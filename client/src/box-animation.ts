@@ -1,0 +1,16 @@
+import Animation from "./animation";
+import GameClient from "./gameclient";
+
+export default class BoxAnimation extends Animation {
+  public color: number;
+  public DEFAULT_BLINK_LENGTH_MS: number = 500;
+
+  constructor(gameClient: GameClient, color: number) {
+    super(gameClient, 0);
+    this.color = color;
+  }
+
+  public __generateDurations(): number[] {
+    return [this.DEFAULT_BLINK_LENGTH_MS];
+  }
+}

@@ -8,6 +8,8 @@ import Keyboard from "./keyboard";
 import Mouse from "./mouse";
 import NetworkManager from "./network-manager";
 import ObjectBuffer from "./object-buffer";
+import Packet from "./packet";
+import PacketReader from "./packetreader";
 import Player from "./player";
 import Renderer from "./renderer";
 import SpriteBuffer from "./sprite-buffer";
@@ -29,7 +31,7 @@ export default class GameClient {
   player: Player | null = null;
   database: Database;
   world!: World;
-  renderer!: Renderer;
+  renderer: Renderer;
   private __tickInterval: number = 0;
   serverVersion: number | null = null;
   clientVersion: number | null = null;
@@ -40,20 +42,21 @@ export default class GameClient {
      * Main container for the HTML5 ForbyJS Game Client
      */
 
-    this.spriteBuffer = new SpriteBuffer(this, 32);
-    this.gameLoop = new GameLoop(this.__loop.bind(this));
+    this.renderer = new Renderer(this);
+    this.interface = new Interface(this);
+    this.spriteBuffer = new SpriteBuffer(32);
     this.dataObjects = new ObjectBuffer(this);
     this.networkManager = new NetworkManager(this);
-    this.interface = new Interface(this);
-    this.eventQueue = new EventQueue(this);
     this.database = new Database(this);
+    this.gameLoop = new GameLoop(this.__loop.bind(this));
     this.keyboard = new Keyboard(this);
     this.mouse = new Mouse(this);
-
-    document.getElementById("client-version")!.innerHTML = "a";
+    this.eventQueue = new EventQueue(this);
+    
+    document.getElementById("client-version")!.innerHTML = this.CLIENT_VERSION;
   }
 
-  setServerData(packet: any): void {
+  setServerData(packet: PacketReader): void {
     /*
      * Handles event when connected to the gameserver
      */
@@ -73,7 +76,6 @@ export default class GameClient {
     }
 
     this.interface.enableVersionFeatures(serverData.clientVersion);
-    this.world.clock.CLOCK_SPEED = serverData.clock;
 
     this.__setServerVersion(serverData.version);
     this.__setClientVersion(serverData.clientVersion);
@@ -83,14 +85,15 @@ export default class GameClient {
     Chunk.DEPTH = serverData.chunk.depth;
 
     this.world = new World(this, serverData.width, serverData.height, serverData.depth);
-    this.renderer = new Renderer(this);
+    this.world.clock.CLOCK_SPEED = serverData.clock;
+
     this.__setTickInterval(serverData.tick);
 
     document.getElementById("anti-aliasing")!.dispatchEvent(new Event("change"));
   }
 
   getFrame(): number {
-    return this.renderer.debugger.__nFrames;
+    return this.renderer!.debugger.__nFrames;
   }
 
   isRunning(): boolean {
@@ -179,7 +182,7 @@ export default class GameClient {
     this.serverVersion = Number(version);
   }
 
-  private __setClientVersion(version: string): void {
+  private __setClientVersion(version: number): void {
     this.clientVersion = Number(version);
   }
 

@@ -1,4 +1,6 @@
-import EventEmitter from "events";
+import EventEmitter from "./eventemitter";
+import State from "./state";
+
 
 export default class InteractiveWindow extends EventEmitter {
     __element: HTMLElement;
@@ -9,7 +11,6 @@ export default class InteractiveWindow extends EventEmitter {
   
     constructor(element: HTMLElement) {
       super();
-  
       /*
        * Class InteractiveWindow
        * Makes an element with the window class interactive

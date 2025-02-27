@@ -355,21 +355,29 @@ export default class PacketReader extends Packet {
     version: string;
     clientVersion: number;
   } {
+    const width = this.readUInt16();
+    const height = this.readUInt16();
+    const depth = this.readUInt8();
+    const chunkWidth = this.readUInt8();
+    const chunkHeight = this.readUInt8();
+    const chunkDepth = this.readUInt8();
+    const tick = this.readUInt8();
+    const clock = this.readUInt16();
+    const version = this.readString();
+    const clientVersion = this.readUInt16();
+  
     return {
-      width: this.readUInt16(),
-      height: this.readUInt16(),
-      depth: this.readUInt8(),
-      chunk: {
-        width: this.readUInt8(),
-        height: this.readUInt8(),
-        depth: this.readUInt8(),
-      },
-      tick: this.readUInt8(),
-      clock: this.readUInt16(),
-      version: this.readString(),
-      clientVersion: this.readUInt16(),
+      width,
+      height,
+      depth,
+      chunk: { width: chunkWidth, height: chunkHeight, depth: chunkDepth },
+      tick,
+      clock,
+      version,
+      clientVersion,
     };
   }
+  
   
   public readUInt16(): number {
     /*
@@ -386,12 +394,7 @@ export default class PacketReader extends Packet {
      * Reads an unsigned 32-bit integer from the packet
      */
   
-    return (
-      this.buffer[this.index++] +
-      (this.buffer[this.index++] << 8) +
-      (this.buffer[this.index++] << 16) +
-      (this.buffer[this.index++] << 24)
-    );
+    return this.buffer[this.index++] + (this.buffer[this.index++] << 8) + (this.buffer[this.index++] << 16) + (this.buffer[this.index++] << 24);
   }
   
   public readThing(id: number, count: number): Item {

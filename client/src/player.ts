@@ -6,6 +6,7 @@ import GameClient from "./gameclient";
 import { ContainerClosePacket } from "./protocol";
 import Skills from "./skills";
 import Spellbook from "./spellbook";
+import State from "./state";
 import BattleWindow from "./window-battle";
 import SkillWindow from "./window-skill";
 

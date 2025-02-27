@@ -1,4 +1,4 @@
-class State {
+export  default class State {
   private __state: Record<string, any>;
 
   constructor() {

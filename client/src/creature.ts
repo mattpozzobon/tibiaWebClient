@@ -8,6 +8,7 @@ import { CONST } from "./helper/appContext";
 import BoxAnimation from "./box-animation"; 
 import CastingManager from "./casting-manager";
 import CharacterElement from "./screen-element-character";
+import State from "./state";
 
 // Define an interface for the data passed to the Creature constructor.
 export interface CreatureData {
@@ -63,21 +64,21 @@ export default class Creature {
   public speed: number;
   public attackSlowness: number;
   public conditions: ConditionManager;
-  protected __lookDirection: number;
-  protected __previousPosition: Position;
+  public __lookDirection: number;
+  public __previousPosition: Position;
   public outfit: Outfit;
   public castingManager: CastingManager;
   public spriteBuffer: SpriteBuffer;
   public spriteBufferMount?: SpriteBuffer;
   public textBuffer = [];
-  protected __movementEvent: any;
-  protected __lookDirectionBuffer: any;
-  protected __chunk: any;
+  public __movementEvent: any;
+  public __lookDirectionBuffer: any;
+  public __chunk: any;
   __teleported: boolean;
   // This method should create and assign a DOM element representing the creature.
-  protected __activeTextElement: any;
-  protected __target: any;
-  protected __animations: Set<any>;
+  public __activeTextElement: any;
+  public __target: any;
+  public __animations: Set<any>;
   // Assume characterElement is provided (e.g., by Creature or assigned later)
   public characterElement: any;
 
@@ -106,9 +107,9 @@ export default class Creature {
     this.castingManager = new CastingManager(gameClient);
 
     // Initialize spriteBuffer using outfit's sprite buffer size.
-    this.spriteBuffer = new SpriteBuffer(this.gameClient, this.outfit.getSpriteBufferSize(this.outfit.getDataObject()));
+    this.spriteBuffer = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObject()));
     if (this.outfit.getDataObjectMount()) {
-      this.spriteBufferMount = new SpriteBuffer(this.gameClient, this.outfit.getSpriteBufferSize(this.outfit.getDataObjectMount()));
+      this.spriteBufferMount = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObjectMount()));
     }
 
     this.__movementEvent = null;
@@ -292,10 +293,10 @@ export default class Creature {
   public serverSetOutfit(outfit: Outfit): void {
     this.outfit = outfit;
     // Clear the outfit sprite buffer to make room for the new sprite.
-    this.spriteBuffer = new SpriteBuffer(this.gameClient, this.outfit.getSpriteBufferSize(this.outfit.getDataObject()));
+    this.spriteBuffer = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObject()));
     // If the creature has a mount, create a sprite buffer for it as well.
     if (this.outfit.getDataObjectMount()) {
-      this.spriteBufferMount = new SpriteBuffer(this.gameClient, this.outfit.getSpriteBufferSize(this.outfit.getDataObjectMount()));
+      this.spriteBufferMount = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObjectMount()));
     }
   }
 

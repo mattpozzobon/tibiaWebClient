@@ -90,7 +90,7 @@ class Mouse {
   private __handleMouseUp(event: MouseEvent): void {
     if (event.button === 0) this.__leftButtonPressed = false;
     if (event.button === 2) this.__rightButtonPressed = false;
-    if (event.target === this.gameClient.renderer.screen.canvas) {
+    if (event.target === window.gameClient.renderer.screen.canvas) {
       this.__handleCanvasMouseUp(event);
     }
   }
@@ -126,7 +126,7 @@ class Mouse {
   }
 
   private __setSelectedObject(event: MouseEvent): void {
-    if (event.target === this.gameClient.renderer.screen.canvas) {
+    if (event.target === window.gameClient.renderer.screen.canvas) {
       this.__mouseDownObject = this.getWorldObject(event);
     }
   }

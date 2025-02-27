@@ -3,6 +3,7 @@ import InteractiveWindow from "./window"; // Assuming IGameWindow is exported
 import BattleWindow from "./window-battle";
 import SkillWindow from "./window-skill";
 import FriendWindow from "./window-friend";
+import State from "./state";
 
 
 export default class WindowManager {
@@ -14,9 +15,9 @@ export default class WindowManager {
   constructor(gameClient: GameClient) {
     this.gameClient = gameClient;
     this.windows = {
-      "battle-window": new BattleWindow(gameClient, document.getElementById("battle-window")!),
-      "skill-window": new SkillWindow(document.getElementById("skill-window")!),
-      "friend-window": new FriendWindow(document.getElementById("friend-window")!),
+      "battle-window": new BattleWindow(gameClient, document.getElementById("battle-window") as HTMLElement),
+      "skill-window": new SkillWindow(document.getElementById("skill-window") as HTMLElement),
+      "friend-window": new FriendWindow(document.getElementById("friend-window") as HTMLElement),
     };
 
     this.stacks = document.getElementsByClassName("column");

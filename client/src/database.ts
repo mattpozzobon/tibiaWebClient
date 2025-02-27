@@ -15,9 +15,8 @@ export default class Database {
   }
 
   public init(): void {
-    const VERSION = 1;
+    const VERSION = 1098;
     const openRequest: IDBOpenDBRequest = indexedDB.open("game", VERSION);
-
     openRequest.onerror = (event: Event) => this.__handleOpenError(event);
     openRequest.onsuccess = (event: Event) => this.__handleOpenSuccess(event);
     openRequest.onupgradeneeded = (event: IDBVersionChangeEvent) => this.__handleUpgrade(event);
@@ -124,16 +123,18 @@ export default class Database {
 
   private __handleUpgrade(event: IDBVersionChangeEvent): void {
     console.debug("Initializing IndexedDB with new version.");
+  
+    // Set the database; event.target is an IDBOpenDBRequest.
     this.__database = (event.target as IDBOpenDBRequest).result;
   
-    const minimapStore = this.__database.createObjectStore("minimap", { keyPath: "chunk" });
-    minimapStore.createIndex("id", "chunk");
+    const objectStore = this.__database.createObjectStore("minimap", { keyPath: "chunk" });
+    objectStore.createIndex("id", "chunk");
   
     const fileStore = this.__database.createObjectStore("files", { keyPath: "filename" });
     fileStore.createIndex("id", "filename");
   
-    // Instead of fileStore.onsuccess = ..., call loadGameAssets() directly:
-    this.loadGameAssets();
+    // Instead of fileStore.onsuccess (which doesn't exist), call loadGameAssets immediately.
+    //this.loadGameAssets();
   }
   
   private __handleOpenError(event: Event): void {

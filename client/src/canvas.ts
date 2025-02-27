@@ -1,3 +1,4 @@
+import Creature from "./creature";
 import FrameGroup from "./frame-group";
 import GameClient from "./gameclient";
 import Interface from "./interface";
@@ -242,11 +243,14 @@ export default class Canvas {
     }
   }
   
-  drawCharacter(creature: any, position: Position, size: number, offset: number): void {
+  drawCharacter(creature: Creature, position: Position, size: number, offset: number): void {
     /*
      * Draws a character (player/creature) onto the canvas.
      */
     let frames = creature.getCharacterFrames();
+
+    console.log('creature', creature);
+    console.log('frames', frames);
     if (frames === null) return;
   
     let xPattern = creature.__lookDirection % 4;
@@ -326,7 +330,7 @@ export default class Canvas {
     if (rightHandGroup) this.__drawCharacterLayer(spriteBuffer, outfit, rightHandGroup, rightHandFrame, xPattern, zPattern, drawPosition, size, 0);
   
     if (!headGroup && hairGroup) {
-      const spriteBufferHair = new SpriteBuffer(this.gameClient, 64);
+      const spriteBufferHair = new SpriteBuffer(64);
       this.__drawCharacterLayer(spriteBufferHair, outfit, hairGroup, hairFrame, xPattern, zPattern, drawPosition, size, 0, true);
     }
   

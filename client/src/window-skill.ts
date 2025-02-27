@@ -1,5 +1,8 @@
 import InteractiveWindow from "./window";
 
+function formatNumber(value: number): string {
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
 
 export default class SkillWindow extends InteractiveWindow {
   constructor(element: HTMLElement) {
@@ -14,10 +17,8 @@ export default class SkillWindow extends InteractiveWindow {
     // Find the element with class "skill" inside the container.
     const skillElement = container.querySelector(".skill") as HTMLElement | null;
     if (skillElement) {
-      // Assuming a custom Number prototype method formatNumber exists.
-      skillElement.innerHTML = (value as any).formatNumber();
-      // Alternatively, you might use:
-      // skillElement.innerHTML = value.toLocaleString();
+      skillElement.innerHTML = formatNumber(value);
+      // Alternatively: skillElement.innerHTML = value.toLocaleString();
     }
 
     // Find the element with class "bar" inside the container.

@@ -9,6 +9,7 @@ import { KeyringOpenPacket, LogoutPacket } from "./protocol";
 import ScreenElementManager from "./screen-element-manager";
 import Settings from "./settings";
 import SoundManager from "./sound-manager";
+import State from "./state";
 import StatusBar from "./status-bar";
 import WindowManager from "./window-manager";
 
@@ -197,6 +198,7 @@ export default class Interface {
   }
 
   loadGameFiles(event: Event): void {
+    console.log('LOAD FROM INTERFACE');
     const target = event.target as HTMLInputElement;
     if (!target.files) return;
     
@@ -402,6 +404,6 @@ export default class Interface {
     document.getElementById("enter-game")?.addEventListener("click", () => this.enterGame());
     window.onbeforeunload = () => this.gameClient.isConnected() ? true : undefined;
     window.onunload = () => this.gameClient.renderer.minimap.save();
-    window.onresize = () => this.handleResize();
+    //window.onresize = () => this.handleResize();
   }
 }

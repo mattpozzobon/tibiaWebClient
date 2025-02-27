@@ -230,30 +230,31 @@ class NetworkManager {
     return response.arrayBuffer();
   }
 
-  loadGameFilesServer(): void {
+  public loadGameFilesServer(): void {
+    // The resources to load from the server.
     const resources = ["Tibia.spr", "Tibia.dat"];
-    const promises = resources.map(url => fetch(`/data/${this.gameClient.SERVER_VERSION}/${url}`).then(res => res.arrayBuffer()));
-
+  
+    // Map each resource to a fetch promise using template literals.
+    const promises = resources.map(url =>
+      fetch(`/data/${this.gameClient.SERVER_VERSION}/${url}`).then(this.fetchCallback)
+    );
+  
+    // Wait for all resources to load.
     Promise.all(promises)
       .then(([dataSprites, dataObjects]) => {
-        // Load sprites using FileReader
-        const readerSprites = new FileReader();
-        readerSprites.onload = (event: ProgressEvent<FileReader>) => {
-          if (!event.target?.result) return;
-          this.gameClient.spriteBuffer.load("Tibia.spr", event);
-        };
-        readerSprites.readAsArrayBuffer(new Blob([dataSprites]));
 
-        // Load objects properly
-        const readerObjects = new FileReader();
-        readerObjects.onload = (event: ProgressEvent<FileReader>) => {
-          if (!event.target?.result) return;
-          this.gameClient.dataObjects.load("Tibia.dat", event);
-        };
-        readerObjects.readAsArrayBuffer(new Blob([dataObjects]));
+        this.gameClient.dataObjects.load("Tibia.dat", {target: {result: dataObjects} } as unknown as ProgressEvent<FileReader>);
+        this.gameClient.spriteBuffer.load("Tibia.spr", { target: { result: dataSprites } } as unknown as ProgressEvent<FileReader>);
+        
       })
-      .catch(() => this.gameClient.interface.modalManager.open("floater-connecting", "Failed loading client data from server. Please select them manually using the Load Assets button."));
+      .catch(error => {
+        return this.gameClient.interface.modalManager.open(
+          "floater-connecting",
+          "Failed loading client data from server. Please select them manually using the Load Assets button."
+        );
+      });
   }
+  
 
   connect(): void {
     const host: string = this.getConnectionSettings();

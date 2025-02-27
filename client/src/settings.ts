@@ -61,9 +61,9 @@ export default class Settings {
   __setAA(event: Event): void {
     const target = event.target as HTMLInputElement;
     if (target.checked) {
-      this.gameClient.renderer.screen.canvas.style.imageRendering = "auto";
+      window.gameClient.renderer.screen.canvas.style.imageRendering = "auto";
     } else {
-      this.gameClient.renderer.screen.canvas.style.imageRendering = "pixelated";
+      window.gameClient.renderer.screen.canvas.style.imageRendering = "pixelated";
     }
   }
 

@@ -29,7 +29,6 @@ export default class Container extends Item {
        * Function Container.createDOM
        * Creates the DOM for the container
        */
-  
       let element = this.createElement(this.__containerId);
   
       this.window = new InteractiveWindow(element);

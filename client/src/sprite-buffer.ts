@@ -1,5 +1,4 @@
 import Canvas from "./canvas";
-import GameClient from "./gameclient";
 import Outfit from "./outfit";
 import PacketReader from "./packetreader";
 import Position from "./position";
@@ -7,7 +6,6 @@ import Sprite from "./sprite";
 
 export default class SpriteBuffer {
   size: number;
-  gameClient: GameClient;
   private __spriteBufferIndex: number = 0;
   private __spriteBufferArray: (number | null)[];
   private __spriteBufferLookup: Record<number, number> = {};
@@ -23,12 +21,11 @@ export default class SpriteBuffer {
   private __spriteAddressPointers: Record<number, number> = {};
   private packet!: PacketReader;
 
-  constructor(gameClient: GameClient, size: number) {
-    this.gameClient = gameClient;
+  constructor(size: number) {
     this.size = size;
     this.__spriteBufferArray = new Array(size * size).fill(null);
-    this.__spriteBufferCanvas = new Canvas(this.gameClient, null, 32 * size, 32 * size);
-    this.compositionCanvas = new Canvas(this.gameClient, null, 32, 32);
+    this.__spriteBufferCanvas = new Canvas(window.gameClient, null, 32 * size, 32 * size);
+    this.compositionCanvas = new Canvas(window.gameClient, null, 32, 32);
   }
 
   getVersion(): number | null {
@@ -95,24 +92,23 @@ export default class SpriteBuffer {
     this.__spriteBufferCanvas.context.drawImage(this.compositionCanvas.canvas, 32 * position.x, 32 * position.y);
   }
 
-  load(name: string, event: ProgressEvent<FileReader>): void {
-    const fileReader = event.target as FileReader | null;
-    if (!fileReader || !fileReader.result) {
-      this.gameClient.interface.modalManager.open("floater-connecting", "Failed to load file.");
-      return;
-    }
-  
+  public load(name: string, event: ProgressEvent<FileReader>): void {
     try {
-      this.__load(name, fileReader.result as ArrayBuffer);
-      this.gameClient.database.storeFile(name, fileReader.result as ArrayBuffer);
+      const result = (event.target as FileReader).result;
+      if (result instanceof ArrayBuffer) {
+        this.__load(name, result);
+      } else {
+        throw new Error("Failed to load sprite: result is not an ArrayBuffer.");
+      }
+      window.gameClient.database.storeFile(name, result);
     } catch (exception) {
-      this.gameClient.interface.modalManager.open("floater-connecting", String(exception));
+      window.gameClient.interface.modalManager.open("floater-connecting", exception);
     }
   }
 
   __load(name: string, buffer: ArrayBuffer): void {
     let start = performance.now();
-    this.packet = new PacketReader(this.gameClient, buffer);
+    this.packet = new PacketReader(window.gameClient, buffer);
 
     let signature = this.packet.readUInt32().toString(16).toUpperCase();
     if (!SpriteBuffer.SIGNATURES.hasOwnProperty(signature)) {
@@ -129,7 +125,7 @@ export default class SpriteBuffer {
     }
 
     console.log(`Completed loading ${spriteCount} sprites in ${Math.round(performance.now() - start)} milliseconds.`);
-    this.gameClient.interface.loadAssetCallback("sprite", name);
+    window.gameClient.interface.loadAssetCallback("sprite", name);
   }
 
   private __add(id: number): Sprite {
@@ -200,7 +196,7 @@ export default class SpriteBuffer {
   }
 
 
-  private __loadSingleSprite(address: number): ImageData {
+  private __loadSingleSprite = (address: number): ImageData => {
     /*
      * Function __loadSingleSprite
      * Loads a single sprite from the full sprite buffer

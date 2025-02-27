@@ -4,6 +4,13 @@ import Sprite from "./sprite";
 
 export default class FrameGroup {
     gameClient: GameClient;
+
+    type: number = 0;
+    asynchronous: number = 0;
+    nLoop: number = 0;
+    start: number = 0;
+
+
     width: number = 0;
     height: number = 0;
     layers: number = 1;

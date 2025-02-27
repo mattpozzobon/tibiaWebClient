@@ -25,8 +25,8 @@ export default class OutfitModal extends Modal {
     this.__addEventListeners();
 
     this.__activeOutfitElement = null;
-    this.__spriteBuffer = new SpriteBuffer(gameClient, 2);
-    this.__spriteBufferMount = new SpriteBuffer(gameClient, 2);
+    this.__spriteBuffer = new SpriteBuffer(2);
+    this.__spriteBufferMount = new SpriteBuffer(2);
 
     const outfitExample = document.getElementById("outfit-example");
     if (!(outfitExample instanceof HTMLCanvasElement)) {

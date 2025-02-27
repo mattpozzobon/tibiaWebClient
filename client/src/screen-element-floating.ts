@@ -7,9 +7,9 @@ export default class FloatingElement extends ScreenElement {
   private __position: Position;
   private __start: number;
 
-  constructor(gameClient: GameClient, message: string, position: Position, color: number) {
+  constructor(message: string, position: Position, color: number) {
     // Call the parent constructor with the prototype identifier and gameClient.
-    super(gameClient, "floating-element-prototype");
+    super( "floating-element-prototype");
     this.__position = position;
     this.setColor(color);
     this.setMessage(message);
@@ -35,7 +35,7 @@ export default class FloatingElement extends ScreenElement {
    */
   public setTextPosition(): void {
     // Get a static screen position from the renderer using the element's position.
-    const staticPos = this.gameClient.renderer.getStaticScreenPosition(this.__position);
+    const staticPos = window.gameClient.renderer.getStaticScreenPosition(this.__position);
     // Calculate the absolute offset (assume __getAbsoluteOffset is inherited).
     const offset = this.__getAbsoluteOffset(staticPos);
     const age = this.getAge();

@@ -1,14 +1,11 @@
 import Canvas from "./canvas";
-import GameClient from "./gameclient";
 import { TargetPacket } from "./protocol";
 import InteractiveWindow from "./window";
 
 export default class BattleWindow extends InteractiveWindow {
-  gameClient: GameClient
-
-  constructor(gameClient: GameClient, element: HTMLElement) {
+  constructor(element: HTMLElement) {
     super(element);
-    this.gameClient = gameClient; 
+     
   }
 
   public removeCreature(id: number | string): void {
@@ -47,7 +44,7 @@ export default class BattleWindow extends InteractiveWindow {
     // Create a new Canvas for the creature.
     const canvasParent = node.lastElementChild?.firstElementChild as HTMLCanvasElement;
     if (!canvasParent) return;
-    const canvas = new Canvas(this.gameClient, canvasParent, 64, 64);
+    const canvas = new Canvas(canvasParent, 64, 64);
   
     const frames = creature.getCharacterFrames();
     const zPattern = (frames.characterGroup.pattern.z > 1 && creature.isMounted()) ? 1 : 0;
@@ -84,9 +81,9 @@ export default class BattleWindow extends InteractiveWindow {
     // Add a click listener to select the creature.
     node.addEventListener("click", () => {
       // Use node.id (converted to number) as the creature identifier.
-      const targetCreature = this.gameClient.world.getCreature(Number(node.id));
-      this.gameClient.player!.setTarget(targetCreature);
-      this.gameClient.send(new TargetPacket(Number(node.id)));
+      const targetCreature = window.gameClient.world.getCreature(Number(node.id));
+      window.gameClient.player!.setTarget(targetCreature);
+      window.gameClient.send(new TargetPacket(Number(node.id)));
     });
   }
   

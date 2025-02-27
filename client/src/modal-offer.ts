@@ -15,16 +15,16 @@ interface Offer {
 
 export default class OfferModal extends Modal {
   // Internal state
-  gameClient: GameClient;
+  ;
   private __selectedElement: HTMLElement | null = null;
   private __selectedOffer: number | null = null;
   private __offerType: string = "sell";
   private __offers: Offer[] | null = null;
   private __id: number | string | null = null;
 
-  constructor(gameClient: GameClient, id: string) {
+  constructor(id: string) {
     super(id);
-    this.gameClient = gameClient;
+    
     // Set up event listeners for offer type toggling and count changes.
     document.getElementById("set-sell")?.addEventListener("click", this.setOfferType.bind(this, "sell"));
     document.getElementById("set-buy")?.addEventListener("click", this.setOfferType.bind(this, "buy"));
@@ -95,10 +95,10 @@ export default class OfferModal extends Modal {
   }
 
   public createOfferNode(offer: Offer, index: number): HTMLElement {
-    const canvasInstance = new Canvas(this.gameClient, null, 32, 32);
+    const canvasInstance = new Canvas(null, 32, 32);
     canvasInstance.canvas.className = "slot";
     // Draw the item's sprite on the canvas. We assume Position.prototype.NULL is equivalent to a default position.
-    canvasInstance.drawSprite(new Item(this.gameClient, offer.id, offer.count), new Position(0, 0, 0), 32);
+    canvasInstance.drawSprite(new Item(offer.id, offer.count), new Position(0, 0, 0), 32);
     canvasInstance.canvas.addEventListener("click", this.handleSelectOffer.bind(this, canvasInstance, offer, index));
     return canvasInstance.canvas;
   }
@@ -125,7 +125,7 @@ export default class OfferModal extends Modal {
 
   public handleOpen = (properties: any): void => {
     // Retrieve the NPC from the game world.
-    const NPC = this.gameClient.world.getCreature(properties.id);
+    const NPC = window.gameClient.world.getCreature(properties.id);
     this.__id = properties.id;
     this.__offers = properties.offers;
     this.setOffers();
@@ -146,7 +146,7 @@ export default class OfferModal extends Modal {
       count = 1;
     }
     if (typeof this.__id === 'number') {
-      this.gameClient.send(new OfferBuyPacket(this.__id, this.__selectedOffer, count));
+      window.gameClient.send(new OfferBuyPacket(this.__id, this.__selectedOffer, count));
     } else {
       console.error('Invalid ID type');
     }
@@ -154,7 +154,7 @@ export default class OfferModal extends Modal {
   }
 
   private __setOfferInformation(offer: Offer): void {
-    const thing = new Item(this.gameClient, offer.id, offer.count);
+    const thing = new Item(offer.id, offer.count);
     const wrapper = document.getElementById("buy-count-wrapper");
     if (wrapper) {
       wrapper.style.display = thing.isStackable() ? "flex" : "none";

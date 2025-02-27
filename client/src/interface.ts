@@ -14,7 +14,7 @@ import StatusBar from "./status-bar";
 import WindowManager from "./window-manager";
 
 export default class Interface {
-  gameClient: GameClient;
+  ;
   settings: Settings;
   channelManager: ChannelManager;
   hotbarManager: HotbarManager;
@@ -92,18 +92,18 @@ export default class Interface {
       [9, { name: "Levitate", description: "Move up or down a mountain", icon: { x: 4, y: 10 } }],
     ]);
 
-  constructor(gameClient: GameClient) {
-    this.gameClient = gameClient;
-    this.settings = new Settings(gameClient, this);
-    this.channelManager = new ChannelManager(gameClient);
-    this.hotbarManager = new HotbarManager(gameClient);
+  constructor() {
+    
+    this.settings = new Settings( this);
+    this.channelManager = new ChannelManager();
+    this.hotbarManager = new HotbarManager();
     this.notificationManager = new NotificationManager();
-    this.modalManager = new ModalManager(gameClient);
+    this.modalManager = new ModalManager();
     this.statusBar = new StatusBar();
-    this.windowManager = new WindowManager(gameClient);
-    this.soundManager = new SoundManager(gameClient, this.settings.isSoundEnabled());
-    this.menuManager = new MenuManager(gameClient);
-    this.screenElementManager = new ScreenElementManager(gameClient);
+    this.windowManager = new WindowManager();
+    this.soundManager = new SoundManager( this.settings.isSoundEnabled());
+    this.menuManager = new MenuManager();
+    this.screenElementManager = new ScreenElementManager();
     this.state = new State();
     
     this.state.add("spritesLoaded", this.enableEnterGame.bind(this));
@@ -120,11 +120,11 @@ export default class Interface {
   }
 
   updateSpells(sid: number): void {
-    this.gameClient.player?.spellbook.addSpell(sid);
+    window.gameClient.player?.spellbook.addSpell(sid);
   }
 
   __openKeyRing(): void {
-    this.gameClient.send(new KeyringOpenPacket());
+    window.gameClient.send(new KeyringOpenPacket());
   }
 
   enableVersionFeatures(version: number): void {
@@ -150,7 +150,7 @@ export default class Interface {
       return;
     }
     this.modalManager.open("floater-connecting", "Connecting to Gameworld...");
-    this.gameClient.connect();
+    window.gameClient.connect();
   }
 
   reset(): void {
@@ -206,9 +206,9 @@ export default class Interface {
       console.debug(`Loading asset ${file.name} from disk.`);
       const reader = new FileReader();
       if (file.name === "Tibia.dat") {
-        reader.addEventListener("load", (e) => this.gameClient.dataObjects.load(file.name, e));
+        reader.addEventListener("load", (e) => window.gameClient.dataObjects.load(file.name, e));
       } else if (file.name === "Tibia.spr") {
-        reader.addEventListener("load", (e) => this.gameClient.spriteBuffer.load(file.name, e));
+        reader.addEventListener("load", (e) => window.gameClient.spriteBuffer.load(file.name, e));
       } else {
         console.error(`Unknown asset file ${file.name} was selected.`);
         return;
@@ -223,14 +223,14 @@ export default class Interface {
       const element = document.getElementById("sprites-loaded");
       if (element) {
         element.style.color = "green";
-        element.innerHTML = `${filename} (${this.gameClient.spriteBuffer.__version})`;
+        element.innerHTML = `${filename} (${window.gameClient.spriteBuffer.__version})`;
       }
     } else if (which === "data") {
       this.state.dataLoaded = true;
       const element = document.getElementById("data-loaded");
       if (element) {
         element.style.color = "green";
-        element.innerHTML = `${filename} (${this.gameClient.dataObjects.__version})`;
+        element.innerHTML = `${filename} (${window.gameClient.dataObjects.__version})`;
       }
     }
   }
@@ -249,7 +249,7 @@ export default class Interface {
   }
 
   isRaining(): boolean {
-    return this.gameClient.renderer.weatherCanvas.isRaining();
+    return window.gameClient.renderer.weatherCanvas.isRaining();
   }
 
   getSpriteScaling(): number {
@@ -298,7 +298,7 @@ export default class Interface {
 
   closeClient(event: Event): void {
     // Save the minimap
-    this.gameClient.renderer.minimap.save();
+    window.gameClient.renderer.minimap.save();
 
     // Save the state of the settings to localstorage
     this.settings.saveState();
@@ -310,19 +310,19 @@ export default class Interface {
   sendLogout(): void {
     this.modalManager.open("confirm-modal", () => {
       // Block logout in no-logout zones.
-      if (this.gameClient.player!.getTile().isNoLogoutZone()) {
-        return this.gameClient.interface.setCancelMessage("You may not logout here.");
+      if (window.gameClient.player!.getTile().isNoLogoutZone()) {
+        return window.gameClient.interface.setCancelMessage("You may not logout here.");
       }
-      this.gameClient.send(new LogoutPacket());
+      window.gameClient.send(new LogoutPacket());
     });
   }
 
   handleResize(event?: Event): void {
     // Get and set the resolution scale.
-    this.gameClient.renderer.screen.setScale(this.getResolutionScale());
+    window.gameClient.renderer.screen.setScale(this.getResolutionScale());
 
     // Update the wrapper size explicitly.
-    const { width, height } = this.gameClient.renderer.screen.canvas.getBoundingClientRect();
+    const { width, height } = window.gameClient.renderer.screen.canvas.getBoundingClientRect();
     const canvas = document.getElementById("canvas-id");
     if (canvas) {
       this.setElementDimensions(canvas, width, height);
@@ -350,7 +350,7 @@ export default class Interface {
         // If the bottom of the element is below the viewport height, close the corresponding container.
         if (bounding.bottom >= viewportHeight) {
           const containerIndex = Number(last.getAttribute("containerIndex"));
-          this.gameClient.player!.getContainer(containerIndex).close();
+          window.gameClient.player!.getContainer(containerIndex).close();
         }
       }
     }
@@ -367,12 +367,12 @@ export default class Interface {
 
 
   __handleVisibiliyChange(event: Event): void {
-    if (!this.gameClient.networkManager.isConnected()) {
+    if (!window.gameClient.networkManager.isConnected()) {
       return;
     }
     // Disable the keyboard when tabbing out to prevent stuck keys.
-    this.gameClient.keyboard.setInactive();
-    this.gameClient.renderer.__handleVisibiliyChange(event);
+    window.gameClient.keyboard.setInactive();
+    window.gameClient.renderer.__handleVisibiliyChange(event);
   }
 
   __handleResizeWindow(): void {
@@ -388,7 +388,7 @@ export default class Interface {
    * @returns True if confirmation is needed, otherwise undefined.
    */
   __closeClientConfirm(event: Event): boolean | void {
-    if (this.gameClient.isConnected()) {
+    if (window.gameClient.isConnected()) {
       return true;
     }
     return;
@@ -402,8 +402,8 @@ export default class Interface {
     document.getElementById("load-assets")?.addEventListener("click", () => this.loadAssetsDelegator());
     document.getElementById("asset-selector")?.addEventListener("change", (event) => this.loadGameFiles(event));
     document.getElementById("enter-game")?.addEventListener("click", () => this.enterGame());
-    window.onbeforeunload = () => this.gameClient.isConnected() ? true : undefined;
-    window.onunload = () => this.gameClient.renderer.minimap.save();
+    window.onbeforeunload = () => window.gameClient.isConnected() ? true : undefined;
+    window.onunload = () => window.gameClient.renderer.minimap.save();
     //window.onresize = () => this.handleResize();
   }
 }

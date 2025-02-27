@@ -1,13 +1,11 @@
 import ConditionManager from "./condition";
 import FrameGroup from "./frame-group";
-import GameClient from "./gameclient";
 import Item from "./item";
 import Position from "./position";
 import Thing from "./thing";
 
 
 export default class Tile extends Thing {
-  gameClient: GameClient;
   private __position: Position;
   private __renderElevation: number = 0;
   private __animations: Set<any> = new Set();
@@ -24,9 +22,9 @@ export default class Tile extends Thing {
   public __closed: boolean = false;
   public __parent: Tile | null = null;
 
-  constructor(gameClient: GameClient, tile: { id: number; flags: number; zone: number; items: Item[] }, position: Position) {
-    super(gameClient, tile.id);
-    this.gameClient = gameClient
+  constructor(tile: { id: number; flags: number; zone: number; items: Item[] }, position: Position) {
+    super(tile.id);
+    
     this.flags = tile.flags;
     this.zone = tile.zone;
     this.__position = position;
@@ -88,22 +86,22 @@ export default class Tile extends Thing {
 
   addCreature(creature: any): void {
     if (
-      creature ===  this.gameClient.player &&
+      creature ===  window.gameClient.player &&
       this.isProtectionZone() &&
-      ! this.gameClient.player!.hasCondition(ConditionManager.PROTECTION_ZONE)
+      ! window.gameClient.player!.hasCondition(ConditionManager.PROTECTION_ZONE)
     ) {
-      this.gameClient.player!.addCondition(ConditionManager.PROTECTION_ZONE);
+      window.gameClient.player!.addCondition(ConditionManager.PROTECTION_ZONE);
     }
     this.monsters.add(creature);
   }
 
   removeCreature(creature: any): void {
     if (
-      creature === this.gameClient.player &&
+      creature === window.gameClient.player &&
       this.isProtectionZone() &&
-      this.gameClient.player!.hasCondition(ConditionManager.PROTECTION_ZONE)
+      window.gameClient.player!.hasCondition(ConditionManager.PROTECTION_ZONE)
     ) {
-      this.gameClient.player!.removeCondition(5);
+      window.gameClient.player!.removeCondition(5);
     }
     this.monsters.delete(creature);
   }

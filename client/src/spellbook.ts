@@ -1,4 +1,3 @@
-import GameClient from "./gameclient";
 import HeapEvent from "./heap-event";
 import SpellbookModal from "./modal-spellbook";
 import { SpellCastPacket } from "./protocol";
@@ -8,33 +7,32 @@ export default class Spellbook {
   public cooldowns: Map<number, HeapEvent>;
   public GLOBAL_COOLDOWN: number = 0xFFFF;
   public GLOBAL_COOLDOWN_DURATION: number = 20;
-  private gameClient: GameClient;
 
-  constructor(gameClient: GameClient, spells: number[]) {
-    this.gameClient = gameClient;
+  constructor(spells: number[]) {
+    
     this.spells = new Set(spells);
     this.cooldowns = new Map<number, HeapEvent>();
 
     // Create the spell list in the modal.
-    (this.gameClient.interface.modalManager.get("spellbook-modal") as SpellbookModal).createSpellList(Array.from(this.spells));
-    this.gameClient.interface.hotbarManager.__loadConfiguration();
+    (window.gameClient.interface.modalManager.get("spellbook-modal") as SpellbookModal).createSpellList(Array.from(this.spells));
+    window.gameClient.interface.hotbarManager.__loadConfiguration();
   }
 
   public addSpell(sid: number): void {
     this.spells.add(sid);
-    (this.gameClient.interface.modalManager.get("spellbook-modal") as SpellbookModal).createSpellList(Array.from(this.spells));
+    (window.gameClient.interface.modalManager.get("spellbook-modal") as SpellbookModal).createSpellList(Array.from(this.spells));
   }
 
   public removeSpell(sid: number): void {
     this.spells.delete(sid);
-    (this.gameClient.interface.modalManager.get("spellbook-modal") as SpellbookModal).createSpellList(Array.from(this.spells));
+    (window.gameClient.interface.modalManager.get("spellbook-modal") as SpellbookModal).createSpellList(Array.from(this.spells));
   }
 
   public castSpell(sid: number): void {
     if (this.cooldowns.has(this.GLOBAL_COOLDOWN) || this.cooldowns.has(sid)) {
       return this.__cooldownCallback();
     }
-    this.gameClient.send(new SpellCastPacket(sid));
+    window.gameClient.send(new SpellCastPacket(sid));
   }
 
   public serverCastSpell(packet: { id: number; cooldown: number }): void {
@@ -62,18 +60,18 @@ export default class Spellbook {
   }
 
   private __cooldownCallback(): void {
-    this.gameClient.player!.blockHit();
-    this.gameClient.interface.setCancelMessage("You cannot cast this spell yet.");
+    window.gameClient.player!.blockHit();
+    window.gameClient.interface.setCancelMessage("You cannot cast this spell yet.");
   }
 
   private __lockSpell(id: number, time: number): void {
     this.cooldowns.set(
       id,
-      this.gameClient.eventQueue.addEvent(this.__unlockSpell.bind(this, id), time) as HeapEvent
+      window.gameClient.eventQueue.addEvent(this.__unlockSpell.bind(this, id), time) as HeapEvent
     );
     this.cooldowns.set(
       this.GLOBAL_COOLDOWN,
-      this.gameClient.eventQueue.addEvent(this.__unlockSpell.bind(this, this.GLOBAL_COOLDOWN), this.GLOBAL_COOLDOWN_DURATION) as HeapEvent
+      window.gameClient.eventQueue.addEvent(this.__unlockSpell.bind(this, this.GLOBAL_COOLDOWN), this.GLOBAL_COOLDOWN_DURATION) as HeapEvent
     );
   }
 

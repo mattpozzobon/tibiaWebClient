@@ -3,20 +3,20 @@ import GameClient from "./gameclient";
 import HeapEvent from "./heap-event";
 
 export default class EventQueue {
-  private gameClient: GameClient;
+ 
   __internalDelta: number;
   private __start: number;
   public heap: BinaryHeap<HeapEvent>;
 
-  constructor(gameClient: GameClient) {
-    this.gameClient = gameClient;
+  constructor() {
+    
     this.__internalDelta = 0;
     this.__start = performance.now();
     this.heap = new BinaryHeap<HeapEvent>();
   }
 
   public getFrame(): number {
-    return Math.floor(this.__internalDelta / this.gameClient.getTickInterval());
+    return Math.floor(this.__internalDelta / window.gameClient.getTickInterval());
   }
 
   public tick(): void {
@@ -48,13 +48,13 @@ export default class EventQueue {
 
   public addEvent(callback: () => void, when: number): HeapEvent | void {
     // Convert the "when" (in ticks) to an absolute frame using the tick interval.
-    when = Math.floor(Math.max(when, 0) * this.gameClient.getTickInterval());
+    when = Math.floor(Math.max(when, 0) * window.gameClient.getTickInterval());
     return this.__addEvent(callback, when);
   }
 
   public addEventMs(callback: () => void, ms: number): HeapEvent | void {
     // Convert milliseconds to ticks (using the tick interval).
-    const ticks = Math.floor(ms / this.gameClient.getTickInterval());
+    const ticks = Math.floor(ms / window.gameClient.getTickInterval());
     return this.addEvent(callback, ticks);
   }
 
@@ -71,7 +71,7 @@ export default class EventQueue {
       console.error("Could not add event with an invalid frame.");
       return;
     }
-    const eventItem = new HeapEvent(this.gameClient, callback, frame);
+    const eventItem = new HeapEvent(callback, frame);
     this.heap.push(eventItem);
     return eventItem;
   }

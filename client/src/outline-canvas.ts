@@ -4,11 +4,11 @@ import Position from "./position";
 
 export default class OutlineCanvas extends Canvas {
   private __currentIdentifier: number = 0;
-  gameCLient: GameClient
   
-  constructor(gameCLient: GameClient, id: string | null, width: number, height: number) {
-    super(gameCLient, id, width, height);
-    this.gameCLient = gameCLient;
+  
+  constructor(id: string | null, width: number, height: number) {
+    super( id, width, height);
+    
     this.context.fillStyle = "white";
   }
 
@@ -21,7 +21,7 @@ export default class OutlineCanvas extends Canvas {
     this.context.globalCompositeOperation = "source-over";
     this.clear();
 
-    const position = this.gameClient.spriteBuffer.getSpritePosition(spriteIdentifier);
+    const position = window.gameClient.spriteBuffer.getSpritePosition(spriteIdentifier);
 
     this.context.filter = "blur(2px)";
     this.drawOutlineSprite(position!);
@@ -36,7 +36,7 @@ export default class OutlineCanvas extends Canvas {
 
   drawOutlineSprite(position: Position): void {
     this.context.drawImage(
-      this.gameClient.spriteBuffer.__spriteBufferCanvas.canvas,
+      window.gameClient.spriteBuffer.__spriteBufferCanvas.canvas,
       position.x * 32,
       position.y * 32,
       32, 32,

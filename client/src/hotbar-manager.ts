@@ -15,14 +15,14 @@ interface HotbarSlot {
 }
 
 export default class HotbarManager {
-  gameClient: GameClient;
+  ;
   slots: HotbarSlot[];
   ICONS: HTMLImageElement;
   GRADIENTS: CanvasGradient[] = [];
   private __currentDragElement: HTMLElement | null;
 
-  constructor(gameClient: GameClient) {
-    this.gameClient = gameClient;
+  constructor() {
+    
     this.__currentDragElement = null;
     
 
@@ -49,7 +49,7 @@ export default class HotbarManager {
     if (index < 0 || index >= this.slots.length) return;
 
     // Get the spell details from the game interface.
-    const spell = this.gameClient.interface.getSpell(sid);
+    const spell = window.gameClient.interface.getSpell(sid);
 
     // Set the new spell reference in the slot.
     this.slots[index].spell = { sid, icon: spell.icon };
@@ -99,7 +99,7 @@ export default class HotbarManager {
       );
 
       // Get the cooldown fraction for the spell.
-      const fraction = this.gameClient.player!.spellbook.getCooldownFraction(
+      const fraction = window.gameClient.player!.spellbook.getCooldownFraction(
         slot.spell.sid
       );
       if (fraction < 1) {
@@ -116,7 +116,7 @@ export default class HotbarManager {
     slot.canvas.context.fillRect(0, 0, 32, 32);
 
     const seconds =
-      this.gameClient.player!.spellbook.getCooldownSeconds(slot.spell!.sid);
+      window.gameClient.player!.spellbook.getCooldownSeconds(slot.spell!.sid);
     if (seconds > 60) {
       slot.duration.innerHTML = `${(seconds / 60).toFixed(1)}m`;
     } else {
@@ -149,13 +149,13 @@ export default class HotbarManager {
     const slot = this.slots[i];
     this.__handleLightUp(slot);
     if (slot.spell === null) return;
-    this.gameClient.player!.spellbook.castSpell(slot.spell.sid);
+    window.gameClient.player!.spellbook.castSpell(slot.spell.sid);
   }
 
   private __createSlot(DOMElement: HTMLElement): HotbarSlot {
     // Assume DOMElement.firstElementChild is the canvas container.
     const firstChild = DOMElement.firstElementChild as HTMLElement;
-    const canvasInstance = new Canvas(this.gameClient, firstChild as HTMLCanvasElement, 32, 32);
+    const canvasInstance = new Canvas(firstChild as HTMLCanvasElement, 32, 32);
     return {
       canvas: canvasInstance,
       duration: DOMElement.children[1] as HTMLElement,
@@ -164,7 +164,7 @@ export default class HotbarManager {
   }
 
   private __createConicGradients(): void {
-    const temp = new Canvas(this.gameClient, null, 32, 32);
+    const temp = new Canvas(null, 32, 32);
     const gradients: CanvasGradient[] = [];
     for (let i = 0; i < 360; i++) {
       gradients.push(this.__createConicGradient(i / 360, temp.context));

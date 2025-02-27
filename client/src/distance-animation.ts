@@ -6,8 +6,8 @@ export default class DistanceAnimation extends Animation {
   public fromPosition: Position;
   public toPosition: Position;
 
-  constructor(gameClient: GameClient, id: number, fromPosition: Position, toPosition: Position) {
-    super(gameClient ,id);
+  constructor(id: number, fromPosition: Position, toPosition: Position) {
+    super(id);
     this.fromPosition = fromPosition;
     this.toPosition = toPosition;
   }

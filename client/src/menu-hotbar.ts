@@ -3,11 +3,11 @@ import GameClient from "./gameclient";
 
 export default class HotbarMenu extends Menu {
   private __index: number | null;
-  public gameClient: GameClient;
+  
 
-  constructor(gameClient: GameClient, id: string) {
+  constructor(id: string) {
     super(id);
-    this.gameClient = gameClient;
+    
     this.__index = null;
   }
 
@@ -24,10 +24,10 @@ export default class HotbarMenu extends Menu {
     switch (action) {
       case "add":
         // Here we assume that the modal manager's open method can accept a number as second parameter.
-        this.gameClient.interface.modalManager.open("spellbook-modal", index as any);
+        window.gameClient.interface.modalManager.open("spellbook-modal", index as any);
         break;
       case "remove":
-        this.gameClient.interface.hotbarManager.clearSlot(index);
+        window.gameClient.interface.hotbarManager.clearSlot(index);
         break;
       default:
         break;

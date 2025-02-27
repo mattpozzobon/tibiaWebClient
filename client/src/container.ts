@@ -9,13 +9,13 @@ export default class Container extends Item {
     slots: Slot[];
     window!: InteractiveWindow;
   
-    constructor(gameClient: GameClient, properties: { id: number; cid: number; items: Item[] }) {
+    constructor(properties: { id: number; cid: number; items: Item[] }) {
       /*
        * Class Container
        * Wrapper for a container on the DOM
        */
   
-      super(gameClient, properties.id, 0);
+      super( properties.id, 0);
       // The number of slots in the container and its identifier
       this.__containerId = properties.cid;
       this.size = properties.items.length;
@@ -65,7 +65,7 @@ export default class Container extends Item {
        * Callback fired when the container is closed
        */
   
-      this.gameClient.player!.closeContainer(this);
+      window.gameClient.player!.closeContainer(this);
     }
   
     peekItem(index: number): Item | null {
@@ -103,7 +103,7 @@ export default class Container extends Item {
       body.style.height = "100%";
   
       for (let i = 0; i < size; i++) {
-        let slot = new Slot(this.gameClient);
+        let slot = new Slot();
         slot.createDOM(i);
         if (this.__containerId === 2) {
           slot.element.style.backgroundImage = "url(png/icon-key.png)";

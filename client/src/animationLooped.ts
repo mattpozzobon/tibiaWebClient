@@ -30,8 +30,8 @@ export default class LoopedAnimation extends Thing {
   static SOUND_BLUE: LoopedAnimation;
   static SOUND_WHITE: LoopedAnimation;
 
-  constructor(gameClient: GameClient, id: number) {
-    super(gameClient, id);
+  constructor(id: number) {
+    super( id);
   }
 
   getPattern(): Position {
@@ -46,36 +46,36 @@ export default class LoopedAnimation extends Thing {
     return this.__getGlobalFrame();
   }
 
-  static initialize(gameClient: GameClient): void {
-    LoopedAnimation.DRAWBLOOD = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 1));
-    LoopedAnimation.LOSEENERGY = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 2));
-    LoopedAnimation.POFF = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 3));
-    LoopedAnimation.BLOCKHIT = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 4));
-    LoopedAnimation.EXPLOSIONAREA = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 5));
-    LoopedAnimation.EXPLOSIONHIT = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 6));
-    LoopedAnimation.FIREAREA = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 7));
-    LoopedAnimation.YELLOW_RINGS = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 8));
-    LoopedAnimation.GREEN_RINGS = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 9));
-    LoopedAnimation.HITAREA = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 10));
-    LoopedAnimation.TELEPORT = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 11));
-    LoopedAnimation.ENERGYHIT = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 12));
-    LoopedAnimation.MAGIC_BLUE = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 13));
-    LoopedAnimation.MAGIC_RED = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 14));
-    LoopedAnimation.MAGIC_GREEN = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 15));
-    LoopedAnimation.HITBYFIRE = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 16));
-    LoopedAnimation.HITBYPOISON = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 17));
-    LoopedAnimation.MORTAREA = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 18));
-    LoopedAnimation.SOUND_GREEN = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 19));
-    LoopedAnimation.SOUND_RED = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 20));
-    LoopedAnimation.POISONAREA = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 21));
-    LoopedAnimation.SOUND_YELLOW = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 22));
-    LoopedAnimation.SOUND_PURPLE = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 23));
-    LoopedAnimation.SOUND_BLUE = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 24));
-    LoopedAnimation.SOUND_WHITE = new LoopedAnimation(gameClient, this.getAnimationId(gameClient, 25));
+  static initialize(): void {
+    LoopedAnimation.DRAWBLOOD = new LoopedAnimation( this.getAnimationId( 1));
+    LoopedAnimation.LOSEENERGY = new LoopedAnimation( this.getAnimationId( 2));
+    LoopedAnimation.POFF = new LoopedAnimation( this.getAnimationId( 3));
+    LoopedAnimation.BLOCKHIT = new LoopedAnimation( this.getAnimationId( 4));
+    LoopedAnimation.EXPLOSIONAREA = new LoopedAnimation( this.getAnimationId( 5));
+    LoopedAnimation.EXPLOSIONHIT = new LoopedAnimation( this.getAnimationId( 6));
+    LoopedAnimation.FIREAREA = new LoopedAnimation( this.getAnimationId( 7));
+    LoopedAnimation.YELLOW_RINGS = new LoopedAnimation( this.getAnimationId( 8));
+    LoopedAnimation.GREEN_RINGS = new LoopedAnimation( this.getAnimationId( 9));
+    LoopedAnimation.HITAREA = new LoopedAnimation( this.getAnimationId( 10));
+    LoopedAnimation.TELEPORT = new LoopedAnimation( this.getAnimationId( 11));
+    LoopedAnimation.ENERGYHIT = new LoopedAnimation( this.getAnimationId( 12));
+    LoopedAnimation.MAGIC_BLUE = new LoopedAnimation( this.getAnimationId( 13));
+    LoopedAnimation.MAGIC_RED = new LoopedAnimation( this.getAnimationId( 14));
+    LoopedAnimation.MAGIC_GREEN = new LoopedAnimation( this.getAnimationId( 15));
+    LoopedAnimation.HITBYFIRE = new LoopedAnimation( this.getAnimationId( 16));
+    LoopedAnimation.HITBYPOISON = new LoopedAnimation( this.getAnimationId( 17));
+    LoopedAnimation.MORTAREA = new LoopedAnimation( this.getAnimationId( 18));
+    LoopedAnimation.SOUND_GREEN = new LoopedAnimation( this.getAnimationId( 19));
+    LoopedAnimation.SOUND_RED = new LoopedAnimation( this.getAnimationId( 20));
+    LoopedAnimation.POISONAREA = new LoopedAnimation( this.getAnimationId( 21));
+    LoopedAnimation.SOUND_YELLOW = new LoopedAnimation( this.getAnimationId( 22));
+    LoopedAnimation.SOUND_PURPLE = new LoopedAnimation( this.getAnimationId( 23));
+    LoopedAnimation.SOUND_BLUE = new LoopedAnimation( this.getAnimationId( 24));
+    LoopedAnimation.SOUND_WHITE = new LoopedAnimation( this.getAnimationId( 25));
   }
 
-  private static getAnimationId(gameClient: GameClient, id: number): number {
-    return gameClient.dataObjects.getAnimationId(id);
+  private static getAnimationId(id: number): number {
+    return window.gameClient.dataObjects.getAnimationId(id);
   }
 }
 

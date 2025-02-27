@@ -6,12 +6,10 @@ import Position from "./position";
 import SpriteBuffer from "./sprite-buffer";
 
 export default class Canvas {
-  gameClient: GameClient
   canvas: HTMLCanvasElement;
   context: CanvasRenderingContext2D;
 
-  constructor(gameClient: GameClient, id: string | HTMLCanvasElement | null, width: number, height: number) {
-    this.gameClient = gameClient;
+  constructor(id: string | HTMLCanvasElement | null, width: number, height: number) {
     /*
      * Class Canvas
      * Container for writing to a HTML5 canvas
@@ -58,8 +56,8 @@ export default class Canvas {
      * Returns the clicked canvas coordinates in world coordinates.
      */
     const { x, y } = this.getCanvasCoordinates(event);
-    const scaling = this.gameClient.interface.getSpriteScaling();
-    const position = this.gameClient.player!.getPosition();
+    const scaling = window.gameClient.interface.getSpriteScaling();
+    const position = window.gameClient.player!.getPosition();
 
     const projectedViewPosition = new Position(
       Math.floor(x / scaling) + position.x - 7,
@@ -67,7 +65,7 @@ export default class Canvas {
       position.z
     );
 
-    const chunk = this.gameClient.world.getChunkFromWorldPosition(projectedViewPosition);
+    const chunk = window.gameClient.world.getChunkFromWorldPosition(projectedViewPosition);
 
     return chunk ? chunk.getFirstTileFromTop(projectedViewPosition.projected()) : null;
   }
@@ -134,8 +132,8 @@ export default class Canvas {
       0
     );
 
-    if (this.gameClient.interface.settings.isLightingEnabled() && animation.isLight()) {
-      this.gameClient.renderer.__renderLightThing(renderPosition, animation, 1);
+    if (window.gameClient.interface.settings.isLightingEnabled() && animation.isLight()) {
+      window.gameClient.renderer.__renderLightThing(renderPosition, animation, 1);
     }
 
     this.drawSprite(animation, renderPosition, 32);
@@ -168,7 +166,7 @@ export default class Canvas {
         this.context.filter = "grayscale()";
         break;
       case "hue":
-        this.context.filter = `hue-rotate(${this.gameClient.getFrame() % 360}deg)`;
+        this.context.filter = `hue-rotate(${window.gameClient.getFrame() % 360}deg)`;
         break;
       case "invert":
         this.context.filter = "invert()";
@@ -192,7 +190,7 @@ export default class Canvas {
   private __drawSprite(sprite: any, position: Position, x: number, y: number, size: number): void {
     if (!sprite) return;
 
-    this.gameClient.renderer.drawCalls++;
+    window.gameClient.renderer.drawCalls++;
 
     this.context.drawImage(
       sprite.src,
@@ -230,10 +228,10 @@ export default class Canvas {
       for (let y = 0; y < frameGroup.height; y++) {
         for (let l = 0; l < frameGroup.layers; l++) {
           let index = frameGroup.getSpriteIndex(frame, pattern.x, pattern.y, pattern.z, l, x, y);
-          this.gameClient.renderer.outlineCanvas.createOutline(frameGroup.sprites[index]);
+          window.gameClient.renderer.outlineCanvas.createOutline(frameGroup.sprites[index]);
   
           this.context.drawImage(
-            this.gameClient.renderer.outlineCanvas.canvas,
+            window.gameClient.renderer.outlineCanvas.canvas,
             0, 0, 33, 33,
             position.x * 32 - 1, position.y * 32 - 1,
             33, 33

@@ -1,19 +1,17 @@
-import GameClient from "./gameclient";
 import { CONST } from "./helper/appContext";
 import PacketHandler from "./packet-handler";
 import PacketReader from "./packetreader";
 import { LatencyPacket } from "./protocol";
 
 class NetworkManager {
-  gameClient: GameClient;
   socket!: WebSocket;
   state: Record<string, any>;
   public packetHandler: PacketHandler;
   nPacketsSent: number = 0;
   __latency: number = 0;
 
-  constructor(gameClient: GameClient) {
-    this.gameClient = gameClient;
+  constructor() {
+    
     this.state = {
       bytesRecv: null,
       bytesSent: null,
@@ -21,7 +19,7 @@ class NetworkManager {
       nPackets: null,
       connected: false,
     };
-    this.packetHandler = new PacketHandler(gameClient);
+    this.packetHandler = new PacketHandler();
   }
 
   close(): void {
@@ -63,7 +61,7 @@ class NetworkManager {
     // Determine the operation based on the first byte from the server.
     switch (operationCode) {
       case CONST.PROTOCOL.SERVER.SPELL_ADD: {
-        return this.gameClient.interface.updateSpells(packet.readUInt16());
+        return window.gameClient.interface.updateSpells(packet.readUInt16());
       }
       case CONST.PROTOCOL.SERVER.PLAYER_STATISTICS: {
         return this.packetHandler.handlePlayerStatistics(packet.readCharacterStatistics());
@@ -141,7 +139,7 @@ class NetworkManager {
         return this.packetHandler.handleRemoveItem(packet.readRemoveItem());
       }
       case CONST.PROTOCOL.SERVER.SPELL_CAST: {
-        return this.gameClient.player!.spellbook.serverCastSpell(packet.readCastSpell());
+        return window.gameClient.player!.spellbook.serverCastSpell(packet.readCastSpell());
       }
       case CONST.PROTOCOL.SERVER.CHUNK: {
         return this.packetHandler.handleChunk(packet.readChunkData());
@@ -220,9 +218,9 @@ class NetworkManager {
         if (response.status !== 201) throw new Error("Account creation failed");
         (document.getElementById("user-username") as HTMLInputElement).value = options.account;
         (document.getElementById("user-password") as HTMLInputElement).value = options.password;
-        this.gameClient.interface.modalManager.open("floater-connecting", "The account and character have been created.");
+        window.gameClient.interface.modalManager.open("floater-connecting", "The account and character have been created.");
       })
-      .catch((err) => this.gameClient.interface.modalManager.open("floater-connecting", err));
+      .catch((err) => window.gameClient.interface.modalManager.open("floater-connecting", err));
   }
 
   fetchCallback(response: Response): Promise<ArrayBuffer> {
@@ -236,19 +234,19 @@ class NetworkManager {
   
     // Map each resource to a fetch promise using template literals.
     const promises = resources.map(url =>
-      fetch(`/data/${this.gameClient.SERVER_VERSION}/${url}`).then(this.fetchCallback)
+      fetch(`/data/${window.gameClient.SERVER_VERSION}/${url}`).then(this.fetchCallback)
     );
   
     // Wait for all resources to load.
     Promise.all(promises)
       .then(([dataSprites, dataObjects]) => {
 
-        this.gameClient.dataObjects.load("Tibia.dat", {target: {result: dataObjects} } as unknown as ProgressEvent<FileReader>);
-        this.gameClient.spriteBuffer.load("Tibia.spr", { target: { result: dataSprites } } as unknown as ProgressEvent<FileReader>);
+        window.gameClient.dataObjects.load("Tibia.dat", {target: {result: dataObjects} } as unknown as ProgressEvent<FileReader>);
+        window.gameClient.spriteBuffer.load("Tibia.spr", { target: { result: dataSprites } } as unknown as ProgressEvent<FileReader>);
         
       })
       .catch(error => {
-        return this.gameClient.interface.modalManager.open(
+        return window.gameClient.interface.modalManager.open(
           "floater-connecting",
           "Failed loading client data from server. Please select them manually using the Load Assets button."
         );
@@ -258,7 +256,7 @@ class NetworkManager {
 
   connect(): void {
     const host: string = this.getConnectionSettings();
-    const { account, password } = this.gameClient.interface.getAccountDetails();
+    const { account, password } = window.gameClient.interface.getAccountDetails();
 
     // Contact the login server using a template literal.
     fetch(`${location.protocol}//${host}/?account=${account}&password=${password}`)
@@ -283,12 +281,12 @@ class NetworkManager {
         this.socket.onclose = this.__handleClose.bind(this);
         this.socket.onerror = this.__handleError.bind(this);
       })
-      .catch((x: any) => this.gameClient.interface.modalManager.open("floater-connecting", x));
+      .catch((x: any) => window.gameClient.interface.modalManager.open("floater-connecting", x));
   }
 
 
   private __handlePacket(event: MessageEvent): void {
-    const packet = new PacketReader(this.gameClient, event.data);
+    const packet = new PacketReader(event.data);
     this.state.bytesRecv += packet.buffer.length;
     while (packet.readable()) {
       this.readPacket(packet);
@@ -296,13 +294,13 @@ class NetworkManager {
   }
 
   private __handleError(): void {
-    this.gameClient.interface.modalManager.open("floater-connecting", new Error("Could not connect to the Gameworld. Please try again later."));
+    window.gameClient.interface.modalManager.open("floater-connecting", new Error("Could not connect to the Gameworld. Please try again later."));
   }
 
   private __handleClose(): void {
     console.log("Disconnected");
-    if (this.state.connected && this.gameClient.renderer) {
-      this.gameClient.reset();
+    if (this.state.connected && window.gameClient.renderer) {
+      window.gameClient.reset();
     }
     this.state.connected = false;
   }

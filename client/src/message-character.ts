@@ -7,11 +7,11 @@ export default class CharacterMessage extends Message {
   type: number;
   color: string;
 
-  constructor(gameClient: GameClient, message: string, type: number, name: string, color: number) {
-    super(gameClient, message, color);
+  constructor(message: string, type: number, name: string, color: number) {
+    super( message, color);
     this.name = name;
     this.type = type;
-    this.color = gameClient.interface.getHexColor(color);
+    this.color = window.gameClient.interface.getHexColor(color);
   }
 
   /**

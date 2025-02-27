@@ -8,7 +8,7 @@ import SpriteBuffer from "./sprite-buffer";
 
 
 export default class OutfitModal extends Modal {
-  gameClient: GameClient;
+  ;
   __activeOutfitElement: HTMLElement | null;
   __spriteBuffer: SpriteBuffer;
   __spriteBufferMount: SpriteBuffer;
@@ -18,9 +18,9 @@ export default class OutfitModal extends Modal {
   __outfitIndex: number;
   __faceDirection: number;
 
-  constructor(gameClient: GameClient, id: string) {
+  constructor(id: string) {
     super(id);
-    this.gameClient = gameClient;
+    
 
     this.__addEventListeners();
 
@@ -32,7 +32,7 @@ export default class OutfitModal extends Modal {
     if (!(outfitExample instanceof HTMLCanvasElement)) {
       throw new Error("Element with id 'outfit-example' is not a canvas element.");
     }
-    this.__canvas = new Canvas( this.gameClient, outfitExample, 128, 128);
+    this.__canvas = new Canvas( outfitExample, 128, 128);
 
     this.__outfit = null;
     this.__mountIndex = 0;
@@ -48,7 +48,7 @@ export default class OutfitModal extends Modal {
 
   public handleOpen = (options?: any): void => {
     // Copy over the current player's outfit.
-    this.__outfit = this.gameClient.player!.outfit.copy();
+    this.__outfit = window.gameClient.player!.outfit.copy();
 
     // Default selection of HEAD.
     this.__internalToggleSectionSelect(document.getElementById("outfit-head") as HTMLElement);
@@ -61,10 +61,10 @@ export default class OutfitModal extends Modal {
     (document.getElementById("checkbox-outfit-mounted") as HTMLInputElement).checked = this.__outfit.mounted;
 
     // Get the indices for the mount and outfit.
-    this.__mountIndex = this.__getIndex(this.gameClient.player!.mounts, this.__outfit.mount);
-    this.__outfitIndex = this.__getIndex(this.gameClient.player!.outfits, this.__outfit.id);
+    this.__mountIndex = this.__getIndex(window.gameClient.player!.mounts, this.__outfit.mount);
+    this.__outfitIndex = this.__getIndex(window.gameClient.player!.outfits, this.__outfit.id);
 
-    if (this.gameClient.player!.mounts.length === 0) {
+    if (window.gameClient.player!.mounts.length === 0) {
       const mountSpan = document.getElementById("mount-span");
       if (mountSpan) {
         mountSpan.innerHTML = "Mounts Unavailable";
@@ -73,13 +73,13 @@ export default class OutfitModal extends Modal {
     } else {
       const mountSpan = document.getElementById("mount-span");
       if (mountSpan) {
-        mountSpan.innerHTML = this.gameClient.player!.mounts[this.__mountIndex].name;
+        mountSpan.innerHTML = window.gameClient.player!.mounts[this.__mountIndex].name;
       }
     }
 
     const outfitSpan = document.getElementById("outfit-span");
     if (outfitSpan) {
-      outfitSpan.innerHTML = this.gameClient.player!.outfits[this.__outfitIndex].name;
+      outfitSpan.innerHTML = window.gameClient.player!.outfits[this.__outfitIndex].name;
     }
 
     // Render the preview.
@@ -87,8 +87,8 @@ export default class OutfitModal extends Modal {
   }
 
   public handleConfirm = (): boolean => {
-    if (!this.gameClient.player!.outfit.equals(this.__outfit!)) {
-      this.gameClient.send(new OutfitChangePacket(this.__outfit!));
+    if (!window.gameClient.player!.outfit.equals(this.__outfit!)) {
+      window.gameClient.send(new OutfitChangePacket(this.__outfit!));
     }
     return true;
   }
@@ -132,19 +132,19 @@ export default class OutfitModal extends Modal {
   }
 
   private __handleSelectMount(value: number): void {
-    if (this.gameClient.player!.mounts.length === 0) return;
+    if (window.gameClient.player!.mounts.length === 0) return;
 
     this.__mountIndex += value;
     if (this.__mountIndex < 0) {
-      this.__mountIndex = this.gameClient.player!.mounts.length - 1;
+      this.__mountIndex = window.gameClient.player!.mounts.length - 1;
     } else {
-      this.__mountIndex = this.__mountIndex % this.gameClient.player!.mounts.length;
+      this.__mountIndex = this.__mountIndex % window.gameClient.player!.mounts.length;
     }
 
-    this.__outfit!.mount = this.gameClient.player!.mounts[this.__mountIndex].id;
+    this.__outfit!.mount = window.gameClient.player!.mounts[this.__mountIndex].id;
     const mountSpan = document.getElementById("mount-span");
     if (mountSpan) {
-      mountSpan.innerHTML = this.gameClient.player!.mounts[this.__mountIndex].name;
+      mountSpan.innerHTML = window.gameClient.player!.mounts[this.__mountIndex].name;
     }
     this.__renderOutfit();
   }
@@ -152,14 +152,14 @@ export default class OutfitModal extends Modal {
   private __handleSelectOutfit(value: number): void {
     this.__outfitIndex += value;
     if (this.__outfitIndex < 0) {
-      this.__outfitIndex = this.gameClient.player!.outfits.length - 1;
+      this.__outfitIndex = window.gameClient.player!.outfits.length - 1;
     } else {
-      this.__outfitIndex = this.__outfitIndex % this.gameClient.player!.outfits.length;
+      this.__outfitIndex = this.__outfitIndex % window.gameClient.player!.outfits.length;
     }
-    this.__outfit!.id = this.gameClient.player!.outfits[this.__outfitIndex].id;
+    this.__outfit!.id = window.gameClient.player!.outfits[this.__outfitIndex].id;
     const outfitSpan = document.getElementById("outfit-span");
     if (outfitSpan) {
-      outfitSpan.innerHTML = this.gameClient.player!.outfits[this.__outfitIndex].name;
+      outfitSpan.innerHTML = window.gameClient.player!.outfits[this.__outfitIndex].name;
     }
     this.__renderOutfit();
   }
@@ -221,7 +221,7 @@ export default class OutfitModal extends Modal {
     if (!animate) {
       item = outfitObject.getFrameGroup(0);
       characterFrame = 0;
-      if (this.gameClient.clientVersion === 1098) {
+      if (window.gameClient.clientVersion === 1098) {
         mount = this.__outfit.getDataObjectMount().getFrameGroup(0);
         mountFrame = 0;
       } else {
@@ -230,7 +230,7 @@ export default class OutfitModal extends Modal {
       }
     } else {
       item = outfitObject.getFrameGroup(1);
-      if (this.gameClient.clientVersion === 1098) {
+      if (window.gameClient.clientVersion === 1098) {
         mount = this.__outfit.getDataObjectMount().getFrameGroup(1);
         characterFrame = mount.getAlwaysAnimatedFrame();
         mountFrame = mount.getAlwaysAnimatedFrame();

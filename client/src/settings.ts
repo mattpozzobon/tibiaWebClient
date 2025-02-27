@@ -10,12 +10,12 @@ interface SettingsState {
 
 export default class Settings {
   gameInterface: GameInterface;
-  gameClient: GameClient;
+  ;
   private __state!: SettingsState;
 
-  constructor(gameClient: GameClient, gameInterface: GameInterface) {
+  constructor(gameInterface: GameInterface) {
     this.gameInterface = gameInterface;
-    this.gameClient = gameClient;
+    
   
 
     // Set the volume slider callback function.
@@ -74,7 +74,7 @@ export default class Settings {
   setVolume(event: Event): void {
     const target = event.target as HTMLInputElement;
     const volume = Number(target.value);
-    this.gameClient.interface.soundManager.setMasterVolume(volume / 100);
+    window.gameClient.interface.soundManager.setMasterVolume(volume / 100);
     const volumeSliderValue = document.getElementById("volume-slider-value");
     if (volumeSliderValue) {
       volumeSliderValue.innerHTML = `${volume}%`;
@@ -126,7 +126,7 @@ export default class Settings {
       case "enable-weather":
       case "enable-sound":
         this.__state[target.id] = target.checked;
-        this.gameClient.interface.soundManager.enableSound(target.checked);
+        window.gameClient.interface.soundManager.enableSound(target.checked);
         break;
       case "toggle-scale-gamewindow":
         this.__state[target.id] = target.checked;

@@ -83,10 +83,9 @@ export default class Creature {
   public characterElement: any;
 
   // gameClient is injected to replace global references.
-  protected gameClient: GameClient;
 
-  constructor(gameClient: GameClient, data: CreatureData) {
-    this.gameClient = gameClient;
+  constructor(data: CreatureData) {
+
     this.state = new State();
     // Register a state callback for health updates.
     this.state.add("health", this.setHealthStatus.bind(this));
@@ -98,13 +97,13 @@ export default class Creature {
     this.maxHealth = data.maxHealth;
     this.speed = data.speed;
     this.attackSlowness = data.attackSlowness;
-    this.conditions = new ConditionManager(gameClient, this, data.conditions);
+    this.conditions = new ConditionManager(this, data.conditions);
 
     this.__lookDirection = data.direction;
     this.__previousPosition = data.position.copy();
 
-    this.outfit = new Outfit(this.gameClient, data.outfit);
-    this.castingManager = new CastingManager(gameClient);
+    this.outfit = new Outfit(data.outfit);
+    this.castingManager = new CastingManager();
 
     // Initialize spriteBuffer using outfit's sprite buffer size.
     this.spriteBuffer = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObject()));
@@ -114,7 +113,7 @@ export default class Creature {
 
     this.__movementEvent = null;
     this.__lookDirectionBuffer = null;
-    this.__chunk = this.gameClient.world.getChunkFromWorldPosition(this.__position);
+    this.__chunk = window.gameClient.world.getChunkFromWorldPosition(this.__position);
     this.__teleported = false;
 
     // Create the character element (method implementation assumed).
@@ -130,10 +129,10 @@ export default class Creature {
 
   public __createCharacterElement(): void {
     // We use a sticky text element for the nametag.
-    this.characterElement = new CharacterElement(this.gameClient, this);
+    this.characterElement = new CharacterElement(this);
   
     // Add it to the DOM.
-    this.gameClient.interface.screenElementManager.add(this.characterElement.element);
+    window.gameClient.interface.screenElementManager.add(this.characterElement.element);
   
     // Make sure to update it directly.
     this.characterElement.setHealthFraction(this.getHealthFraction());
@@ -157,11 +156,11 @@ export default class Creature {
   }
 
   public blockHit(): any {
-    return this.gameClient.renderer.addPositionAnimation({position: this.__position, type: 3,});
+    return window.gameClient.renderer.addPositionAnimation({position: this.__position, type: 3,});
   }
   
   public getMaxFloor(): number {
-    return this.gameClient.world
+    return window.gameClient.world
       .getChunkFromWorldPosition(this.getPosition())
       .getFirstFloorFromBottom(this.getPosition());
   }
@@ -217,7 +216,7 @@ export default class Creature {
       leftHandFrame = leftHandGroup ? leftHandGroup.getAlwaysAnimatedFrame() : 0;
       rightHandFrame = rightHandGroup ? rightHandGroup.getAlwaysAnimatedFrame() : 0;
 
-      if (this.gameClient.clientVersion === 1098) {
+      if (window.gameClient.clientVersion === 1098) {
         mountGroup = mountObject.getFrameGroup(FrameGroup.GROUP_IDLE);
         mountFrame = mountGroup.getAlwaysAnimatedFrame();
       } else {
@@ -246,7 +245,7 @@ export default class Creature {
       leftHandFrame = leftHandGroup ? this.__getWalkingFrame(leftHandGroup) : 0;
       rightHandFrame = rightHandGroup ? this.__getWalkingFrame(rightHandGroup) : 0;
 
-      if (this.gameClient.clientVersion === 1098) {
+      if (window.gameClient.clientVersion === 1098) {
         mountGroup = mountObject.getFrameGroup(FrameGroup.GROUP_MOVING);
         mountFrame = this.__getWalkingFrame(mountGroup);
       } else {
@@ -302,15 +301,15 @@ export default class Creature {
 
   public setPosition(position: Position): void {
     // Remove from the previous tile.
-    const fromTile = this.gameClient.world.getTileFromWorldPosition(this.getPosition());
+    const fromTile = window.gameClient.world.getTileFromWorldPosition(this.getPosition());
     if (fromTile !== null) {
       fromTile.removeCreature(this);
     }
     // Update the position and set the new chunk.
     this.__position = position;
-    this.__chunk = this.gameClient.world.getChunkFromWorldPosition(position);
+    this.__chunk = window.gameClient.world.getChunkFromWorldPosition(position);
     // Add the creature to the new tile.
-    this.gameClient.world.getTileFromWorldPosition(position).addCreature(this);
+    window.gameClient.world.getTileFromWorldPosition(position).addCreature(this);
   }
 
   public getHealthPercentage(): string {
@@ -341,7 +340,7 @@ export default class Creature {
 
   // Method: addBoxAnimation
   public addBoxAnimation(color: number): void {
-    this.__animations.add(new BoxAnimation(this.gameClient, color));
+    this.__animations.add(new BoxAnimation(color));
   }
 
   // Method: deleteAnimation
@@ -351,7 +350,7 @@ export default class Creature {
 
   // Method: addAnimation
   public addAnimation(id: number): void {
-    const aid = this.gameClient.dataObjects.getAnimationId(id);
+    const aid = window.gameClient.dataObjects.getAnimationId(id);
     if (aid === null) {
       return;
     }
@@ -406,17 +405,17 @@ export default class Creature {
   }
 
   public moveTo(position: Position, speed: number): any {
-    if (!this.gameClient.world.isValidWorldPosition(position)) {
+    if (!window.gameClient.world.isValidWorldPosition(position)) {
       return false;
     }
-    this.__chunk = this.gameClient.world.getChunkFromWorldPosition(position);
+    this.__chunk = window.gameClient.world.getChunkFromWorldPosition(position);
 
     if (this.__movementEvent) {
       this.__movementEvent.cancel();
     }
 
     const modSlowness = (this.getPosition().isDiagonal(position) ? 2 : 1) * speed;
-    this.__movementEvent = this.gameClient.eventQueue.addEvent(this.unlockMovement.bind(this), modSlowness);
+    this.__movementEvent = window.gameClient.eventQueue.addEvent(this.unlockMovement.bind(this), modSlowness);
     const angle = this.getPosition().getLookDirection(position);
 
     if (angle !== null) {
@@ -426,12 +425,12 @@ export default class Creature {
     this.__previousPosition = this.getPosition();
     this.__position = position;
 
-    if (this.gameClient.player!.canSeeSmall(this) && position.z === this.gameClient.player!.__position.z) {
-      this.gameClient.interface.soundManager.playWalkBit(position);
+    if (window.gameClient.player!.canSeeSmall(this) && position.z === window.gameClient.player!.__position.z) {
+      window.gameClient.interface.soundManager.playWalkBit(position);
     }
 
-    if (this.gameClient.player && this.id === this.gameClient.player.id) {
-      return this.gameClient.renderer.minimap.cache();
+    if (window.gameClient.player && this.id === window.gameClient.player.id) {
+      return window.gameClient.renderer.minimap.cache();
     }
   }
   
@@ -455,20 +454,20 @@ export default class Creature {
     this.__movementEvent = null;
     this.__teleported = false;
     if (
-      this.gameClient.player && 
-      this.id === this.gameClient.player.id && 
-      this.gameClient.world.pathfinder.__pathfindCache.length > 0
+      window.gameClient.player && 
+      this.id === window.gameClient.player.id && 
+      window.gameClient.world.pathfinder.__pathfindCache.length > 0
     ) {
-      return this.gameClient.world.pathfinder.handlePathfind();
+      return window.gameClient.world.pathfinder.handlePathfind();
     }
 
     // TODO: Implement movement buffer handling.
     // if (
-    //   this.gameClient.player &&
-    //   this.id === this.gameClient.player.id &&
+    //   window.gameClient.player &&
+    //   this.id === window.gameClient.player.id &&
     //   this.__movementBuffer !== null
     // ) {
-    //   this.gameClient.keyboard.handleCharacterMovement(this.__movementBuffer);
+    //   window.gameClient.keyboard.handleCharacterMovement(this.__movementBuffer);
     //   this.__movementBuffer = null;
     // }
   }
@@ -512,7 +511,7 @@ export default class Creature {
   
   protected __setActiveTextElement(message: string, color: number): any {
     // Sets a new active text element for the creature.
-    this.__activeTextElement = this.gameClient.interface.screenElementManager.createTextElement(this, message, color);
+    this.__activeTextElement = window.gameClient.interface.screenElementManager.createTextElement(this, message, color);
     return this.__activeTextElement;
   }
   

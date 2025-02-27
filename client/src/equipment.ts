@@ -7,9 +7,9 @@ export default class Equipment extends Container {
   public slots: Slot[];
   public BACKGROUNDS: string[];
 
-  constructor(gameClient: GameClient, items: any) {
+  constructor(items: any) {
     // Call the parent constructor with an object containing id, cid, and items with a length of 10.
-    super(gameClient, { id: 0, cid: 0, items: new Array<Item>(10) });
+    super( { id: 0, cid: 0, items: new Array<Item>(10) });
     
     // The equipment has ten slots for items.
     this.slots = [
@@ -72,7 +72,7 @@ export default class Equipment extends Container {
 
   public referenceSlotDOM(index: number, id: string): Slot {
     // Create a new Slot and assign its element.
-    const slot = new Slot(this.gameClient);
+    const slot = new Slot();
     slot.setElement(document.getElementById(id) as HTMLElement);
     return slot;
   }

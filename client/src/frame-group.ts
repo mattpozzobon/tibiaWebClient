@@ -3,7 +3,7 @@ import Position from "./position";
 import Sprite from "./sprite";
 
 export default class FrameGroup {
-    gameClient: GameClient;
+    ;
 
     type: number = 0;
     asynchronous: number = 0;
@@ -24,8 +24,8 @@ export default class FrameGroup {
     static GROUP_IDLE: number = 0;
     static GROUP_MOVING: number = 1;
 
-    constructor(gameClient: GameClient) {
-      this.gameClient = gameClient;
+    constructor() {
+      
     }
   
     getAlwaysAnimatedFrame(): number {
@@ -33,7 +33,7 @@ export default class FrameGroup {
         return 0;
       }
   
-      let current = this.gameClient.renderer.__nMiliseconds % this.__totalAnimationLength;
+      let current = window.gameClient.renderer.__nMiliseconds % this.__totalAnimationLength;
       let sum = 0;
   
       for (let i = 0; i < this.animationLengths.length; i++) {
@@ -54,7 +54,7 @@ export default class FrameGroup {
       if (!this.isValidIndex(index)) {
         return null;
       }
-      return this.gameClient.spriteBuffer.get(this.sprites[index]);
+      return window.gameClient.spriteBuffer.get(this.sprites[index]);
     }
   
     isAnimated(): boolean {

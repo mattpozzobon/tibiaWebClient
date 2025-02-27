@@ -19,12 +19,12 @@ interface IPathNode {
 }
 
 export default class Pathfinder {
-  private gameClient: GameClient;
+ 
   private __pathfindCache: any[];
   private __dirtyNodes: IPathNode[];
 
-  constructor(gameClient: GameClient) {
-    this.gameClient = gameClient; 
+  constructor() {
+     
     // Cache to keep the tiles to walk on
     this.__pathfindCache = [];
     this.__dirtyNodes = [];
@@ -113,13 +113,13 @@ export default class Pathfinder {
   }
 
   public findPath(begin: Position, stop: Position): void {
-    let start: IPathNode = this.gameClient.world.getTileFromWorldPosition(begin);
-    const end: IPathNode = this.gameClient.world.getTileFromWorldPosition(stop);
+    let start: IPathNode = window.gameClient.world.getTileFromWorldPosition(begin);
+    const end: IPathNode = window.gameClient.world.getTileFromWorldPosition(stop);
   
     const path = this.search(start, end);
   
     if (path.length === 0) {
-      this.gameClient.interface.setCancelMessage("There is no way.");
+      window.gameClient.interface.setCancelMessage("There is no way.");
       return;
     }
   
@@ -154,21 +154,21 @@ export default class Pathfinder {
     // Delegate the next pathfinding move to the keyboard handler.
     switch (this.getNextMove()) {
       case CONST.DIRECTION.NORTH:
-        return this.gameClient.keyboard.handleCharacterMovement(Keyboard.KEYS.UP_ARROW);
+        return window.gameClient.keyboard.handleCharacterMovement(Keyboard.KEYS.UP_ARROW);
       case CONST.DIRECTION.EAST:
-        return this.gameClient.keyboard.handleCharacterMovement(Keyboard.KEYS.RIGHT_ARROW);
+        return window.gameClient.keyboard.handleCharacterMovement(Keyboard.KEYS.RIGHT_ARROW);
       case CONST.DIRECTION.SOUTH:
-        return this.gameClient.keyboard.handleCharacterMovement(Keyboard.KEYS.DOWN_ARROW);
+        return window.gameClient.keyboard.handleCharacterMovement(Keyboard.KEYS.DOWN_ARROW);
       case CONST.DIRECTION.WEST:
-        return this.gameClient.keyboard.handleCharacterMovement(Keyboard.KEYS.LEFT_ARROW);
+        return window.gameClient.keyboard.handleCharacterMovement(Keyboard.KEYS.LEFT_ARROW);
       // case CONST.DIRECTION.NORTH_EAST:
-      //   return this.gameClient.keyboard.handleCharacterMovement(Keyboard.KEYS.KEYPAD_9);
+      //   return window.gameClient.keyboard.handleCharacterMovement(Keyboard.KEYS.KEYPAD_9);
       // case CONST.DIRECTION.SOUTH_EAST:
-      //   return this.gameClient.keyboard.handleCharacterMovement(Keyboard.KEYS.KEYPAD_3);
+      //   return window.gameClient.keyboard.handleCharacterMovement(Keyboard.KEYS.KEYPAD_3);
       // case CONST.DIRECTION.SOUTH_WEST:
-      //   return this.gameClient.keyboard.handleCharacterMovement(Keyboard.KEYS.KEYPAD_1);
+      //   return window.gameClient.keyboard.handleCharacterMovement(Keyboard.KEYS.KEYPAD_1);
       // case CONST.DIRECTION.NORTH_WEST:
-      //   return this.gameClient.keyboard.handleCharacterMovement(Keyboard.KEYS.KEYPAD_7);
+      //   return window.gameClient.keyboard.handleCharacterMovement(Keyboard.KEYS.KEYPAD_7);
       default:
         return;
     }

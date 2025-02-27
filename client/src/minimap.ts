@@ -3,7 +3,7 @@ import GameClient from "./gameclient";
 import Position from "./position";
 
 export default class Minimap {
-  gameClient: GameClient
+  
   public minimap: Canvas;
   public nLayers: number;
   public __zoomLevel: number;
@@ -13,10 +13,10 @@ export default class Minimap {
   public center: Position;
   public colors: number[];
 
-  constructor(gameClient: GameClient) {
-    this.gameClient = gameClient;
+  constructor() {
+    
     // Create an off-screen canvas that holds the full minimap.
-    this.minimap = new Canvas(gameClient, "minimap", 160, 160);
+    this.minimap = new Canvas( "minimap", 160, 160);
     // There are 16 minimap layers (8 above and 8 below ground).
     this.nLayers = 16;
     // Minimap state for the current zoom level and what layer is being rendered.
@@ -97,11 +97,11 @@ export default class Minimap {
   }
 
   public openLargeMap(): void {
-    this.gameClient.interface.modalManager.open("map-modal");
+    window.gameClient.interface.modalManager.open("map-modal");
   }
 
   public cache(): void {
-    const position =  this.gameClient.player!.getPosition();
+    const position =  window.gameClient.player!.getPosition();
     // Bounding rectangle for the minimap.
     const upperWest = new Position(position.x - 80, position.y - 80, this.__renderLayer);
     const upper = new Position(position.x, position.y - 80, this.__renderLayer);
@@ -113,7 +113,7 @@ export default class Minimap {
     const west = new Position(position.x - 80, position.y, this.__renderLayer);
 
     // Preemptively load the chunks.
-    this.gameClient.database.preloadCallback(
+    window.gameClient.database.preloadCallback(
       [position, upperWest, upper, upperEast, east, lowerEast, lower, lowerWest, west],
       this.chunkUpdate.bind(this)
     );
@@ -136,7 +136,7 @@ export default class Minimap {
 
   public setCenter(): void {
     this.center = new Position(0, 0, 0);
-    this.setRenderLayer(this.gameClient.player!.getPosition().z);
+    this.setRenderLayer(window.gameClient.player!.getPosition().z);
   }
 
   public move(event: MouseEvent): void {
@@ -165,14 +165,14 @@ export default class Minimap {
   }
 
   public update(chunks: any): void {
-    this.gameClient.world.chunks.forEach((chunk: any) => {
-      const tiles = chunk.getFloorTiles(this.gameClient.player!.getPosition().z);
+    window.gameClient.world.chunks.forEach((chunk: any) => {
+      const tiles = chunk.getFloorTiles(window.gameClient.player!.getPosition().z);
       tiles.forEach((tile: any) => {
         if (tile === null) return;
-        if (!this.gameClient.player!.canSee(tile)) return;
+        if (!window.gameClient.player!.canSee(tile)) return;
         const color = this.__getTileColor(tile);
         if (color === null) return;
-        const buffer = chunks[ this.gameClient.database.getChunkIdentifier(tile.getPosition())];
+        const buffer = chunks[ window.gameClient.database.getChunkIdentifier(tile.getPosition())];
         const index = (tile.getPosition().x % 128) + ((tile.getPosition().y % 128) * 128);
         buffer.view[index] = this.colors[color];
       });
@@ -194,7 +194,7 @@ export default class Minimap {
   }
 
   public save(): void {
-    this.gameClient.database.saveChunks();
+    window.gameClient.database.saveChunks();
   }
 
   public render(chunks: any): void {
@@ -206,8 +206,8 @@ export default class Minimap {
       if (z !== this.__renderLayer) return;
       this.minimap.context.putImageData(
         chunk.imageData,
-        x * 128 - this.gameClient.player!.getPosition().x + 80,
-        y * 128 - this.gameClient.player!.getPosition().y + 80
+        x * 128 - window.gameClient.player!.getPosition().x + 80,
+        y * 128 - window.gameClient.player!.getPosition().y + 80
       );
     }, this);
     this.minimap.context.globalCompositeOperation = "copy";

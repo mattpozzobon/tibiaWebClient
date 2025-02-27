@@ -23,15 +23,15 @@ declare class Message implements IMessage {
 }
 
 export default class Channel {
-  gameClient: GameClient;
+  ;
   public name: string;
   public id: number | null;
   public element: HTMLElement;
   public MAX_MESSAGE_COUNT: number = 100;
   private __contents: IMessage[];
 
-  constructor(gameClient: GameClient, name: string, id: number | null) {
-    this.gameClient = gameClient;
+  constructor(name: string, id: number | null) {
+    
     this.name = name;
     this.id = id;
     this.__contents = [];
@@ -40,7 +40,7 @@ export default class Channel {
 
   public close(): void {
     // Delegate channel closure to the channel manager.
-    this.gameClient.interface.channelManager.closeChannel(this);
+    window.gameClient.interface.channelManager.closeChannel(this);
   }
 
   public addPrivateMessage(message: string, name: string): void {
@@ -63,7 +63,7 @@ export default class Channel {
       return null;
     }
     // Filter messages where the sender is the current player.
-    const filtered = this.__contents.filter((msg) => this.gameClient.player!.name === msg.name);
+    const filtered = this.__contents.filter((msg) => window.gameClient.player!.name === msg.name);
     return filtered.length ? filtered[filtered.length - 1].message : null;
   }
 
@@ -105,7 +105,7 @@ export default class Channel {
 
   public click(event: Event): void {
     // When the tab is clicked, set this channel as active.
-    this.gameClient.interface.channelManager.setActiveChannelElement(this);
+    window.gameClient.interface.channelManager.setActiveChannelElement(this);
   }
 
   public select(): void {
@@ -131,7 +131,7 @@ export default class Channel {
     this.__contents = this.__contents.slice(-this.MAX_MESSAGE_COUNT);
 
     // If this channel is active, render immediately.
-    if (this.gameClient.interface.channelManager.isActive(this)) {
+    if (window.gameClient.interface.channelManager.isActive(this)) {
       this.render();
       return;
     }

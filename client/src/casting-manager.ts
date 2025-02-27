@@ -4,10 +4,10 @@ import HeapEvent from "./heap-event";
 export default class CastingManager {
   private __castBegin: HeapEvent | null;
   private __spell: any;
-  private gameClient: GameClient;
+ 
 
-  constructor(gameClient: GameClient) {
-    this.gameClient = gameClient;
+  constructor() {
+    
     this.__castBegin = null;
     this.__spell = null;
   }
@@ -18,7 +18,7 @@ export default class CastingManager {
 
   public beginCast(spell: any): void {
     // Schedule an event for when casting should end.
-    this.__castBegin = this.gameClient.eventQueue.addEvent(
+    this.__castBegin = window.gameClient.eventQueue.addEvent(
       this.endCast.bind(this),
       spell.cast || spell.channel
     ) as HeapEvent | null;

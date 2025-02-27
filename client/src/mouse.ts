@@ -4,15 +4,15 @@ import { ItemLookPacket, ItemMovePacket, ItemUsePacket, ItemUseWithPacket } from
 import Tile from "./tile";
 
 class Mouse {
-  gameClient: GameClient;
+  ;
   private __mouseDownObject: any = null;
   private __currentMouseTile: any = null;
   private __multiUseObject: any = null;
   private __leftButtonPressed: boolean = false;
   private __rightButtonPressed: boolean = false;
 
-  constructor(gameClient: GameClient) {
-    this.gameClient = gameClient;
+  constructor() {
+    
     document.body.addEventListener("mousedown", this.__handleMouseDown.bind(this));
     document.body.addEventListener("mouseup", this.__handleMouseUp.bind(this));
     document.body.addEventListener("mousemove", this.__handleMouseMove.bind(this));
@@ -26,7 +26,7 @@ class Mouse {
 
   sendItemMove(fromObject: any, toObject: any, count: number): void {
     if (!fromObject || !toObject) return;
-    this.gameClient.send(new ItemMovePacket(fromObject, toObject, count));
+    window.gameClient.send(new ItemMovePacket(fromObject, toObject, count));
   }
 
   setCursor(which: string): void {
@@ -35,7 +35,7 @@ class Mouse {
 
   getWorldObject(event: MouseEvent): any {
     return {
-      which: this.gameClient.renderer.screen.getWorldCoordinates(event),
+      which: window.gameClient.renderer.screen.getWorldCoordinates(event),
       index: 0xff,
     };
   }
@@ -43,42 +43,42 @@ class Mouse {
   look(object: any): void {
     const item = object.which.peekItem(object.index);
     if (object.which instanceof Container && item === null) return;
-    this.gameClient.send(new ItemLookPacket(object));
+    window.gameClient.send(new ItemLookPacket(object));
   }
 
   use(object: any): void {
     const item = object.which.peekItem(object.index);
     if (object.which instanceof Tile) {
       if (object.which.monsters.size !== 0) {
-        if (this.gameClient.player!.isInProtectionZone()) {
-          return this.gameClient.interface.setCancelMessage("You may not attack from within protection zone.");
+        if (window.gameClient.player!.isInProtectionZone()) {
+          return window.gameClient.interface.setCancelMessage("You may not attack from within protection zone.");
         }
-        return this.gameClient.world.targetMonster(object.which.monsters);
+        return window.gameClient.world.targetMonster(object.which.monsters);
       }
     }
     if (item !== null && item.isMultiUse()) {
       return this.__setMultiUseItem(object);
     }
-    this.gameClient.send(new ItemUsePacket(object));
+    window.gameClient.send(new ItemUsePacket(object));
   }
 
   private __handleMouseDoubleClick(event: MouseEvent): void {
     if (event.target instanceof HTMLElement && event.target.className === "chat-message") {
       const name = event.target.getAttribute("name");
       if (name !== null) {
-        this.gameClient.interface.channelManager.addPrivateChannel(name);
+        window.gameClient.interface.channelManager.addPrivateChannel(name);
       }
     }
   }
 
   private __handleContextMenu(event: MouseEvent): void {
     event.preventDefault();
-    this.gameClient.interface.menuManager.close();
+    window.gameClient.interface.menuManager.close();
   }
 
   private __handleMouseMove(event: MouseEvent): void {
-    if (!this.gameClient.isRunning()) return;
-    this.__currentMouseTile = this.gameClient.renderer.screen.getWorldCoordinates(event);
+    if (!window.gameClient.isRunning()) return;
+    this.__currentMouseTile = window.gameClient.renderer.screen.getWorldCoordinates(event);
   }
 
   private __handleMouseDown(event: MouseEvent): void {
@@ -105,7 +105,7 @@ class Mouse {
   }
 
   private __handleItemUseWith(fromObject: any, toObject: any): void {
-    this.gameClient.send(new ItemUseWithPacket(fromObject, toObject));
+    window.gameClient.send(new ItemUseWithPacket(fromObject, toObject));
     this.__multiUseObject = null;
     this.setCursor("auto");
   }
@@ -114,7 +114,7 @@ class Mouse {
     const item = fromObject.which.peekItem(fromObject.index);
     if (!item) return this.sendItemMove(fromObject, toObject, 1);
     if (!item.isMoveable()) return;
-    if (item.isStackable() && this.gameClient.keyboard.isShiftDown()) {
+    if (item.isStackable() && window.gameClient.keyboard.isShiftDown()) {
       return this.sendItemMove(fromObject, toObject, 1);
     }
     return this.sendItemMove(fromObject, toObject, item.count);

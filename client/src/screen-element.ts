@@ -7,10 +7,10 @@ function clamp(value: number, min: number, max: number): number {
 
 export default class ScreenElement {
   public element: HTMLElement;
-  public gameClient: GameClient;
+  
 
-  constructor(gameClient: GameClient, id: string) {
-    this.gameClient = gameClient;
+  constructor(id: string) {
+    
     const elem = document.getElementById(id);
     if (!elem) {
       throw new Error(`Element with id "${id}" not found.`);
@@ -50,7 +50,7 @@ export default class ScreenElement {
 
   public __updateTextPosition(offset: { left: number; top: number }): void {
     // Get the bounding rectangle of the game screen canvas.
-    const rect = this.gameClient.renderer.screen.canvas.getBoundingClientRect();
+    const rect = window.gameClient.renderer.screen.canvas.getBoundingClientRect();
 
     // Clamp the position within the screen bounds.
     const left = clamp(offset.left, 0, rect.width - this.element.offsetWidth);
@@ -65,7 +65,7 @@ export default class ScreenElement {
 
   public __getAbsoluteOffset(position: { x: number; y: number; z?: number }): { left: number; top: number } {
     // Determine the fraction based on the screen size.
-    const fraction = this.gameClient.interface.getSpriteScaling();
+    const fraction = window.gameClient.interface.getSpriteScaling();
     // Calculate centered offsets.
     const left = fraction * position.x - 0.5 * this.element.offsetWidth;
     const top = fraction * position.y - 0.5 * this.element.offsetHeight;

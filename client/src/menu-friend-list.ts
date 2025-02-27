@@ -3,11 +3,11 @@ import GameClient from "./gameclient";
 import { FriendRemovePacket } from "./protocol";
 
 export default class FriendListMenu extends Menu {
-  public gameClient: GameClient;
+  
 
-  constructor(gameClient: GameClient, id: string) {
+  constructor(id: string) {
     super(id);
-    this.gameClient = gameClient;
+    
   }
 
   public removeFriend(target: HTMLElement): boolean {
@@ -15,7 +15,7 @@ export default class FriendListMenu extends Menu {
     if (friend === null) {
       return false;
     }
-    this.gameClient.send(new FriendRemovePacket(friend));
+    window.gameClient.send(new FriendRemovePacket(friend));
     return true;
   }
 
@@ -31,7 +31,7 @@ export default class FriendListMenu extends Menu {
         }
         break;
       case "note":
-        this.gameClient.interface.setCancelMessage("Not implemented.");
+        window.gameClient.interface.setCancelMessage("Not implemented.");
         return true;
       default:
         break;

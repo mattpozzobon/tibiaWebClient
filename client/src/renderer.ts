@@ -42,30 +42,27 @@ export default class Renderer {
 
   // Cache of tiles to be rendered.
   private __tileCache: any[];
-  gameClient: GameClient
 
-  constructor(gameClient: GameClient) {
+  constructor() {
     // Create main canvases using values from Interface.
-    this.gameClient = gameClient;
+    
 
     this.screen = new Canvas(
-      this.gameClient,
       "screen",
       Interface.SCREEN_WIDTH_MIN,
       Interface.SCREEN_HEIGHT_MIN
     );
 
     this.lightscreen = new LightCanvas(
-      this.gameClient,
       null,
       Interface.SCREEN_WIDTH_MIN,
       Interface.SCREEN_HEIGHT_MIN
     );
 
-    this.weatherCanvas = new WeatherCanvas(this.gameClient, this.screen);
-    this.outlineCanvas = new OutlineCanvas(this.gameClient, null, 130, 130);
-    this.minimap = new Minimap(this.gameClient); // TODO: CHECK IF THIS IS NECESSARY: gameClient.world.width, gameClient.world.height
-    this.debugger = new Debugger(this.gameClient);
+    this.weatherCanvas = new WeatherCanvas( this.screen);
+    this.outlineCanvas = new OutlineCanvas( null, 130, 130);
+    this.minimap = new Minimap(); // TODO: CHECK IF THIS IS NECESSARY: gameClient.world.width, gameClient.world.height
+    this.debugger = new Debugger();
 
     // Initialize state variables.
     this.__start = performance.now();
@@ -96,7 +93,7 @@ export default class Renderer {
     this.__tileCache = [];
     this.numberOfTiles = 0;
 
-    const max = this.gameClient.player!.getMaxFloor();
+    const max = window.gameClient.player!.getMaxFloor();
     for (let i = 0; i < max; i++) {
       const tiles = this.__getFloorTilesTiles(i);
       this.__tileCache.push(tiles);
@@ -113,7 +110,7 @@ export default class Renderer {
     element.download = `screenshot-${new Date().toISOString()}.png`;
 
     // Render character plates.
-    Object.values(this.gameClient.world.activeCreatures).forEach((activeCreature: any) => {
+    Object.values(window.gameClient.world.activeCreatures).forEach((activeCreature: any) => {
       const style = window.getComputedStyle(
         activeCreature.characterElement.element.querySelector("span")
       );
@@ -128,7 +125,7 @@ export default class Renderer {
     }, this);
 
     // Render text elements.
-    this.gameClient.interface.screenElementManager.activeTextElements.forEach((element: any) => {
+    window.gameClient.interface.screenElementManager.activeTextElements.forEach((element: any) => {
       const style = window.getComputedStyle(
         element.element.querySelector("span")
       );
@@ -160,33 +157,33 @@ export default class Renderer {
   
   public addDistanceAnimation(packet: { type: number; from: Position; to: Position }): void {
     // Adds a distance animation
-    const animationId = this.gameClient.dataObjects.getDistanceAnimationId(packet.type);
+    const animationId = window.gameClient.dataObjects.getDistanceAnimationId(packet.type);
     if (animationId === null) {
       return;
     }
-    const animation = new DistanceAnimation(this.gameClient, animationId, packet.from, packet.to);
+    const animation = new DistanceAnimation(animationId, packet.from, packet.to);
     this.__animationLayers[packet.from.z % 8].add(animation);
   }
   
   public addPositionAnimation(packet: { position: Position; type: number }): any {
     // Adds an animation on the given tile position
-    const tile = this.gameClient.world.getTileFromWorldPosition(packet.position);
+    const tile = window.gameClient.world.getTileFromWorldPosition(packet.position);
     if (tile === null) {
       return;
     }
-    const animationId = this.gameClient.dataObjects.getAnimationId(packet.type);
+    const animationId = window.gameClient.dataObjects.getAnimationId(packet.type);
     if (animationId === null) {
       return;
     }
-    return tile.addAnimation(new Animation(this.gameClient, animationId));
+    return tile.addAnimation(new Animation(animationId));
   }
   
   public getStaticScreenPosition(position: Position): Position {
     // Return the static position of a particular world position
-    const projectedPlayer = this.gameClient.player!.getPosition().projected();
+    const projectedPlayer = window.gameClient.player!.getPosition().projected();
     const projectedThing = position.projected();
-    const x = 7 + this.gameClient.player!.getMoveOffset().x + projectedThing.x - projectedPlayer.x;
-    const y = 5 +this. gameClient.player!.getMoveOffset().y + projectedThing.y - projectedPlayer.y;
+    const x = 7 + window.gameClient.player!.getMoveOffset().x + projectedThing.x - projectedPlayer.x;
+    const y = 5 + window.gameClient.player!.getMoveOffset().y + projectedThing.y - projectedPlayer.y;
     return new Position(x, y, 0);
   }
   
@@ -210,9 +207,9 @@ export default class Renderer {
   private __getFloorTilesTiles(floor: number): Tile[] {
     // Returns the tiles in the viewport sorted by distinctive layers
     const tiles: Tile[] = [];
-    this.gameClient.world.chunks.forEach((chunk: Chunk) => {
+    window.gameClient.world.chunks.forEach((chunk: Chunk) => {
       chunk.getFloorTiles(floor).forEach((tile: Tile) => {
-        if (!this.gameClient.player!.canSee(tile)) {
+        if (!window.gameClient.player!.canSee(tile)) {
           return;
         }
         if (tile.id === 0 && tile.items.length === 0 ) { //TODO : && tile.neighbours.length === 1
@@ -234,13 +231,13 @@ export default class Renderer {
     this.getTileCache().forEach(this.__renderFloor, this);
   
     // If requested render the weather canvas
-    if (this.gameClient.interface.settings.isWeatherEnabled()) {
+    if (window.gameClient.interface.settings.isWeatherEnabled()) {
       this.weatherCanvas.drawWeather();
     }
   
     // Finally draw the lightscreen to the canvas and reset it
-    if (this.gameClient.interface.settings.isLightingEnabled()) {
-      if (this.gameClient.player!.hasCondition(ConditionManager.LIGHT)) {
+    if (window.gameClient.interface.settings.isLightingEnabled()) {
+      if (window.gameClient.player!.hasCondition(ConditionManager.LIGHT)) {
         this.lightscreen.renderLightBubble(7, 5, 5, 23);
       } else {
         this.lightscreen.renderLightBubble(7, 5, 2, 23);
@@ -286,7 +283,7 @@ export default class Renderer {
   
     // There is a flag that identifies light coming from the tile
     if (!(animation instanceof BoxAnimation)) {
-      if (this.gameClient.interface.settings.isLightingEnabled() && animation.isLight()) {
+      if (window.gameClient.interface.settings.isLightingEnabled() && animation.isLight()) {
         const position = this.getStaticScreenPosition(thing.getPosition());
         this.__renderLight(thing, position, animation, false);
       }
@@ -316,18 +313,18 @@ export default class Renderer {
     const info = thing.getDataObject().properties.light;
     const phase = 0;
     const size =
-      info.level + 0.2 * info.level * Math.sin(phase + this.gameClient.renderer.debugger.__nFrames / (8 * 2 * Math.PI));
+      info.level + 0.2 * info.level * Math.sin(phase + window.gameClient.renderer.debugger.__nFrames / (8 * 2 * Math.PI));
     this.lightscreen.renderLightBubble(position.x, position.y, size, info.color);
   }
   
   public __renderLight(tile: any, position: Position, thing: any, intensity: any): void {
     // Renders the light at a position
-    const floor = this.gameClient.world
+    const floor = window.gameClient.world
       .getChunkFromWorldPosition(tile.getPosition())
       .getFirstFloorFromBottomProjected(tile.getPosition());
   
     // Confirm light is visible and should be rendered
-    if (floor === null || floor >= this.gameClient.player!.getMaxFloor()) {
+    if (floor === null || floor >= window.gameClient.player!.getMaxFloor()) {
       this.__renderLightThing(position, thing, intensity);
     }
   }
@@ -347,7 +344,7 @@ export default class Renderer {
       }
   
       // Should render item light?
-      if (this.gameClient.interface.settings.isLightingEnabled() && item.isLight()) {
+      if (window.gameClient.interface.settings.isLightingEnabled() && item.isLight()) {
         this.__renderLight(tile, position, item, undefined);
       }
   
@@ -361,7 +358,7 @@ export default class Renderer {
       // Draw the sprite at the right position
       this.screen.drawSprite(item, renderPosition, 32);
   
-      if (item.isPickupable() && i === items.length - 1 && tile === this.gameClient.mouse.getCurrentTileHover()) {
+      if (item.isPickupable() && i === items.length - 1 && tile === window.gameClient.mouse.getCurrentTileHover()) {
         this.screen.drawSpriteOverlay(item, renderPosition, 32);
       }
   
@@ -403,7 +400,7 @@ export default class Renderer {
     // Get the position of the tile on the game screen
     const position = this.getStaticScreenPosition(tile.getPosition());
     // Render light if enabled and applicable
-    if (this.gameClient.interface.settings.isLightingEnabled() && tile.isLight()) {
+    if (window.gameClient.interface.settings.isLightingEnabled() && tile.isLight()) {
       this.__renderLight(tile, position, tile, undefined);
     }
     // Draw the sprite to the screen
@@ -416,7 +413,7 @@ export default class Renderer {
       return;
     }
     tile.__deferredCreatures.forEach((creature: any) => {
-      const tileFromWorld = this.gameClient.world.getTileFromWorldPosition(creature.__position);
+      const tileFromWorld = window.gameClient.world.getTileFromWorldPosition(creature.__position);
       this.__renderCreature(tileFromWorld, creature, true);
     }, this);
     tile.__deferredCreatures.clear();
@@ -424,7 +421,7 @@ export default class Renderer {
   
   public __renderCreature(tile: any, creature: any, deferred: boolean): void {
     // Render the available creatures to the screen
-    if (!this.gameClient.player!.canSee(creature)) {
+    if (!window.gameClient.player!.canSee(creature)) {
       return;
     }
     const position = this.getCreatureScreenPosition(creature);
@@ -440,7 +437,7 @@ export default class Renderer {
     // Render animations below the creature
     this.__renderCreatureAnimationsBelow(creature);
     // Render the target box around the creature if applicable
-    if (this.gameClient.player!.isCreatureTarget(creature)) {
+    if (window.gameClient.player!.isCreatureTarget(creature)) {
       this.screen.drawOuterCombatRect(this.getCreatureScreenPosition(creature), Interface.COLORS.RED);
     }
     if (creature.hasCondition(ConditionManager.INVISIBLE)) {
@@ -465,11 +462,11 @@ export default class Renderer {
   public __getDeferTile(tile: any, creature: any): any {
     // Get the tile we need to defer the rendering of the creature to
     if (creature.__lookDirection === CONST.DIRECTION.NORTHEAST) {
-      return this.gameClient.world.getTileFromWorldPosition(creature.getPosition().south());
+      return window.gameClient.world.getTileFromWorldPosition(creature.getPosition().south());
     } else if (creature.__lookDirection === CONST.DIRECTION.SOUTHWEST) {
-      return this.gameClient.world.getTileFromWorldPosition(creature.getPosition().east());
+      return window.gameClient.world.getTileFromWorldPosition(creature.getPosition().east());
     } else {
-      return this.gameClient.world.getTileFromWorldPosition(creature.__previousPosition);
+      return window.gameClient.world.getTileFromWorldPosition(creature.__previousPosition);
     }
   }
   
@@ -526,18 +523,18 @@ export default class Renderer {
   
   public __renderOther(): void {
     // Renders other information to the screen
-    this.gameClient.player!.equipment.render();
-    this.gameClient.interface.modalManager.render();
+    window.gameClient.player!.equipment.render();
+    window.gameClient.interface.modalManager.render();
     this.__renderContainers();
-    this.gameClient.world.clock.updateClockDOM();
-    this.gameClient.interface.screenElementManager.render();
-    this.gameClient.interface.hotbarManager.render();
+    window.gameClient.world.clock.updateClockDOM();
+    window.gameClient.interface.screenElementManager.render();
+    window.gameClient.interface.hotbarManager.render();
     this.debugger.renderStatistics();
   }
   
   public __renderContainers(): void {
     // Handles a tab-out event of the game window
-    this.gameClient.player!.__openedContainers.forEach((container: any) => container.__renderAnimated());
+    window.gameClient.player!.__openedContainers.forEach((container: any) => container.__renderAnimated());
   }
   
   public __handleVisibiliyChange(event: Event): void {
@@ -545,7 +542,7 @@ export default class Renderer {
     if (!document.hidden) {
       return;
     }
-    Object.values(this.gameClient.world.activeCreatures).forEach((creature: any) => {
+    Object.values(window.gameClient.world.activeCreatures).forEach((creature: any) => {
       creature.__movementEvent = null;
     });
   }

@@ -12,7 +12,7 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 export default class ChannelManager {
-  gameClient: GameClient;
+  ;
   channels: Channel[];
   private __activeIndex: number;
   private __disabled: boolean;
@@ -27,8 +27,8 @@ export default class ChannelManager {
     YELL: 2,
   };
 
-  constructor(gameClient: GameClient) {
-    this.gameClient = gameClient;
+  constructor() {
+    
     this.channels = [];
     this.__activeIndex = 0;
     this.__disabled = true;
@@ -160,7 +160,7 @@ export default class ChannelManager {
 
   // Sends a join request to the server for a given channel.
   joinChannel(id: number, name: string): void {
-    this.gameClient.send(new ChannelJoinPacket(id));
+    window.gameClient.send(new ChannelJoinPacket(id));
   }
 
   // Handles an open channel request.
@@ -182,7 +182,7 @@ export default class ChannelManager {
       return;
     }
     if (channel.id === 0) {
-      this.gameClient.interface.setCancelMessage("The Default channel cannot be closed.");
+      window.gameClient.interface.setCancelMessage("The Default channel cannot be closed.");
       return;
     }
     // Set the previous channel as the new active channel.
@@ -197,7 +197,7 @@ export default class ChannelManager {
     }
 
     if(channel.id)
-      this.gameClient.send(new ChannelLeavePacket(channel.id));
+      window.gameClient.send(new ChannelLeavePacket(channel.id));
   }
 
   // Increments or decrements the active channel by a given increment.
@@ -265,7 +265,7 @@ export default class ChannelManager {
       this.setActiveChannelElement(existingChannel);
       return;
     }
-    this.__addChannel(new LocalChannel(this.gameClient, name));
+    this.__addChannel(new LocalChannel(name));
   }
 
   // Adds a private channel.
@@ -275,11 +275,11 @@ export default class ChannelManager {
       this.setActiveChannelElement(existingChannel);
       return;
     }
-    if (this.gameClient && this.gameClient.player!.name === name) {
-      this.gameClient.interface.setCancelMessage("Cannot open a chat window yourself.");
+    if (window.gameClient && window.gameClient.player!.name === name) {
+      window.gameClient.interface.setCancelMessage("Cannot open a chat window yourself.");
       return;
     }
-    this.__addChannel(new PrivateChannel(this.gameClient, name));
+    this.__addChannel(new PrivateChannel(name));
   }
 
   // Adds a public channel.
@@ -289,7 +289,7 @@ export default class ChannelManager {
       this.setActiveChannelElement(existingChannel);
       return;
     }
-    this.__addChannel(new Channel(this.gameClient, name, id));
+    this.__addChannel(new Channel(name, id));
   }
 
   // Internal method to add a channel to the collection and DOM.
@@ -319,8 +319,8 @@ export default class ChannelManager {
 
   // Handles sending a private message in a private channel.
   private __handlePrivateMessageSend(channel: Channel, message: string): void {
-    channel.__addMessage(new CharacterMessage(this.gameClient, message, 0, this.gameClient.player!.name, Interface.COLORS.MAYABLUE));
-    this.gameClient.send(new ChannelPrivatePacket(channel.name, message));
+    channel.__addMessage(new CharacterMessage(message, 0, window.gameClient.player!.name, Interface.COLORS.MAYABLUE));
+    window.gameClient.send(new ChannelPrivatePacket(channel.name, message));
   }
 
   // Reads the chat input and sends the message to the appropriate channel.
@@ -330,7 +330,7 @@ export default class ChannelManager {
     if (message.length === 0) return;
     const channel = this.getActiveChannel();
     if (channel instanceof LocalChannel) {
-      this.gameClient.interface.setCancelMessage("Cannot write to a local channel.");
+      window.gameClient.interface.setCancelMessage("Cannot write to a local channel.");
       return;
     }
     if (channel instanceof PrivateChannel) {
@@ -339,7 +339,7 @@ export default class ChannelManager {
     }
     const loudness = this.getLoudness();
     if (channel.id !== null) {
-      this.gameClient.send(new ChannelMessagePacket(channel.id, loudness, message));
+      window.gameClient.send(new ChannelMessagePacket(channel.id, loudness, message));
     }
   }
 

@@ -4,7 +4,7 @@ import Tile from "./tile";
 
 
 export default class Chunk {
-  gameClient: GameClient
+  
   public id: any;
   public position: Position;
   public tiles: Tile[];
@@ -14,8 +14,8 @@ export default class Chunk {
   public static HEIGHT: number;
   public static DEPTH: number;
 
-  constructor(gameclient: GameClient, id: any, position: Position, tiles: any[]) {
-    this.gameClient = gameclient;
+  constructor(id: any, position: Position, tiles: any[]) {
+    
     this.id = id;
     this.position = position;
     // Initialize tiles by converting incoming definitions to Tile instances.
@@ -51,7 +51,7 @@ export default class Chunk {
 
   public getFirstTileFromTop(position: Position): Tile | null {
     // Returns the first tile starting from the top for a given (x, y) screen position.
-    const maximum = Math.max(0, this.gameClient.player!.getMaxFloor() - 1);
+    const maximum = Math.max(0, window.gameClient.player!.getMaxFloor() - 1);
     const minimum = 0;
 
     // Check each floor from the top downward.
@@ -71,7 +71,7 @@ export default class Chunk {
 
     for (let z = 1; z <= maximum - minimum; z++) {
       const tilePosition = position;
-      const tile = this.gameClient.world.getTileFromWorldPosition(
+      const tile = window.gameClient.world.getTileFromWorldPosition(
         new Position(tilePosition.x + z, tilePosition.y + z, tilePosition.z + z)
       );
       if (tile === null) {
@@ -97,7 +97,7 @@ export default class Chunk {
     for (let z = 1; z <= maximum - minimum; z++) {
       for (let i = 0; i < positions.length; i++) {
         const tilePosition = positions[i];
-        const tile = this.gameClient.world.getTileFromWorldPosition(
+        const tile = window.gameClient.world.getTileFromWorldPosition(
           new Position(tilePosition.x + z, tilePosition.y + z, tilePosition.z + z)
         );
         if (tile === null) {
@@ -122,7 +122,7 @@ export default class Chunk {
       // Calculate the true world position by adding the chunk's world position.
       const tileWorldPosition = worldPosition.add(relativeTilePosition.unprojected());
       // Create and return a new Tile.
-      return new Tile(this.gameClient, tile, tileWorldPosition);
+      return new Tile(tile, tileWorldPosition);
     });
   }
 

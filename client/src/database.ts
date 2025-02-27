@@ -1,13 +1,13 @@
 import GameClient from "./gameclient";
 
 export default class Database {
-  private gameClient: GameClient;
+ 
   private __database: IDBDatabase | null;
   private __minimapChunkSize: number;
   private __loadedMinimapChunks: { [id: string]: { imageData: ImageData; view: Uint32Array } };
 
-  constructor(gameClient: GameClient) {
-    this.gameClient = gameClient;
+  constructor() {
+    
     this.__database = null;
     this.__minimapChunkSize = 128;
     this.__loadedMinimapChunks = {};
@@ -107,7 +107,7 @@ export default class Database {
   }
 
   public async loadConstants(): Promise<any> {
-    const response = await fetch(`/data/${this.gameClient.SERVER_VERSION}/constants.json`);
+    const response = await fetch(`/data/${window.gameClient.SERVER_VERSION}/constants.json`);
     return await response.json();
   }
 
@@ -115,7 +115,7 @@ export default class Database {
     this.loadConstants().then((constants: any) => {
       (window as any).CONST = constants;
       if (!localStorage.getItem("Tibia.spr") || !localStorage.getItem("Tibia.dat")) {
-        return this.gameClient.networkManager.loadGameFilesServer();
+        return window.gameClient.networkManager.loadGameFilesServer();
       }
       this.__loadGameAssets();
     });
@@ -161,7 +161,7 @@ export default class Database {
   }
 
   private __loadGameAssets(): void {
-    this.gameClient.setErrorModal("Welcome back! Loading game assets from local storage.");
+    window.gameClient.setErrorModal("Welcome back! Loading game assets from local storage.");
     this.transaction("files", "readonly").getAll().onsuccess = (event: Event): void => {
       const target = event.target as IDBRequest;
       if (target.result.length === 0) {
@@ -170,9 +170,9 @@ export default class Database {
       target.result.forEach((file: any) => {
         switch (file.filename) {
           case "Tibia.dat":
-            return this.gameClient.dataObjects.__load(file.filename, file.data);
+            return window.gameClient.dataObjects.__load(file.filename, file.data);
           case "Tibia.spr":
-            return this.gameClient.spriteBuffer.__load(file.filename, file.data);
+            return window.gameClient.spriteBuffer.__load(file.filename, file.data);
           default:
             return;
         }
@@ -194,7 +194,7 @@ export default class Database {
   public checkChunks(): void {
     Object.keys(this.__loadedMinimapChunks).forEach((id: string) => {
       const [x, y, z] = id.split(".").map(Number);
-      if (this.gameClient.player!.getPosition().z !== z) {
+      if (window.gameClient.player!.getPosition().z !== z) {
         this.__saveChunk(id);
       }
     });

@@ -3,11 +3,11 @@ import Menu from "./menu";
 
 
 export default class ScreenMenu extends Menu {
-  gameClient: GameClient;
+  ;
 
-  constructor(gameClient: GameClient, id: string) {
+  constructor(id: string) {
     super(id);
-    this.gameClient = gameClient;
+    
   }
 
   /**
@@ -15,17 +15,17 @@ export default class ScreenMenu extends Menu {
    */
   public click = (event: Event): void => {
     // Get the selected world object from the stored downEvent (assumed to be a MouseEvent)
-    const object = this.gameClient.mouse.getWorldObject(this.downEvent as MouseEvent);
+    const object = window.gameClient.mouse.getWorldObject(this.downEvent as MouseEvent);
     const action = this.__getAction(event);
     switch (action) {
       case "look":
-        this.gameClient.mouse.look(object);
+        window.gameClient.mouse.look(object);
         break;
       case "use":
-        this.gameClient.mouse.use(object);
+        window.gameClient.mouse.use(object);
         break;
       case "outfits":
-        this.gameClient.interface.modalManager.open("outfit-modal", event);
+        window.gameClient.interface.modalManager.open("outfit-modal", event);
         break;
     }
     this.close(); // Explicitly close the menu.

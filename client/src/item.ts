@@ -6,10 +6,10 @@ import Thing from "./thing";
 import Tile from "./tile";
 
 export default class Item extends Thing {
-    public gameClient: GameClient;
+    
     count: number;
   
-    constructor(gameClient: GameClient, id: number, count: number) {
+    constructor(id: number, count: number) {
       /*
        * Class Item
        * Container for an item with an identifier and count
@@ -22,8 +22,8 @@ export default class Item extends Thing {
        * @Item.isHangable() - returns true if the item is hangable
        *
        */
-      super(gameClient, id);
-      this.gameClient = gameClient
+      super( id);
+      
       this.count = count;
     }
   

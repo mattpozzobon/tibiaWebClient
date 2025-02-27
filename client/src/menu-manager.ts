@@ -13,21 +13,21 @@ export interface IMenu {
 }
 
 export default class MenuManager {
-  gameClient: GameClient;
+  ;
   public menus: { [name: string]: IMenu };
   private __activeMenu: IMenu | null;
 
-  constructor(gameClient: GameClient,) {
+  constructor() {
     // Register the configured menus.
-    this.gameClient = gameClient;
+    
     this.menus = {
-      "screen-menu": new ScreenMenu(gameClient, "screen-menu"),
-      "chat-header-menu": new ChatHeaderMenu(gameClient, "chat-header-menu"),
-      "chat-entry-menu": new MessageMenu(gameClient, "chat-entry-menu"),
-      "chat-body-menu": new ChatBodyMenu(gameClient, "chat-body-menu"),
-      "friend-list-menu": new FriendListMenu(gameClient, "friend-list-menu"),
-      "friend-window-menu": new FriendWindowMenu(gameClient, "friend-window-menu"),
-      "hotbar-menu": new HotbarMenu(gameClient, "hotbar-menu"),
+      "screen-menu": new ScreenMenu( "screen-menu"),
+      "chat-header-menu": new ChatHeaderMenu( "chat-header-menu"),
+      "chat-entry-menu": new MessageMenu( "chat-entry-menu"),
+      "chat-body-menu": new ChatBodyMenu( "chat-body-menu"),
+      "friend-list-menu": new FriendListMenu( "friend-list-menu"),
+      "friend-window-menu": new FriendWindowMenu( "friend-window-menu"),
+      "hotbar-menu": new HotbarMenu( "hotbar-menu"),
     };
 
     // Reference the currently active open menu.

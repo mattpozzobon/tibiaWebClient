@@ -9,11 +9,11 @@ interface CreateAccountOptions {
 }
 
 export default class CreateAccountModal extends Modal {
-  gameClient: GameClient;
+  ;
 
-  constructor(gameClient: GameClient, id: string) {
+  constructor(id: string) {
     super(id);
-    this.gameClient = gameClient;
+    
   }
 
   private __isValidSubmission(options: CreateAccountOptions): boolean {
@@ -57,7 +57,7 @@ export default class CreateAccountModal extends Modal {
       return false;
     }
 
-    this.gameClient.networkManager.createAccount(options);
+    window.gameClient.networkManager.createAccount(options);
     return true;
   };
 }

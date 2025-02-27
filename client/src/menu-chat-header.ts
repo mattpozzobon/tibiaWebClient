@@ -2,20 +2,20 @@ import Menu from "./menu";
 import GameClient from "./gameclient";
 
 export default class ChatHeaderMenu extends Menu {
-  public gameClient: GameClient;
+  
 
-  constructor(gameClient: GameClient, id: string) {
+  constructor(id: string) {
     super(id);
-    this.gameClient = gameClient;
+    
   }
 
   public closeChannel(target: HTMLElement): boolean {
     // Get the channel identifier from the target element's first child.
     const index = target.children[0].innerHTML;
     // Retrieve the channel by index and then close it.
-    const channel = this.gameClient.interface.channelManager.getChannel(index);
+    const channel = window.gameClient.interface.channelManager.getChannel(index);
     if (channel) {
-      this.gameClient.interface.channelManager.closeChannel(channel);
+      window.gameClient.interface.channelManager.closeChannel(channel);
     }
     return true;
   }

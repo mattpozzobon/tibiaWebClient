@@ -3,11 +3,11 @@ import { CONST } from "./helper/appContext";
 import { MovementPacket, PlayerTurnPacket } from "./protocol";
 
 class Keyboard {
-  gameClient: GameClient;
+  ;
   private __activeKeys: Set<number> = new Set();
 
-  constructor(gameClient: GameClient) {
-    this.gameClient = gameClient;
+  constructor() {
+    
     document.addEventListener("keydown", this.__keyDown.bind(this));
     document.addEventListener("keyup", this.__keyUp.bind(this));
   }
@@ -62,10 +62,10 @@ class Keyboard {
 
   handleInput(): void {
     this.__activeKeys.forEach((key) => {
-      this.gameClient.world.pathfinder.setPathfindCache(null);
-      if (!this.gameClient.player!.__serverWalkConfirmation) return;
-      if (this.gameClient.player!.isMoving()) {
-        return this.gameClient.player!.extendMovementBuffer(key);
+      window.gameClient.world.pathfinder.setPathfindCache(null);
+      if (!window.gameClient.player!.__serverWalkConfirmation) return;
+      if (window.gameClient.player!.isMoving()) {
+        return window.gameClient.player!.extendMovementBuffer(key);
       }
       if (this.isShiftDown()) {
         return this.__handleCharacterRotate(key);
@@ -75,7 +75,7 @@ class Keyboard {
   }
 
   handleCharacterMovement(key: number): void {
-    let position = this.gameClient.player!.getPosition();
+    let position = window.gameClient.player!.getPosition();
     switch (key) {
       case Keyboard.KEYS.KEYPAD_7:
         return this.__handleCharacterMovementWrapper(CONST.DIRECTION.NORTHWEST, position.northwest());
@@ -118,16 +118,16 @@ class Keyboard {
   }
 
   private __handleCharacterMovementWrapper(direction: number, position: any): void {
-    if (!this.gameClient.networkManager.packetHandler.handlePlayerMove(position)) return;
-    this.gameClient.renderer.updateTileCache();
-    this.gameClient.interface.modalManager.close();
-    this.gameClient.send(new MovementPacket(direction));
+    if (!window.gameClient.networkManager.packetHandler.handlePlayerMove(position)) return;
+    window.gameClient.renderer.updateTileCache();
+    window.gameClient.interface.modalManager.close();
+    window.gameClient.send(new MovementPacket(direction));
   }
 
   private __setTurn(direction: number): void {
-    if (this.gameClient.player!.getLookDirection() === direction) return;
-    this.gameClient.player!.setTurnBuffer(direction);
-    this.gameClient.send(new PlayerTurnPacket(direction));
+    if (window.gameClient.player!.getLookDirection() === direction) return;
+    window.gameClient.player!.setTurnBuffer(direction);
+    window.gameClient.send(new PlayerTurnPacket(direction));
   }
 
   private __keyDown(event: KeyboardEvent): void {
@@ -138,15 +138,15 @@ class Keyboard {
   }
 
   private __handleReturnKey(): void {
-    if (!this.gameClient.interface.modalManager.isOpened() && !this.gameClient.isConnected()) {
-      this.gameClient.interface.modalManager.open("floater-enter");
-      this.gameClient.interface.enterGame();
+    if (!window.gameClient.interface.modalManager.isOpened() && !window.gameClient.isConnected()) {
+      window.gameClient.interface.modalManager.open("floater-enter");
+      window.gameClient.interface.enterGame();
     }
   }
 
   private __handleEscapeKey(): void {
-    if (this.gameClient.interface.modalManager.isOpened()) {
-      return this.gameClient.interface.modalManager.close();
+    if (window.gameClient.interface.modalManager.isOpened()) {
+      return window.gameClient.interface.modalManager.close();
     }
   }
 

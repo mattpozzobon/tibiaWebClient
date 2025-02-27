@@ -10,10 +10,10 @@ export default class Friendlist {
   private __friends: Map<string, boolean>;
   private __sortFunction: (a: Friend, b: Friend) => number;
   private __showOffline: boolean;
-  private gameClient: GameClient;
+ 
 
-  constructor(gameClient: GameClient, friends: Friend[]) {
-    this.gameClient = gameClient;
+  constructor(friends: Friend[]) {
+    
     this.__friends = new Map<string, boolean>();
     this.__sortFunction = this.__nameSort;
     this.__showOffline = true;
@@ -76,7 +76,7 @@ export default class Friendlist {
     const friendArray: Friend[] = Array.from(this.__friends, this.__deconstructMap.bind(this))
       .filter(this.__showOfflineFilter.bind(this))
       .sort(this.__sortFunction);
-    (this.gameClient.interface.windowManager.getWindow("friend-window") as FriendWindow).generateContent(friendArray);
+    (window.gameClient.interface.windowManager.getWindow("friend-window") as FriendWindow).generateContent(friendArray);
   }
 
   public toggleShowOffline(): void {

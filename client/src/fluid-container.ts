@@ -42,8 +42,8 @@ class FluidThing extends Item {
       PURPLE: 7
     };
   
-    constructor(gameClient: GameClient, id: number, count: number) {
-      super(gameClient, id, count);
+    constructor(id: number, count: number) {
+      super( id, count);
     }
   
     getPattern(): Position {

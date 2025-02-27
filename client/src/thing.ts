@@ -11,13 +11,12 @@ export default class Thing {
   protected DEFAULT_FRAME_LENGTH_MS: number = 500;
   public __durations: number[] = [];
   private __durationsSum: number = 0;
-  public gameClient: GameClient;
 
-  constructor(gameClient: GameClient, id: number) {
-    this.gameClient = gameClient;
+  constructor(id: number) {
+    
     this.id = id;
 
-    if (this.id !== 0 && this.gameClient.hasExtendedAnimations() && this.isAnimated()) {
+    if (this.id !== 0 && window.gameClient.hasExtendedAnimations() && this.isAnimated()) {
       this.__generateExtendedDurations();
     }
   }
@@ -85,11 +84,11 @@ export default class Thing {
        */
       let frameGroup = this.getFrameGroup(FrameGroup.NONE);
   
-      if (!this.gameClient.hasExtendedAnimations()) {
-        return Math.floor((this.gameClient.renderer.__nMiliseconds / this.DEFAULT_FRAME_LENGTH_MS) % frameGroup.animationLength);
+      if (!window.gameClient.hasExtendedAnimations()) {
+        return Math.floor((window.gameClient.renderer.__nMiliseconds / this.DEFAULT_FRAME_LENGTH_MS) % frameGroup.animationLength);
       }
   
-      let delta = this.gameClient.renderer.__nMiliseconds % this.__durationsSum;
+      let delta = window.gameClient.renderer.__nMiliseconds % this.__durationsSum;
       for (let i = 0; i < this.__durations.length; i++) {
         if (this.__durations[i] >= delta) {
           return i;
@@ -126,7 +125,7 @@ export default class Thing {
        * Function Thing.getDataObject
        * Returns the data object based on the identifier
        */
-      return this.gameClient.dataObjects.get(this.id);
+      return window.gameClient.dataObjects.get(this.id);
     }
   
     hasFlag(flag: string | number): boolean {

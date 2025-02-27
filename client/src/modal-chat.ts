@@ -2,11 +2,11 @@ import Modal from "./modal";
 import GameClient from "./gameclient";
 
 export default class ChatModal extends Modal {
-  gameClient: GameClient;
+  ;
 
-  constructor(gameClient: GameClient, id: string) {
+  constructor(id: string) {
     super(id);
-    this.gameClient = gameClient;
+    
 
     const privateInput = document.getElementById("open-private-channel-input");
     if (privateInput) {
@@ -30,9 +30,9 @@ export default class ChatModal extends Modal {
     const idAttr = row.getAttribute("channelId");
 
     if (type === "local") {
-      this.gameClient.interface.channelManager.addLocalChannel(idAttr!);
+      window.gameClient.interface.channelManager.addLocalChannel(idAttr!);
     } else {
-      this.gameClient.interface.channelManager.joinChannel(Number(idAttr), channel.value);
+      window.gameClient.interface.channelManager.joinChannel(Number(idAttr), channel.value);
     }
 
     return true;
@@ -54,7 +54,7 @@ export default class ChatModal extends Modal {
   private __handleOpenPrivateChannel(): boolean {
     const input = document.getElementById("open-private-channel-input") as HTMLInputElement;
     const playerName = input.value.trim();
-    this.gameClient.interface.channelManager.addPrivateChannel(playerName);
+    window.gameClient.interface.channelManager.addPrivateChannel(playerName);
     return true;
   }
 

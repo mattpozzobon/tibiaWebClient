@@ -42,17 +42,17 @@ export default class GameClient {
      * Main container for the HTML5 ForbyJS Game Client
      */
 
-    this.renderer = new Renderer(this);
-    this.interface = new Interface(this);
+    this.renderer = new Renderer();
+    this.interface = new Interface();
     this.spriteBuffer = new SpriteBuffer(32);
-    this.dataObjects = new ObjectBuffer(this);
-    this.networkManager = new NetworkManager(this);
-    this.database = new Database(this);
+    this.dataObjects = new ObjectBuffer();
+    this.networkManager = new NetworkManager();
+    this.database = new Database();
     this.gameLoop = new GameLoop(this.__loop.bind(this));
-    this.keyboard = new Keyboard(this);
-    this.mouse = new Mouse(this);
-    this.eventQueue = new EventQueue(this);
-    
+    this.keyboard = new Keyboard();
+    this.mouse = new Mouse();
+    this.eventQueue = new EventQueue();
+
     document.getElementById("client-version")!.innerHTML = this.CLIENT_VERSION;
   }
 
@@ -84,7 +84,7 @@ export default class GameClient {
     Chunk.HEIGHT = serverData.chunk.height;
     Chunk.DEPTH = serverData.chunk.depth;
 
-    this.world = new World(this, serverData.width, serverData.height, serverData.depth);
+    this.world = new World(serverData.width, serverData.height, serverData.depth);
     this.world.clock.CLOCK_SPEED = serverData.clock;
 
     this.__setTickInterval(serverData.tick);
@@ -157,7 +157,7 @@ export default class GameClient {
     this.interface.showGameInterface();
     this.interface.modalManager.close();
 
-    this.player = new Player(packet, this);
+    this.player = new Player(packet);
     this.world.createCreature(packet.id, this.player);
     console.log(this.player);
     this.renderer.updateTileCache();

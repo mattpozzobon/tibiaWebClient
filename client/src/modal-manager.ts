@@ -18,15 +18,15 @@ function clamp(value: number, min: number, max: number): number {
 
 type ModalConstructor =
   | (new (id: string) => Modal)
-  | (new (gameClient: GameClient, id: string) => Modal);
+  | (new (id: string) => Modal);
 
 export default class ModalManager {
-  gameClient: GameClient;
+  ;
   private __openedModal: Modal | null;
   private __modals: { [id: string]: Modal };
 
-  constructor(gameClient: GameClient) {
-    this.gameClient = gameClient;
+  constructor() {
+    
     this.__openedModal = null;
     this.__modals = {};
 
@@ -80,7 +80,7 @@ export default class ModalManager {
 
     const __handleDrag = (dragEvent: MouseEvent): void => {
       dragEvent.preventDefault();
-      const rect = manager.gameClient.renderer.screen.canvas.getBoundingClientRect();
+      const rect = window.gameClient.renderer.screen.canvas.getBoundingClientRect();
       const modalElement = headerElement.parentElement;
       if (!modalElement) return;
       let left = dragEvent.clientX - rect.left - 0.5 * modalElement.offsetWidth;
@@ -111,7 +111,7 @@ export default class ModalManager {
     if (ModalClass.length === 1) {
       instance = new (ModalClass as new (id: string) => Modal)(id);
     } else {
-      instance = new (ModalClass as new (gameClient: GameClient, id: string) => Modal)(this.gameClient, id);
+      instance = new (ModalClass as new (id: string) => Modal)(id);
     }
     this.__modals[id] = instance;
   }

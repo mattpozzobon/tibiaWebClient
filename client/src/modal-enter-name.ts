@@ -2,12 +2,12 @@ import Modal from "./modal";
 import GameClient from "./gameclient";
 
 export default class EnterNameModal extends Modal {
-  gameClient: GameClient;
+  ;
   private __confirmCallback: (name: string) => void;
 
-  constructor(gameClient: GameClient, id: string) {
+  constructor(id: string) {
     super(id);
-    this.gameClient = gameClient;
+    
     this.__confirmCallback = () => {};
   }
 

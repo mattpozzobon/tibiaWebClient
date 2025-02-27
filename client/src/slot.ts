@@ -4,17 +4,17 @@ import Item from "./item";
 import Position from "./position";
 
 export default class Slot {
-    gameClient: GameClient;
+    ;
     item: Item | null;
     element!: HTMLElement;
     canvas!: Canvas;
   
-    constructor(gameClient: GameClient) {
+    constructor() {
       /*
        * Class Slot
        * Container for a slot that contains an item
        */
-      this.gameClient = gameClient;
+      
       this.item = null;
     }
   
@@ -25,7 +25,7 @@ export default class Slot {
        */
       
       this.element = element;
-      this.canvas = new Canvas(this.gameClient, element.firstElementChild as HTMLCanvasElement, 32, 32);
+      this.canvas = new Canvas(element.firstElementChild as HTMLCanvasElement, 32, 32);
     }
   
     createDOM(index: number): void {

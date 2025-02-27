@@ -4,16 +4,16 @@ import Position from "./position";
 import Interface from "./interface";
 
 export default class MessageElement extends ScreenElement {
-  gameClient: GameClient;
+  ;
   __entity: any;
   private __position: Position;
   private __message: string;
   __color: number;
 
-  constructor(gameClient: GameClient, entity: any, message: string, color: number) {
+  constructor(entity: any, message: string, color: number) {
     // Call the parent constructor with gameClient and the prototype identifier.
-    super(gameClient, "message-element-prototype");
-    this.gameClient = gameClient;
+    super( "message-element-prototype");
+    
     this.__entity = entity;
     this.__position = entity.__position.copy();
     this.__message = message;
@@ -58,7 +58,7 @@ export default class MessageElement extends ScreenElement {
    * Updates the text position of the element based on its position.
    */
   public setTextPosition(): void {
-    const staticPos = this.gameClient.renderer.getStaticScreenPosition(this.__position);
+    const staticPos = window.gameClient.renderer.getStaticScreenPosition(this.__position);
     const offset = this.__getAbsoluteOffset(staticPos);
     this.__updateTextPosition(offset);
   }

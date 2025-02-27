@@ -7,15 +7,15 @@ import State from "./state";
 
 
 export default class WindowManager {
-  gameClient: GameClient;
+  ;
   public windows: { [name: string]: InteractiveWindow };
   public stacks: HTMLCollectionOf<Element>;
   public state: State;
 
-  constructor(gameClient: GameClient) {
-    this.gameClient = gameClient;
+  constructor() {
+    
     this.windows = {
-      "battle-window": new BattleWindow(gameClient, document.getElementById("battle-window") as HTMLElement),
+      "battle-window": new BattleWindow(document.getElementById("battle-window") as HTMLElement),
       "skill-window": new SkillWindow(document.getElementById("skill-window") as HTMLElement),
       "friend-window": new FriendWindow(document.getElementById("friend-window") as HTMLElement),
     };

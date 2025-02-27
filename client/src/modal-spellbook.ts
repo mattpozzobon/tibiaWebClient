@@ -14,14 +14,14 @@ interface Spell {
 }
 
 export default class SpellbookModal extends Modal {
-  gameClient: GameClient;
+  ;
   private __wrapper: HTMLElement;
   private __index: number;
 
-  constructor(gameClient: GameClient, id: string) {
+  constructor(id: string) {
     super(id);
 
-    this.gameClient = gameClient;
+    
     const wrapper = document.getElementById("spellbook-list");
     if (!wrapper) {
       throw new Error("Element with id 'spellbook-list' not found.");
@@ -32,7 +32,7 @@ export default class SpellbookModal extends Modal {
 
   // Using an arrow function property to avoid issues with 'this'
   private __handleClick = (sid: number ): void => {
-    this.gameClient.interface.hotbarManager.addSlot(this.__index, sid);
+    window.gameClient.interface.hotbarManager.addSlot(this.__index, sid);
     const cancelButton = this.element.querySelector("button[action='cancel']");
     if (cancelButton) {
       // __buttonClick is assumed to be defined on the base class (Modal)
@@ -51,7 +51,7 @@ export default class SpellbookModal extends Modal {
   }
 
   private __createSpellNode = (id: number): HTMLElement => {
-    const spell: Spell = this.gameClient.interface.getSpell(id);
+    const spell: Spell = window.gameClient.interface.getSpell(id);
     const prototypeElem = document.getElementById("spellbook-wrapper-prototype");
     if (!prototypeElem) {
       throw new Error("Element with id 'spellbook-wrapper-prototype' not found.");
@@ -59,7 +59,7 @@ export default class SpellbookModal extends Modal {
     // Clone the prototype element.
     const DOMElement = prototypeElem.cloneNode(true) as HTMLElement;
     const DOMElementCanvas = DOMElement.firstElementChild as HTMLElement;
-    const canvas = new Canvas(this.gameClient, DOMElementCanvas as HTMLCanvasElement, 32, 32);
+    const canvas = new Canvas(DOMElementCanvas as HTMLCanvasElement, 32, 32);
 
     // Draw the spell icon on the canvas.
     canvas.context.drawImage(

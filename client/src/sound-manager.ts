@@ -4,15 +4,15 @@ import SoundTrace from "./soundtrace";
 
 
 export default class SoundManager {
-  gameClient: GameClient
+  
   public traces: Record<string, SoundTrace>;
   public soundbits: Record<string, SoundBit>;
   public ambientTraces: Record<string, SoundTrace>;
   private __masterVolume: number;
   private __currentAmbientTrace: SoundTrace | null;
 
-  constructor(gameClient: GameClient, enabled: boolean) {
-    this.gameClient = gameClient;
+  constructor(enabled: boolean) {
+    
     this.traces = {};
     this.soundbits = {};
     this.ambientTraces = {};
@@ -40,7 +40,7 @@ export default class SoundManager {
   }
 
   public playWalkBit(position: any): void {
-    const tile = this.gameClient.world.getTileFromWorldPosition(position);
+    const tile = window.gameClient.world.getTileFromWorldPosition(position);
     if (tile.id === 405) {
       this.play("wood");
     } else {
@@ -53,7 +53,7 @@ export default class SoundManager {
   }
 
   public setMasterVolume(amount: number): void {
-    if (!this.gameClient.interface.settings.isSoundEnabled()) {
+    if (!window.gameClient.interface.settings.isSoundEnabled()) {
       amount = 0;
     }
     this.__masterVolume = amount;

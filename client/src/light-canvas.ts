@@ -4,7 +4,7 @@ import RGBA from "./rgba";
 
 export default class LightCanvas extends Canvas {
   // Current state of the light canvas and start/target for interpolation.
-  public gameClient: GameClient;
+  
   private __ambientColor: RGBA;
   private __ambientColorTarget: RGBA;
   private __ambientColorStart: RGBA;
@@ -14,10 +14,10 @@ export default class LightCanvas extends Canvas {
   // Darkness is black.
   public readonly DARKNESS: RGBA = new RGBA(0, 0, 0, 255);
 
-  constructor(gameClient: GameClient, id: string | null, width: number, height: number) {
-    super(gameClient, id, width, height);
+  constructor(id: string | null, width: number, height: number) {
+    super( id, width, height);
 
-    this.gameClient = gameClient;
+    
     this.__ambientColor = new RGBA(0, 0, 0, 0);
     this.__ambientColorTarget = new RGBA(0, 0, 0, 0);
     this.__ambientColorStart = new RGBA(0, 0, 0, 0);
@@ -43,7 +43,7 @@ export default class LightCanvas extends Canvas {
 
   public getNightSine(): number {
     // Read the world time from the clock.
-    const unix = this.gameClient.world.clock.getUnix();
+    const unix = window.gameClient.world.clock.getUnix();
     // Calculate the sine with an 1/8th PI offset.
     return Math.sin(0.25 * Math.PI + (2 * Math.PI * unix) / (24 * 60 * 60 * 1000));
   }
@@ -52,7 +52,7 @@ export default class LightCanvas extends Canvas {
     // Simulate the day & night cycle.
     let fraction = 0.5 * (this.getNightSine() + 1);
     // Underground is always in full darkness.
-    if (this.gameClient.player!.isUnderground()) {
+    if (window.gameClient.player!.isUnderground()) {
       fraction = 1;
     }
     return fraction;

@@ -3,11 +3,11 @@ import GameClient from "./gameclient";
 import { FriendAddPacket } from "./protocol"; // Adjust the import as needed
 
 export default class FriendWindowMenu extends Menu {
-  public gameClient: GameClient;
+  
 
-  constructor(gameClient: GameClient, id: string) {
+  constructor(id: string) {
     super(id);
-    this.gameClient = gameClient;
+    
   }
 
   public click = (event: Event): any => {
@@ -17,9 +17,9 @@ export default class FriendWindowMenu extends Menu {
       case "add":
         return this.openInputModal();
       case "sort-reversed":
-        return this.gameClient.player!.friendlist.sortBy("reversed");
+        return window.gameClient.player!.friendlist.sortBy("reversed");
       case "sort-normal":
-        return this.gameClient.player!.friendlist.sortBy("normal");
+        return window.gameClient.player!.friendlist.sortBy("normal");
       case "hide-offline":
         return this.hideOffline(target);
       default:
@@ -33,12 +33,12 @@ export default class FriendWindowMenu extends Menu {
     } else {
       target.innerHTML = "Hide Offline";
     }
-    this.gameClient.player!.friendlist.toggleShowOffline();
+    window.gameClient.player!.friendlist.toggleShowOffline();
   }
 
   public openInputModal(): any {
     // Pass a dummy MouseEvent if needed (adjust as appropriate)
-    const modal = this.gameClient.interface.modalManager.open("enter-name-modal", new MouseEvent("click"));
+    const modal = window.gameClient.interface.modalManager.open("enter-name-modal", new MouseEvent("click"));
     if (modal === null) {
       return;
     }
@@ -51,9 +51,9 @@ export default class FriendWindowMenu extends Menu {
     if (friend === null || friend === "") {
       return;
     }
-    if (this.gameClient.player!.friendlist.has(friend)) {
-      return this.gameClient.interface.setCancelMessage("This friend is already in your friendlist.");
+    if (window.gameClient.player!.friendlist.has(friend)) {
+      return window.gameClient.interface.setCancelMessage("This friend is already in your friendlist.");
     }
-    this.gameClient.send(new FriendAddPacket(friend));
+    window.gameClient.send(new FriendAddPacket(friend));
   }
 }

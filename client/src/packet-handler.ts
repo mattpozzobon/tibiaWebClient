@@ -14,19 +14,19 @@ import Tile from "./tile";
 import BattleWindow from "./window-battle";
 
 class PacketHandler {
-  gameClient: GameClient;
+  ;
 
-  constructor(gameClient: GameClient) {
+  constructor() {
     /*
      * Class PacketHandler
      * Containers handler functions for all incoming network packets from the gameserver
      * This usually delegates to the gameClient but is a central place for collections
      */
-    this.gameClient = gameClient;
+    
   }
 
   handlePropertyChange(packet: { guid: number; property: number; value: number }): void {
-    let creature = this.gameClient.world.getCreature(packet.guid);
+    let creature = window.gameClient.world.getCreature(packet.guid);
     if (!creature) return;
 
     console.log(`player property: ${packet.property}, value: ${packet.value}`);
@@ -54,32 +54,32 @@ class PacketHandler {
   }
 
   handleWorldTime(time: number): void {
-    this.gameClient.world.clock.setPhase(time);
+    window.gameClient.world.clock.setPhase(time);
   }
 
   handleSetTarget(id: number): void {
     if (id === 0) {
-      this.gameClient.player!.setTarget(null);
+      window.gameClient.player!.setTarget(null);
       return;
     }
 
-    let creature = this.gameClient.world.getCreature(id);
+    let creature = window.gameClient.world.getCreature(id);
     if (!creature) return;
 
-    this.gameClient.player!.setTarget(creature);
+    window.gameClient.player!.setTarget(creature);
   }
 
   handleCombatLock(bool: boolean): void {
     const condition = {
       toggle: bool,
-      guid: this.gameClient.player!.id,
+      guid: window.gameClient.player!.id,
       cid: ConditionManager.COMBAT_LOCK,
     };
     this.handleCondition(condition);
   }
 
   handleCondition(packet: { guid: number; toggle: boolean; cid: number }): void {
-    let creature = this.gameClient.world.getCreature(packet.guid);
+    let creature = window.gameClient.world.getCreature(packet.guid);
     if (!creature) return;
 
     if (packet.toggle) {
@@ -90,7 +90,7 @@ class PacketHandler {
   }
 
   handleTradeOffer(packet: any): void {
-    this.gameClient.interface.modalManager.open("offer-modal", packet);
+    window.gameClient.interface.modalManager.open("offer-modal", packet);
   }
 
   handlePlayerStatistics(packet: {
@@ -99,16 +99,16 @@ class PacketHandler {
     armor: number;
     speed: number;
   }): void {
-    if (!this.gameClient.player) return;
+    if (!window.gameClient.player) return;
 
-    this.gameClient.player.state.capacity = packet.capacity;
-    this.gameClient.player.state.attack = packet.attack;
-    this.gameClient.player.state.armor = packet.armor;
-    this.gameClient.player.state.speed = packet.speed;
+    window.gameClient.player.state.capacity = packet.capacity;
+    window.gameClient.player.state.attack = packet.attack;
+    window.gameClient.player.state.armor = packet.armor;
+    window.gameClient.player.state.speed = packet.speed;
   }
 
   handleOpenChannel(packet: any): void {
-    this.gameClient.interface.channelManager.handleOpenChannel(packet);
+    window.gameClient.interface.channelManager.handleOpenChannel(packet);
   }
 
   handleAddAchievement(packet: { title: string; description: string }): void {
@@ -123,42 +123,42 @@ class PacketHandler {
   }
 
   handleSendDistanceEffect(packet: any): void {
-    this.gameClient.renderer.addDistanceAnimation(packet);
+    window.gameClient.renderer.addDistanceAnimation(packet);
   }
 
   handleSendMagicEffect(packet: any): void {
-    this.gameClient.renderer.addPositionAnimation(packet);
+    window.gameClient.renderer.addPositionAnimation(packet);
   }
 
   handleTransformTile(packet: any): void {
-    this.gameClient.world.handleTransformTile(packet);
+    window.gameClient.world.handleTransformTile(packet);
   }
 
   handleAcceptLogin(packet: any): void {
-    this.gameClient.handleAcceptLogin(packet);
+    window.gameClient.handleAcceptLogin(packet);
   }
 
   handleRemoveFriend(name: string): void {
-    this.gameClient.player!.friendlist.remove(name);
+    window.gameClient.player!.friendlist.remove(name);
   }
 
   handleAddFriend(name: string): void {
-    this.gameClient.player!.friendlist.add({name: name, online: true});
+    window.gameClient.player!.friendlist.add({name: name, online: true});
   }
 
   handleCancelMessage(packet: any): void {
-    this.gameClient.interface.notificationManager.setCancelMessage(packet);
+    window.gameClient.interface.notificationManager.setCancelMessage(packet);
   }
 
   handleServerData(packet: any): void {
-    this.gameClient.setServerData(packet);
+    window.gameClient.setServerData(packet);
   }
 
   handleEmote(packet: { id: number; message: string; color: number }): void {
-    let sourceCreature = this.gameClient.world.getCreature(packet.id);
+    let sourceCreature = window.gameClient.world.getCreature(packet.id);
     if (!sourceCreature) return;
 
-    this.gameClient.interface.screenElementManager.createFloatingTextElement(
+    window.gameClient.interface.screenElementManager.createFloatingTextElement(
       `<i>${packet.message}</i>`,
       sourceCreature.getPosition(),
       packet.color
@@ -166,7 +166,7 @@ class PacketHandler {
   }
 
   handleIncreaseHealth(packet: { id: number; amount: number }): void {
-    let sourceCreature = this.gameClient.world.getCreature(packet.id);
+    let sourceCreature = window.gameClient.world.getCreature(packet.id);
     if (!sourceCreature) return;
 
     let health = Math.min(packet.amount, sourceCreature.maxHealth - sourceCreature.state.health);
@@ -174,14 +174,14 @@ class PacketHandler {
 
     sourceCreature.increaseHealth(health);
 
-    this.gameClient.interface.screenElementManager.createFloatingTextElement(
+    window.gameClient.interface.screenElementManager.createFloatingTextElement(
       health.toString(),
       sourceCreature.getPosition(),
       Interface.COLORS.LIGHTGREEN
     );
 
-    if (this.gameClient.player === sourceCreature) {
-      this.gameClient.interface.channelManager.addConsoleMessage(
+    if (window.gameClient.player === sourceCreature) {
+      window.gameClient.interface.channelManager.addConsoleMessage(
         `You heal for ${health} health.`,
         Interface.COLORS.WHITE
       );
@@ -195,26 +195,26 @@ class PacketHandler {
     ambient: { r: number; g: number; b: number; a: number };
     music: string;
   }): void {
-    this.gameClient.interface.notificationManager.setZoneMessage(packet.name, packet.title);
-    this.gameClient.renderer.weatherCanvas.setWeather(packet.weather);
-    this.gameClient.renderer.setAmbientColor(packet.ambient.r, packet.ambient.g, packet.ambient.b, packet.ambient.a);
-    this.gameClient.interface.soundManager.setAmbientTrace(packet.music);
+    window.gameClient.interface.notificationManager.setZoneMessage(packet.name, packet.title);
+    window.gameClient.renderer.weatherCanvas.setWeather(packet.weather);
+    window.gameClient.renderer.setAmbientColor(packet.ambient.r, packet.ambient.g, packet.ambient.b, packet.ambient.a);
+    window.gameClient.interface.soundManager.setAmbientTrace(packet.music);
   }
 
   handleLatency(): void {
-    this.gameClient.networkManager.state.latency = performance.now() - this.gameClient.networkManager.__latency;
+    window.gameClient.networkManager.state.latency = performance.now() - window.gameClient.networkManager.__latency;
   }
 
   handleChunk(chunk: { id: number }): void {
-    if (this.gameClient.world.chunks.some((c) => c.id === chunk.id)) return;
+    if (window.gameClient.world.chunks.some((c) => c.id === chunk.id)) return;
 
-    this.gameClient.world.chunks.push(chunk);
-    this.gameClient.world.chunks.sort((a, b) => a.id - b.id);
-    this.gameClient.world.referenceTileNeighbours();
+    window.gameClient.world.chunks.push(chunk);
+    window.gameClient.world.chunks.sort((a, b) => a.id - b.id);
+    window.gameClient.world.referenceTileNeighbours();
   }
 
   handleRemoveItem(packet: { position: any; index: number; count: number }): void {
-    let tile = this.gameClient.world.getTileFromWorldPosition(packet.position);
+    let tile = window.gameClient.world.getTileFromWorldPosition(packet.position);
     if (!tile) return;
 
     tile.removeItem(packet.index, packet.count);
@@ -222,62 +222,62 @@ class PacketHandler {
 
   handleAdvanceLevel(): void {
     //TODO: 
-    //this.gameClient.player!.advanceLevel();
+    //window.gameClient.player!.advanceLevel();
   }
 
   handleServerError(message: string): void {
-    this.gameClient.interface.modalManager.open("floater-connecting", message);
+    window.gameClient.interface.modalManager.open("floater-connecting", message);
   }
 
   handleServerMessage(string: string): void {
-    this.gameClient.interface.notificationManager.setServerMessage(string, Interface.COLORS.RED);
+    window.gameClient.interface.notificationManager.setServerMessage(string, Interface.COLORS.RED);
   }
 
   
   getTileUppie(position: Position): Tile | null {
-    let tile = this.gameClient.world.getTileFromWorldPosition(position);
+    let tile = window.gameClient.world.getTileFromWorldPosition(position);
 
     if (!tile.isOccupied()) {
       return tile;
     }
 
     if (tile.id === 0) {
-      return this.gameClient.world.getTileFromWorldPosition(position.down());
+      return window.gameClient.world.getTileFromWorldPosition(position.down());
     }
 
-    if (this.gameClient.player!.getTile().hasMaximumElevation()) {
-      return this.gameClient.world.getTileFromWorldPosition(position.up());
+    if (window.gameClient.player!.getTile().hasMaximumElevation()) {
+      return window.gameClient.world.getTileFromWorldPosition(position.up());
     }
 
     return tile;
   }
 
   clientSideMoveCheck(position: Position): boolean {
-    let tile = this.gameClient.world.getTileFromWorldPosition(position);
+    let tile = window.gameClient.world.getTileFromWorldPosition(position);
 
     if (tile.monsters.size > 0) {
       return true;
     }
 
     if (tile.id === 0) {
-      if (this.gameClient.player!.__position.isDiagonal(position)) {
+      if (window.gameClient.player!.__position.isDiagonal(position)) {
         return true;
       }
 
-      let belowTile = this.gameClient.world.getTileFromWorldPosition(position.down());
+      let belowTile = window.gameClient.world.getTileFromWorldPosition(position.down());
 
       if (belowTile && belowTile.hasMaximumElevation() && !belowTile.isOccupied()) {
         return false;
       }
     }
 
-    if (this.gameClient.player!.getTile().hasMaximumElevation()) {
-      if (this.gameClient.player!.__position.isDiagonal(position)) {
+    if (window.gameClient.player!.getTile().hasMaximumElevation()) {
+      if (window.gameClient.player!.__position.isDiagonal(position)) {
         return true;
       }
 
-      let upTile = this.gameClient.world.getTileFromWorldPosition(position.up());
-      let aboveTile = this.gameClient.world.getTileFromWorldPosition(this.gameClient.player!.__position.up());
+      let upTile = window.gameClient.world.getTileFromWorldPosition(position.up());
+      let aboveTile = window.gameClient.world.getTileFromWorldPosition(window.gameClient.player!.__position.up());
 
       if ((!aboveTile || aboveTile.id === 0) && upTile && !upTile.isOccupied()) {
         return false;
@@ -289,19 +289,19 @@ class PacketHandler {
 
   handlePlayerMove(position: Position): boolean {
     if (this.clientSideMoveCheck(position)) {
-      this.gameClient.interface.setCancelMessage("You cannot walk here.");
+      window.gameClient.interface.setCancelMessage("You cannot walk here.");
       return false;
     }
 
     let tile = this.getTileUppie(position);
-    let duration = this.gameClient.player!.getStepDuration(tile);
-    this.gameClient.world.handleCreatureMove(this.gameClient.player!.id, position, duration);
+    let duration = window.gameClient.player!.getStepDuration(tile);
+    window.gameClient.world.handleCreatureMove(window.gameClient.player!.id, position, duration);
     return true;
   }
 
   handleDamageEvent(packet: { source: number; target: number; damage: number; color: number }): void {
-    let sourceCreature = this.gameClient.world.getCreature(packet.source);
-    let targetCreature = this.gameClient.world.getCreature(packet.target);
+    let sourceCreature = window.gameClient.world.getCreature(packet.source);
+    let targetCreature = window.gameClient.world.getCreature(packet.target);
 
     if (packet.source === 0 && targetCreature) {
       this.__handleDamageEnvironment(targetCreature, packet.damage, packet.color);
@@ -314,25 +314,25 @@ class PacketHandler {
 
     targetCreature.addAnimation(1);
 
-    if (targetCreature === this.gameClient.player && sourceCreature !== this.gameClient.player) {
+    if (targetCreature === window.gameClient.player && sourceCreature !== window.gameClient.player) {
       sourceCreature.addBoxAnimation(Interface.COLORS.BLACK);
     }
 
     targetCreature.increaseHealth(-packet.damage);
 
-    if (this.gameClient.player === targetCreature) {
-      this.gameClient.interface.channelManager.addConsoleMessage(
+    if (window.gameClient.player === targetCreature) {
+      window.gameClient.interface.channelManager.addConsoleMessage(
         `You lose ${packet.damage} health to a ${sourceCreature.name}.`,
         Interface.COLORS.WHITE
       );
-    } else if (this.gameClient.player === sourceCreature) {
-      this.gameClient.interface.channelManager.addConsoleMessage(
+    } else if (window.gameClient.player === sourceCreature) {
+      window.gameClient.interface.channelManager.addConsoleMessage(
         `You deal ${packet.damage} damage to a ${targetCreature.name}.`,
         Interface.COLORS.WHITE
       );
     }
 
-    this.gameClient.interface.screenElementManager.createFloatingTextElement(
+    window.gameClient.interface.screenElementManager.createFloatingTextElement(
       packet.damage.toString(),
       targetCreature.getPosition(),
       packet.color
@@ -340,7 +340,7 @@ class PacketHandler {
   }
 
   handleChangeOutfit(packet: { id: number; outfit: any }): void {
-    let creature = this.gameClient.world.getCreature(packet.id);
+    let creature = window.gameClient.world.getCreature(packet.id);
     if (!creature) return;
     creature.serverSetOutfit(packet.outfit);
   }
@@ -397,7 +397,7 @@ class PacketHandler {
   }
 
   getItemDescription(packet: { cid: number; count: number; name: string; article: string }): string {
-    let thing = new Item(this.gameClient, packet.cid, packet.count);
+    let thing = new Item(packet.cid, packet.count);
 
     if (thing.isFluidContainer() || thing.isSplash()) {
       return this.handleLiquidMessage(packet);
@@ -419,13 +419,13 @@ class PacketHandler {
     const gender = packet.gender === 0 ? "He" : "She";
     const message = `You see ${packet.name}. ${gender} is level ${packet.level}.`;
 
-    this.gameClient.interface.notificationManager.setServerMessage(message, Interface.COLORS.LIGHTGREEN);
-    this.gameClient.interface.channelManager.addConsoleMessage(message, Interface.COLORS.LIGHTGREEN);
+    window.gameClient.interface.notificationManager.setServerMessage(message, Interface.COLORS.LIGHTGREEN);
+    window.gameClient.interface.channelManager.addConsoleMessage(message, Interface.COLORS.LIGHTGREEN);
   }
 
   handleItemInformation(packet: any): void {
     let message = this.getItemDescription(packet);
-    let thing = new Thing(this.gameClient, packet.cid);
+    let thing = new Thing(packet.cid);
 
     if (packet.description) {
       message += ` ${packet.description}`;
@@ -452,7 +452,7 @@ class PacketHandler {
       message += ` (Attack: ${packet.attack})`;
     }
 
-    if (this.gameClient.renderer.debugger.isActive()) {
+    if (window.gameClient.renderer.debugger.isActive()) {
       message += ` (SID: ${packet.sid}, CID: ${packet.cid})`;
     }
 
@@ -460,137 +460,137 @@ class PacketHandler {
       message += ` (X: ${packet.x}, Y: ${packet.y}, Z: ${packet.z})`;
     }
 
-    this.gameClient.interface.notificationManager.setServerMessage(message, Interface.COLORS.LIGHTGREEN);
-    this.gameClient.interface.channelManager.addConsoleMessage(message, Interface.COLORS.LIGHTGREEN);
+    window.gameClient.interface.notificationManager.setServerMessage(message, Interface.COLORS.LIGHTGREEN);
+    window.gameClient.interface.channelManager.addConsoleMessage(message, Interface.COLORS.LIGHTGREEN);
   }
 
   handleEntityRemove(id: number): void {
-    let creature = this.gameClient.world.getCreature(id);
-    if (!creature || this.gameClient.isSelf(creature)) return;
+    let creature = window.gameClient.world.getCreature(id);
+    if (!creature || window.gameClient.isSelf(creature)) return;
 
-    let tile = this.gameClient.world.getTileFromWorldPosition(creature.getPosition());
+    let tile = window.gameClient.world.getTileFromWorldPosition(creature.getPosition());
     if (!tile) return;
 
     tile.monsters.delete(creature);
-    if (this.gameClient.player!.__target === creature) {
-      this.gameClient.player!.setTarget(null);
+    if (window.gameClient.player!.__target === creature) {
+      window.gameClient.player!.setTarget(null);
     }
 
     creature.remove();
-    delete this.gameClient.world.activeCreatures[id];
-    (this.gameClient.interface.windowManager.getWindow("battle-window") as BattleWindow).removeCreature(id);
+    delete window.gameClient.world.activeCreatures[id];
+    (window.gameClient.interface.windowManager.getWindow("battle-window") as BattleWindow).removeCreature(id);
   }
 
   handleContainerItemRemove(packet: { containerIndex: number; slotIndex: number; count: number }): void {
-    let container = this.gameClient.player!.getContainer(packet.containerIndex);
+    let container = window.gameClient.player!.getContainer(packet.containerIndex);
     if (!container) return;
     container.removeItem(packet.slotIndex, packet.count);
   }
 
   handleContainerAddItem(packet: { containerId: number; itemId: number; count: number; slot: number }): void {
-    let container = this.gameClient.player!.getContainer(packet.containerId);
+    let container = window.gameClient.player!.getContainer(packet.containerId);
     if (!container) return;
-    container.addItem(new Item(this.gameClient, packet.itemId, packet.count), packet.slot);
+    container.addItem(new Item(packet.itemId, packet.count), packet.slot);
   }
 
   handleContainerOpen(packet: any): void {
-    let container = new Container(this.gameClient, packet);
+    let container = new Container(packet);
     container.createDOM(packet.equipped ? `${packet.title}[E]` : packet.title, packet.items);
-    this.gameClient.interface.windowManager.register(container.window);
-    this.gameClient.player!.openContainer(container);
+    window.gameClient.interface.windowManager.register(container.window);
+    window.gameClient.player!.openContainer(container);
   }
 
   handleContainerClose(id: number): void {
-    let container = this.gameClient.player!.getContainer(id);
+    let container = window.gameClient.player!.getContainer(id);
     if (!container) return;
-    this.gameClient.player!.removeContainer(container);
+    window.gameClient.player!.removeContainer(container);
   }
 
   handlePlayerDisconnect(name: string): void {
-    this.gameClient.player!.friendlist.setOnlineStatus(name, false);
+    window.gameClient.player!.friendlist.setOnlineStatus(name, false);
   }
 
   handlePlayerConnect(name: string): void {
-    this.gameClient.player!.friendlist.setOnlineStatus(name, true);
+    window.gameClient.player!.friendlist.setOnlineStatus(name, true);
   }
 
   handleCreatureServerMove(packet: { id: number; position: Position; speed: number }): void {
-    let entity = this.gameClient.world.getCreature(packet.id);
+    let entity = window.gameClient.world.getCreature(packet.id);
     if (!entity) return;
 
     console.log("__handleCreatureMove", packet.speed);
-    this.gameClient.world.__handleCreatureMove(packet.id, packet.position, packet.speed);
+    window.gameClient.world.__handleCreatureMove(packet.id, packet.position, packet.speed);
 
-    if (this.gameClient.isSelf(entity)) {
-      this.gameClient.player!.confirmClientWalk();
-      this.gameClient.world.checkEntityReferences();
-      this.gameClient.world.checkChunks();
+    if (window.gameClient.isSelf(entity)) {
+      window.gameClient.player!.confirmClientWalk();
+      window.gameClient.world.checkEntityReferences();
+      window.gameClient.world.checkChunks();
     }
   }
 
   handleReadText(packet: any): void {
-    this.gameClient.interface.modalManager.open("readable-modal", packet);
+    window.gameClient.interface.modalManager.open("readable-modal", packet);
   }
 
   handleChannelMessage(packet: { id: number; message: string; name: string; color: number }): void {
-    let channel = this.gameClient.interface.channelManager.getChannelById(packet.id);
+    let channel = window.gameClient.interface.channelManager.getChannelById(packet.id);
     if (!channel) return;
     channel.addMessage(packet.message, 0, packet.name, packet.color);
   }
 
   handleDefaultMessage(packet: { id: number }): void {
-    let entity = this.gameClient.world.getCreature(packet.id);
-    if (!entity || !this.gameClient.player!.canSeeSmall(entity)) return;
+    let entity = window.gameClient.world.getCreature(packet.id);
+    if (!entity || !window.gameClient.player!.canSeeSmall(entity)) return;
     entity.say(packet);
   }
 
   handleEntityTeleport(packet: { id: number; position: Position }): void {
-    let entity = this.gameClient.world.getCreature(packet.id);
+    let entity = window.gameClient.world.getCreature(packet.id);
     if (!entity) return;
 
     entity.setPosition(packet.position);
-    if (this.gameClient.isSelf(entity)) {
-      this.gameClient.world.handleSelfTeleport();
+    if (window.gameClient.isSelf(entity)) {
+      window.gameClient.world.handleSelfTeleport();
     }
   }
 
   handleEntityReference(packet: any): void {
-    if (this.gameClient.player && packet.id === this.gameClient.player.id) {
-      return this.gameClient.world.addCreature(this.gameClient.player);
+    if (window.gameClient.player && packet.id === window.gameClient.player.id) {
+      return window.gameClient.world.addCreature(window.gameClient.player);
     }
     console.log("handleEntityReference: ", packet);
-    this.gameClient.world.createCreature(packet.id, new Creature(this.gameClient, packet));
+    window.gameClient.world.createCreature(packet.id, new Creature(packet));
   }
 
   handleCreatureTurn(packet: { id: number; direction: number }): void {
-    let creature = this.gameClient.world.getCreature(packet.id);
+    let creature = window.gameClient.world.getCreature(packet.id);
     if (!creature) return;
     creature.setTurnBuffer(packet.direction);
   }
 
   handleReceivePrivateMessage(packet: { message: string; name: string }): void {
-    let channel = this.gameClient.interface.channelManager.getChannel(packet.name);
+    let channel = window.gameClient.interface.channelManager.getChannel(packet.name);
     if (!channel) {
-      channel = this.gameClient.interface.channelManager.getChannel("Default");
+      channel = window.gameClient.interface.channelManager.getChannel("Default");
     }
     channel!.addPrivateMessage(packet.message, packet.name);
   }
 
   handleGainExperience(packet: { id: number; experience: number }): void {
-    let creature = this.gameClient.world.getCreature(packet.id);
+    let creature = window.gameClient.world.getCreature(packet.id);
     if (!creature) {
       return console.error("Received experience gain for unknown creature.");
     }
 
-    this.gameClient.interface.screenElementManager.createFloatingTextElement(
+    window.gameClient.interface.screenElementManager.createFloatingTextElement(
       packet.experience.toString(),
       creature.getPosition(),
       Interface.COLORS.WHITE
     );
 
-    if (this.gameClient.player !== creature) return;
+    if (window.gameClient.player !== creature) return;
 
-    this.gameClient.interface.channelManager.addConsoleMessage(
+    window.gameClient.interface.channelManager.addConsoleMessage(
       `You gain ${packet.experience} experience.`,
       Interface.COLORS.WHITE
     );
@@ -599,27 +599,27 @@ class PacketHandler {
   }
 
   handleItemAdd(packet: { id: number; count: number; position: Position; slot: number }): void {
-    let thing = new Thing(this.gameClient, packet.id);
+    let thing = new Thing(packet.id);
 
     if (thing.hasFlag("DatFlagWritableOnce") || thing.hasFlag("DatFlagWritable")) {
-      return this.gameClient.world.addItem(packet.position, new Book(this.gameClient, packet.id), packet.slot);
+      return window.gameClient.world.addItem(packet.position, new Book(packet.id), packet.slot);
     }
 
     if (thing.isFluidContainer() || thing.isSplash()) {
-      return this.gameClient.world.addItem(packet.position, new FluidThing(this.gameClient, packet.id, packet.count), packet.slot);
+      return window.gameClient.world.addItem(packet.position, new FluidThing(packet.id, packet.count), packet.slot);
     }
 
-    this.gameClient.world.addItem(packet.position, new Item(this.gameClient, packet.id, packet.count), packet.slot);
+    window.gameClient.world.addItem(packet.position, new Item(packet.id, packet.count), packet.slot);
   }
 
   private __handleDamageEnvironment(targetCreature: Creature, damage: number, color: number): void {
-    this.gameClient.interface.screenElementManager.createFloatingTextElement(
+    window.gameClient.interface.screenElementManager.createFloatingTextElement(
       damage.toString(),
       targetCreature.getPosition(),
       color
     );
 
-    this.gameClient.interface.channelManager.addConsoleMessage(
+    window.gameClient.interface.channelManager.addConsoleMessage(
       `You lose ${damage} health.`,
       Interface.COLORS.WHITE
     );

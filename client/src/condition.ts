@@ -1,7 +1,7 @@
 import GameClient from "./gameclient";
 
 class ConditionManager {
-    gameClient: GameClient
+    
     private __player: any;
     private __conditions: Set<number>;
   
@@ -21,12 +21,12 @@ class ConditionManager {
     static readonly SATED = 14;
     static readonly HASTE = 15;
   
-    constructor(gameClient: GameClient, player: any, conditions: number[]) {
+    constructor( player: any, conditions: number[]) {
       /*
        * Class ConditionManager
        * Handler for player conditions
        */
-      this.gameClient = gameClient;
+      
       this.__player = player;
       this.__conditions = new Set(conditions);
     }
@@ -47,8 +47,8 @@ class ConditionManager {
       this.__conditions.add(cid);
   
       // Update the status bar
-      if (this.__player === this.gameClient.player) {
-        this.gameClient.interface.statusBar.update();
+      if (this.__player === window.gameClient.player) {
+        window.gameClient.interface.statusBar.update();
       }
   
       if (this.__player.hasCondition(ConditionManager.DRUNK)) {
@@ -67,8 +67,8 @@ class ConditionManager {
       this.__conditions.delete(cid);
   
       // Update the status bar
-      if (this.__player === this.gameClient.player) {
-        this.gameClient.interface.statusBar.update();
+      if (this.__player === window.gameClient.player) {
+        window.gameClient.interface.statusBar.update();
       }
   
       if (!this.__player.hasCondition(ConditionManager.DRUNK)) {

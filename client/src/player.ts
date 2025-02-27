@@ -45,20 +45,20 @@ export default class Player extends Creature {
   __openedContainers: Set<any> = new Set();
   __serverWalkConfirmation: boolean = true;
 
-  constructor(data: PlayerData, gameClient: GameClient) {
-    super(gameClient, data);
+  constructor(data: PlayerData, ) {
+    super( data);
     
     
     this.state = new State();
     this.setState(data);
 
     // Players have equipment
-    this.skills = new Skills(gameClient, data.skills);
-    this.equipment = new Equipment(gameClient, data.equipment);
-    this.spellbook = new Spellbook(gameClient, data.spellbook);
+    this.skills = new Skills( data.skills);
+    this.equipment = new Equipment( data.equipment);
+    this.spellbook = new Spellbook( data.spellbook);
 
     // Container for the player's friend list
-    this.friendlist = new Friendlist(gameClient, data.friendlist);
+    this.friendlist = new Friendlist( data.friendlist);
 
     // Initialize character bars
     this.characterElement.addManaBar((this.state.mana / this.state.maxMana) * 100 + "%");
@@ -198,21 +198,21 @@ export default class Player extends Creature {
     // Friction of the tile
     let groundSpeed = tile.getFriction();
 
-    return Math.ceil(Math.floor(1000 * groundSpeed / calculatedStepSpeed) / this.gameClient.getTickInterval());
+    return Math.ceil(Math.floor(1000 * groundSpeed / calculatedStepSpeed) / window.gameClient.getTickInterval());
   }
 
   /**
    * Returns the tile the player is currently on.
    */
   public getTile(): any {
-    return this.gameClient.world.getTileFromWorldPosition(this.__position);
+    return window.gameClient.world.getTileFromWorldPosition(this.__position);
   }
 
   /**
    * Returns the maximum visible floor for the player.
    */
   public getMaxFloor(): number {
-    return this.gameClient.world.getChunkFromWorldPosition(this.getPosition()).getFirstFloorFromBottom(this.getPosition());
+    return window.gameClient.world.getChunkFromWorldPosition(this.getPosition()).getFirstFloorFromBottom(this.getPosition());
   }
 
   /**
@@ -230,7 +230,7 @@ export default class Player extends Creature {
    */
   public setLevelSkillValue(which: string, value: number): void {
     // TODO: check the percerntage value
-    (this.gameClient.interface.windowManager.getWindow("skill-window")! as SkillWindow).setSkillValue(which, value, value);
+    (window.gameClient.interface.windowManager.getWindow("skill-window")! as SkillWindow).setSkillValue(which, value, value);
   }
 
   /**
@@ -238,13 +238,13 @@ export default class Player extends Creature {
    */
   public setAmbientSound(): void {
     if (this.isUnderground()) {
-      this.gameClient.interface.soundManager.setAmbientTrace("cave");
-      this.gameClient.interface.soundManager.setVolume("rain", 0);
+      window.gameClient.interface.soundManager.setAmbientTrace("cave");
+      window.gameClient.interface.soundManager.setVolume("rain", 0);
     } else {
-      this.gameClient.interface.soundManager.setAmbientTrace("forest");
+      window.gameClient.interface.soundManager.setAmbientTrace("forest");
 
-      if (this.gameClient.renderer.weatherCanvas.isRaining()) {
-        this.gameClient.interface.soundManager.setVolume("rain", 1);
+      if (window.gameClient.renderer.weatherCanvas.isRaining()) {
+        window.gameClient.interface.soundManager.setVolume("rain", 1);
       }
     }
   }
@@ -279,7 +279,7 @@ export default class Player extends Creature {
    */
   public confirmClientWalk(): void {
     if (this.__serverWalkConfirmation) {
-      this.gameClient.renderer.updateTileCache();
+      window.gameClient.renderer.updateTileCache();
     }
 
     this.__serverWalkConfirmation = true;
@@ -312,7 +312,7 @@ export default class Player extends Creature {
    */
   public setTarget(creature: any): void {
     this.__target = creature;
-    (this.gameClient.interface.windowManager.getWindow("battle-window")! as BattleWindow).setTarget(creature);
+    (window.gameClient.interface.windowManager.getWindow("battle-window")! as BattleWindow).setTarget(creature);
   }
 
   /**
@@ -375,6 +375,6 @@ export default class Player extends Creature {
    * Closes a container and removes it from the GUI.
    */
   public closeContainer(container: any): void {
-    this.gameClient.send(new ContainerClosePacket(container.____containerId));
+    window.gameClient.send(new ContainerClosePacket(container.____containerId));
   }
 }

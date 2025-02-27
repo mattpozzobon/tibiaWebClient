@@ -5,10 +5,10 @@ import MessageElement from "./screen-element-message";
 export default class ScreenElementManager {
   public activeTextElements: Set<FloatingElement | MessageElement>;
   public screenWrapper: HTMLElement;
-  public gameClient: GameClient;
+  
 
-  constructor(gameClient: GameClient) {
-    this.gameClient = gameClient;
+  constructor() {
+    
     this.activeTextElements = new Set();
     const wrapper = document.getElementById("text-wrapper");
     if (!wrapper) {
@@ -19,7 +19,7 @@ export default class ScreenElementManager {
 
   public clear(): void {
     // Remove all character elements from the DOM
-    Object.values(this.gameClient.world.activeCreatures).forEach((creature: any) => {
+    Object.values(window.gameClient.world.activeCreatures).forEach((creature: any) => {
       creature.characterElement.remove();
     });
   }
@@ -31,7 +31,7 @@ export default class ScreenElementManager {
     // Render other text bubbles on the screen
     this.activeTextElements.forEach((screenElement) => {
       // Only update the position of the text when it is floating or when the player moves
-      if (this.gameClient.player!.isMoving() || screenElement.constructor.name === "FloatingElement") {
+      if (window.gameClient.player!.isMoving() || screenElement.constructor.name === "FloatingElement") {
         screenElement.setTextPosition();
       }
     });
@@ -39,18 +39,18 @@ export default class ScreenElementManager {
 
   private __renderCharacterElements(): void {
     // Render floating name elements above the active creatures
-    Object.values(this.gameClient.world.activeCreatures).forEach((creature: any) => {
+    Object.values(window.gameClient.world.activeCreatures).forEach((creature: any) => {
       // Do not show the name element when on another floor
-      if (this.gameClient.player!.getPosition().z !== creature.getPosition().z) {
+      if (window.gameClient.player!.getPosition().z !== creature.getPosition().z) {
         return creature.characterElement.hide();
       }
       // Do not waste time rendering creatures that are not visible
-      if (!this.gameClient.player!.canSeeSmall(creature)) {
+      if (!window.gameClient.player!.canSeeSmall(creature)) {
         return creature.characterElement.hide();
       }
       // Set color of nameplate for creatures other than the player
-      if (creature !== this.gameClient.player) {
-        if (this.gameClient.player!.getMaxFloor() > creature.getMaxFloor()) {
+      if (creature !== window.gameClient.player) {
+        if (window.gameClient.player!.getMaxFloor() > creature.getMaxFloor()) {
           creature.characterElement.setGrey();
         } else {
           creature.characterElement.setDefault();
@@ -69,7 +69,7 @@ export default class ScreenElementManager {
     if (document.hidden) {
       return null;
     }
-    return this.__createTextElement(new FloatingElement(this.gameClient, message, position, color));
+    return this.__createTextElement(new FloatingElement(message, position, color));
   }
 
   private __createTextElement(messageElement: FloatingElement | MessageElement): any {
@@ -80,7 +80,7 @@ export default class ScreenElementManager {
     // Must update the position after appending to the parent
     messageElement.setTextPosition();
     // Schedule deletion after the element's duration expires
-    const event = this.gameClient.eventQueue.addEvent(
+    const event = window.gameClient.eventQueue.addEvent(
       this.deleteTextElement.bind(this, messageElement),
       messageElement.getDuration()
     );
@@ -90,12 +90,12 @@ export default class ScreenElementManager {
   public createTextElement(entity: any, message: string, color: number): any {
     // If the entity type is not 1, add the message to the default channel instead.
     if (entity.type !== 1) {
-      this.gameClient.interface.channelManager.getChannel("Default")!.addMessage(message, entity.type, entity.name, color);
+      window.gameClient.interface.channelManager.getChannel("Default")!.addMessage(message, entity.type, entity.name, color);
     }
     if (document.hidden) {
       return null;
     }
-    return this.__createTextElement(new MessageElement(this.gameClient, entity, message, color));
+    return this.__createTextElement(new MessageElement(entity, message, color));
   }
 
   public deleteTextElement(textElement: FloatingElement | MessageElement): void {

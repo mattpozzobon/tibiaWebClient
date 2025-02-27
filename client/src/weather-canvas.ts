@@ -3,7 +3,7 @@ import GameClient from "./gameclient";
 import Position from "./position";
 
 export default class WeatherCanvas {
-  gameClient: GameClient;
+  ;
   public screen: Canvas;
   public cloudPattern: HTMLImageElement;
 
@@ -19,10 +19,10 @@ export default class WeatherCanvas {
   private __rainIntensity: number;
   private __thunderIntensity: number;
 
-  constructor(gameClient: GameClient, screen: Canvas) {
+  constructor(screen: Canvas) {
     // Wrapper for the screen canvas: we do not need an extra canvas
     this.screen = screen;
-    this.gameClient = gameClient;
+    
     // Fading state
     this.__ambientAlpha = 0;
     this.__ambientAlphaTarget = 0;
@@ -62,10 +62,10 @@ export default class WeatherCanvas {
   public setRaining(bool: boolean): void {
     this.__isRaining = bool;
 
-    if (this.__isRaining && !this.gameClient.player!.isUnderground()) {
-      this.gameClient.interface.soundManager.setVolume("rain", 1);
+    if (this.__isRaining && !window.gameClient.player!.isUnderground()) {
+      window.gameClient.interface.soundManager.setVolume("rain", 1);
     } else {
-      this.gameClient.interface.soundManager.setVolume("rain", 0);
+      window.gameClient.interface.soundManager.setVolume("rain", 0);
     }
   }
 
@@ -86,7 +86,7 @@ export default class WeatherCanvas {
 
   public handleThunder(): void {
     if (Math.random() < this.__thunderIntensity && this.isRaining() && this.__flash === 0) {
-      this.gameClient.interface.soundManager.play("thunder");
+      window.gameClient.interface.soundManager.play("thunder");
       this.setThunder();
     }
     this.drawThunder();
@@ -99,7 +99,7 @@ export default class WeatherCanvas {
     const pattern = this.cloudPattern;
 
     // Underground has no weather.
-    if (!this.gameClient.player!.isUnderground()) {
+    if (!window.gameClient.player!.isUnderground()) {
       this.handleThunder();
     }
 
@@ -119,21 +119,21 @@ export default class WeatherCanvas {
 
     // Assuming "off" is a global variable of type Position.
     // todo: CHECK THIS "off"
-    const off = this.gameClient.player!.getMoveOffset();
+    const off = window.gameClient.player!.getMoveOffset();
 
-    const selfx = 0.15 * this.gameClient.renderer.debugger.__nFrames + 256 * Math.cos(0.002 * this.gameClient.renderer.debugger.__nFrames);
-    const selfy = 0.15 * this.gameClient.renderer.debugger.__nFrames + 256 * Math.sin(0.002 * this.gameClient.renderer.debugger.__nFrames);
+    const selfx = 0.15 * window.gameClient.renderer.debugger.__nFrames + 256 * Math.cos(0.002 * window.gameClient.renderer.debugger.__nFrames);
+    const selfy = 0.15 * window.gameClient.renderer.debugger.__nFrames + 256 * Math.sin(0.002 * window.gameClient.renderer.debugger.__nFrames);
 
     // Add self movement of the texture to the static world position.
-    const x = ((32 * (this.gameClient.player!.getPosition().x - off.x)) | 0) + selfx;
-    const y = ((32 * (this.gameClient.player!.getPosition().y - off.y)) | 0) + selfy;
+    const x = ((32 * (window.gameClient.player!.getPosition().x - off.x)) | 0) + selfx;
+    const y = ((32 * (window.gameClient.player!.getPosition().y - off.y)) | 0) + selfy;
     this.drawPattern(pattern, x, y);
 
-    const selfx2 = -0.15 * this.gameClient.renderer.debugger.__nFrames + 256;
-    const selfy2 = -0.15 * this.gameClient.renderer.debugger.__nFrames + 256;
+    const selfx2 = -0.15 * window.gameClient.renderer.debugger.__nFrames + 256;
+    const selfy2 = -0.15 * window.gameClient.renderer.debugger.__nFrames + 256;
 
-    const x2 = ((32 * (this.gameClient.player!.getPosition().x - off.x)) | 0) + selfx2;
-    const y2 = ((32 * (this.gameClient.player!.getPosition().y - off.y)) | 0) + selfy2;
+    const x2 = ((32 * (window.gameClient.player!.getPosition().x - off.x)) | 0) + selfx2;
+    const y2 = ((32 * (window.gameClient.player!.getPosition().y - off.y)) | 0) + selfy2;
     this.drawPattern(pattern, x2, y2);
 
     // Reset global alpha.

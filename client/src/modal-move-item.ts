@@ -12,19 +12,19 @@ export interface MoveItemModalProperties {
 }
 
 export default class MoveItemModal extends Modal {
-  gameClient: GameClient;
+  ;
   private __canvas: Canvas;
   private __slider: HTMLInputElement;
   private __output: HTMLElement;
   private __properties: MoveItemModalProperties | null;
   private __count: number | null;
 
-  constructor(gameClient: GameClient, id: string) {
+  constructor(id: string) {
     super(id);
-    this.gameClient = gameClient;
+    
 
     // Create a canvas for the preview using the element with id "move-count-sprite"
-    this.__canvas = new Canvas(this.gameClient, "move-count-sprite", 32, 32);
+    this.__canvas = new Canvas("move-count-sprite", 32, 32);
 
     // Get slider and output elements from the DOM.
     const slider = document.getElementById("item-amount") as HTMLInputElement | null;
@@ -62,7 +62,7 @@ export default class MoveItemModal extends Modal {
 
   public handleConfirm = (): boolean => {
     // Write the move event to the server.
-    this.gameClient.mouse.sendItemMove(
+    window.gameClient.mouse.sendItemMove(
       this.__properties!.fromObject,
       this.__properties!.toObject,
       this.__count!
@@ -76,7 +76,7 @@ export default class MoveItemModal extends Modal {
     this.__output.innerHTML = String(this.__count);
 
     // Create a temporary fake item with the updated count.
-    const item = new Item(this.gameClient, this.__properties!.item.id, this.__count!);
+    const item = new Item(this.__properties!.item.id, this.__count!);
 
     // Clear the canvas and redraw the sprite.
     this.__canvas.clear();
@@ -88,7 +88,7 @@ export default class MoveItemModal extends Modal {
     const max = Number(this.__slider.max);
 
     // If the shift key is down, adjust the amount in steps of 10.
-    if (this.gameClient.keyboard.isShiftDown()) {
+    if (window.gameClient.keyboard.isShiftDown()) {
       if (amount !== max) {
         amount = Math.round(amount / 10) * 10;
       }

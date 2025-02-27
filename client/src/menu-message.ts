@@ -2,11 +2,11 @@ import Menu from "./menu";
 import GameClient from "./gameclient";
 
 export default class MessageMenu extends Menu {
-  public gameClient: GameClient;
+  
 
-  constructor(gameClient: GameClient, id: string) {
+  constructor(id: string) {
     super(id);
-    this.gameClient = gameClient;
+    
   }
 
   public click = (event: Event): any => {
@@ -30,7 +30,7 @@ export default class MessageMenu extends Menu {
     if (name === null) {
       return false;
     }
-    this.gameClient.interface.channelManager.addPrivateChannel(name);
+    window.gameClient.interface.channelManager.addPrivateChannel(name);
     return true;
   }
 }

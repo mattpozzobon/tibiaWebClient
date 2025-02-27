@@ -5,7 +5,7 @@ import gameClient from "./gameclient"; // adjust as needed
 import GameClient from "./gameclient";
 
 export default class MapModal extends Modal {
-  gameClient: GameClient;
+  ;
   public canvas: Canvas;
   public span: HTMLElement;
   private __center: Position;
@@ -13,10 +13,10 @@ export default class MapModal extends Modal {
   private __boundMoveCallback: (event: MouseEvent) => void;
   private __zoomLevel: number;
 
-  constructor(gameClient: GameClient, id: string) {
+  constructor(id: string) {
     super(id);
-    this.gameClient = gameClient;
-    this.canvas = new Canvas(gameClient, "map-modal-canvas", 256, 256);
+    
+    this.canvas = new Canvas( "map-modal-canvas", 256, 256);
     const spanElem = document.querySelector(".map-modal-wrapper > span");
     if (!spanElem) {
       throw new Error("Span element not found.");
@@ -82,7 +82,7 @@ export default class MapModal extends Modal {
 
   public handleOpen = (): void => {
     // When the modal is opened, center it on the player's current position.
-    this.__center = this.gameClient.player!.getPosition().copy();
+    this.__center = window.gameClient.player!.getPosition().copy();
     this.draw();
   }
 
@@ -102,7 +102,7 @@ export default class MapModal extends Modal {
     this.canvas.clear();
 
     // Load visible chunks from the database.
-    this.gameClient.database.preloadCallback(chunkPositions, (chunks: { [id: string]: any }) => {
+    window.gameClient.database.preloadCallback(chunkPositions, (chunks: { [id: string]: any }) => {
       Object.entries(chunks).forEach(([id, chunk]) => {
         const [x, y, z] = id.split(".").map(Number);
         this.canvas.context.putImageData(
@@ -122,7 +122,7 @@ export default class MapModal extends Modal {
     }
 
     // Optionally, retrieve the player's position (unused here) and drop old map chunks.
-    const pos = this.gameClient.player!.getPosition();
-    this.gameClient.database.dropWorldMapChunks(this.__center);
+    const pos = window.gameClient.player!.getPosition();
+    window.gameClient.database.dropWorldMapChunks(this.__center);
   }
 }

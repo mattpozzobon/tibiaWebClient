@@ -1,13 +1,12 @@
-import GameClient from "./gameclient";
 
 export default class Message {
   message: string;
   color: string;
   private __time: Date;
 
-  constructor(gameClient: GameClient, message: string, color: number) {
+  constructor(message: string, color: number) {
     this.message = message;
-    this.color = gameClient.interface.getHexColor(color);
+    this.color = window.gameClient.interface.getHexColor(color);
     this.__time = new Date();
   }
 

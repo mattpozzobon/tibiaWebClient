@@ -5,7 +5,7 @@ import GameClient from "./gameclient";
 import PacketReader from "./packetreader";
 
 class ObjectBuffer {
-  gameClient: GameClient;
+  ;
   private dataObjects: Record<number, DataObject>;
   __version: number;
   private itemCount: number;
@@ -14,12 +14,12 @@ class ObjectBuffer {
   private distanceCount: number;
   private totalObjectCount: number;
 
-  constructor(gameClient: GameClient) {
+  constructor() {
     /*
      * Class ObjectBuffer
      * Container for Tibia.dat that contains item information and pointers to sprites
      */
-    this.gameClient = gameClient;
+    
     this.dataObjects = {};
     this.__version = 0;
     this.itemCount = 0;
@@ -94,12 +94,12 @@ class ObjectBuffer {
       const result = (event.target as FileReader).result;
       if (result instanceof ArrayBuffer) {
         this.__load(name, result);
-        this.gameClient.database.storeFile(name, result);
+        window.gameClient.database.storeFile(name, result);
       } else {
         throw new Error("Failed to load Tibia.dat: result is not an ArrayBuffer.");
       }
     } catch (exception) {
-      this.gameClient.interface.modalManager.open("floater-connecting", exception);
+      window.gameClient.interface.modalManager.open("floater-connecting", exception);
     }
   }
 
@@ -119,7 +119,7 @@ class ObjectBuffer {
     const start = performance.now();
   
     // Wrap the buffer in a packet reader class.
-    const packet = new PacketReader(this.gameClient, buffer);
+    const packet = new PacketReader(buffer);
   
     // Read the signature from the file.
     const signature = packet.readUInt32().toString(16).toUpperCase();
@@ -150,7 +150,7 @@ class ObjectBuffer {
       // For each group in the data object.
       for (let _ = 0; _ < dataObject.groupCount; _++) {
         // Create a new frame group.
-        const frameGroup = new FrameGroup(this.gameClient);
+        const frameGroup = new FrameGroup();
         frameGroup.type = this.__hasFrameGroups(id) ? packet.readUInt8() : 0;
   
         // Read sprite parameters: defines width and height.
@@ -204,11 +204,11 @@ class ObjectBuffer {
       this.dataObjects[id] = dataObject;
     }
   
-    //LoopedAnimation.initialize(this.gameClient);
+    //LoopedAnimation.initialize(window.gameClient);
   
     console.log(`Completed loading ${this.totalObjectCount} data objects in ${Math.round(performance.now() - start)} milliseconds.`);
   
-    this.gameClient.interface.loadAssetCallback("data", name);
+    window.gameClient.interface.loadAssetCallback("data", name);
   }
 
 

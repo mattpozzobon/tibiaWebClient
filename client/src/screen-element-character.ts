@@ -4,14 +4,14 @@ import Interface from "./interface";
 import ScreenElement from "./screen-element";
 
 export default class CharacterElement extends ScreenElement {
-  gameClient: GameClient;
+  ;
   private __creature: Creature;
   public manaBar?: HTMLElement;
   public energyBar?: HTMLElement;
 
-  constructor(gameClient: GameClient, creature: Creature) {
-    super(gameClient, "character-element-prototype");
-    this.gameClient = gameClient;
+  constructor(creature: Creature) {
+    super( "character-element-prototype");
+    
     this.__creature = creature;
     this.setName(creature.name);
   }
@@ -90,9 +90,9 @@ export default class CharacterElement extends ScreenElement {
   public setTextPosition(): void {
     // Get the offset from the renderer's creature screen position.
     const offset = this.__getAbsoluteOffset(
-      this.gameClient.renderer.getCreatureScreenPosition(this.__creature)
+      window.gameClient.renderer.getCreatureScreenPosition(this.__creature)
     );
-    const fraction = this.gameClient.interface.getSpriteScaling();
+    const fraction = window.gameClient.interface.getSpriteScaling();
     offset.top -= fraction / 2;
     this.__updateTextPosition(offset);
   }

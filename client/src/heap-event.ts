@@ -5,19 +5,19 @@ export default class HeapEvent {
   public length: number;
   public cancelled: boolean;
   public __f: number;
-  private gameClient: GameClient;
+ 
 
-  constructor(gameClient: GameClient, callback: () => void, when: number) {
-    this.gameClient = gameClient;
+  constructor(callback: () => void, when: number) {
+    
     this.callback = callback;
     this.length = when;
     this.cancelled = false;
-    this.__f = gameClient.eventQueue.__internalDelta + when;
+    this.__f = window.gameClient.eventQueue.__internalDelta + when;
   }
 
   public extendTo(when: number): HeapEvent | void {
     this.cancel();
-    return this.gameClient.eventQueue.addEvent(this.callback, this.gameClient.eventQueue.__internalDelta + when);
+    return window.gameClient.eventQueue.addEvent(this.callback, window.gameClient.eventQueue.__internalDelta + when);
   }
 
   public complete(): void {
@@ -31,7 +31,7 @@ export default class HeapEvent {
   }
 
   public remainingMillis(): number {
-    return this.__f - this.gameClient.eventQueue.__internalDelta;
+    return this.__f - window.gameClient.eventQueue.__internalDelta;
   }
 
   public remainingSeconds(): number {

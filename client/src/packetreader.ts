@@ -15,13 +15,13 @@ interface OutfitIdName {
 
 
 export default class PacketReader extends Packet {
-  gameClient: GameClient;
+  ;
   buffer: Uint8Array;
   index: number = 0;
 
-  constructor(gameClient: GameClient, buffer: ArrayBuffer) {
+  constructor(buffer: ArrayBuffer) {
     super();
-    this.gameClient = gameClient;
+    
     this.buffer = new Uint8Array(buffer);
   }
 
@@ -30,7 +30,7 @@ export default class PacketReader extends Packet {
      * Function PacketReader.slice
      * Returns the slice of a packetreader class as a new packetreader class
      */
-    return new PacketReader(this.gameClient, this.buffer.slice(start, end));
+    return new PacketReader(this.buffer.slice(start, end));
   }
   
   public readCharacterStatistics(): { capacity: number; attack: number; armor: number; speed: number } {
@@ -398,13 +398,13 @@ export default class PacketReader extends Packet {
   }
   
   public readThing(id: number, count: number): Item {
-    let thing = new Thing(this.gameClient, id);
+    let thing = new Thing(id);
   
     if (thing.isFluidContainer() || thing.isSplash()) {
-      return new FluidThing(this.gameClient, id, count) as Item;
+      return new FluidThing(id, count) as Item;
     }
   
-    return new Item(this.gameClient, id, count);
+    return new Item(id, count);
   }
 
   public readItem(): Item | null{
@@ -467,7 +467,7 @@ export default class PacketReader extends Packet {
   }
   
   public readOutfit(): Outfit {
-    return new Outfit(this.gameClient, {
+    return new Outfit({
       id: this.readUInt16(),
       details: this.readOutfitDetails(),
       equipment: this.readOutfitEquipment(),
@@ -555,7 +555,7 @@ export default class PacketReader extends Packet {
     let id = this.readUInt32();
     let position = this.readPosition();
     let tiles = this.__readChunkTiles();
-    return new Chunk(this.gameClient, id, position, tiles);
+    return new Chunk(id, position, tiles);
   }
   
   public readPrivateMessage(): { name: string; message: string } {

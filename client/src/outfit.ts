@@ -1,4 +1,3 @@
-import GameClient from "./gameclient";
 
 export interface OutfitDetails {
     head: number;
@@ -18,7 +17,7 @@ export interface OutfitEquipment {
 }
 
 export default class Outfit {
-    gameClient: GameClient;
+    ;
     id: number;
     details: OutfitDetails;
     equipment: OutfitEquipment;
@@ -50,7 +49,6 @@ export default class Outfit {
     ];
   
     constructor(
-      gameClient: GameClient,
       outfit: {
         id: number;
         details: OutfitDetails;
@@ -60,7 +58,7 @@ export default class Outfit {
         addonOne: boolean;
         addonTwo: boolean;
     }) {
-      this.gameClient = gameClient;
+      
       this.id = outfit.id;
       this.details = outfit.details;
       this.equipment = outfit.equipment;
@@ -79,7 +77,7 @@ export default class Outfit {
     }
   
     copy(): Outfit {
-      return new Outfit(this.gameClient, this.serialize());
+      return new Outfit(this.serialize());
     }
   
     serialize() {
@@ -112,39 +110,39 @@ export default class Outfit {
     }
   
     getDataObjectMount(): any {
-      return this.gameClient.dataObjects.getOutfit(this.mount);
+      return window.gameClient.dataObjects.getOutfit(this.mount);
     }
   
     getLeftHandDataObject(): any {
-      return this.gameClient.dataObjects.getOutfit(this.equipment.lefthand);
+      return window.gameClient.dataObjects.getOutfit(this.equipment.lefthand);
     }
   
     getRightHandDataObject(): any {
-      return this.gameClient.dataObjects.getOutfit(this.equipment.righthand);
+      return window.gameClient.dataObjects.getOutfit(this.equipment.righthand);
     }
   
     getHairDataObject(): any {
-      return this.gameClient.dataObjects.getOutfit(this.equipment.hair);
+      return window.gameClient.dataObjects.getOutfit(this.equipment.hair);
     }
   
     getHeadDataObject(): any {
-      return this.gameClient.dataObjects.getOutfit(this.equipment.head);
+      return window.gameClient.dataObjects.getOutfit(this.equipment.head);
     }
   
     getBodyDataObject(): any {
-      return this.gameClient.dataObjects.getOutfit(this.equipment.body);
+      return window.gameClient.dataObjects.getOutfit(this.equipment.body);
     }
   
     getLegsDataObject(): any {
-      return this.gameClient.dataObjects.getOutfit(this.equipment.legs);
+      return window.gameClient.dataObjects.getOutfit(this.equipment.legs);
     }
   
     getFeetDataObject(): any {
-      return this.gameClient.dataObjects.getOutfit(this.equipment.feet);
+      return window.gameClient.dataObjects.getOutfit(this.equipment.feet);
     }
   
     getDataObject(): any {
-      return this.gameClient.dataObjects.getOutfit(this.id);
+      return window.gameClient.dataObjects.getOutfit(this.id);
     }
   
     getColor(which: number): number {

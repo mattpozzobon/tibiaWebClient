@@ -2,8 +2,8 @@ import Channel from "./channel";
 import GameClient from "./gameclient";
 
 export default class PrivateChannel extends Channel {
-  constructor(gameClient: GameClient, name: string) {
-    super(gameClient, name, null);
+  constructor(name: string) {
+    super( name, null);
   }
 
   __getEmptyMessage(): string {

@@ -7,11 +7,11 @@ export default class Animation extends Thing {
   __created: number;
   static DEFAULT_FRAME_LENGTH_MS: number = 100;
   __durations: number[];
-  public gameClient: GameClient;
+  
 
-  constructor(gameClient: GameClient, id: number) {
-    super(gameClient, id);
-    this.gameClient = gameClient;
+  constructor(id: number) {
+    super( id);
+    
     this.__created = performance.now();
     this.__durations = this.__generateDurations();
   }
@@ -59,7 +59,7 @@ export default class Animation extends Thing {
   }
 
   __generateDurations(): number[] {
-    if (!this.gameClient.hasExtendedAnimations()) {
+    if (!window.gameClient.hasExtendedAnimations()) {
       return this.__generateDefaultDurations();
     }
     return this.generateExtendedDurations();

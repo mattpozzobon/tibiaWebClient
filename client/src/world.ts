@@ -17,10 +17,9 @@ export default class World {
   public chunks: any[];
   public pathfinder: any;
   public clock: any;
-  public gameClient: GameClient;
 
-  constructor(gameClient: GameClient, width: number, height: number, depth: number) {
-    this.gameClient = gameClient;
+  constructor(width: number, height: number, depth: number) {
+    
     this.width = width;
     this.height = height;
     this.depth = depth;
@@ -32,20 +31,20 @@ export default class World {
 
     this.activeCreatures = {};
     this.chunks = [];
-    this.pathfinder = new Pathfinder(gameClient);
+    this.pathfinder = new Pathfinder();
     this.clock = new Clock();
   }
 
   public handleSelfTeleport(): void {
-    this.gameClient.player!.__teleported = true;
-    this.gameClient.player!.__serverWalkConfirmation = true;
+    window.gameClient.player!.__teleported = true;
+    window.gameClient.player!.__serverWalkConfirmation = true;
     this.checkEntityReferences();
     this.checkChunks();
-    this.gameClient.renderer.updateTileCache();
-    this.gameClient.renderer.minimap.setCenter();
-    if (this.gameClient.player!.__movementEvent === null) {
-      this.gameClient.player!.__movementEvent = this.gameClient.eventQueue.addEvent(
-        this.gameClient.player!.unlockMovement.bind(this.gameClient.player),
+    window.gameClient.renderer.updateTileCache();
+    window.gameClient.renderer.minimap.setCenter();
+    if (window.gameClient.player!.__movementEvent === null) {
+      window.gameClient.player!.__movementEvent = window.gameClient.eventQueue.addEvent(
+        window.gameClient.player!.unlockMovement.bind(window.gameClient.player),
         10
       );
     }
@@ -65,15 +64,15 @@ export default class World {
 
   public checkEntityReferences(): void {
     Object.values(this.activeCreatures).forEach((activeCreature: any) => {
-      if (this.gameClient.isSelf(activeCreature)) return;
-      if (!this.gameClient.player!.getChunk().besides(activeCreature.getChunk())) {
-        this.gameClient.networkManager.packetHandler.handleEntityRemove(activeCreature.id);
+      if (window.gameClient.isSelf(activeCreature)) return;
+      if (!window.gameClient.player!.getChunk().besides(activeCreature.getChunk())) {
+        window.gameClient.networkManager.packetHandler.handleEntityRemove(activeCreature.id);
       }
     });
   }
 
   public handleCreatureMove(id: number | string, position: Position, speed: number): boolean {
-    this.gameClient.player!.__serverWalkConfirmation = false;
+    window.gameClient.player!.__serverWalkConfirmation = false;
     return this.__handleCreatureMove(id, position, speed);
   }
 
@@ -94,8 +93,8 @@ export default class World {
     console.log('__handleCreatureMove 2', speed);
     creature.moveTo(position, speed);
 
-    if (creature === this.gameClient.player) {
-      this.gameClient.player!.setAmbientSound();
+    if (creature === window.gameClient.player) {
+      window.gameClient.player!.setAmbientSound();
     }
     return true;
   }
@@ -103,7 +102,7 @@ export default class World {
   public createCreature(id: number | string, creature: any): any {
     this.activeCreatures[id] = creature;
     this.addCreature(creature);
-    return (this.gameClient.interface.windowManager.getWindow("battle-window") as BattleWindow).addCreature(creature);
+    return (window.gameClient.interface.windowManager.getWindow("battle-window") as BattleWindow).addCreature(creature);
   }
 
   public getCreature(id: number | string): any {
@@ -113,7 +112,7 @@ export default class World {
 
   public checkChunks(): void {
     this.chunks = this.chunks.filter((chunk: any) => {
-      return this.gameClient.player!.getChunk().besides(chunk);
+      return window.gameClient.player!.getChunk().besides(chunk);
     });
   }
 
@@ -202,17 +201,17 @@ export default class World {
     const monster = monsters.values().next().value;
   
     // You cannot target yourself
-    if (monster === this.gameClient.player) {
+    if (monster === window.gameClient.player) {
       return;
     }
   
     // Only monsters can be attacked
     if (monster.constructor.name !== "Creature") {
-      return this.gameClient.interface.notificationManager.setCancelMessage("You cannot attack this creature.");
+      return window.gameClient.interface.notificationManager.setCancelMessage("You cannot attack this creature.");
     }
   
-    this.gameClient.player!.setTarget(monster);
-    this.gameClient.send(new TargetPacket(monster.id));
+    window.gameClient.player!.setTarget(monster);
+    window.gameClient.send(new TargetPacket(monster.id));
   }
 
   public getTileFromWorldPosition(worldPosition: Position): any {

@@ -24,8 +24,8 @@ export default class SpriteBuffer {
   constructor(size: number) {
     this.size = size;
     this.__spriteBufferArray = new Array(size * size).fill(null);
-    this.__spriteBufferCanvas = new Canvas(window.gameClient, null, 32 * size, 32 * size);
-    this.compositionCanvas = new Canvas(window.gameClient, null, 32, 32);
+    this.__spriteBufferCanvas = new Canvas(null, 32 * size, 32 * size);
+    this.compositionCanvas = new Canvas(null, 32, 32);
   }
 
   getVersion(): number | null {
@@ -108,7 +108,7 @@ export default class SpriteBuffer {
 
   __load(name: string, buffer: ArrayBuffer): void {
     let start = performance.now();
-    this.packet = new PacketReader(window.gameClient, buffer);
+    this.packet = new PacketReader(buffer);
 
     let signature = this.packet.readUInt32().toString(16).toUpperCase();
     if (!SpriteBuffer.SIGNATURES.hasOwnProperty(signature)) {

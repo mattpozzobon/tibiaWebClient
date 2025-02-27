@@ -3,13 +3,13 @@ import SkillWindow from "./window-skill";
 
 export default class Skills {
   private __skills: { [key: string]: any };
-  private gameClient: GameClient;
+ 
 
-  constructor(gameClient: GameClient, skills: { [key: string]: any }) {
-    this.gameClient = gameClient;
+  constructor(skills: { [key: string]: any }) {
+    
     this.__skills = skills;
     Object.entries(this.__skills).forEach(([key, value]) => {
-      (this.gameClient.interface.windowManager.getWindow("skill-window") as SkillWindow).setSkillValue(key, value, Math.random() * 100);
+      (window.gameClient.interface.windowManager.getWindow("skill-window") as SkillWindow).setSkillValue(key, value, Math.random() * 100);
     });
   }
 }

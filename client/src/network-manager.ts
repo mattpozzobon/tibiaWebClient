@@ -2,6 +2,7 @@ import { CONST } from "./helper/appContext";
 import PacketHandler from "./packet-handler";
 import PacketReader from "./packetreader";
 import { LatencyPacket } from "./protocol";
+import SpriteBuffer from "./sprite-buffer";
 
 class NetworkManager {
   socket!: WebSocket;
@@ -242,7 +243,7 @@ class NetworkManager {
       .then(([dataSprites, dataObjects]) => {
 
         window.gameClient.dataObjects.load("Tibia.dat", {target: {result: dataObjects} } as unknown as ProgressEvent<FileReader>);
-        window.gameClient.spriteBuffer.load("Tibia.spr", { target: { result: dataSprites } } as unknown as ProgressEvent<FileReader>);
+        SpriteBuffer.load("Tibia.spr", { target: { result: dataSprites } } as unknown as ProgressEvent<FileReader>);
         
       })
       .catch(error => {

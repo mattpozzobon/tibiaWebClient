@@ -1,5 +1,4 @@
 import Canvas from "./canvas";
-import GameClient from "./gameclient";
 import Position from "./position";
 
 export default class OutlineCanvas extends Canvas {

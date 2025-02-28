@@ -1,4 +1,5 @@
 import GameClient from "./gameclient";
+import SpriteBuffer from "./sprite-buffer";
 
 export default class Database {
  
@@ -161,6 +162,7 @@ export default class Database {
   }
 
   private __loadGameAssets(): void {
+    console.log('LOAD FROM GAME');
     window.gameClient.setErrorModal("Welcome back! Loading game assets from local storage.");
     this.transaction("files", "readonly").getAll().onsuccess = (event: Event): void => {
       const target = event.target as IDBRequest;
@@ -172,7 +174,7 @@ export default class Database {
           case "Tibia.dat":
             return window.gameClient.dataObjects.__load(file.filename, file.data);
           case "Tibia.spr":
-            return window.gameClient.spriteBuffer.__load(file.filename, file.data);
+            return SpriteBuffer.load(file.filename, file.data);
           default:
             return;
         }

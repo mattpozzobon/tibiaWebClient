@@ -63,7 +63,7 @@ export default class GameClient {
     let serverData = packet.readServerData();
 
     if (
-      serverData.clientVersion !== this.spriteBuffer.getVersion() ||
+      serverData.clientVersion !== SpriteBuffer.__version ||
       serverData.clientVersion !== this.dataObjects.getVersion()
     ) {
       this.disconnect();
@@ -71,7 +71,7 @@ export default class GameClient {
 
       this.interface.modalManager.open(
         "floater-connecting",
-        `Server version (${serverData.clientVersion}) mismatch with client sprite (${this.spriteBuffer.getVersion()}) or object (${this.dataObjects.getVersion()}) data.`
+        `Server version (${serverData.clientVersion}) mismatch with client sprite (${SpriteBuffer.__version}) or object (${this.dataObjects.getVersion()}) data.`
       );
     }
 

@@ -9,6 +9,8 @@ import { KeyringOpenPacket, LogoutPacket } from "./protocol";
 import ScreenElementManager from "./screen-element-manager";
 import Settings from "./settings";
 import SoundManager from "./sound-manager";
+import SpriteBuffer from "./sprite-buffer";
+import spriteBuffer from "./sprite-buffer";
 import State from "./state";
 import StatusBar from "./status-bar";
 import WindowManager from "./window-manager";
@@ -208,7 +210,7 @@ export default class Interface {
       if (file.name === "Tibia.dat") {
         reader.addEventListener("load", (e) => window.gameClient.dataObjects.load(file.name, e));
       } else if (file.name === "Tibia.spr") {
-        reader.addEventListener("load", (e) => window.gameClient.spriteBuffer.load(file.name, e));
+        reader.addEventListener("load", (e) => spriteBuffer.load(file.name, e));
       } else {
         console.error(`Unknown asset file ${file.name} was selected.`);
         return;
@@ -223,7 +225,7 @@ export default class Interface {
       const element = document.getElementById("sprites-loaded");
       if (element) {
         element.style.color = "green";
-        element.innerHTML = `${filename} (${window.gameClient.spriteBuffer.__version})`;
+        element.innerHTML = `${filename} (${SpriteBuffer.__version})`;
       }
     } else if (which === "data") {
       this.state.dataLoaded = true;

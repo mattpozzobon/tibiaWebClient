@@ -1,17 +1,16 @@
 import BinaryHeap from "./binary-heap";
-import GameClient from "./gameclient";
 import { CONST } from "./helper/appContext";
 import Keyboard from "./keyboard";
 import Position from "./position";
 
-interface IPathNode {
+export interface IPathNode {
   __position: Position;
   __visited: boolean;
   __closed: boolean;
   __g: number;
   __h: number;
   __f: number;
-  __parent?: IPathNode | null;
+  __parentNode?: IPathNode | null;
   neighbours: IPathNode[];
   isOccupied(): boolean;
   cleanPathfinding(): void;
@@ -74,7 +73,7 @@ export default class Pathfinder {
         if (!visited || gScore < neighbourNode.__g) {
           // Found a better path to the neighbor.
           neighbourNode.__visited = true;
-          neighbourNode.__parent = currentNode;
+          neighbourNode.__parentNode = currentNode;
           neighbourNode.__h = neighbourNode.__h || this.heuristic(neighbourNode, to);
           neighbourNode.__g = gScore;
           neighbourNode.__f = neighbourNode.__g + neighbourNode.__h;
@@ -105,16 +104,24 @@ export default class Pathfinder {
   public pathTo(tile: IPathNode): IPathNode[] {
     // Trace the path backwards from the given tile.
     const path: IPathNode[] = [];
-    while (tile.__parent) {
+    while (tile.__parentNode) {
       path.unshift(tile);
-      tile = tile.__parent;
+      tile = tile.__parentNode;
     }
     return path;
   }
 
   public findPath(begin: Position, stop: Position): void {
-    let start: IPathNode = window.gameClient.world.getTileFromWorldPosition(begin);
-    const end: IPathNode = window.gameClient.world.getTileFromWorldPosition(stop);
+    let start = window.gameClient.world.getTileFromWorldPosition(begin);
+    if (start === null) {
+      window.gameClient.interface.setCancelMessage("Start position is invalid.");
+      return;
+    }
+    const end = window.gameClient.world.getTileFromWorldPosition(stop);
+    if (end === null) {
+      window.gameClient.interface.setCancelMessage("End position is invalid.");
+      return;
+    }
   
     const path = this.search(start, end);
   
@@ -125,8 +132,8 @@ export default class Pathfinder {
   
     // Determine the relative movement sequence to take.
     const movementSequence = path.map((node: IPathNode) => {
-      const tmp = start.__position.getLookDirection(node.__position);
-      start = node;
+      const tmp = start?.__position.getLookDirection(node.__position);
+      start = window.gameClient.world.getTileFromWorldPosition(node.__position);
       return tmp;
     });
   

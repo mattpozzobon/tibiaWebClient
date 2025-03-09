@@ -8,7 +8,6 @@ import Keyboard from "./keyboard";
 import Mouse from "./mouse";
 import NetworkManager from "./network-manager";
 import ObjectBuffer from "./object-buffer";
-import Packet from "./packet";
 import PacketReader from "./packetreader";
 import Player from "./player";
 import Renderer from "./renderer";

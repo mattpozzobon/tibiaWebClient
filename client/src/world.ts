@@ -4,6 +4,7 @@ import GameClient from "./gameclient";
 import Pathfinder from "./pathfinder";
 import Position from "./position";
 import { TargetPacket } from "./protocol";
+import Tile from "./tile";
 import BattleWindow from "./window-battle";
 
 export default class World {
@@ -77,7 +78,6 @@ export default class World {
   }
 
   public __handleCreatureMove(id: number | string, position: Position, speed: number): boolean {
-    console.log('__handleCreatureMove 1', speed);
     const creature = this.getCreature(id);
     if (creature === null) return false;
     if (position.equals(creature.getPosition())) return false;
@@ -90,7 +90,6 @@ export default class World {
     if (tile === null) return false;
     tile.addCreature(creature);
 
-    console.log('__handleCreatureMove 2', speed);
     creature.moveTo(position, speed);
 
     if (creature === window.gameClient.player) {
@@ -214,7 +213,7 @@ export default class World {
     window.gameClient.send(new TargetPacket(monster.id));
   }
 
-  public getTileFromWorldPosition(worldPosition: Position): any {
+  public getTileFromWorldPosition(worldPosition: Position): Tile | null{
     const chunk = this.getChunkFromWorldPosition(worldPosition);
     if (chunk === null) return null;
     return chunk.getTileFromWorldPosition(worldPosition);

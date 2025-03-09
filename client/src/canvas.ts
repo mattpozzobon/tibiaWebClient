@@ -1,6 +1,5 @@
 import Creature from "./creature";
 import FrameGroup from "./frame-group";
-import GameClient from "./gameclient";
 import Interface from "./interface";
 import Position from "./position";
 import Sprite from "./sprite";
@@ -315,13 +314,14 @@ export default class Canvas {
      */
     let drawPosition = new Position(position.x - offset, position.y - offset, 0);
   
+    //TODO: Revisit spriteBuffer
     this.__drawCharacterLayer(spriteBuffer, outfit, characterGroup, characterFrame, xPattern, zPattern, drawPosition, size, 0, false);
-    //if (headGroup) this.__drawCharacterLayer(spriteBuffer, outfit, headGroup, headFrame, xPattern, zPattern, drawPosition, size, 0, false);
-    if (bodyGroup) this.__drawCharacterLayer(spriteBuffer, outfit, bodyGroup, bodyFrame, xPattern, zPattern, drawPosition, size, 0, false);
-    if (legsGroup) this.__drawCharacterLayer(spriteBuffer, outfit, legsGroup, legsFrame, xPattern, zPattern, drawPosition, size, 0, false);
-    if (feetGroup) this.__drawCharacterLayer(spriteBuffer, outfit, feetGroup, feetFrame, xPattern, zPattern, drawPosition, size, 0, false);
-    if (leftHandGroup) this.__drawCharacterLayer(spriteBuffer, outfit, leftHandGroup, leftHandFrame, xPattern, zPattern, drawPosition, size, 0, false);
-    if (rightHandGroup) this.__drawCharacterLayer(spriteBuffer, outfit, rightHandGroup, rightHandFrame, xPattern, zPattern, drawPosition, size, 0, false);
+   
+    if (bodyGroup) this.__drawCharacterLayer(new SpriteBuffer(64), outfit, bodyGroup, bodyFrame, xPattern, zPattern, drawPosition, size, 0, false);
+    if (legsGroup) this.__drawCharacterLayer(new SpriteBuffer(64), outfit, legsGroup, legsFrame, xPattern, zPattern, drawPosition, size, 0, false);
+    if (feetGroup) this.__drawCharacterLayer(new SpriteBuffer(64), outfit, feetGroup, feetFrame, xPattern, zPattern, drawPosition, size, 0, false);
+    if (leftHandGroup) this.__drawCharacterLayer(new SpriteBuffer(64), outfit, leftHandGroup, leftHandFrame, xPattern, zPattern, drawPosition, size, 0, false);
+    if (rightHandGroup) this.__drawCharacterLayer(new SpriteBuffer(64), outfit, rightHandGroup, rightHandFrame, xPattern, zPattern, drawPosition, size, 0, false);
   
     if (headGroup) {
       this.__drawCharacterLayer(new SpriteBuffer(64), outfit, headGroup, headFrame, xPattern, zPattern, drawPosition, size, 0, false);

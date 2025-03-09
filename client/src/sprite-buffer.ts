@@ -58,13 +58,8 @@ export default class SpriteBuffer {
   /** 🔹 Get a sprite, fetching if necessary */
   get(id: number): Sprite | null {
     if (id === 0) return null;
-
-    if (!this.has(id)) {
-        if (!SpriteBuffer.__globalSpriteAddressPointers[id]) {
-            console.error(`Sprite address for ID ${id} does not exist in global storage.`);
-        }
-        return this.__add(id);
-    }
+    if (!this.has(id)) 
+      return this.__add(id);
     return this.__get(id);
   }
 
@@ -146,9 +141,6 @@ export default class SpriteBuffer {
   /** 🔹 Load image data from global storage */
   private __getImageData(id: number): ImageData {
     const address = SpriteBuffer.__globalSpriteAddressPointers[id];
-    if (address === undefined) {
-      throw new Error(`Sprite address for id ${id} not found.`);
-    }
     return this.__loadSingleSprite(address);
   }
 

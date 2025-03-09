@@ -341,7 +341,6 @@ export default class PacketReader extends Packet {
       position: this.readPosition(),
       speed: this.readUInt16(),
     };
-    console.log('Speed from server: ', entityMove.speed);
     return entityMove;
   }
   

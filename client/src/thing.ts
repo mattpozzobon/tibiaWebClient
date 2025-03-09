@@ -1,3 +1,4 @@
+import { PropBitFlag } from "./bitflag";
 import Container from "./container";
 import { DataObject } from "./dataobject";
 import FrameGroup from "./frame-group";
@@ -46,35 +47,35 @@ export default class Thing {
     }
   
     isMultiUse(): boolean {
-      return this.hasFlag("DatFlagMultiUse");
+      return this.hasFlag(PropBitFlag.DatFlagMultiUse);
     }
   
     isElevation(): boolean {
-      return this.hasFlag("DatFlagElevation");
+      return this.hasFlag(PropBitFlag.DatFlagElevation);
     }
   
     isRotateable(): boolean {
-      return this.hasFlag("DatFlagRotateable");
+      return this.hasFlag(PropBitFlag.DatFlagRotateable);
     }
   
     isPickupable(): boolean {
-      return this.hasFlag("DatFlagPickupable");
+      return this.hasFlag(PropBitFlag.DatFlagPickupable);
     }
   
     isSplash(): boolean {
-      return this.hasFlag("DatFlagSplash");
+      return this.hasFlag(PropBitFlag.DatFlagSplash);
     }
   
     isStackable(): boolean {
-      return this.hasFlag("DatFlagStackable");
+      return this.hasFlag(PropBitFlag.DatFlagStackable);
     }
   
     isFluidContainer(): boolean {
-      return this.hasFlag("DatFlagFluidContainer");
+      return this.hasFlag(PropBitFlag.DatFlagFluidContainer);
     }
   
     isLight(): boolean {
-      return this.hasFlag("DatFlagLight");
+      return this.hasFlag(PropBitFlag.DatFlagLight);
     }
   
     __getGlobalFrame(): number {
@@ -104,7 +105,7 @@ export default class Thing {
        * Returns the minimap color of a thing
        */
       if (this.id === 0) return null;
-      if (!this.hasFlag("DatFlagMinimapColor")) return null;
+      if (!this.hasFlag(PropBitFlag.DatFlagMinimapColor)) return null;
       return this.getDataObject().properties.minimapColor;
     }
   

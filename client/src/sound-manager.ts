@@ -41,7 +41,7 @@ export default class SoundManager {
 
   public playWalkBit(position: any): void {
     const tile = window.gameClient.world.getTileFromWorldPosition(position);
-    if (tile.id === 405) {
+    if (tile?.id === 405) {
       this.play("wood");
     } else {
       this.play("grass-walk");

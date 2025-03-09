@@ -1,4 +1,3 @@
-import GameClient from "./gameclient";
 import GameInterface from "./interface";
 
 interface SettingsState {
@@ -10,14 +9,11 @@ interface SettingsState {
 
 export default class Settings {
   gameInterface: GameInterface;
-  ;
   private __state!: SettingsState;
 
   constructor(gameInterface: GameInterface) {
     this.gameInterface = gameInterface;
     
-  
-
     // Set the volume slider callback function.
     const volumeSlider = document.getElementById("volume-slider") as HTMLInputElement | null;
     if (volumeSlider) {
@@ -33,7 +29,7 @@ export default class Settings {
     // Attach event listeners for resolution changes.
     const enableResolution = document.getElementById("enable-resolution");
     const resolution = document.getElementById("resolution");
-    // Assuming Interface.prototype.handleResize exists and is typed properly.
+
     if (enableResolution) {
       // Bind to the parent's handleResize method.
       enableResolution.addEventListener("change", this.gameInterface.handleResize.bind(this.gameInterface));

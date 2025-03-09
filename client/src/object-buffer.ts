@@ -142,6 +142,9 @@ class ObjectBuffer {
     for (let id = 100; id <= this.totalObjectCount; id++) {
       const flags = this.__readFlags(packet);
       // Create a new data object.
+
+      if (id === 100)
+        console.log('flags',flags);
       const dataObject = new DataObject(flags);
   
       // Update the group count if this is an outfit.
@@ -315,7 +318,7 @@ class ObjectBuffer {
   }  
 
   public __readFlags(packet: PacketReader): { flags: BitFlagGenerator; properties: any } {
-    const flags = PropBitFlag;
+    const flags = PropBitFlag.clone(); 
     const properties: any = {};
   
     while (true) {

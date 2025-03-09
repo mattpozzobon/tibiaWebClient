@@ -5,7 +5,6 @@ import Chunk from "./chunk";
 import ConditionManager from "./condition";
 import Creature from "./creature";
 import DistanceAnimation from "./distance-animation";
-import GameClient from "./gameclient";
 import { CONST } from "./helper/appContext";
 import Interface from "./interface";
 import Position from "./position";
@@ -17,6 +16,7 @@ import WeatherCanvas from "./weather-canvas";
 import OutlineCanvas from "./outline-canvas";
 import Minimap from "./minimap";
 import Debugger from "./debugger";
+import Item from "./item";
 
 export default class Renderer {
   __animationLayers = new Array();
@@ -45,22 +45,11 @@ export default class Renderer {
 
   constructor() {
     // Create main canvases using values from Interface.
-    
+    this.screen = new Canvas("screen", Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
+    this.lightscreen = new LightCanvas(null, Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
 
-    this.screen = new Canvas(
-      "screen",
-      Interface.SCREEN_WIDTH_MIN,
-      Interface.SCREEN_HEIGHT_MIN
-    );
-
-    this.lightscreen = new LightCanvas(
-      null,
-      Interface.SCREEN_WIDTH_MIN,
-      Interface.SCREEN_HEIGHT_MIN
-    );
-
-    this.weatherCanvas = new WeatherCanvas( this.screen);
-    this.outlineCanvas = new OutlineCanvas( null, 130, 130);
+    this.weatherCanvas = new WeatherCanvas(this.screen);
+    this.outlineCanvas = new OutlineCanvas(null, 130, 130);
     this.minimap = new Minimap(); // TODO: CHECK IF THIS IS NECESSARY: gameClient.world.width, gameClient.world.height
     this.debugger = new Debugger();
 
@@ -337,9 +326,9 @@ export default class Renderer {
     const items = tile.items;
   
     // Render the items on the tile
-    items.forEach((item: any, i: number) => {
+    items.forEach((item: Item, i: number) => {
       // Immediately skip objects with on-top property: these are rendered later
-      if (item.hasFlag(PropBitFlag.flags.DatFlagOnTop)) {
+      if (item.hasFlag(PropBitFlag.DatFlagOnTop)) {
         return;
       }
   
@@ -361,7 +350,7 @@ export default class Renderer {
       if (item.isPickupable() && i === items.length - 1 && tile === window.gameClient.mouse.getCurrentTileHover()) {
         this.screen.drawSpriteOverlay(item, renderPosition, 32);
       }
-  
+      
       // Add the elevation of the item
       if (item.isElevation()) {
         tile.addElevation(item.getDataObject().properties.elevation);
@@ -383,7 +372,7 @@ export default class Renderer {
   public __renderAlwaysOnTopItems(items: any[], position: Position): void {
     // Renders the items that are always on top of the other items
     items.forEach((item: any) => {
-      if (!item.hasFlag(PropBitFlag.flags.DatFlagOnTop)) {
+      if (!item.hasFlag(PropBitFlag.DatFlagOnTop)) {
         return;
       }
       this.screen.drawSprite(item, position, 32);

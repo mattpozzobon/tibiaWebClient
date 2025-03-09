@@ -237,11 +237,11 @@ class PacketHandler {
   getTileUppie(position: Position): Tile | null {
     let tile = window.gameClient.world.getTileFromWorldPosition(position);
 
-    if (!tile.isOccupied()) {
+    if (tile && !tile.isOccupied()) {
       return tile;
     }
 
-    if (tile.id === 0) {
+    if (tile?.id === 0) {
       return window.gameClient.world.getTileFromWorldPosition(position.down());
     }
 
@@ -255,11 +255,11 @@ class PacketHandler {
   clientSideMoveCheck(position: Position): boolean {
     let tile = window.gameClient.world.getTileFromWorldPosition(position);
 
-    if (tile.monsters.size > 0) {
+    if (tile && tile.monsters.size > 0) {
       return true;
     }
 
-    if (tile.id === 0) {
+    if (tile?.id === 0) {
       if (window.gameClient.player!.__position.isDiagonal(position)) {
         return true;
       }
@@ -284,7 +284,7 @@ class PacketHandler {
       }
     }
 
-    return tile.isOccupied();
+    return !!tile?.isOccupied();
   }
 
   handlePlayerMove(position: Position): boolean {
@@ -518,7 +518,6 @@ class PacketHandler {
     let entity = window.gameClient.world.getCreature(packet.id);
     if (!entity) return;
 
-    console.log("__handleCreatureMove", packet.speed);
     window.gameClient.world.__handleCreatureMove(packet.id, packet.position, packet.speed);
 
     if (window.gameClient.isSelf(entity)) {

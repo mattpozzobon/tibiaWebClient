@@ -75,11 +75,17 @@ export default class HotbarManager {
     this.__saveConfiguration();
   }
 
-  public handleKeyPress(key: number): void {
-    // For this example, we assume F1 corresponds to key code 112.
+  public handleKeyPress(key: string | number): void {
     const F1_KEY = 112;
-    this.__handleClick(key - F1_KEY);
-  }
+
+    if (typeof key === "string" && key.startsWith("F")) {
+        key = parseInt(key.slice(1)) + 111; // Convert "F1" → 112
+    }
+
+    if (typeof key === "number") {
+        this.__handleClick(key - F1_KEY);
+    }
+}
 
   public render(): void {
     this.slots.forEach((slot) => {

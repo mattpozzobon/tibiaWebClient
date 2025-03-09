@@ -1,12 +1,15 @@
+import { PropBitFlag } from "./bitflag";
 import ConditionManager from "./condition";
+import Container from "./container";
 import FrameGroup from "./frame-group";
 import Item from "./item";
+import { IPathNode } from "./pathfinder";
 import Position from "./position";
 import Thing from "./thing";
 
 
-export default class Tile extends Thing {
-  private __position: Position;
+export default class Tile extends Thing implements IPathNode {
+  __position: Position;
   private __renderElevation: number = 0;
   private __animations: Set<any> = new Set();
   private __deferredCreatures: Set<any> = new Set();
@@ -15,12 +18,14 @@ export default class Tile extends Thing {
   items: Item[];
   monsters: Set<any> = new Set();
 
+  // Pathfinding properties
   public __f: number = 0;
   public __g: number = 0;
   public __h: number = 0;
   public __visited: boolean = false;
   public __closed: boolean = false;
-  public __parent: Tile | null = null;
+  public __parentNode: IPathNode | null = null;
+  public neighbours: IPathNode[] = []; // Store neighboring tiles for pathfinding
 
   constructor(tile: { id: number; flags: number; zone: number; items: Item[] }, position: Position) {
     super(tile.id);
@@ -107,11 +112,17 @@ export default class Tile extends Thing {
   }
 
   isItemBlocked(): boolean {
-    return this.items.some(item => !item.isWalkable());
+    for(let i = 0; i < this.items.length; i++) {
+      if(!this.items[i].isWalkable()) {
+        return true;
+      }
+    }
+  
+    return false;
   }
 
   isTranslucent(): boolean {
-    return this.hasFlag("DatFlagTranslucent");
+    return this.hasFlag(PropBitFlag.DatFlagTranslucent);
   }
 
   isHookSouth(): boolean {
@@ -123,8 +134,8 @@ export default class Tile extends Thing {
   }
 
   isWalkable(): boolean {
-    return !this.hasFlag("DatFlagNotWalkable");
-  }
+    return !this.hasFlag(PropBitFlag.DatFlagNotWalkable);
+  } 
 
   isOccupied(): boolean {
     if (this.id === 0 || !this.isWalkable() || this.isItemBlocked()) {

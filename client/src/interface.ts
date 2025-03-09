@@ -16,7 +16,6 @@ import StatusBar from "./status-bar";
 import WindowManager from "./window-manager";
 
 export default class Interface {
-  ;
   settings: Settings;
   channelManager: ChannelManager;
   hotbarManager: HotbarManager;

@@ -309,7 +309,7 @@ export default class Creature {
     this.__position = position;
     this.__chunk = window.gameClient.world.getChunkFromWorldPosition(position);
     // Add the creature to the new tile.
-    window.gameClient.world.getTileFromWorldPosition(position).addCreature(this);
+    window.gameClient.world.getTileFromWorldPosition(position)?.addCreature(this);
   }
 
   public getHealthPercentage(): string {

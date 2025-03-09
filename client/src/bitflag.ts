@@ -32,8 +32,6 @@ export interface PropFlags {
 }
 
 export default class BitFlagGenerator implements PropFlags {
-  // These properties are declared so that they’re accessible as:
-  // PropBitFlag.DatFlagNotWalkable, etc.
   public DatFlagGround!: number;
   public DatFlagGroundBorder!: number;
   public DatFlagOnBottom!: number;
@@ -76,10 +74,14 @@ export default class BitFlagGenerator implements PropFlags {
 
     flagNames.forEach((flag, i) => {
       const value = 1 << i;
-      this.flags[flag as string] = value;
-      // Expose the flag as a property on the instance.
+      this.flags[flag] = value;
       (this as any)[flag] = value;
     });
+  }
+
+  // ✅ Add a clone method to create a new instance with the same flags
+  clone(): BitFlagGenerator {
+    return new BitFlagGenerator(Object.keys(this.flags) as (keyof PropFlags)[]);
   }
 
   getFlags(): Record<string, number> {

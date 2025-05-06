@@ -48,7 +48,7 @@ class ConditionManager {
   
       // Update the status bar
       if (this.__player === window.gameClient.player) {
-        window.gameClient.interface.statusBar.update();
+       // window.gameClient.interface.statusBar.update();
       }
   
       if (this.__player.hasCondition(ConditionManager.DRUNK)) {
@@ -68,7 +68,7 @@ class ConditionManager {
   
       // Update the status bar
       if (this.__player === window.gameClient.player) {
-        window.gameClient.interface.statusBar.update();
+        //window.gameClient.interface.statusBar.update();
       }
   
       if (!this.__player.hasCondition(ConditionManager.DRUNK)) {

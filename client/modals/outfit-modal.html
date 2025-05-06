@@ -1,0 +1,82 @@
+<div id="outfit-modal" class="modal">
+    <button class="close-button-transparent symbol-button" action="cancel" value="Cancel">✕</button>
+    <div class="modal-header">Change Outfit</div>
+    <div class="modal-body">
+      <div class="change-outfit-wrapper">
+        <div class="outfit-canvas-wrapper">
+          <div class="button-wrapper">
+            <button id="rotate-outfit" class="symbol-button">⭮</button>
+          </div>
+          <canvas id="outfit-example" width="128" height="128"></canvas>
+        </div>
+        
+        <!-- Wrapper for changing head, body, legs, feet to a different color -->
+        <div class="outfit-color-picker-wrapper">
+      
+          <div class="outfit-button-row">
+            <button id="outfit-head" class="outfit-face-picker">Head</button>
+            <button id="outfit-body" class="outfit-face-picker">Body</button>
+            <button id="outfit-legs" class="outfit-face-picker">Legs</button>
+            <button id="outfit-feet" class="outfit-face-picker">Feet</button>
+          </div>
+      
+          <!-- Wrapper for all color selectors -->
+          <div class="outfit-color-picker">
+            <div class="outfit-color-picker-row">
+              <button style="background-color: rgb(255, 255, 255);" index="0"></button><button style="background-color: rgb(255, 212, 191);" index="1"></button><button style="background-color: rgb(255, 233, 191);" index="2"></button><button style="background-color: rgb(255, 255, 191);" index="3"></button><button style="background-color: rgb(233, 255, 191);" index="4"></button><button style="background-color: rgb(212, 255, 191);" index="5"></button><button style="background-color: rgb(191, 255, 191);" index="6"></button><button style="background-color: rgb(191, 255, 212);" index="7"></button><button style="background-color: rgb(191, 255, 233);" index="8"></button><button style="background-color: rgb(191, 255, 255);" index="9"></button><button style="background-color: rgb(191, 233, 255);" index="10"></button><button style="background-color: rgb(191, 212, 255);" index="11"></button><button style="background-color: rgb(191, 191, 255);" index="12"></button><button style="background-color: rgb(212, 191, 255);" index="13"></button><button style="background-color: rgb(233, 191, 255);" index="14"></button><button style="background-color: rgb(255, 191, 255);" index="15"></button><button style="background-color: rgb(255, 191, 233);" index="16"></button><button style="background-color: rgb(255, 191, 212);" index="17"></button><button style="background-color: rgb(255, 191, 191);" index="18"></button>
+            </div>
+            <div class="outfit-color-picker-row">
+            <button style="background-color: rgb(218, 218, 218);" index="19"></button><button style="background-color: rgb(191, 159, 143);" index="20"></button><button style="background-color: rgb(191, 175, 143);" index="21"></button><button style="background-color: rgb(191, 191, 143);" index="22"></button><button style="background-color: rgb(175, 191, 143);" index="23"></button><button style="background-color: rgb(159, 191, 143);" index="24"></button><button style="background-color: rgb(143, 191, 143);" index="25"></button><button style="background-color: rgb(143, 191, 159);" index="26"></button><button style="background-color: rgb(143, 191, 175);" index="27"></button><button style="background-color: rgb(143, 191, 191);" index="28"></button><button style="background-color: rgb(143, 175, 191);" index="29"></button><button style="background-color: rgb(143, 159, 191);" index="30"></button><button style="background-color: rgb(143, 143, 191);" index="31"></button><button style="background-color: rgb(159, 143, 191);" index="32"></button><button style="background-color: rgb(175, 143, 191);" index="33"></button><button style="background-color: rgb(191, 143, 191);" index="34"></button><button style="background-color: rgb(191, 143, 175);" index="35"></button><button style="background-color: rgb(191, 143, 159);" index="36"></button><button style="background-color: rgb(191, 143, 143);" index="37"></button>
+            </div>
+            <div class="outfit-color-picker-row">
+            <button style="background-color: rgb(182, 182, 182);" index="38"></button><button style="background-color: rgb(191, 127, 95);" index="39"></button><button style="background-color: rgb(191, 175, 143);" index="40"></button><button style="background-color: rgb(191, 191, 95);" index="41"></button><button style="background-color: rgb(159, 191, 95);" index="42"></button><button style="background-color: rgb(127, 191, 95);" index="43"></button><button style="background-color: rgb(95, 191, 95);" index="44"></button><button style="background-color: rgb(95, 191, 127);" index="45"></button><button style="background-color: rgb(95, 191, 159);" index="46"></button><button style="background-color: rgb(95, 191, 191);" index="47"></button><button style="background-color: rgb(95, 159, 191);" index="48"></button><button style="background-color: rgb(95, 127, 191);" index="49"></button><button style="background-color: rgb(95, 95, 191);" index="50"></button><button style="background-color: rgb(127, 95, 191);" index="51"></button><button style="background-color: rgb(159, 95, 191);" index="52"></button><button style="background-color: rgb(191, 95, 191);" index="53"></button><button style="background-color: rgb(191, 95, 159);" index="54"></button><button style="background-color: rgb(191, 95, 127);" index="55"></button><button style="background-color: rgb(191, 95, 95);" index="56"></button>
+            </div>
+            <div class="outfit-color-picker-row">
+            <button style="background-color: rgb(145, 145, 145);" index="57"></button><button style="background-color: rgb(191, 106, 63);" index="58"></button><button style="background-color: rgb(191, 148, 63);" index="59"></button><button style="background-color: rgb(191, 191, 63);" index="60"></button><button style="background-color: rgb(148, 191, 63);" index="61"></button><button style="background-color: rgb(106, 191, 63);" index="62"></button><button style="background-color: rgb(63, 191, 63);" index="63"></button><button style="background-color: rgb(63, 191, 106);" index="64"></button><button style="background-color: rgb(63, 191, 148);" index="65"></button><button style="background-color: rgb(63, 191, 191);" index="66"></button><button style="background-color: rgb(63, 148, 191);" index="67"></button><button style="background-color: rgb(63, 106, 191);" index="68"></button><button style="background-color: rgb(63, 63, 191);" index="69"></button><button style="background-color: rgb(106, 63, 191);" index="70"></button><button style="background-color: rgb(148, 63, 191);" index="71"></button><button style="background-color: rgb(191, 63, 191);" index="72"></button><button style="background-color: rgb(191, 63, 148);" index="73"></button><button style="background-color: rgb(191, 63, 106);" index="74"></button><button style="background-color: rgb(191, 63, 63);" index="75"></button>
+            </div>
+            <div class="outfit-color-picker-row">
+            <button style="background-color: rgb(109, 109, 109);" index="76"></button><button style="background-color: rgb(255, 85, 0);" index="77"></button><button style="background-color: rgb(255, 170, 0);" index="78"></button><button style="background-color: rgb(255, 255, 0);" index="79"></button><button style="background-color: rgb(170, 255, 0);" index="80"></button><button style="background-color: rgb(84, 255, 0);" index="81"></button><button style="background-color: rgb(0, 255, 0);" index="82"></button><button style="background-color: rgb(0, 255, 84);" index="83"></button><button style="background-color: rgb(0, 255, 170);" index="84"></button><button style="background-color: rgb(0, 255, 255);" index="85"></button><button style="background-color: rgb(0, 169, 255);" index="86"></button><button style="background-color: rgb(0, 85, 255);" index="87"></button><button style="background-color: rgb(0, 0, 255);" index="88"></button><button style="background-color: rgb(85, 0, 255);" index="89"></button><button style="background-color: rgb(169, 0, 255);" index="90"></button><button style="background-color: rgb(254, 0, 255);" index="91"></button><button style="background-color: rgb(255, 0, 170);" index="92"></button><button style="background-color: rgb(255, 0, 85);" index="93"></button><button style="background-color: rgb(255, 0, 0);" index="94"></button>
+            </div>
+            <div class="outfit-color-picker-row">
+            <button style="background-color: rgb(72, 72, 72);" index="95"></button><button style="background-color: rgb(191, 63, 0);" index="96"></button><button style="background-color: rgb(191, 127, 0);" index="97"></button><button style="background-color: rgb(191, 191, 0);" index="98"></button><button style="background-color: rgb(127, 191, 0);" index="99"></button><button style="background-color: rgb(63, 191, 0);" index="100"></button><button style="background-color: rgb(0, 191, 0);" index="101"></button><button style="background-color: rgb(0, 191, 63);" index="102"></button><button style="background-color: rgb(0, 191, 127);" index="103"></button><button style="background-color: rgb(0, 191, 191);" index="104"></button><button style="background-color: rgb(0, 127, 191);" index="105"></button><button style="background-color: rgb(0, 63, 191);" index="106"></button><button style="background-color: rgb(0, 0, 191);" index="107"></button><button style="background-color: rgb(63, 0, 191);" index="108"></button><button style="background-color: rgb(127, 0, 191);" index="109"></button><button style="background-color: rgb(191, 0, 191);" index="110"></button><button style="background-color: rgb(191, 0, 127);" index="111"></button><button style="background-color: rgb(191, 0, 63);" index="112"></button><button style="background-color: rgb(191, 0, 0);" index="113"></button>
+            </div>
+            <div class="outfit-color-picker-row">
+            <button style="background-color: rgb(36, 36, 36);" index="114"></button><button style="background-color: rgb(127, 42, 0);" index="115"></button><button style="background-color: rgb(127, 85, 0);" index="116"></button><button style="background-color: rgb(127, 127, 0);" index="117"></button><button style="background-color: rgb(85, 127, 0);" index="118"></button><button style="background-color: rgb(42, 127, 0);" index="119"></button><button style="background-color: rgb(0, 127, 0);" index="120"></button><button style="background-color: rgb(0, 127, 42);" index="121"></button><button style="background-color: rgb(0, 127, 85);" index="122"></button><button style="background-color: rgb(0, 127, 127);" index="123"></button><button style="background-color: rgb(0, 84, 127);" index="124"></button><button style="background-color: rgb(0, 42, 127);" index="125"></button><button style="background-color: rgb(0, 0, 127);" index="126"></button><button style="background-color: rgb(42, 0, 127);" index="127"></button><button style="background-color: rgb(84, 0, 127);" index="128"></button><button style="background-color: rgb(127, 0, 127);" index="129"></button><button style="background-color: rgb(127, 0, 85);" index="130"></button><button style="background-color: rgb(127, 0, 42);" index="131"></button><button style="background-color: rgb(127, 0, 0);" index="132"></button>
+            </div>
+          </div>
+      
+        </div>
+      </div>
+
+      <!-- Wrapper for selecting a different outfit & mount -->
+      <div class="change-outfit">
+        <div class="change-outfit-inner">
+          <button id="left-outfit" class="symbol-button">&#129092;</button>
+          <span id="outfit-span">Outfit</span>
+          <button id="right-outfit" class="symbol-button">&#129094;</button>
+        </div>
+        <div class="change-outfit-inner">
+          <button id="left-mount" class="symbol-button">&#129092;</button>
+          <span id="mount-span">Mount</span>
+          <button id="right-mount" class="symbol-button">&#129094;</button>
+        </div>
+      </div>
+      
+      <!-- Wrapper for toggling outfit options (addons, mount) -->
+      <div class="checkboxes">
+        <label class="checkbox-label" for="checkbox-outfit-addon-one"><input type="checkbox" id="checkbox-outfit-addon-one"><span>Addon One</span></label>
+        <label class="checkbox-label" for="checkbox-outfit-addon-two"><input type="checkbox" id="checkbox-outfit-addon-two"><span>Addon Two</span></label>
+        <label class="checkbox-label" for="checkbox-outfit-mounted"><input type="checkbox" id="checkbox-outfit-mounted"><span>Mounted</span></label>
+        <label class="checkbox-label" for="checkbox-animate-outfit"><input type="checkbox" id="checkbox-animate-outfit"><span>Animated</span></label>
+      </div>
+      
+      <hr>
+  
+      <!-- Buttons aligned to the right -->
+      <div class="modal-footer">
+        <button action="cancel" value="Cancel">Cancel</button>
+        <button action="confirm" value="Ok">Confirm</button>
+      </div>
+    </div>
+
+  </div>

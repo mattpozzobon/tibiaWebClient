@@ -9,6 +9,7 @@ import BoxAnimation from "./box-animation";
 import CastingManager from "./casting-manager";
 import CharacterElement from "./screen-element-character";
 import State from "./state";
+import Interface from "./interface";
 
 // Define an interface for the data passed to the Creature constructor.
 export interface CreatureData {
@@ -59,7 +60,7 @@ export default class Creature {
   public id: number;
   public type: number;
   public name: string;
-  __position: Position;
+  public __position: Position;
   public maxHealth: number;
   public speed: number;
   public attackSlowness: number;
@@ -74,7 +75,7 @@ export default class Creature {
   public __movementEvent: any;
   public __lookDirectionBuffer: any;
   public __chunk: any;
-  __teleported: boolean;
+  public __teleported: boolean;
   // This method should create and assign a DOM element representing the creature.
   public __activeTextElement: any;
   public __target: any;
@@ -430,7 +431,7 @@ export default class Creature {
     }
 
     if (window.gameClient.player && this.id === window.gameClient.player.id) {
-      return window.gameClient.renderer.minimap.cache();
+     // return window.gameClient.renderer.minimap.cache();
     }
   }
   
@@ -494,7 +495,7 @@ export default class Creature {
     const projectedThing = thing.getPosition().projected();
     const dx = Math.abs(projectedSelf.x - projectedThing.x);
     const dy = Math.abs(projectedSelf.y - projectedThing.y);
-    return (dx < 10) && (dy < 8);
+    return (dx < (Interface.TILE_WIDTH+2)/2) && (dy < (Interface.TILE_HEIGHT+2)/2);
   }
   
   public canSeeSmall(thing: { getPosition(): Position }): boolean {

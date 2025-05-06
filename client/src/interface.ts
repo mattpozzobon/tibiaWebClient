@@ -1,5 +1,5 @@
+import Canvas from "./canvas";
 import ChannelManager from "./channel-manager";
-import GameClient from "./gameclient";
 import HotbarManager from "./hotbar-manager";
 import MenuManager from "./menu-manager";
 import ModalManager from "./modal-manager";
@@ -12,7 +12,6 @@ import SoundManager from "./sound-manager";
 import SpriteBuffer from "./sprite-buffer";
 import spriteBuffer from "./sprite-buffer";
 import State from "./state";
-import StatusBar from "./status-bar";
 import WindowManager from "./window-manager";
 
 export default class Interface {
@@ -21,14 +20,17 @@ export default class Interface {
   hotbarManager: HotbarManager;
   notificationManager: NotificationManager;
   modalManager: ModalManager;
-  statusBar: StatusBar;
+  //statusBar: StatusBar;
   windowManager: WindowManager;
   soundManager: SoundManager;
   menuManager: MenuManager;
   screenElementManager: ScreenElementManager;
   state: State;
-  static readonly SCREEN_WIDTH_MIN = 480;
-  static readonly SCREEN_HEIGHT_MIN = 352;
+  static readonly SCREEN_WIDTH_MIN = 864;
+  static readonly SCREEN_HEIGHT_MIN = 416;
+  static readonly TILE_SIZE = 32;
+  static readonly TILE_WIDTH = 27;
+  static readonly TILE_HEIGHT = 13;
 
   static COLORS: { [key: string]: number } = {
     "BLACK": 0,
@@ -100,7 +102,7 @@ export default class Interface {
     this.hotbarManager = new HotbarManager();
     this.notificationManager = new NotificationManager();
     this.modalManager = new ModalManager();
-    this.statusBar = new StatusBar();
+    //this.statusBar = new StatusBar();
     this.windowManager = new WindowManager();
     this.soundManager = new SoundManager( this.settings.isSoundEnabled());
     this.menuManager = new MenuManager();
@@ -110,8 +112,10 @@ export default class Interface {
     this.state.add("spritesLoaded", this.enableEnterGame.bind(this));
     this.state.add("dataLoaded", this.enableEnterGame.bind(this));
 
-    (document.getElementById("chat-input") as HTMLInputElement).disabled = true;
+    //(document.getElementById("chat-input") as HTMLInputElement).disabled = true;
+
     this.addAvailableResolutions();
+
     document.getElementById("keyring")?.addEventListener("click", this.__openKeyRing.bind(this));
     this.__enableListeners();
   }
@@ -281,15 +285,10 @@ export default class Interface {
   }
 
   getResolutionScale(): number {
-    if ((document.getElementById("enable-resolution") as HTMLInputElement).checked) {
-      return Number((document.getElementById("resolution") as HTMLInputElement).value) / Interface.SCREEN_WIDTH_MIN;
-    }
-
     const viewport = window.visualViewport ?? { width: window.innerWidth, height: window.innerHeight };
-    const scaleX = (viewport.width - 360) / Interface.SCREEN_WIDTH_MIN;
-    const scaleY = (viewport.height - 188) / Interface.SCREEN_HEIGHT_MIN;
-
-    return Math.max(1, Math.min(scaleX, scaleY));
+    const scaleX = (viewport.width) / Interface.SCREEN_WIDTH_MIN;
+    const scaleY = (viewport.height) / Interface.SCREEN_HEIGHT_MIN;
+    return Math.min(scaleX, scaleY);
   }
 
   setElementDimensions(elem: HTMLElement, width: number, height: number): void {
@@ -299,7 +298,7 @@ export default class Interface {
 
   closeClient(event: Event): void {
     // Save the minimap
-    window.gameClient.renderer.minimap.save();
+    //window.gameClient.renderer.minimap.save();
 
     // Save the state of the settings to localstorage
     this.settings.saveState();
@@ -318,19 +317,18 @@ export default class Interface {
     });
   }
 
-  handleResize(event?: Event): void {
-    // Get and set the resolution scale.
-    window.gameClient.renderer.screen.setScale(this.getResolutionScale());
-
-    // Update the wrapper size explicitly.
-    const { width, height } = window.gameClient.renderer.screen.canvas.getBoundingClientRect();
-    const canvas = document.getElementById("canvas-id");
-    if (canvas) {
-      this.setElementDimensions(canvas, width, height);
-    }
-    this.__handleStackResize();
+  handleResize() {
+    
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+  
+    const scaleX = screenWidth / (Interface.TILE_WIDTH * Interface.TILE_SIZE);
+    const scaleY = screenHeight / (Interface.TILE_HEIGHT * Interface.TILE_SIZE);
+  
+    const scale = Math.min(scaleX, scaleY); // prevent overflow
+    window.gameClient.renderer.screen.setScale(scale);
   }
-
+  
   __handleStackResize(): void {
     // Get all elements with the class "column".
     const columns = Array.from(document.getElementsByClassName("column"));
@@ -393,7 +391,7 @@ export default class Interface {
       return true;
     }
     return;
-  }
+  } 
 
   private __enableListeners(): void {
     document.getElementById("openSkills")?.addEventListener("click", () => this.toggleWindow("skill-window"));
@@ -404,7 +402,7 @@ export default class Interface {
     document.getElementById("asset-selector")?.addEventListener("change", (event) => this.loadGameFiles(event));
     document.getElementById("enter-game")?.addEventListener("click", () => this.enterGame());
     window.onbeforeunload = () => window.gameClient.isConnected() ? true : undefined;
-    window.onunload = () => window.gameClient.renderer.minimap.save();
-    //window.onresize = () => this.handleResize();
+    //window.onunload = () => window.gameClient.renderer.minimap.save();
+    window.onresize = () => this.handleResize();
   }
 }

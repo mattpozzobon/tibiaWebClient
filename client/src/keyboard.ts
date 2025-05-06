@@ -200,7 +200,7 @@ class Keyboard {
 
     if (lowerKey === Keyboard.KEYS.KEY_M && this.isControlDown()) {
       event.preventDefault();
-      return window.gameClient.renderer.minimap.openLargeMap();
+      //return window.gameClient.renderer.minimap.openLargeMap();
     }
 
     if (lowerKey === Keyboard.KEYS.KEY_E && this.isControlDown()) {

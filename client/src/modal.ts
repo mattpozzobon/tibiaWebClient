@@ -1,8 +1,7 @@
-declare const gameClient: any; // Adjust the type as needed
-
 export default class Modal {
   public element: HTMLElement;
   public isOpen: boolean;
+  public id: string;
 
   // Subclasses may override these:
   public handleConfirm: () => boolean = () => true;
@@ -15,13 +14,17 @@ export default class Modal {
     if (!el) {
       throw new Error(`Element with id "${id}" not found.`);
     }
+    this.id = id;
     this.element = el;
     this.isOpen = false;
 
-    // Add event listeners to each button with an "action" attribute.
     Array.from(this.element.querySelectorAll("button[action]")).forEach(
       this.__addAction.bind(this)
     );
+  }
+
+  public getElement(selector: string): HTMLElement | null {
+    return this.element.querySelector(selector);
   }
 
   public show(): void {
@@ -70,7 +73,7 @@ export default class Modal {
     const target = event.target as HTMLElement;
     if (this.__internalButtonClick(target)) {
       // If the action returns true, close the modal via the global gameClient.
-      gameClient.interface.modalManager.close();
+      window.gameClient.interface.modalManager.close();
     }
   }
 }

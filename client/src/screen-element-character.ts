@@ -1,10 +1,8 @@
 import Creature from "./creature";
-import GameClient from "./gameclient";
 import Interface from "./interface";
 import ScreenElement from "./screen-element";
 
 export default class CharacterElement extends ScreenElement {
-  ;
   private __creature: Creature;
   public manaBar?: HTMLElement;
   public energyBar?: HTMLElement;
@@ -88,14 +86,30 @@ export default class CharacterElement extends ScreenElement {
   }
 
   public setTextPosition(): void {
-    // Get the offset from the renderer's creature screen position.
-    const offset = this.__getAbsoluteOffset(
-      window.gameClient.renderer.getCreatureScreenPosition(this.__creature)
-    );
-    const fraction = window.gameClient.interface.getSpriteScaling();
-    offset.top -= fraction / 2;
-    this.__updateTextPosition(offset);
+    const creatureTilePos = window.gameClient.renderer.getCreatureScreenPosition(this.__creature);
+  
+    const canvas = window.gameClient.renderer.screen.canvas;
+    const rect = canvas.getBoundingClientRect();
+  
+    const scaleX = rect.width / canvas.width;
+    const scaleY = rect.height / canvas.height;
+  
+    const spriteSizeX = Interface.TILE_SIZE * scaleX;
+    const spriteSizeY = Interface.TILE_SIZE * scaleY;
+  
+    const screenCenterX = (Interface.TILE_WIDTH - 1) / 2;
+    const screenCenterY = (Interface.TILE_HEIGHT - 1) / 2;
+  
+    // 🧠 now correct offset using independent X and Y scaling:
+    const offsetX = (creatureTilePos.x - screenCenterX) * spriteSizeX + rect.left + rect.width / 2;
+    const offsetY = (creatureTilePos.y - screenCenterY) * spriteSizeY + rect.top + rect.height / 2;
+  
+    this.element.style.transform = `translate(
+      ${offsetX - this.element.offsetWidth / 2 - 20}px,
+      ${offsetY - spriteSizeY * 1.2}px
+    )`;
   }
+  
 
   public addManaBar(value: string): void {
     if (!this.manaBar) {

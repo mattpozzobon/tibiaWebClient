@@ -73,7 +73,7 @@ export default class Equipment extends Container {
   public referenceSlotDOM(index: number, id: string): Slot {
     // Create a new Slot and assign its element.
     const slot = new Slot();
-    slot.setElement(document.getElementById(id) as HTMLElement);
+    //slot.setElement(document.getElementById(id) as HTMLElement);
     return slot;
   }
 
@@ -90,6 +90,6 @@ export default class Equipment extends Container {
 
   public render(): void {
     // Render each slot.
-    this.slots.forEach(slot => slot.render());
+    //this.slots.forEach(slot => slot.render());
   }
 }

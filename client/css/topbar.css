@@ -1,0 +1,24 @@
+#top-button-bar {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 20px;
+  padding: 6px 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  z-index: 1000; /* Make sure it's above canvas */
+}
+
+#top-button-bar img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  filter: brightness(70%); /* Make it darker normally */
+  transition: filter 0.2s ease, border 0.2s ease; /* Smooth hover effect */
+}
+
+#top-button-bar img:hover {
+  filter: brightness(120%); /* Make it brighter when hovered */
+}

@@ -1,10 +1,8 @@
 import Canvas from "./canvas";
-import GameClient from "./gameclient";
 import Item from "./item";
 import Position from "./position";
 
 export default class Slot {
-    ;
     item: Item | null;
     element!: HTMLElement;
     canvas!: Canvas;
@@ -34,11 +32,11 @@ export default class Slot {
        * Creates the interactable DOM elements for the slot
        */
   
-      let element = document.getElementById("slot-prototype")!.cloneNode(true) as HTMLElement;
-      element.setAttribute("slotIndex", index.toString());
-      element.removeAttribute("id");
+      // let element = document.getElementById("slot-prototype")!.cloneNode(true) as HTMLElement;
+      // element.setAttribute("slotIndex", index.toString());
+      // element.removeAttribute("id");
   
-      this.setElement(element);
+      // this.setElement(element);
     }
   
     setItem(item: Item | null): void {

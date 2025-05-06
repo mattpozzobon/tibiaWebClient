@@ -1,8 +1,6 @@
 import Modal from "./modal";
-import GameClient from "./gameclient";
 
 export default class ChatModal extends Modal {
-  ;
 
   constructor(id: string) {
     super(id);

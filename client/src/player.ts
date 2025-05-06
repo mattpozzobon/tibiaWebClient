@@ -3,6 +3,7 @@ import Creature, { CreatureData } from "./creature";
 import Equipment from "./equipment";
 import Friendlist from "./friendlist";
 import GameClient from "./gameclient";
+import SkillModal from "./modal-skills";
 import { ContainerClosePacket } from "./protocol";
 import Skills from "./skills";
 import Spellbook from "./spellbook";
@@ -47,7 +48,6 @@ export default class Player extends Creature {
 
   constructor(data: PlayerData, ) {
     super( data);
-    
     
     this.state = new State();
     this.setState(data);
@@ -230,7 +230,8 @@ export default class Player extends Creature {
    */
   public setLevelSkillValue(which: string, value: number): void {
     // TODO: check the percerntage value
-    (window.gameClient.interface.windowManager.getWindow("skill-window")! as SkillWindow).setSkillValue(which, value, value);
+    //(window.gameClient.interface.windowManager.getWindow("skill-window")! as SkillWindow).setSkillValue(which, value, value);
+    (window.gameClient.interface.modalManager.get("skill-modal") as SkillModal).setSkillValue(which, value, value);
   }
 
   /**

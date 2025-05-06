@@ -1,11 +1,7 @@
 import Modal from "./modal";
 import Canvas from "./canvas";
 import HotbarManager from "./hotbar-manager";
-import GameClient from "./gameclient";
 
-// Declare gameClient with minimal type information.
-// You can replace 'any' with a more specific type as needed.
-declare const gameClient: any;
 
 interface Spell {
   name: string;

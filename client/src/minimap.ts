@@ -1,5 +1,4 @@
 import Canvas from "./canvas";
-import GameClient from "./gameclient";
 import Position from "./position";
 
 export default class Minimap {
@@ -125,13 +124,13 @@ export default class Minimap {
   }
 
   public addEventListeners(): void {
-    document.getElementById("minimap-current-layer")!.addEventListener("click", this.setCenter.bind(this));
-    document.getElementById("minimap-zoom-up")!.addEventListener("click", this.changeZoomLevel.bind(this, 1));
-    document.getElementById("minimap-zoom-down")!.addEventListener("click", this.changeZoomLevel.bind(this, -1));
-    document.getElementById("minimap-zoom-el")!.addEventListener("click", this.changeLevel.bind(this, 1));
-    document.getElementById("minimap-zoom-dl")!.addEventListener("click", this.changeLevel.bind(this, -1));
-    this.minimap.canvas.addEventListener("wheel", this.scroll.bind(this));
-    this.minimap.canvas.addEventListener("click", this.move.bind(this));
+    // document.getElementById("minimap-current-layer")!.addEventListener("click", this.setCenter.bind(this));
+    // document.getElementById("minimap-zoom-up")!.addEventListener("click", this.changeZoomLevel.bind(this, 1));
+    // document.getElementById("minimap-zoom-down")!.addEventListener("click", this.changeZoomLevel.bind(this, -1));
+    // document.getElementById("minimap-zoom-el")!.addEventListener("click", this.changeLevel.bind(this, 1));
+    // document.getElementById("minimap-zoom-dl")!.addEventListener("click", this.changeLevel.bind(this, -1));
+    // this.minimap.canvas.addEventListener("wheel", this.scroll.bind(this));
+    // this.minimap.canvas.addEventListener("click", this.move.bind(this));
   }
 
   public setCenter(): void {

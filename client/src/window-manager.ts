@@ -16,7 +16,7 @@ export default class WindowManager {
     
     this.windows = {
       "battle-window": new BattleWindow(document.getElementById("battle-window") as HTMLElement),
-      "skill-window": new SkillWindow(document.getElementById("skill-window") as HTMLElement),
+      //"skill-window": new SkillWindow(document.getElementById("skill-window") as HTMLElement),
       "friend-window": new FriendWindow(document.getElementById("friend-window") as HTMLElement),
     };
 

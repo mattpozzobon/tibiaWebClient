@@ -1,0 +1,28 @@
+<!-- Skill Window -->
+<div id="battle-window" class="modal">
+  <div class="header">
+    <button class="symbol-button small" action="close" title="Close">✕</button>
+    <button class="symbol-button small" action="minimize" title="Minimize">&#x2212</button>
+    <span class="title">Battle</span>
+  </div>
+  <div class="body"></div>
+  <div class="footer"></div>
+</div>
+
+<!-- Battle Window -->
+<div id="battle-window-target" class="battle-window-target-wrapper">
+  <div class="battle-window-target-stats">
+    <div class="battle-window-target-title"></div>
+    <div class="battle-window-bar-wrapper">
+      <span style="color: rgb(0, 255, 0)">???</span>
+      <div class="battle-window-target-stats-bar health"></div>
+    </div>
+    <div class="battle-window-bar-wrapper">
+      <div class="battle-window-target-stats-bar mana"></div>
+      <span style="color: rgb(0, 0, 255)">???</span>
+    </div>
+  </div>
+  <div class="battle-window-target-canvas">
+    <canvas id="battle-window-target-canvas"></canvas>
+  </div>
+</div>

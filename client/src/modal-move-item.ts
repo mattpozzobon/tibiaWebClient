@@ -1,5 +1,4 @@
 import Modal from "./modal";
-import GameClient from "./gameclient";
 import Canvas from "./canvas";
 import Item from "./item";
 import Position from "./position";
@@ -8,11 +7,9 @@ export interface MoveItemModalProperties {
   item: { id: number; count: number };
   fromObject: any;
   toObject: any;
-  // Add additional properties as needed.
 }
 
 export default class MoveItemModal extends Modal {
-  ;
   private __canvas: Canvas;
   private __slider: HTMLInputElement;
   private __output: HTMLElement;

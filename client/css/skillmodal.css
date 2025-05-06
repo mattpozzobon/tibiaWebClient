@@ -1,0 +1,151 @@
+/* General layout for modal body */
+#skill-modal .modal-body {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-grow: 1;
+}
+
+/* Character section (left column) */
+.character-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: rgba(0, 0, 0, 0.25);
+  padding: 8px;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: white;
+  font-size: 13px;
+}
+
+.character-header img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border: 1px solid #444;
+}
+
+/* Attribute section */
+.stats-attributes {
+  background-color: rgba(0, 0, 0, 0.25);
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 8px;
+  color: white;
+  font-size: 13px;
+}
+
+.stats-attributes .attribute-points {
+  margin-bottom: 6px;
+}
+
+.attribute {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.attribute .label {
+  text-align: left;
+}
+
+.attribute .value {
+  text-align: center;
+  min-width: 24px;
+}
+
+.attribute button {
+  padding: 0 6px;
+  height: 18px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Progress skills section */
+.progress-skills {
+  background-color: rgba(0, 0, 0, 0.25);
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Skill rows */
+.outer-skill-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 2px 0;
+}
+
+.outer-skill-wrapper .skill-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: white;
+  font-size: 13px;
+  min-width: 100px;
+}
+
+.skill-wrapper img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  opacity: 0.9;
+}
+
+/* Progress bar area */
+.bar-wrapper {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+.bar {
+  flex-grow: 1;
+  height: 6px;
+  background: #222;
+  border: 1px solid #333;
+  margin-left: 4px;
+  position: relative;
+}
+
+.bar .value {
+  background: #22aa22;
+  height: 100%;
+  width: 0%;
+  transition: width 0.2s ease-in-out;
+}
+
+/* Right panel for derived stats */
+.derived-stats {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 8px;
+  color: white;
+  font-size: 13px;
+  min-width: 160px;
+  flex-shrink: 0;
+}
+
+.derived-stats h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #fff;
+  border-bottom: 1px solid #444;
+  padding-bottom: 4px;
+}

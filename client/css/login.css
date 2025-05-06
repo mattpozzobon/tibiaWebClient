@@ -2,48 +2,47 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  min-width: 640px;
-  min-height: 480px;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  background-image: url('/png/background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-#login-wrapper #login-inner {
-  justify-content: center;
+#login-inner {
   position: relative;
-  height: 100%;
-  min-width: 640px;
-  min-height: 480px;
+  width: 640px;
+  height: 480px;
   display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
-.password-input {
-  text-align: center;
+.login-settings {
+  position: absolute;
+  left: 32px;
+  bottom: 32px;
+  width: 116px;
+  background-color: rgba(0, 0, 0, 0.45);
+  padding: 12px;
+  border: 1px solid black;
 }
 
-#login-wrapper #login-inner img {
-  height: 100%;
-}
-
-#login-wrapper #login-inner .login-settings button {
+.login-settings button {
   margin: 4px;
   width: 108px;
   height: 32px;
 }
 
-#login-wrapper #login-inner .login-settings {
-  border: 1px solid black;
+.login-version {
   position: absolute;
-  left: 32px;
-  bottom: 32px;
-  padding: 12px;
-  background-color: rgba(0, 0, 0, 0.45);
-  width: 116px;
-}
-
-#login-wrapper #login-inner .login-version {
-  position: absolute;
-  width: auto;
-  top: 4px;
-  left: 10px;
+  top: 2px;
+  left: 2px;
   color: white;
 }

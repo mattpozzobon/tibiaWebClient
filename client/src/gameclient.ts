@@ -79,6 +79,8 @@ export default class GameClient {
     this.__setServerVersion(serverData.version);
     this.__setClientVersion(serverData.clientVersion);
 
+    console.log('serverData', serverData);
+
     Chunk.WIDTH = serverData.chunk.width;
     Chunk.HEIGHT = serverData.chunk.height;
     Chunk.DEPTH = serverData.chunk.depth;
@@ -111,7 +113,7 @@ export default class GameClient {
     /*
      * Resets the gameclient for a new connection
      */
-    this.renderer.minimap.save();
+    //this.renderer.minimap.save();
     this.interface.settings.saveState();
     this.gameLoop.abort();
     this.renderer.screen.clear();
@@ -161,7 +163,7 @@ export default class GameClient {
     console.log(this.player);
     this.renderer.updateTileCache();
     this.player.setAmbientSound();
-    this.renderer.minimap.setRenderLayer(this.player.getPosition().z);
+    //this.renderer.minimap.setRenderLayer(this.player.getPosition().z);
 
     this.gameLoop.init();
   }

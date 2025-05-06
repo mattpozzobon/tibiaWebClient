@@ -10,12 +10,6 @@ export default class Canvas {
   context: CanvasRenderingContext2D;
 
   constructor(id: string | HTMLCanvasElement | null, width: number, height: number) {
-    /*
-     * Class Canvas
-     * Container for writing to a HTML5 canvas
-     * This is used for the main game screen and additional smaller canvases.
-     */
-
     this.canvas = this.__reference(id);
     this.canvas.width = width;
     this.canvas.height = height;
@@ -25,9 +19,6 @@ export default class Canvas {
   }
 
   setScale(scale: number): void {
-    /*
-     * Updates the scale of the game screen canvas using CSS transforms.
-     */
     this.canvas.style.transform = `scale(${scale})`;
   }
 
@@ -52,21 +43,19 @@ export default class Canvas {
   }
 
   getWorldCoordinates(event: MouseEvent): any {
-    /*
-     * Returns the clicked canvas coordinates in world coordinates.
-     */
     const { x, y } = this.getCanvasCoordinates(event);
-    const scaling = window.gameClient.interface.getSpriteScaling();
+    const scaling = window.gameClient.interface.getResolutionScale();
+    const tileSize = Interface.TILE_SIZE * scaling;
     const position = window.gameClient.player!.getPosition();
-
+  
     const projectedViewPosition = new Position(
-      Math.floor(x / scaling) + position.x - 7,
-      Math.floor(y / scaling) + position.y - 5,
+      Math.floor(x / tileSize) + position.x - Math.floor(Interface.TILE_WIDTH / 2),
+      Math.floor(y / tileSize) + position.y - Math.floor(Interface.TILE_HEIGHT / 2),
       position.z
     );
-
+  
     const chunk = window.gameClient.world.getChunkFromWorldPosition(projectedViewPosition);
-
+  
     return chunk ? chunk.getFirstTileFromTop(projectedViewPosition.projected()) : null;
   }
 

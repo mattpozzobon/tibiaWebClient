@@ -1,11 +1,8 @@
 import Modal from "./modal";
 import Canvas from "./canvas";
 import Position from "./position";
-import gameClient from "./gameclient"; // adjust as needed
-import GameClient from "./gameclient";
 
 export default class MapModal extends Modal {
-  ;
   public canvas: Canvas;
   public span: HTMLElement;
   private __center: Position;

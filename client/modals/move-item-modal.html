@@ -1,0 +1,22 @@
+<!-- Move Item Modal -->
+<div id="move-item-modal" class="modal">
+  <button class="close-button-transparent symbol-button" action="cancel" value="Cancel">✕</button>
+  <div class="modal-header">Move Item</div>
+  <div class="modal-body">
+    <div class="move-item-wrapper">
+      <div class="slot">
+        <canvas id="move-count-sprite" width="32" height="32"></canvas>
+        <span class="count" id="item-count"></span>
+      </div>
+      <div class="move-item-wrapper-inner">
+        <div class="move-item-wrapper-inner-row">
+          <input type="range" class="slider" id="item-amount" min="1">
+        </div>
+        <div class="move-item-wrapper-inner-row">
+          <button action="cancel" value="Cancel">Cancel</button>
+          <button action="confirm" value="Ok">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

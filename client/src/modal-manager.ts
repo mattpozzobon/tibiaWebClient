@@ -1,4 +1,3 @@
-import GameClient from "./gameclient";
 import Modal from "./modal";
 import OutfitModal from "./modal-outfit";
 import MoveItemModal from "./modal-move-item";
@@ -11,17 +10,15 @@ import ReadableModal from "./modal-readable";
 import OfferModal from "./modal-offer";
 import MapModal from "./modal-map";
 import SpellbookModal from "./modal-spellbook";
+import SkillModal from "./modal-skills";
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
-type ModalConstructor =
-  | (new (id: string) => Modal)
-  | (new (id: string) => Modal);
+type ModalConstructor = (new (id: string) => Modal);
 
 export default class ModalManager {
-  ;
   private __openedModal: Modal | null;
   private __modals: { [id: string]: Modal };
 
@@ -31,17 +28,20 @@ export default class ModalManager {
     this.__modals = {};
 
     // Register all the modals.
+    this.register(Modal, "information-modal");
+    this.register(Modal, "settings-modal");
+    this.register(Modal, "settings-box");
+    this.register(Modal, "floater-enter");
+    this.register(SkillModal, "skill-modal");
+
     this.register(OutfitModal, "outfit-modal");
     this.register(MoveItemModal, "move-item-modal");
+
     this.register(ChatModal, "chat-modal");
-    this.register(Modal, "settings-modal");
     this.register(EnterNameModal, "enter-name-modal");
     this.register(ConfirmModal, "confirm-modal");
     this.register(TextModal, "floater-connecting");
-    this.register(Modal, "settings-box");
-    this.register(Modal, "floater-enter");
     this.register(CreateAccountModal, "floater-create");
-    this.register(Modal, "information-modal");
     this.register(ReadableModal, "readable-modal");
     this.register(OfferModal, "offer-modal");
     this.register(MapModal, "map-modal");
@@ -58,7 +58,8 @@ export default class ModalManager {
     document.getElementById("login-info")?.addEventListener("click", this.open.bind(this, "floater-enter"));
     document.getElementById("create-account")?.addEventListener("click", this.open.bind(this, "floater-create"));
     document.getElementById("settings")?.addEventListener("click", this.open.bind(this, "settings-box"));
-  
+    document.getElementById("openSkills")?.addEventListener("click", this.open.bind(this, "skill-modal"));
+
     Array.from(document.querySelectorAll(".modal-header")).forEach(header => {
       header.addEventListener("mousedown", this.__handleHeaderMouseDown.bind(this));
     });
@@ -70,7 +71,6 @@ export default class ModalManager {
   private __handleHeaderMouseDown(event: any): void {
     event.preventDefault();
     const headerElement = event.currentTarget as HTMLElement;
-    const manager = this; // capture the ModalManager instance
 
     const __handleRelease = (releaseEvent: MouseEvent): void => {
       releaseEvent.preventDefault();
@@ -98,7 +98,7 @@ export default class ModalManager {
   /**
    * Registers a modal class with a given identifier.
    */
-  
+
 
   public register(ModalClass: ModalConstructor, id: string): void {
     if (this.__modals.hasOwnProperty(id)) {
@@ -163,15 +163,26 @@ export default class ModalManager {
    * Opens the modal with the given identifier and passes optional options to it.
    */
   public open(id: string, options?: any): Modal | null {
-    if (!this.__modals.hasOwnProperty(id)) {
+    // If the modal is already opened and it's the same one, close it (toggle off)
+    if (this.isOpened() && this.__openedModal?.id === id) {
+      this.close();
       return null;
     }
+  
+    // If another modal is opened, close it first
     if (this.isOpened()) {
       this.close();
     }
+  
+    // Open the requested modal
+    if (!this.__modals.hasOwnProperty(id)) {
+      return null;
+    }
+  
     this.__openedModal = this.get(id);
     this.__openedModal!.show();
     this.__openedModal!.handleOpen(options);
     return this.__openedModal;
   }
+  
 }

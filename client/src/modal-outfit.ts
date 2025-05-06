@@ -1,14 +1,11 @@
 import Canvas from "./canvas";
-import GameClient from "./gameclient";
 import Modal from "./modal";
 import Outfit from "./outfit";
-import Position from "./position";
 import { OutfitChangePacket } from "./protocol";
 import SpriteBuffer from "./sprite-buffer";
 
 
 export default class OutfitModal extends Modal {
-  ;
   __activeOutfitElement: HTMLElement | null;
   __spriteBuffer: SpriteBuffer;
   __spriteBufferMount: SpriteBuffer;

@@ -29,7 +29,7 @@ export default class Renderer {
   // Canvas for rendering item outlines.
   public outlineCanvas: OutlineCanvas;
   // Minimap for world preview.
-  public minimap: Minimap;
+  //public minimap: Minimap;
   // Debugger for internal statistics.
   public debugger: Debugger;
 
@@ -50,7 +50,7 @@ export default class Renderer {
 
     this.weatherCanvas = new WeatherCanvas(this.screen);
     this.outlineCanvas = new OutlineCanvas(null, 130, 130);
-    this.minimap = new Minimap(); // TODO: CHECK IF THIS IS NECESSARY: gameClient.world.width, gameClient.world.height
+    //this.minimap = new Minimap(); // TODO: CHECK IF THIS IS NECESSARY: gameClient.world.width, gameClient.world.height
     this.debugger = new Debugger();
 
     // Initialize state variables.
@@ -171,8 +171,8 @@ export default class Renderer {
     // Return the static position of a particular world position
     const projectedPlayer = window.gameClient.player!.getPosition().projected();
     const projectedThing = position.projected();
-    const x = 7 + window.gameClient.player!.getMoveOffset().x + projectedThing.x - projectedPlayer.x;
-    const y = 5 + window.gameClient.player!.getMoveOffset().y + projectedThing.y - projectedPlayer.y;
+    const x = ((Interface.TILE_WIDTH-1)/2) + window.gameClient.player!.getMoveOffset().x + projectedThing.x - projectedPlayer.x;
+    const y = ((Interface.TILE_HEIGHT-1)/2) + window.gameClient.player!.getMoveOffset().y + projectedThing.y - projectedPlayer.y;
     return new Position(x, y, 0);
   }
   

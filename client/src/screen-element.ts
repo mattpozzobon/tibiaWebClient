@@ -49,18 +49,8 @@ export default class ScreenElement {
   }
 
   public __updateTextPosition(offset: { left: number; top: number }): void {
-    // Get the bounding rectangle of the game screen canvas.
-    const rect = window.gameClient.renderer.screen.canvas.getBoundingClientRect();
-
-    // Clamp the position within the screen bounds.
-    const left = clamp(offset.left, 0, rect.width - this.element.offsetWidth);
-    const top = clamp(offset.top, 0, rect.height - this.element.offsetHeight);
-
-    // Apply the transform.
-    this.element.style.transform = `translate(${left}px, ${top}px)`;
-
-    // Defer showing the element to prevent glitchy behavior.
-    setTimeout(() => this.show());
+    this.element.style.left = `${offset.left}px`;
+    this.element.style.top = `${offset.top}px`;
   }
 
   public __getAbsoluteOffset(position: { x: number; y: number; z?: number }): { left: number; top: number } {

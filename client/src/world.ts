@@ -42,7 +42,7 @@ export default class World {
     this.checkEntityReferences();
     this.checkChunks();
     window.gameClient.renderer.updateTileCache();
-    window.gameClient.renderer.minimap.setCenter();
+    //window.gameClient.renderer.minimap.setCenter();
     if (window.gameClient.player!.__movementEvent === null) {
       window.gameClient.player!.__movementEvent = window.gameClient.eventQueue.addEvent(
         window.gameClient.player!.unlockMovement.bind(window.gameClient.player),

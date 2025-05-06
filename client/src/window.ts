@@ -193,7 +193,7 @@ export default class InteractiveWindow extends EventEmitter {
        * Function InteractiveWindow.addTo
        * Adds an interactive window to a particular stack
        */
-      stackElement.appendChild(this.__element);
+      //stackElement.appendChild(this.__element);
     }
   }
   

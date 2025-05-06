@@ -355,7 +355,7 @@ export default class Canvas {
         
         if (hasMask) {
           if (!spriteBuffer.has(spriteId)) {
-              console.log(`🟢 Adding composed outfit for spriteId: ${spriteId} at (${x}, ${y})`);
+              //console.log(`🟢 Adding composed outfit for spriteId: ${spriteId} at (${x}, ${y})`);
               spriteBuffer.addComposedOutfit(spriteId, outfit, group, frame, xPattern, zPattern, x, y);
           }
         }

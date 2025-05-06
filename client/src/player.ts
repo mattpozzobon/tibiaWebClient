@@ -2,14 +2,12 @@ import ConditionManager from "./condition";
 import Creature, { CreatureData } from "./creature";
 import Equipment from "./equipment";
 import Friendlist from "./friendlist";
-import GameClient from "./gameclient";
 import SkillModal from "./modal-skills";
 import { ContainerClosePacket } from "./protocol";
 import Skills from "./skills";
 import Spellbook from "./spellbook";
 import State from "./state";
 import BattleWindow from "./window-battle";
-import SkillWindow from "./window-skill";
 
 interface PlayerData extends CreatureData {
   equipment: any;
@@ -26,7 +24,6 @@ interface PlayerData extends CreatureData {
   energy: number;
   maxEnergy: number;
   speed: number;
-  // ... other properties as needed
 }
 
 export default class Player extends Creature {
@@ -69,24 +66,12 @@ export default class Player extends Creature {
    * Sets the player's state based on the provided data.
    */
   public setState(data: any): void {
+    this.registerStateListeners();
+
     // Keep player state
     this.mounts = data.mounts;
     this.outfits = data.outfits;
-
-    // Capacity
-    this.state.add("capacity", this.setCapacity.bind(this));
-
-    // Mana and energy
-    this.state.add("mana", this.setManaStatus.bind(this));
-    this.state.add("maxMana", this.setManaStatus.bind(this));
-    this.state.add("energy", this.setEnergyStatus.bind(this));
-    this.state.add("maxEnergy", this.setEnergyStatus.bind(this));
-
-    // Other skills
-    this.state.add("armor", this.setLevelSkillValue.bind(this, "armor"));
-    this.state.add("attack", this.setLevelSkillValue.bind(this, "attack"));
-    this.state.add("speed", this.setLevelSkillValue.bind(this, "speed"));
-
+    
     // Set defaults
     this.state.maxCapacity = data.maxCapacity;
     this.state.capacity = data.capacity;
@@ -98,7 +83,27 @@ export default class Player extends Creature {
     this.state.speed = data.speed;
     this.state.armor = 90;
     this.state.attack = 0;
+    
+
   }
+
+  private registerStateListeners(): void {
+     // Capacity
+     this.state.add("capacity", this.setCapacity.bind(this));
+
+     // Mana and energy
+     this.state.add("mana", this.setManaStatus.bind(this));
+     this.state.add("maxMana", this.setManaStatus.bind(this));
+     this.state.add("energy", this.setEnergyStatus.bind(this));
+     this.state.add("maxEnergy", this.setEnergyStatus.bind(this));
+ 
+     // Other skills
+     this.state.add("armor", this.setLevelSkillValue.bind(this, "armor"));
+     this.state.add("attack", this.setLevelSkillValue.bind(this, "attack"));
+     this.state.add("speed", this.setLevelSkillValue.bind(this, "speed"));
+ 
+  }
+
 
    /**
    * Updates the health status in the DOM.

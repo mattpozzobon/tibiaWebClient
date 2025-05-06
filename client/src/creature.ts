@@ -29,8 +29,7 @@ export interface CreatureData {
   maxMana: number;
   energy: number;
   maxEnergy: number;
-  speedValue?: number; // if needed
-  // ... add other properties as needed.
+  speedValue?: number;
 }
 
 export interface CharacterFrames {

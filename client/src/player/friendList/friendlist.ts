@@ -1,5 +1,4 @@
-import GameClient from "./gameclient";
-import FriendWindow from "./window-friend";
+import FriendWindow from "../../window-friend";
 
 export interface Friend {
   name: string;

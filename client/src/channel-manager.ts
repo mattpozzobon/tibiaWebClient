@@ -1,5 +1,4 @@
 import Channel from "./channel";
-import GameClient from "./gameclient";
 import Interface from "./interface";
 import LocalChannel from "./local-channel";
 import CharacterMessage from "./message-character";
@@ -12,7 +11,6 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 export default class ChannelManager {
-  ;
   channels: Channel[];
   private __activeIndex: number;
   private __disabled: boolean;
@@ -275,7 +273,7 @@ export default class ChannelManager {
       this.setActiveChannelElement(existingChannel);
       return;
     }
-    if (window.gameClient && window.gameClient.player!.name === name) {
+    if (window.gameClient && window.gameClient.player!.vitals.name === name) {
       window.gameClient.interface.setCancelMessage("Cannot open a chat window yourself.");
       return;
     }
@@ -319,7 +317,7 @@ export default class ChannelManager {
 
   // Handles sending a private message in a private channel.
   private __handlePrivateMessageSend(channel: Channel, message: string): void {
-    channel.__addMessage(new CharacterMessage(message, 0, window.gameClient.player!.name, Interface.COLORS.MAYABLUE));
+    channel.__addMessage(new CharacterMessage(message, 0, window.gameClient.player!.vitals.name, Interface.COLORS.MAYABLUE));
     window.gameClient.send(new ChannelPrivatePacket(channel.name, message));
   }
 

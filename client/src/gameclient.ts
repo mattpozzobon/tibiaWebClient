@@ -9,7 +9,7 @@ import Mouse from "./mouse";
 import NetworkManager from "./network-manager";
 import ObjectBuffer from "./object-buffer";
 import PacketReader from "./packetreader";
-import Player from "./player";
+import Player from "./player/player";
 import Renderer from "./renderer";
 import SpriteBuffer from "./sprite-buffer";
 import World from "./world";

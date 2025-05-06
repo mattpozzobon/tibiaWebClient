@@ -1,6 +1,5 @@
 import Outfit from "./outfit";
 import Position from "./position";
-import GameClient from "./gameclient";
 import ConditionManager from "./condition";
 import SpriteBuffer from "./sprite-buffer";
 import FrameGroup from "./frame-group";
@@ -10,26 +9,15 @@ import CastingManager from "./casting-manager";
 import CharacterElement from "./screen-element-character";
 import State from "./state";
 import Interface from "./interface";
+import { Vitals, VitalsData } from "./player/vitals/vitals";
 
-// Define an interface for the data passed to the Creature constructor.
+
 export interface CreatureData {
   id: number;
   type?: number;
-  name: string;
-  position: Position;
-  maxHealth: number;
-  speed: number;
-  attackSlowness: number;
-  conditions: any;
-  direction: number;
   outfit: any;
-  friendlist?: any;
-  health: number;
-  mana: number;
-  maxMana: number;
-  energy: number;
-  maxEnergy: number;
-  speedValue?: number;
+  vitals: VitalsData;
+  conditions: any;
 }
 
 export interface CharacterFrames {
@@ -55,14 +43,10 @@ export interface CharacterFrames {
 }
 
 export default class Creature {
-  public state: State;
+
   public id: number;
   public type: number;
-  public name: string;
-  public __position: Position;
-  public maxHealth: number;
-  public speed: number;
-  public attackSlowness: number;
+
   public conditions: ConditionManager;
   public __lookDirection: number;
   public __previousPosition: Position;
@@ -81,26 +65,22 @@ export default class Creature {
   public __animations: Set<any>;
   // Assume characterElement is provided (e.g., by Creature or assigned later)
   public characterElement: any;
+  public vitals: Vitals;
 
   // gameClient is injected to replace global references.
 
   constructor(data: CreatureData) {
 
-    this.state = new State();
-    // Register a state callback for health updates.
-    this.state.add("health", this.setHealthStatus.bind(this));
-
+    this.vitals = new Vitals(data.vitals);
+    
     this.id = data.id;
     this.type = data.type != null ? data.type : 0;
-    this.name = data.name;
-    this.__position = data.position;
-    this.maxHealth = data.maxHealth;
-    this.speed = data.speed;
-    this.attackSlowness = data.attackSlowness;
+ 
+
     this.conditions = new ConditionManager(this, data.conditions);
 
-    this.__lookDirection = data.direction;
-    this.__previousPosition = data.position.copy();
+    this.__lookDirection = data.vitals.direction;
+    this.__previousPosition = data.vitals.position.copy();
 
     this.outfit = new Outfit(data.outfit);
     this.castingManager = new CastingManager();
@@ -113,7 +93,7 @@ export default class Creature {
 
     this.__movementEvent = null;
     this.__lookDirectionBuffer = null;
-    this.__chunk = window.gameClient.world.getChunkFromWorldPosition(this.__position);
+    this.__chunk = window.gameClient.world.getChunkFromWorldPosition(this.vitals.position);
     this.__teleported = false;
 
     // Create the character element (method implementation assumed).
@@ -122,9 +102,6 @@ export default class Creature {
     this.__activeTextElement = null;
     this.__target = null;
     this.__animations = new Set();
-
-    // Set initial health from data.
-    this.state.health = data.health;
   }
 
   public __createCharacterElement(): void {
@@ -136,11 +113,6 @@ export default class Creature {
   
     // Make sure to update it directly.
     this.characterElement.setHealthFraction(this.getHealthFraction());
-  }
-
-  public setHealthStatus(): void {
-    // Implementation for setting health status should be provided.
-    // For example, update a health bar in the UI.
   }
 
   public removeCondition(cid: number): void {
@@ -156,7 +128,7 @@ export default class Creature {
   }
 
   public blockHit(): any {
-    return window.gameClient.renderer.addPositionAnimation({position: this.__position, type: 3,});
+    return window.gameClient.renderer.addPositionAnimation({position: this.vitals.position, type: 3});
   }
   
   public getMaxFloor(): number {
@@ -278,7 +250,7 @@ export default class Creature {
   }
 
   public getPosition(): Position {
-    return this.__position;
+    return this.vitals.position;
   }
 
   public hasTarget(): boolean {
@@ -306,7 +278,7 @@ export default class Creature {
       fromTile.removeCreature(this);
     }
     // Update the position and set the new chunk.
-    this.__position = position;
+    this.vitals.position = position;
     this.__chunk = window.gameClient.world.getChunkFromWorldPosition(position);
     // Add the creature to the new tile.
     window.gameClient.world.getTileFromWorldPosition(position)?.addCreature(this);
@@ -318,7 +290,7 @@ export default class Creature {
   }
 
   public getHealthFraction(): number {
-    return this.clamp(this.state.health / this.maxHealth, 0, 1);
+    return this.clamp(this.vitals.health / this.vitals.maxHealth, 0, 1);
   }
 
   clamp(value: number, min: number, max: number): number {
@@ -361,7 +333,7 @@ export default class Creature {
   // Method: increaseHealth
   public increaseHealth(amount: number): void {
     // Assuming state.health and maxHealth are numbers and a .clamp method exists on number.
-    this.state.health = (this.state.health + amount).clamp(0, this.maxHealth);
+    this.vitals.state.health = (this.vitals.state.health + amount).clamp(0, this.vitals.maxHealth);
   }
 
   // Method: getTarget
@@ -423,9 +395,9 @@ export default class Creature {
     }
 
     this.__previousPosition = this.getPosition();
-    this.__position = position;
+    this.vitals.position = position;
 
-    if (window.gameClient.player!.canSeeSmall(this) && position.z === window.gameClient.player!.__position.z) {
+    if (window.gameClient.player!.canSeeSmall(this) && position.z === window.gameClient.player!.vitals.position.z) {
       window.gameClient.interface.soundManager.playWalkBit(position);
     }
 

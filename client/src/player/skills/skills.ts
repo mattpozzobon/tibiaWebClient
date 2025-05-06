@@ -1,4 +1,4 @@
-import SkillModal from "./modal-skills";
+import SkillModal from "../../modal-skills";
 
 export default class Skills {
   private __skills: { [key: string]: any };

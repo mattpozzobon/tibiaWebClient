@@ -1,7 +1,7 @@
-import Container from "./container";
-import GameClient from "./gameclient";
-import Item from "./item";
-import Slot from "./slot";
+import Container from "../../container";
+import GameClient from "../../gameclient";
+import Item from "../../item";
+import Slot from "../../slot";
 
 export default class Equipment extends Container {
   public slots: Slot[];

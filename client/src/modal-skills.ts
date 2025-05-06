@@ -32,4 +32,12 @@ export default class SkillModal extends Modal {
     }
   }
 
+  public setCharactherInfo(data: any): void {
+    const nameElement = document.getElementById("character-name");
+    if (nameElement) {
+      nameElement.innerText = "Name: " + data.name;
+    }
+  }
+
+
 }

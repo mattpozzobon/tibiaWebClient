@@ -254,6 +254,7 @@ button.symbol-button {
 }
 
 #game-wrapper {
+  position: relative;
   overflow-y: hidden;
   overflow-x: hidden;
   display: none;

@@ -157,11 +157,12 @@
       <div id="offer-modal-container"></div>
       <div id="spell-modal-container"></div>
       <div id="move-item-modal-container"></div>
+      
     </div>
 
     <!-- The Game Interface -->
     <div id="game-wrapper">
-      
+
       <div id="top-button-bar">
         <img id="logout-button" src="png/icons/logout.png"    title="Logout" />
         <img id="openSettings"  src="png/icons/config.png"    title="Settings" />
@@ -175,6 +176,8 @@
         
       <!-- Main body for the screen etc.. -->   
       <div class="main">
+
+        <div id="chat-container"></div>
 
         <div class="middle"></div>
 
@@ -238,6 +241,8 @@
       { url: 'modals/spell-modal.html', containerId: 'spell-modal-container' },
       { url: 'modals/move-item-modal.html', containerId: 'move-item-modal-container' },
       { url: 'modals/move-item-modal.html', containerId: 'move-item-modal-container' }, 
+
+      { url: 'modals/chat.html', containerId: 'chat-container' }, 
     ];
 
     modalsToLoad.forEach(modal => {

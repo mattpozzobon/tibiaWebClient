@@ -101,10 +101,10 @@ class PacketHandler {
   }): void {
     if (!window.gameClient.player) return;
 
-    window.gameClient.player.state.capacity = packet.capacity;
-    window.gameClient.player.state.attack = packet.attack;
-    window.gameClient.player.state.armor = packet.armor;
-    window.gameClient.player.state.speed = packet.speed;
+    window.gameClient.player.vitals.capacity = packet.capacity;
+    window.gameClient.player.vitals.state.attack = packet.attack;
+    window.gameClient.player.vitals.state.armor = packet.armor;
+    window.gameClient.player.vitals.speed = packet.speed;
   }
 
   handleOpenChannel(packet: any): void {
@@ -260,7 +260,7 @@ class PacketHandler {
     }
 
     if (tile?.id === 0) {
-      if (window.gameClient.player!.__position.isDiagonal(position)) {
+      if (window.gameClient.player!.vitals.position.isDiagonal(position)) {
         return true;
       }
 
@@ -272,12 +272,12 @@ class PacketHandler {
     }
 
     if (window.gameClient.player!.getTile().hasMaximumElevation()) {
-      if (window.gameClient.player!.__position.isDiagonal(position)) {
+      if (window.gameClient.player!.vitals.position.isDiagonal(position)) {
         return true;
       }
 
       let upTile = window.gameClient.world.getTileFromWorldPosition(position.up());
-      let aboveTile = window.gameClient.world.getTileFromWorldPosition(window.gameClient.player!.__position.up());
+      let aboveTile = window.gameClient.world.getTileFromWorldPosition(window.gameClient.player!.vitals.position.up());
 
       if ((!aboveTile || aboveTile.id === 0) && upTile && !upTile.isOccupied()) {
         return false;

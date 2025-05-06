@@ -1,9 +1,9 @@
 import Chunk from "./chunk";
 import FluidThing from "./fluid-container";
-import GameClient from "./gameclient";
 import Item from "./item";
 import Outfit, { OutfitEquipment } from "./outfit";
 import Packet from "./packet";
+import { VitalsData } from "./player/vitals/vitals";
 import Position from "./position";
 import RGBA from "./rgba";
 import Thing from "./thing";
@@ -669,57 +669,42 @@ export default class PacketReader extends Packet {
 
   public readPlayerInfo(): {
     id: number;
-    name: string;
-    position: Position;
-    direction: number;
     skills: any;
-    speed: number;
     attack: number;
-    attackSlowness: number;
     equipment: Item[];
-    capacity: number;
-    maxCapacity: number;
     mounts: OutfitIdName[];
     outfits: OutfitIdName[];
     spellbook: number[];
     friendlist: any[];
     outfit: Outfit;
-    health: number;
-    maxHealth: number;
-    mana: number;
-    maxMana: number;
-    energy: number;
-    maxEnergy: number;
+    vitals: VitalsData;
     conditions: number[];
   } {
-    /*
-     * Function PacketReader.readPlayerInfo
-     * Reads and serializes the player information during login
-     */
-  
     return {
       id: this.readUInt32(),
-      name: this.readString(),
-      position: this.readPosition(),
-      direction: this.readUInt8(),
       skills: this.readSkills(),
-      speed: this.readUInt16(),
       attack: this.readUInt8(),
-      attackSlowness: this.readUInt8(),
       equipment: this.readEquipment(),
-      capacity: this.readUInt32(),
-      maxCapacity: this.readUInt32(),
       mounts: this.readOutfits(),
       outfits: this.readOutfits(),
       spellbook: this.readArray(),
       friendlist: this.readFriendlist(),
       outfit: this.readOutfit(),
-      health: this.readUInt8(),
-      maxHealth: this.readUInt8(),
-      mana: this.readUInt8(),
-      maxMana: this.readUInt8(),
-      energy: this.readUInt8(),
-      maxEnergy: this.readUInt8(),
+      vitals: {
+        name: this.readString(),
+        position: this.readPosition(),
+        direction: this.readUInt8(),
+        health: this.readUInt8(),
+        maxHealth: this.readUInt8(),
+        mana: this.readUInt8(),
+        maxMana: this.readUInt8(),
+        energy: this.readUInt8(),
+        maxEnergy: this.readUInt8(),
+        capacity: this.readUInt32(),
+        maxCapacity: this.readUInt32(),
+        speed: this.readUInt16(),
+        attackSlowness: this.readUInt8(),
+      },
       conditions: this.readConditions(),
     };
   }

@@ -63,7 +63,7 @@ export default class Channel {
       return null;
     }
     // Filter messages where the sender is the current player.
-    const filtered = this.__contents.filter((msg) => window.gameClient.player!.name === msg.name);
+    const filtered = this.__contents.filter((msg) => window.gameClient.player!.vitals.name === msg.name);
     return filtered.length ? filtered[filtered.length - 1].message : null;
   }
 

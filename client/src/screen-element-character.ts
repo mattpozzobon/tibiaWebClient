@@ -8,10 +8,10 @@ export default class CharacterElement extends ScreenElement {
   public energyBar?: HTMLElement;
 
   constructor(creature: Creature) {
-    super( "character-element-prototype");
+    super("character-element-prototype");
     
     this.__creature = creature;
-    this.setName(creature.name);
+    this.setName(creature.vitals.name);
   }
 
   public setDefault(): void {

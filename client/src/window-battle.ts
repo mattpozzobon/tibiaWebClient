@@ -68,8 +68,8 @@ export default class BattleWindow extends InteractiveWindow {
     // Update health and mana bars.
     const nodeList = node.querySelectorAll(".battle-window-bar-wrapper");
     if (nodeList.length >= 2) {
-      nodeList[0].firstElementChild!.innerHTML = `${creature.state.health}|${creature.maxHealth}`;
-      nodeList[1].lastElementChild!.innerHTML = `${creature.state.mana || 0}|${creature.maxMana || 0}`;
+      nodeList[0].firstElementChild!.innerHTML = `${creature.vitals.health}|${creature.vitals.maxHealth}`;
+      nodeList[1].lastElementChild!.innerHTML = `${creature.vitals.mana || 0}|${creature.vitals.maxMana || 0}`;
     }
     // Set the creature name.
     const nameSpan = node.firstElementChild?.firstElementChild as HTMLElement;

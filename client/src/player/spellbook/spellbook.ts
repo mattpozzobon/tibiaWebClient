@@ -1,6 +1,6 @@
-import HeapEvent from "./heap-event";
-import SpellbookModal from "./modal-spellbook";
-import { SpellCastPacket } from "./protocol";
+import HeapEvent from "../../heap-event";
+import SpellbookModal from "../../modal-spellbook";
+import { SpellCastPacket } from "../../protocol";
 
 export default class Spellbook {
   public spells: Set<number>;

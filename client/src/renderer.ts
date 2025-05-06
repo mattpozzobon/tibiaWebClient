@@ -402,7 +402,7 @@ export default class Renderer {
       return;
     }
     tile.__deferredCreatures.forEach((creature: any) => {
-      const tileFromWorld = window.gameClient.world.getTileFromWorldPosition(creature.__position);
+      const tileFromWorld = window.gameClient.world.getTileFromWorldPosition(creature.vitals.position);
       this.__renderCreature(tileFromWorld, creature, true);
     }, this);
     tile.__deferredCreatures.clear();

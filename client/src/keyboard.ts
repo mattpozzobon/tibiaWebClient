@@ -19,13 +19,36 @@ class Keyboard {
     UP_ARROW: "arrowup",
     RIGHT_ARROW: "arrowright",
     DOWN_ARROW: "arrowdown",
+  
+    // Alphabet
     KEY_A: "a",
+    KEY_B: "b",
+    KEY_C: "c",
     KEY_D: "d",
     KEY_E: "e",
+    KEY_F: "f",
+    KEY_G: "g",
+    KEY_H: "h",
+    KEY_I: "i",
+    KEY_J: "j",
+    KEY_K: "k",
     KEY_L: "l",
     KEY_M: "m",
+    KEY_N: "n",
+    KEY_O: "o",
+    KEY_P: "p",
+    KEY_Q: "q",
+    KEY_R: "r",
     KEY_S: "s",
+    KEY_T: "t",
+    KEY_U: "u",
+    KEY_V: "v",
     KEY_W: "w",
+    KEY_X: "x",
+    KEY_Y: "y",
+    KEY_Z: "z",
+  
+    // Function keys
     F1: "f1",
     F2: "f2",
     F3: "f3",
@@ -39,6 +62,7 @@ class Keyboard {
     F11: "f11",
     F12: "f12",
   };
+  
 
   constructor() {
     document.addEventListener("keydown", this.__keyDown);
@@ -183,6 +207,7 @@ class Keyboard {
 
   private __keyDown = (event: KeyboardEvent): void => {
     // convert event.key to lower case for consistency
+    event.preventDefault();
     const lowerKey = event.key.toLowerCase();
 
     if (!this.__isConfigured(lowerKey)) return;
@@ -194,8 +219,20 @@ class Keyboard {
       return;
     }
 
-    if (lowerKey === Keyboard.KEYS.KEY_L && this.isControlDown()) {
+    if (lowerKey === Keyboard.KEYS.KEY_G && this.isControlDown()) {
       return window.gameClient.interface.sendLogout();
+    }
+
+    if (lowerKey === Keyboard.KEYS.KEY_O && this.isControlDown()) {
+      return window.gameClient.interface.openOptions();
+    }
+
+    if (lowerKey === Keyboard.KEYS.KEY_K && this.isControlDown()) {
+      return window.gameClient.interface.openCharactherStatus();
+    }
+
+    if (lowerKey === Keyboard.KEYS.KEY_U && this.isControlDown()) {
+      return window.gameClient.interface.openOutfit();
     }
 
     if (lowerKey === Keyboard.KEYS.KEY_M && this.isControlDown()) {

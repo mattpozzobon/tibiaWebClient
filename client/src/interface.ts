@@ -304,9 +304,6 @@ export default class Interface {
     this.settings.saveState();
   }
 
-  /**
-   * Writes a logout request to the server.
-   */
   sendLogout(): void {
     this.modalManager.open("confirm-modal", () => {
       // Block logout in no-logout zones.
@@ -317,8 +314,23 @@ export default class Interface {
     });
   }
 
+  openOptions(): void {
+    this.modalManager.open("settings-modal");
+  }
+
+  openCharactherStatus(): void {
+    this.modalManager.open("skill-modal");
+  }
+
+  openFriendsList(): void {
+    this.modalManager.open("friend-modal");
+  }
+
+  openOutfit(): void {
+    this.modalManager.open("outfit-modal");
+  }
+
   handleResize() {
-    
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
   

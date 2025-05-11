@@ -61,39 +61,17 @@ export default class ModalManager {
     document.getElementById("openSkills")?.addEventListener("click", this.open.bind(this, "skill-modal"));
 
     Array.from(document.querySelectorAll(".modal-header")).forEach(header => {
-      header.addEventListener("mousedown", this.__handleHeaderMouseDown.bind(this));
+      header.addEventListener("mousedown", this.__handleHeaderMouseDown.bind(this) as EventListener);
     });
   }
 
   /**
    * Handles dragging of modal windows. The event listener is attached to modal header elements.
    */
-  private __handleHeaderMouseDown(event: any): void {
+  private __handleHeaderMouseDown(event: MouseEvent): void {
     event.preventDefault();
-    const headerElement = event.currentTarget as HTMLElement;
-
-    const __handleRelease = (releaseEvent: MouseEvent): void => {
-      releaseEvent.preventDefault();
-      document.removeEventListener("mousemove", __handleDrag);
-      document.removeEventListener("mouseup", __handleRelease);
-    };
-
-    const __handleDrag = (dragEvent: MouseEvent): void => {
-      dragEvent.preventDefault();
-      const rect = window.gameClient.renderer.screen.canvas.getBoundingClientRect();
-      const modalElement = headerElement.parentElement;
-      if (!modalElement) return;
-      let left = dragEvent.clientX - rect.left - 0.5 * modalElement.offsetWidth;
-      let top = dragEvent.clientY - rect.top - 0.5 * headerElement.offsetHeight;
-      left = clamp(left, 0, rect.width - modalElement.offsetWidth);
-      top = clamp(top, 0, rect.height - modalElement.offsetHeight);
-      modalElement.style.left = `${left}px`;
-      modalElement.style.top = `${top}px`;
-    };
-
-    document.addEventListener("mousemove", __handleDrag);
-    document.addEventListener("mouseup", __handleRelease);
   }
+  
 
   /**
    * Registers a modal class with a given identifier.

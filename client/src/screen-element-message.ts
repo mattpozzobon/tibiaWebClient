@@ -1,11 +1,10 @@
 import ScreenElement from "./screen-element";
-import GameClient from "./gameclient";
 import Position from "./position";
 import Interface from "./interface";
+import Creature from "./creature";
 
 export default class MessageElement extends ScreenElement {
-  ;
-  __entity: any;
+  __entity: Creature;
   private __position: Position;
   private __message: string;
   __color: number;
@@ -15,7 +14,7 @@ export default class MessageElement extends ScreenElement {
     super( "message-element-prototype");
     
     this.__entity = entity;
-    this.__position = entity.__position.copy();
+    this.__position = entity.getPosition().copy();
     this.__message = message;
     this.__color = color;
 
@@ -38,7 +37,7 @@ export default class MessageElement extends ScreenElement {
     if (spans.length < 2) return;
     const nameElement = spans[0] as HTMLElement;
     const textElement = spans[1] as HTMLElement;
-    nameElement.innerHTML = `<u>${this.__entity.name}</u>`;
+    nameElement.innerHTML = `<u>${this.__entity.getName()}</u>`;
     textElement.innerHTML = message;
   }
 

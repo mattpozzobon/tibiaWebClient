@@ -1,17 +1,10 @@
-import GameClient from "./gameclient";
 import Interface from "./interface";
+import CharacterMessage from "./message-character";
 
 // Assume these interfaces and classes are defined/imported from elsewhere:
 interface IMessage {
   message: string;
   name: string;
-  createNode(): Node;
-}
-
-declare class CharacterMessage implements IMessage {
-  message: string;
-  name: string;
-  constructor(message: string, type: number, name: string, color: number);
   createNode(): Node;
 }
 
@@ -23,7 +16,6 @@ declare class Message implements IMessage {
 }
 
 export default class Channel {
-  ;
   public name: string;
   public id: number | null;
   public element: HTMLElement;
@@ -39,7 +31,7 @@ export default class Channel {
   }
 
   public close(): void {
-    // Delegate channel closure to the channel manager.
+    // Delegate channel closure to the channel manager.S
     window.gameClient.interface.channelManager.closeChannel(this);
   }
 

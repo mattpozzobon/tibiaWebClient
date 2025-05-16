@@ -243,11 +243,6 @@ button.symbol-button {
   max-width: 18px;
 }
 
-.symbol-button-long {
-  padding: 0px;
-  min-width: 24px;
-}
-
 .close-button {
   position: absolute;
   right: 6px;

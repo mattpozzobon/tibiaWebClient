@@ -1,4 +1,3 @@
-import GameClient from "./gameclient";
 import FloatingElement from "./screen-element-floating";
 import MessageElement from "./screen-element-message";
 
@@ -8,7 +7,6 @@ export default class ScreenElementManager {
   
 
   constructor() {
-    
     this.activeTextElements = new Set();
     const wrapper = document.getElementById("text-wrapper");
     if (!wrapper) {
@@ -95,6 +93,8 @@ export default class ScreenElementManager {
     if (document.hidden) {
       return null;
     }
+
+    console.log('Creating text element:', entity, message, color);
     return this.__createTextElement(new MessageElement(entity, message, color));
   }
 
@@ -111,7 +111,7 @@ export default class ScreenElementManager {
       }
       this.createTextElement(
         textElement.__entity,
-        textElement.__entity.textBuffer.shift(),
+        textElement.__entity.textBuffer.shift() || "",
         textElement.__color
       );
     }

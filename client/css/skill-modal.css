@@ -27,8 +27,8 @@
 }
 
 .character-header img {
-  width: 64px;
-  height: 64px;
+  width: 72px;        /* was 64px */
+  height: 72px;
   object-fit: contain;
   border: 1px solid #444;
 }
@@ -87,7 +87,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 6px 0; 
+  padding: 2px 0;
 }
 
 .outer-skill-wrapper .skill-wrapper {
@@ -96,12 +96,22 @@
   gap: 6px;
   color: white;
   font-size: 13px;
-  min-width: 100px;
+  min-width: 70px;
+}
+
+.skill-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px; /* icon ↔ number spacing */
+  color: white;
+  font-size: 13px;
+  flex-shrink: 0; /* Don’t stretch */
 }
 
 .skill-wrapper img {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated; /* keep pixel art sharp */
 }
 
 .stats-attributes img {
@@ -109,12 +119,16 @@
   height: 26px;
 }
 
-/* Progress bar area */
 .bar-wrapper {
-  flex-grow: 1;
   display: flex;
   align-items: center;
-  margin-left: 8px;
+  gap: 4px; /* Minimal space between number and bar */
+  width: 100%;
+}
+
+.skill-wrapper .skill {
+  margin-left: 2px;
+  white-space: nowrap;
 }
 
 .bar {
@@ -122,8 +136,8 @@
   height: 6px;
   background: #222;
   border: 1px solid #333;
-  margin-left: 4px;
   position: relative;
+  min-width: 0; /* prevent overflow pushing it away */
 }
 
 .bar .value {

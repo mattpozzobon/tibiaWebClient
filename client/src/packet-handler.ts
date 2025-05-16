@@ -1,10 +1,8 @@
-import { PropBitFlag } from "./bitflag";
 import Book from "./book";
 import ConditionManager from "./condition";
 import Container from "./container";
 import Creature from "./creature";
 import FluidThing from "./fluid-container";
-import GameClient from "./gameclient";
 import { CONST } from "./helper/appContext";
 import Interface from "./interface";
 import Item from "./item";
@@ -14,8 +12,6 @@ import Tile from "./tile";
 import BattleWindow from "./window-battle";
 
 class PacketHandler {
-  ;
-
   constructor() {
     /*
      * Class PacketHandler
@@ -33,22 +29,23 @@ class PacketHandler {
 
     switch (packet.property) {
       case CONST.PROPERTIES.HEALTH:
-        creature.state.health = packet.value;
+        creature.vitals.health = packet.value;
         break;
       case CONST.PROPERTIES.HEALTH_MAX:
-        creature.maxHealth = packet.value;
+        creature.vitals.maxHealth = packet.value;
         break;
       case CONST.PROPERTIES.MANA:
-        creature.state.mana = packet.value;
+        creature.vitals.mana = packet.value;
         break;
       case CONST.PROPERTIES.ENERGY:
-        creature.state.energy = packet.value;
+        creature.vitals.energy = packet.value;
         break;
       case CONST.PROPERTIES.DIRECTION:
         creature.__setLookDirection(packet.value);
         break;
       case CONST.PROPERTIES.CAPACITY:
-        creature.state.capacity = packet.value;
+     
+      creature.vitals.capacity = packet.value;
         break;
     }
   }

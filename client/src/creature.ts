@@ -7,7 +7,6 @@ import { CONST } from "./helper/appContext";
 import BoxAnimation from "./box-animation"; 
 import CastingManager from "./casting-manager";
 import CharacterElement from "./screen-element-character";
-import State from "./state";
 import Interface from "./interface";
 import { Vitals, VitalsData } from "./player/vitals/vitals";
 
@@ -43,10 +42,8 @@ export interface CharacterFrames {
 }
 
 export default class Creature {
-
   public id: number;
   public type: number;
-
   public conditions: ConditionManager;
   public __lookDirection: number;
   public __previousPosition: Position;
@@ -72,16 +69,11 @@ export default class Creature {
   constructor(data: CreatureData) {
 
     this.vitals = new Vitals(data.vitals);
-    
     this.id = data.id;
     this.type = data.type != null ? data.type : 0;
- 
-
     this.conditions = new ConditionManager(this, data.conditions);
-
     this.__lookDirection = data.vitals.direction;
     this.__previousPosition = data.vitals.position.copy();
-
     this.outfit = new Outfit(data.outfit);
     this.castingManager = new CastingManager();
 
@@ -251,6 +243,10 @@ export default class Creature {
 
   public getPosition(): Position {
     return this.vitals.position;
+  }
+
+  public getName(): string {
+    return this.vitals.name;
   }
 
   public hasTarget(): boolean {

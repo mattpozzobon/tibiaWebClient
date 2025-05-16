@@ -167,24 +167,38 @@ class Keyboard {
     window.gameClient.send(new PlayerTurnPacket(direction));
   }
 
+  private __setChatOpacity(value: number): void {
+    const wrapper = document.querySelector(".chatbox-wrapper") as HTMLElement;
+    if (wrapper) wrapper.style.opacity = `${value}`;
+  }
+  
   private __handleReturnKey(): void {
-    if (!window.gameClient.interface.modalManager.isOpened() && !window.gameClient.isConnected()) {
-      window.gameClient.interface.modalManager.open("floater-enter");
+    const modalManager = window.gameClient.interface.modalManager;
+    const input = window.gameClient.interface.channelManager;
+  
+    if (!modalManager.isOpened() && !window.gameClient.isConnected()) {
+      modalManager.open("floater-enter");
       window.gameClient.interface.enterGame();
-    } else if (window.gameClient.interface.modalManager.isOpened()) {
-      window.gameClient.interface.modalManager.handleConfirm();
-    } else {
-      const activeElement = document.activeElement as HTMLElement | null;
-      if (
-        !activeElement ||
-        activeElement.id !== "chat-input" ||
-        (activeElement as HTMLInputElement).value === ""
-      ) {
-        window.gameClient.interface.channelManager.toggleInputLock();
-      } else {
-        window.gameClient.interface.channelManager.handleMessageSend();
-      }
+      return;
     }
+  
+    if (modalManager.isOpened()) {
+      modalManager.handleConfirm();
+      return;
+    }
+  
+    const chatInput = document.getElementById("chat-input") as HTMLInputElement;
+  
+    if (input.isDisabled()) {
+      input.toggleInputLock();
+      this.__setChatOpacity(1); // fully visible when active
+      return;
+    }
+  
+    // Send message, then lock input again
+    input.handleMessageSend();
+    input.toggleInputLock();
+    this.__setChatOpacity(0.6); // fade out when not typing
   }
 
   private __handleEscapeKey(): void {
@@ -207,7 +221,7 @@ class Keyboard {
 
   private __keyDown = (event: KeyboardEvent): void => {
     // convert event.key to lower case for consistency
-    event.preventDefault();
+    //event.preventDefault();
     const lowerKey = event.key.toLowerCase();
 
     if (!this.__isConfigured(lowerKey)) return;
@@ -219,30 +233,36 @@ class Keyboard {
       return;
     }
 
-    if (lowerKey === Keyboard.KEYS.KEY_G && this.isControlDown()) {
-      return window.gameClient.interface.sendLogout();
-    }
+    if (window.gameClient.isConnected()) {
+      if (lowerKey === Keyboard.KEYS.KEY_G && this.isControlDown()) {
+        event.preventDefault();
+        return window.gameClient.interface.sendLogout();
+      }
 
-    if (lowerKey === Keyboard.KEYS.KEY_O && this.isControlDown()) {
-      return window.gameClient.interface.openOptions();
-    }
+      if (lowerKey === Keyboard.KEYS.KEY_O && this.isControlDown()) {
+        event.preventDefault();
+        return window.gameClient.interface.openOptions();
+      }
 
-    if (lowerKey === Keyboard.KEYS.KEY_K && this.isControlDown()) {
-      return window.gameClient.interface.openCharactherStatus();
-    }
+      if (lowerKey === Keyboard.KEYS.KEY_K && this.isControlDown()) {
+        event.preventDefault();
+        return window.gameClient.interface.openCharactherStatus();
+      }
 
-    if (lowerKey === Keyboard.KEYS.KEY_U && this.isControlDown()) {
-      return window.gameClient.interface.openOutfit();
-    }
+      if (lowerKey === Keyboard.KEYS.KEY_U && this.isControlDown()) {
+        event.preventDefault();
+        return window.gameClient.interface.openOutfit();
+      }
 
-    if (lowerKey === Keyboard.KEYS.KEY_M && this.isControlDown()) {
-      event.preventDefault();
-      //return window.gameClient.renderer.minimap.openLargeMap();
-    }
+      if (lowerKey === Keyboard.KEYS.KEY_M && this.isControlDown()) {
+        event.preventDefault();
+        //return window.gameClient.renderer.minimap.openLargeMap();
+      }
 
-    if (lowerKey === Keyboard.KEYS.KEY_E && this.isControlDown()) {
-      event.preventDefault();
-      return window.gameClient.interface.channelManager.closeCurrentChannel();
+      if (lowerKey === Keyboard.KEYS.KEY_E && this.isControlDown()) {
+        event.preventDefault();
+        return window.gameClient.interface.channelManager.closeCurrentChannel();
+      }
     }
 
     // Update cursor on modifier keys

@@ -534,7 +534,7 @@ export default class PacketReader extends Packet {
       health: this.readUInt32(),
       maxHealth: this.readUInt32(),
       speed: this.readUInt16(),
-      name: this.readString(),
+      name: this.readString(),           // ✅ matches correct location now
       conditions: this.readConditions(),
     };
   }

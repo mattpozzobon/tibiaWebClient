@@ -553,8 +553,32 @@ class PacketHandler {
     if (window.gameClient.player && packet.id === window.gameClient.player.id) {
       return window.gameClient.world.addCreature(window.gameClient.player);
     }
+  
     console.log("handleEntityReference: ", packet);
-    window.gameClient.world.createCreature(packet.id, new Creature(packet));
+  
+    const creatureData = {
+      id: packet.id,
+      type: CONST.TYPES[packet.type as keyof typeof CONST.TYPES] ?? 0,
+      outfit: packet.outfit,
+      conditions: packet.conditions,
+      vitals: {
+        name: packet.name,
+        position: packet.position,
+        direction: packet.direction,
+        health: packet.health,
+        maxHealth: packet.maxHealth,
+        mana: 0,               // 🟡 placeholder (not sent from server)
+        maxMana: 1,            // avoid NaN
+        energy: 0,             // 🟡 placeholder
+        maxEnergy: 1,
+        capacity: 0,
+        maxCapacity: 1,
+        speed: packet.speed,
+        attackSlowness: 0,
+      }
+    };
+  
+    window.gameClient.world.createCreature(packet.id, new Creature(creatureData));
   }
 
   handleCreatureTurn(packet: { id: number; direction: number }): void {

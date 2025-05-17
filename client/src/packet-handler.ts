@@ -29,23 +29,22 @@ class PacketHandler {
 
     switch (packet.property) {
       case CONST.PROPERTIES.HEALTH:
-        creature.vitals.health = packet.value;
+        creature.vitals.state.health = packet.value;
         break;
       case CONST.PROPERTIES.HEALTH_MAX:
-        creature.vitals.maxHealth = packet.value;
+        creature.vitals.state.maxHealth = packet.value;
         break;
       case CONST.PROPERTIES.MANA:
-        creature.vitals.mana = packet.value;
+        creature.vitals.state.mana = packet.value;
         break;
       case CONST.PROPERTIES.ENERGY:
-        creature.vitals.energy = packet.value;
+        creature.vitals.state.energy = packet.value;
         break;
       case CONST.PROPERTIES.DIRECTION:
         creature.__setLookDirection(packet.value);
         break;
       case CONST.PROPERTIES.CAPACITY:
-     
-      creature.vitals.capacity = packet.value;
+        creature.vitals.capacity = packet.value;
         break;
     }
   }
@@ -98,7 +97,7 @@ class PacketHandler {
   }): void {
     if (!window.gameClient.player) return;
 
-    window.gameClient.player.vitals.capacity = packet.capacity;
+    window.gameClient.player.vitals.state.capacity = packet.capacity;
     window.gameClient.player.vitals.state.attack = packet.attack;
     window.gameClient.player.vitals.state.armor = packet.armor;
     window.gameClient.player.vitals.speed = packet.speed;

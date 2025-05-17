@@ -152,35 +152,35 @@ export interface Constants {
       ELDER_DRUID: number;
     };
     PROPERTIES: {
-      NAME: number;
-      HEALTH: number;
-      HEALTH_MAX: number;
-      MANA: number;
-      MANA_MAX: number;
-      CAPACITY: number;
-      CAPACITY_MAX: number;
-      ATTACK: number;
-      ATTACK_SPEED: number;
-      DEFENSE: number;
-      SPEED: number;
-      OUTFIT: number;
-      DIRECTION: number;
-      ROLE: number;
-      SEX: number;
-      VOCATION: number;
-      MOUNTS: number;
-      OUTFITS: number;
-      MAGIC: number;
-      FIST: number;
-      CLUB: number;
-      SWORD: number;
-      AXE: number;
-      DISTANCE: number;
-      SHIELDING: number;
-      FISHING: number;
-      EXPERIENCE: number;
-      ENERGY: number;
-      ENERGY_MAX: number;
+      NAME: number;         // 0
+      HEALTH: number;       // 1
+      HEALTH_MAX: number;   // 2
+      MANA: number;         // 3
+      MANA_MAX: number;     // 4
+      CAPACITY: number;     // 5
+      CAPACITY_MAX: number; // 6
+      ATTACK: number;       // 7
+      ATTACK_SPEED: number; // 9
+      DEFENSE: number;      // 8
+      SPEED: number;        // 10
+      OUTFIT: number;       // 11
+      DIRECTION: number;    // 12
+      ROLE: number;         // 13
+      SEX: number;          // 14
+      VOCATION: number;     // 15
+      MOUNTS: number;       // 16
+      OUTFITS: number;      // 17
+      MAGIC: number;        // 18
+      FIST: number;         // 19
+      CLUB: number;         // 20
+      SWORD: number;        // 21
+      AXE: number;          // 22
+      DISTANCE: number;     // 23
+      SHIELDING: number;    // 24
+      FISHING: number;      // 25
+      EXPERIENCE: number;   // 26
+      ENERGY: number;       // 27
+      ENERGY_MAX: number;   // 28
     };
     SEX: {
       MALE: number;

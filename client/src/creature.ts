@@ -61,7 +61,7 @@ export default class Creature {
   public __target: any;
   public __animations: Set<any>;
   // Assume characterElement is provided (e.g., by Creature or assigned later)
-  public characterElement: any;
+  public characterElement: CharacterElement;
   public vitals: Vitals;
 
   // gameClient is injected to replace global references.
@@ -89,22 +89,13 @@ export default class Creature {
     this.__teleported = false;
 
     // Create the character element (method implementation assumed).
-    this.__createCharacterElement();
+    this.characterElement = new CharacterElement(this);
+    window.gameClient.interface.screenElementManager.add(this.characterElement.element);
+    this.characterElement.setHealthFraction(this.getHealthFraction());
 
     this.__activeTextElement = null;
     this.__target = null;
     this.__animations = new Set();
-  }
-
-  public __createCharacterElement(): void {
-    // We use a sticky text element for the nametag.
-    this.characterElement = new CharacterElement(this);
-  
-    // Add it to the DOM.
-    window.gameClient.interface.screenElementManager.add(this.characterElement.element);
-  
-    // Make sure to update it directly.
-    this.characterElement.setHealthFraction(this.getHealthFraction());
   }
 
   public removeCondition(cid: number): void {
@@ -286,7 +277,7 @@ export default class Creature {
   }
 
   public getHealthFraction(): number {
-    return this.clamp(this.vitals.health / this.vitals.maxHealth, 0, 1);
+    return this.clamp(this.vitals.state.health / this.vitals.state.maxHealth, 0, 1);
   }
 
   clamp(value: number, min: number, max: number): number {
@@ -329,7 +320,7 @@ export default class Creature {
   // Method: increaseHealth
   public increaseHealth(amount: number): void {
     // Assuming state.health and maxHealth are numbers and a .clamp method exists on number.
-    this.vitals.state.health = (this.vitals.state.health + amount).clamp(0, this.vitals.maxHealth);
+    this.vitals.state.health = (this.vitals.state.health + amount).clamp(0, this.vitals.state.maxHealth);
   }
 
   // Method: getTarget

@@ -20,22 +20,14 @@ export interface VitalsData {
 }
 
 export class Vitals {
-    public state: State;
-    public name: string;
-    public position: Position;
-    public direction: number;
-    public attackSlowness: number;
-    public speedValue?: number;
-    
-    public health: number;
-    public maxHealth: number;
-    public mana: number;
-    public maxMana: number;
-    public energy: number;
-    public maxEnergy: number;
-    public capacity: number;
-    public maxCapacity: number;
-    public speed: number;
+  public state: State;
+  public name: string;
+  public position: Position;
+  public direction: number;
+  public attackSlowness: number;
+  public speedValue?: number;
+  public maxCapacity: number;
+  public speed: number;
 
   constructor(data: VitalsData) {
     this.state = new State();
@@ -45,82 +37,60 @@ export class Vitals {
     this.direction = data.direction;
     this.attackSlowness = data.attackSlowness;
     this.speedValue = data.speedValue;
-    this.health = data.health;
-    this.maxHealth = data.maxHealth;
-    this.mana = data.mana;
-    this.maxMana = data.maxMana;
-    this.energy = data.energy;
-    this.maxEnergy = data.maxEnergy;
-    this.capacity = data.capacity;
     this.maxCapacity = data.maxCapacity;
     this.speed = data.speed;
-    
-    this.registerDefaultListeners();
+
+    this.registerStatListener("health", "maxHealth", this.updateHealthBar);
+    this.registerStatListener("mana", "maxMana", this.updateManaBar);
+    this.registerStatListener("energy", "maxEnergy", this.updateEnergyBar);
+
+    // Set values AFTER listeners
+    this.state.health = data.health;
+    this.state.maxHealth = data.maxHealth;
+    this.state.mana = data.mana;
+    this.state.maxMana = data.maxMana;
+    this.state.energy = data.energy;
+    this.state.maxEnergy = data.maxEnergy;
+    this.state.capacity = data.capacity;
+
     this.setCharactherModal(data);
   }
 
   private setCharactherModal(data: VitalsData): void {
-    (window.gameClient.interface.modalManager.get("skill-modal") as SkillModal).setCharactherInfo(data);
+    (window.gameClient.interface.modalManager.get("skill-modal") as SkillModal)
+      .setCharactherInfo(data);
   }
 
-  private registerDefaultListeners(): void {
-    this.state.add("health", this.setHealthStatus.bind(this));
-    this.state.add("mana", this.setManaStatus.bind(this));
-    this.state.add("maxMana", this.setManaStatus.bind(this));
-    this.state.add("energy", this.setEnergyStatus.bind(this));
-    this.state.add("maxEnergy", this.setEnergyStatus.bind(this));
-    this.state.add("capacity", this.setCapacity.bind(this));
+  private registerStatListener( statKey: "health" | "mana" | "energy",maxStatKey: "maxHealth" | "maxMana" | "maxEnergy", updateFn: () => void
+  ): void {
+    this.state.add(statKey, updateFn.bind(this));
+    this.state.add(maxStatKey, updateFn.bind(this));
   }
 
-  public setHealthStatus(): void {
-    const current = this.state.health;
-    const max = this.state.maxHealth;
-    const fraction = (current / max) * 100 + "%";
-
-    const bar = document.getElementById("health-bar");
-    if (bar) {
-      const firstChild = bar.firstElementChild as HTMLElement;
-      if (firstChild) firstChild.style.width = fraction;
-
-      const lastChild = bar.lastElementChild as HTMLElement;
-      if (lastChild) lastChild.innerHTML = `${current} / ${max}`;
+  private updateHealthBar(): void {
+    console.log('updateHealthBar', this.state.health, this.state.maxHealth);
+    const player = window.gameClient.player;
+    if (player && player.vitals.name === this.name) {
+      const fraction = player.getHealthFraction();
+      player.characterElement.setHealthFraction(fraction);
     }
   }
 
-  private setManaStatus(): void {
-    const current = this.state.mana;
-    const max = this.state.maxMana;
-    const fraction = (current / max) * 100 + "%";
-
-    const manaBar = document.getElementById("mana-bar");
-    if (manaBar) {
-      const firstChild = manaBar.firstElementChild as HTMLElement | null;
-      if (firstChild) firstChild.style.width = fraction;
-
-      const lastChild = manaBar.lastElementChild as HTMLElement | null;
-      if (lastChild) lastChild.innerHTML = `${current} / ${max}`;
+  private updateManaBar(): void {
+    const player = window.gameClient.player;
+    if (player && player.vitals.name === this.name) {
+      const current = this.state.mana ?? 0;
+      const max = this.state.maxMana ?? 1;
+      player.characterElement.setDefaultMana(`${(current / max) * 100}%`);
     }
   }
 
-  private setEnergyStatus(): void {
-    const current = this.state.energy;
-    const max = this.state.maxEnergy;
-    const fraction = (current / max) * 100 + "%";
-
-    const energyBar = document.getElementById("energy-bar");
-    if (energyBar) {
-      const firstChild = energyBar.firstElementChild as HTMLElement | null;
-      if (firstChild) firstChild.style.width = fraction;
-
-      const lastChild = energyBar.lastElementChild as HTMLElement | null;
-      if (lastChild) lastChild.innerHTML = `${current} / ${max}`;
-    }
-  }
-
-  private setCapacity(): void {
-    const el = document.getElementById("player-capacity");
-    if (el) {
-      el.innerHTML = `Cap: <br> ${Math.round(this.state.capacity / 100)}`;
+  private updateEnergyBar(): void {
+    const player = window.gameClient.player;
+    if (player && player.vitals.name === this.name) {
+      const current = this.state.energy ?? 0;
+      const max = this.state.maxEnergy ?? 1;
+      player.characterElement.setDefaultEnergy(`${(current / max) * 100}%`);
     }
   }
 }

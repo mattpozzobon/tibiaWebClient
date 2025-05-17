@@ -16,7 +16,6 @@ export default class CharacterElement extends ScreenElement {
 
   public setDefault(): void {
     this.setHealthFraction(this.__creature.getHealthFraction());
-    // Optionally: this.setManaColor(Interface.prototype.COLORS.BLUE);
   }
 
   public setDefaultEnergy(value: string): void {
@@ -109,7 +108,6 @@ export default class CharacterElement extends ScreenElement {
       ${offsetY - spriteSizeY * 1.2}px
     )`;
   }
-  
 
   public addManaBar(value: string): void {
     if (!this.manaBar) {

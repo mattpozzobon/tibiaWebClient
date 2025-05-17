@@ -37,8 +37,6 @@ export default class Player extends Creature {
 
   constructor(data: PlayerData) {
     super(data);
-
-
     this.skills = new Skills(data.skills);
     this.equipment = new Equipment(data.equipment);
     this.spellbook = new Spellbook(data.spellbook);
@@ -46,14 +44,10 @@ export default class Player extends Creature {
     this.mounts = data.mounts;
     this.outfits = data.outfits;
 
-    //this.registerStateListeners();
-
     // Initialize character bars
-    this.characterElement.addManaBar((this.vitals.mana / this.vitals.maxMana) * 100 + "%");
-    this.characterElement.addEnergyBar((this.vitals.energy / this.vitals.maxEnergy) * 100 + "%");
+    this.characterElement.addManaBar((this.vitals.state.mana / this.vitals.state.maxMana) * 100 + "%");
+    this.characterElement.addEnergyBar((this.vitals.state.energy / this.vitals.state.maxEnergy) * 100 + "%");
   }
-
-
 
   public getSpeed(): number {
     let base = this.vitals.speed;

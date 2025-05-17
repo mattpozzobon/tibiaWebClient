@@ -151,13 +151,14 @@ class PacketHandler {
   }
 
   handleEmote(packet: { id: number; message: string; color: number }): void {
-    let sourceCreature = window.gameClient.world.getCreature(packet.id);
-    if (!sourceCreature) return;
-
+    const creature = window.gameClient.world.getCreature(packet.id);
+    if (!creature) return;
+  
     window.gameClient.interface.screenElementManager.createFloatingTextElement(
       `<i>${packet.message}</i>`,
-      sourceCreature.getPosition(),
-      packet.color
+      creature.getPosition(),
+      packet.color,
+      packet.id // Pass creature ID for stagger tracking
     );
   }
 

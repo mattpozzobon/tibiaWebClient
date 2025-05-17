@@ -68,7 +68,6 @@ export class Vitals {
   }
 
   private updateHealthBar(): void {
-    console.log('updateHealthBar', this.state.health, this.state.maxHealth);
     const player = window.gameClient.player;
     if (player && player.vitals.name === this.name) {
       const fraction = player.getHealthFraction();

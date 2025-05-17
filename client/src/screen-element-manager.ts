@@ -4,7 +4,7 @@ import MessageElement from "./screen-element-message";
 export default class ScreenElementManager {
   public activeTextElements: Set<FloatingElement | MessageElement>;
   public screenWrapper: HTMLElement;
-  
+  private emoteDelays: Map<number, number> = new Map(); // creatureId → last delay in ms
 
   constructor() {
     this.activeTextElements = new Set();
@@ -63,11 +63,27 @@ export default class ScreenElementManager {
     this.screenWrapper.appendChild(element);
   }
 
-  public createFloatingTextElement(message: string, position: any, color: number): any {
-    if (document.hidden) {
-      return null;
+  public createFloatingTextElement(message: string, position: any, color: number, creatureId?: number): void {
+    if (document.hidden) return;
+  
+    let delay = 0;
+    if (creatureId !== undefined) {
+      const lastDelay = this.emoteDelays.get(creatureId) || 0;
+      delay = lastDelay + 200; // Stagger by 100ms
+      this.emoteDelays.set(creatureId, delay);
+  
+      // Reset the delay counter after a short time
+      setTimeout(() => {
+        const current = this.emoteDelays.get(creatureId);
+        if (current === delay) {
+          this.emoteDelays.delete(creatureId);
+        }
+      }, delay + 500);
     }
-    return this.__createTextElement(new FloatingElement(message, position, color));
+  
+    setTimeout(() => {
+      this.__createTextElement(new FloatingElement(message, position, color));
+    }, delay);
   }
 
   private __createTextElement(messageElement: FloatingElement | MessageElement): any {

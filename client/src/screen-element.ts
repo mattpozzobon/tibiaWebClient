@@ -1,22 +1,16 @@
-import GameClient from "./gameclient";
-
-// Helper clamp function.
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
-}
 
 export default class ScreenElement {
   public element: HTMLElement;
   
-
   constructor(id: string) {
-    
     const elem = document.getElementById(id);
     if (!elem) {
       throw new Error(`Element with id "${id}" not found.`);
     }
-    // Clone the node deeply.
+    
     this.element = elem.cloneNode(true) as HTMLElement;
+    this.element.removeAttribute("id");
+    document.body.appendChild(this.element);
     this.show();
   }
 

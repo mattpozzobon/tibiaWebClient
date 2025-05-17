@@ -1,4 +1,3 @@
-import GameClient from "./gameclient";
 import Position from "./position";
 import Interface from "./interface";
 import ScreenElement from "./screen-element";
@@ -20,7 +19,7 @@ export default class FloatingElement extends ScreenElement {
    * Returns the duration (in milliseconds or any unit) the element should appear.
    */
   public getDuration(): number {
-    return 15;
+    return 20;
   }
 
   /**
@@ -34,21 +33,22 @@ export default class FloatingElement extends ScreenElement {
    * Updates the text position based on the element's age and position.
    */
   public setTextPosition(): void {
-    // Get a static screen position from the renderer using the element's position.
     const staticPos = window.gameClient.renderer.getStaticScreenPosition(this.__position);
-    // Calculate the absolute offset (assume __getAbsoluteOffset is inherited).
     const offset = this.__getAbsoluteOffset(staticPos);
     const age = this.getAge();
-
-    // Animate the text element upwards as it ages.
+  
+    // Animate upward
     offset.top -= Math.floor(0.05 * age);
-
-    // Update opacity after 500ms.
+  
+    // Fade out after 500ms
     if (age > 500) {
       this.element.style.opacity = String(1 - ((age - 500) / 250));
     }
-
-    // Update the element's position on screen (assume __updateTextPosition is inherited).
+  
+    // ✅ Shrink over time: starts at 1.5 → shrinks to 1.0
+    const scale = 2.0 - Math.min(age / 600, 0.5); // shrink over 600ms
+    this.element.style.transform = `scale(${scale})`;
+  
     this.__updateTextPosition(offset);
   }
 

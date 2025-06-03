@@ -2,7 +2,7 @@ import ConditionManager from "../condition";
 import Creature, { CreatureData } from "../creature";
 import Equipment from "./equipment/equipment";
 import Friendlist from "./friendList/friendlist";
-import SkillModal from "../modal-skills";
+import SkillModal from "../modals/modal-skills";
 import { ContainerClosePacket } from "../protocol";
 import Skills from "./skills/skills";
 import Spellbook from "./spellbook/spellbook";

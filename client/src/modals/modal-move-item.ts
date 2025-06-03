@@ -1,7 +1,7 @@
 import Modal from "./modal";
-import Canvas from "./canvas";
-import Item from "./item";
-import Position from "./position";
+import Canvas from "../canvas";
+import Item from "../item";
+import Position from "../position";
 
 export interface MoveItemModalProperties {
   item: { id: number; count: number };

@@ -1,6 +1,6 @@
 import Modal from "./modal";
-import Canvas from "./canvas";
-import HotbarManager from "./hotbar-manager";
+import Canvas from "../canvas";
+import HotbarManager from "../hotbar-manager";
 
 
 interface Spell {

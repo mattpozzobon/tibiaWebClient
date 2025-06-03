@@ -1,8 +1,8 @@
-import Canvas from "./canvas";
+import Canvas from "../canvas";
 import Modal from "./modal";
-import Outfit from "./outfit";
-import { OutfitChangePacket } from "./protocol";
-import SpriteBuffer from "./sprite-buffer";
+import Outfit from "../outfit";
+import { OutfitChangePacket } from "../protocol";
+import SpriteBuffer from "../sprite-buffer";
 
 
 export default class OutfitModal extends Modal {

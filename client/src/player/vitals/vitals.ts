@@ -1,4 +1,4 @@
-import SkillModal from "../../modal-skills";
+import SkillModal from "../../modals/modal-skills";
 import Position from "../../position";
 import State from "../../state";
 

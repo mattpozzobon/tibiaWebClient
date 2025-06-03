@@ -1,9 +1,9 @@
 import Modal from "./modal";
-import Canvas from "./canvas";
-import Item from "./item";
-import Position from "./position";
-import { OfferBuyPacket } from "./protocol";
-import GameClient from "./gameclient";
+import Canvas from "../canvas";
+import Item from "../item";
+import Position from "../position";
+import { OfferBuyPacket } from "../protocol";
+import GameClient from "../gameclient";
 
 interface Offer {
   id: number;

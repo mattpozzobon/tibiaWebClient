@@ -1,4 +1,4 @@
-import GameClient from "./gameclient";
+import GameClient from "../gameclient";
 import Modal from "./modal";
 
 interface CreateAccountOptions {

@@ -1,5 +1,5 @@
 import Modal from "./modal";
-import GameClient from "./gameclient";
+import GameClient from "../gameclient";
 
 export default class EnterNameModal extends Modal {
   ;

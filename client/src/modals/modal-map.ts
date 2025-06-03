@@ -1,6 +1,6 @@
 import Modal from "./modal";
-import Canvas from "./canvas";
-import Position from "./position";
+import Canvas from "../canvas";
+import Position from "../position";
 
 export default class MapModal extends Modal {
   public canvas: Canvas;

@@ -1,4 +1,4 @@
-import GameClient from "./gameclient";
+import GameClient from "./core/gameclient";
 
 declare global {
   interface Window {

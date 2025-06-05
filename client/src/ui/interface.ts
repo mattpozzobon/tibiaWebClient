@@ -1,4 +1,3 @@
-
 import ChannelManager from "./managers/channel-manager";
 import HotbarManager from "./managers/hotbar-manager";
 import MenuManager from "./menu/menu-manager";
@@ -155,6 +154,10 @@ export default class Interface {
       alert("The Tibia.spr and Tibia.dat must be loaded first.");
       return;
     }
+    this.modalManager.open("floater-enter");
+  }
+
+  login(): void {
     this.modalManager.open("floater-connecting", "Connecting to Gameworld...");
     window.gameClient.connect();
   }
@@ -387,11 +390,11 @@ export default class Interface {
     document.getElementById("openSkills")?.addEventListener("click", () => this.toggleWindow("skill-window"));
     document.getElementById("openBattle")?.addEventListener("click", () => this.toggleWindow("battle-window"));
     document.getElementById("openFriends")?.addEventListener("click", () => this.toggleWindow("friend-window"));
-    document.getElementById("logout-button")?.addEventListener("click", () => this.sendLogout());
+    //document.getElementById("logout-button")?.addEventListener("click", () => this.sendLogout());
     document.getElementById("load-assets")?.addEventListener("click", () => this.loadAssetsDelegator());
     document.getElementById("asset-selector")?.addEventListener("change", (event) => this.loadGameFiles(event));
     document.getElementById("enter-game")?.addEventListener("click", () => this.enterGame());
-    window.onbeforeunload = () => window.gameClient.isConnected() ? true : undefined;
+    //window.onbeforeunload = () => window.gameClient.isConnected() ? true : undefined;
     window.onresize = () => this.handleResize();
   }  
 }

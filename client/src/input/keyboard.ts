@@ -179,12 +179,14 @@ class Keyboard {
     const input = window.gameClient.interface.channelManager;
   
     if (!modalManager.isOpened() && !window.gameClient.isConnected()) {
-      modalManager.open("floater-enter");
       window.gameClient.interface.enterGame();
       return;
     }
   
     if (modalManager.isOpened()) {
+      if ((modalManager as any).__openedModal?.id === "floater-enter") {
+        window.gameClient.interface.login();
+      }
       modalManager.handleConfirm();
       return;
     }

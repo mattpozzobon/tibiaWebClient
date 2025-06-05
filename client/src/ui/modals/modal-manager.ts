@@ -12,9 +12,6 @@ import MapModal from "./modal-map";
 import SpellbookModal from "./modal-spellbook";
 import SkillModal from "./modal-skills";
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
-}
 
 type ModalConstructor = (new (id: string) => Modal);
 

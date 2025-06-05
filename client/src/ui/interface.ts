@@ -116,8 +116,7 @@ export default class Interface {
 
 
     document.getElementById("keyring")?.addEventListener("click", this.__openKeyRing.bind(this));
-    //this.__enableListeners();
-    this.enableTopbarListeners();
+
   }
 
   getSpell(id: number) {
@@ -187,6 +186,7 @@ export default class Interface {
   }
 
   toggleWindow(which: string): void {
+    console.log('toggleWindow', which);
     this.windowManager.getWindow(which)?.toggle();
   }
 
@@ -287,13 +287,17 @@ export default class Interface {
   }
 
   sendLogout(): void {
-    this.modalManager.open("confirm-modal", () => {
-      // Block logout in no-logout zones.
-      if (window.gameClient.player!.getTile().isNoLogoutZone()) {
-        return window.gameClient.interface.setCancelMessage("You may not logout here.");
-      }
-      window.gameClient.send(new LogoutPacket());
-    });
+    const modal = this.modalManager.open("confirm-modal");
+    if (modal) {
+      (modal as any).handleOpen(() => {
+        // Block logout in no-logout zones.
+        if (window.gameClient.player!.getTile().isNoLogoutZone()) {
+          window.gameClient.interface.setCancelMessage("You may not logout here.");
+          return;
+        }
+        window.gameClient.send(new LogoutPacket());
+      });
+    }
   }
 
   openOptions(): void {
@@ -390,11 +394,11 @@ export default class Interface {
     document.getElementById("openSkills")?.addEventListener("click", () => this.toggleWindow("skill-window"));
     document.getElementById("openBattle")?.addEventListener("click", () => this.toggleWindow("battle-window"));
     document.getElementById("openFriends")?.addEventListener("click", () => this.toggleWindow("friend-window"));
-    //document.getElementById("logout-button")?.addEventListener("click", () => this.sendLogout());
+    document.getElementById("logoutButton")?.addEventListener("click", () => this.sendLogout());
     document.getElementById("load-assets")?.addEventListener("click", () => this.loadAssetsDelegator());
     document.getElementById("asset-selector")?.addEventListener("change", (event) => this.loadGameFiles(event));
     document.getElementById("enter-game")?.addEventListener("click", () => this.enterGame());
-    //window.onbeforeunload = () => window.gameClient.isConnected() ? true : undefined;
+    window.onbeforeunload = () => window.gameClient.isConnected() ? true : undefined;
     window.onresize = () => this.handleResize();
   }  
 }

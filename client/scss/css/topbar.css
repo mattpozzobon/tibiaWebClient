@@ -1,0 +1,45 @@
+#top-button-bar {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 20px;
+  padding: 6px 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  z-index: 1000; /* Make sure it's above canvas */
+}
+
+#top-button-bar img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  filter: brightness(70%); /* Make it darker normally */
+  transition: filter 0.2s ease, border 0.2s ease; /* Smooth hover effect */
+}
+
+#top-button-bar img:hover {
+  filter: brightness(120%); /* Make it brighter when hovered */
+}
+
+.icon-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 10px;
+  text-shadow: 1px 1px 0 #000; /* pixel-style shadow */
+  cursor: pointer;
+}
+
+.icon-button img {
+  width: 24px;
+  height: 24px;
+}
+
+.icon-button .shortcut {
+  margin-top: -5px; /* was 2px, now moves upward */
+  font-size: 9px;
+  opacity: 0.85;
+  pointer-events: none;
+}

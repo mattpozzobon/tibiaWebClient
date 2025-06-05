@@ -41,9 +41,11 @@
     <div id="prototypes-container"></div>
     <div id="windows-container"></div>
     <div id="additional-modals-container"></div>
+    
 
     <!-- The Game Interface -->
-    <div id="game-wrapper">
+    <div id="game-wrapper" style="display: none;">
+
       <div id="top-button-bar">
         <div class="icon-button" title="Logout (Ctrl+G)"> <img id="logout-button" src="png/icons/logout.png" /> <span class="shortcut">Ctrl+G</span> </div>
         <div class="icon-button" title="Settings (Ctrl+O)"> <img id="openSettings" src="png/icons/config.png" /> <span class="shortcut">Ctrl+O</span> </div>
@@ -58,6 +60,8 @@
       <!-- Main body for the screen etc.. -->   
       <div class="main">
         <div id="chat-container"></div>
+        <div id="hotbar-container"></div>
+
         <div class="middle"></div>
         <div class="upper">
           <div id="canvas-id" class="canvas-wrapper">
@@ -74,23 +78,6 @@
             <div id="achievement" class="canvas-notification hidden"></div>
           </div>
         </div>
-
-        <div class="middle">
-          <div class="hotbar">
-            <div class="hotbar-item"><canvas></canvas><span class="hotbar-text"></span><span class="hotbar-key">F1</span></div>
-            <div class="hotbar-item"><canvas></canvas><span class="hotbar-text"></span><span class="hotbar-key">F2</span></div>
-            <div class="hotbar-item"><canvas></canvas><span class="hotbar-text"></span><span class="hotbar-key">F3</span></div>
-            <div class="hotbar-item"><canvas></canvas><span class="hotbar-text"></span><span class="hotbar-key">F4</span></div>
-            <div class="hotbar-item"><canvas></canvas><span class="hotbar-text"></span><span class="hotbar-key">F5</span></div>
-            <div class="hotbar-item"><canvas></canvas><span class="hotbar-text"></span><span class="hotbar-key">F6</span></div>
-            <div class="hotbar-item"><canvas></canvas><span class="hotbar-text"></span><span class="hotbar-key">F7</span></div>
-            <div class="hotbar-item"><canvas></canvas><span class="hotbar-text"></span><span class="hotbar-key">F8</span></div>
-            <div class="hotbar-item"><canvas></canvas><span class="hotbar-text"></span><span class="hotbar-key">F9</span></div>
-            <div class="hotbar-item"><canvas></canvas><span class="hotbar-text"></span><span class="hotbar-key">F10</span></div>
-            <div class="hotbar-item"><canvas></canvas><span class="hotbar-text"></span><span class="hotbar-key">F11</span></div>
-            <div class="hotbar-item"><canvas></canvas><span class="hotbar-text"></span><span class="hotbar-key">F12</span></div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -101,6 +88,8 @@
           { url: 'components/prototypes.html', containerId: 'prototypes-container' },
           { url: 'components/windows.html', containerId: 'windows-container' },
           { url: 'components/additional-modals.html', containerId: 'additional-modals-container' },
+          { url: 'components/hotbar.html', containerId: 'hotbar-container' },
+
           { url: 'modals/login-modal.html', containerId: 'login-modal-container' },
           { url: 'modals/settings-modal.html', containerId: 'settings-modal-container' },
           { url: 'modals/skill-modal.html', containerId: 'skill-modal-container' },
@@ -123,7 +112,22 @@
           fetch(component.url)
             .then(response => response.text())
             .then(html => {
-              document.getElementById(component.containerId).innerHTML = html;
+              console.log(`Loading component: ${component.url} into ${component.containerId}`);
+              if (component.containerId === 'top-bar-icons-container') {
+                // For top-bar-icons, we need to move it to the correct location
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                const topBar = tempDiv.querySelector('#top-button-bar');
+                console.log('Found top-bar element:', topBar);
+                if (topBar) {
+                  document.getElementById(component.containerId).appendChild(topBar);
+                  console.log('Successfully appended top-bar to container');
+                } else {
+                  console.error('Could not find #top-button-bar in loaded HTML');
+                }
+              } else {
+                document.getElementById(component.containerId).innerHTML = html;
+              }
             })
             .catch(error => {
               console.error(`Error loading ${component.url}:`, error);

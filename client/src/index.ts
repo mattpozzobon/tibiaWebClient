@@ -6,15 +6,11 @@ declare global {
   }
 }
 
-window.onload = function windowOnLoad(): void {
-  window.gameClient = new GameClient();
-};
+/* make it global right away */
+(window as any).gameClient = new GameClient();
 
-document.addEventListener("DOMContentLoaded", (): void => {
-  const enterGame = document.getElementById("enter-game") as HTMLButtonElement | null;
-  if (enterGame) {
-    enterGame.disabled = true;
-  }
+/* optional – DOM-ready stuff that needs buttons, etc. */
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('enter-game') as HTMLButtonElement | null;
+  if (btn) btn.disabled = true;
 });
-
-export {};

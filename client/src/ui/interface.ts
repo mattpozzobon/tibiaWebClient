@@ -115,10 +115,10 @@ export default class Interface {
 
     //(document.getElementById("chat-input") as HTMLInputElement).disabled = true;
 
-    this.addAvailableResolutions();
 
     document.getElementById("keyring")?.addEventListener("click", this.__openKeyRing.bind(this));
-    this.__enableListeners();
+    //this.__enableListeners();
+    this.enableTopbarListeners();
   }
 
   getSpell(id: number) {
@@ -262,28 +262,6 @@ export default class Interface {
     return 32 * this.getResolutionScale();
   }
 
-  addAvailableResolutions(): void {
-    const selectElement = document.getElementById("resolution") as HTMLSelectElement;
-    const resolutions = [
-      { width: 800, height: 600 },
-      { width: 960, height: 720 },
-      { width: 1024, height: 768 },
-      { width: 1152, height: 864 },
-    ];
-
-    const nodes = [this.__createResolutionNode({ width: 480, height: 352 })];
-    for (const resolution of resolutions) {
-      const { width, height } = resolution;
-      const viewport = window.visualViewport ?? { width: window.innerWidth, height: window.innerHeight };
-      if (viewport.width - 360 < width || viewport.height - 188 < height) {
-        break;
-      }
-      nodes.push(this.__createResolutionNode(resolution));
-    }
-
-    selectElement.replaceChildren(...nodes);
-    selectElement.selectedIndex = selectElement.options.length - 1;
-  }
 
   getResolutionScale(): number {
     const viewport = window.visualViewport ?? { width: window.innerWidth, height: window.innerHeight };
@@ -389,7 +367,6 @@ export default class Interface {
 
   __handleResizeWindow(): void {
     // Re-calculate available game screen resolutions.
-    this.addAvailableResolutions();
 
     // Handle resizing of the game screen.
     this.handleResize();
@@ -406,7 +383,7 @@ export default class Interface {
     return;
   } 
 
-  private __enableListeners(): void {
+  public enableTopbarListeners(): void {
     document.getElementById("openSkills")?.addEventListener("click", () => this.toggleWindow("skill-window"));
     document.getElementById("openBattle")?.addEventListener("click", () => this.toggleWindow("battle-window"));
     document.getElementById("openFriends")?.addEventListener("click", () => this.toggleWindow("friend-window"));
@@ -415,7 +392,6 @@ export default class Interface {
     document.getElementById("asset-selector")?.addEventListener("change", (event) => this.loadGameFiles(event));
     document.getElementById("enter-game")?.addEventListener("click", () => this.enterGame());
     window.onbeforeunload = () => window.gameClient.isConnected() ? true : undefined;
-    //window.onunload = () => window.gameClient.renderer.minimap.save();
     window.onresize = () => this.handleResize();
-  }
+  }  
 }

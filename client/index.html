@@ -15,8 +15,7 @@
   <link rel="shortcut icon" type="image/png" href="/png/forby.png"/>
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" type="text/css" href="./css/hotbar.css">
-  <link rel="stylesheet" type="text/css" href="./css/topbar.css">
+
   <link rel="stylesheet" type="text/css" href="./css/screen-element.css">
   <link rel="stylesheet" type="text/css" href="./css/canvas.css">
   <link rel="stylesheet" type="text/css" href="./css/chatbox.css">
@@ -41,21 +40,11 @@
     <div id="prototypes-container"></div>
     <div id="windows-container"></div>
     <div id="additional-modals-container"></div>
-    
 
     <!-- The Game Interface -->
     <div id="game-wrapper" style="display: none;">
 
-      <div id="top-button-bar">
-        <div class="icon-button" title="Logout (Ctrl+G)"> <img id="logout-button" src="png/icons/logout.png" /> <span class="shortcut">Ctrl+G</span> </div>
-        <div class="icon-button" title="Settings (Ctrl+O)"> <img id="openSettings" src="png/icons/config.png" /> <span class="shortcut">Ctrl+O</span> </div>
-        <div class="icon-button" title="Stats (Ctrl+K)"> <img id="openSkills" src="png/icons/status.png" /> <span class="shortcut">Ctrl+K</span>  </div>
-        <div class="icon-button" title="Battle (Ctrl+B)"> <img id="openBattle" src="png/icons/battle.png" /> <span class="shortcut">Ctrl+B</span> </div>
-        <div class="icon-button" title="Outfit (Ctrl+U)"><img id="openOutfit" src="png/icons/outfit.png" /><span class="shortcut">Ctrl+U</span></div>
-        <div class="icon-button" title="Friends (Ctrl+F)"><img id="openFriends" src="png/icons/friends.png" /><span class="shortcut">Ctrl+F</span></div>
-        <div class="icon-button" title="Inventory (Ctrl+I)"><img id="openInventory" src="png/icons/inventory.png" /><span class="shortcut">Ctrl+I</span></div>
-        <div class="icon-button" title="Map (Ctrl+M)"><img id="openMap" src="png/icons/map.png" /><span class="shortcut">Ctrl+M</span></div>
-      </div>
+      <div id="topbar-container"></div>
       
       <!-- Main body for the screen etc.. -->   
       <div class="main">
@@ -68,79 +57,74 @@
             <canvas id="screen"></canvas>
             <!-- Wrapper for elements on top of the gamescreen -->
             <div id="text-wrapper" class="no-select">
-              <span id="server-message"></span>
-              <span id="zone-message"></span>
+                <span id="server-message"></span>
+                <span id="zone-message"></span>
+              </div>
+              <!-- Statistics -->
+              <div id="debug-statistics"></div>
+              <!-- Notifications etc.. -->
+              <div id="notification" class="canvas-notification"></div>
+              <div id="achievement" class="canvas-notification hidden"></div>
             </div>
-            <!-- Statistics -->
-            <div id="debug-statistics"></div>
-            <!-- Notifications etc.. -->
-            <div id="notification" class="canvas-notification"></div>
-            <div id="achievement" class="canvas-notification hidden"></div>
           </div>
         </div>
-      </div>
     </div>
 
-    <script>
-      document.addEventListener('DOMContentLoaded', async function() {
-        const componentsToLoad = [
-          { url: 'components/audio.html', containerId: 'audio-container' },
-          { url: 'components/prototypes.html', containerId: 'prototypes-container' },
-          { url: 'components/windows.html', containerId: 'windows-container' },
-          { url: 'components/additional-modals.html', containerId: 'additional-modals-container' },
-          { url: 'components/hotbar.html', containerId: 'hotbar-container' },
-
-          { url: 'components/modals/login-modal.html', containerId: 'login-modal-container' },
-          { url: 'components/modals/settings-modal.html', containerId: 'settings-modal-container' },
-          { url: 'components/modals/skill-modal.html', containerId: 'skill-modal-container' },
-          { url: 'components/modals/outfit-modal.html', containerId: 'outfit-modal-container' },
-          { url: 'components/modals/battle-modal.html', containerId: 'battle-modal-container' },
-          { url: 'components/modals/friends-modal.html', containerId: 'friends-modal-container' },
-          { url: 'components/modals/chat-modal.html', containerId: 'chat-modal-container' },
-          { url: 'components/modals/redable-modal.html', containerId: 'redable-modal-container' },
-          { url: 'components/modals/map-modal.html', containerId: 'map-modal-container' },
-          { url: 'components/modals/enter-name-modal.html', containerId: 'enter-name-modal-container' },
-          { url: 'components/modals/confirm-modal.html', containerId: 'confirm-modal-container' },
-          { url: 'components/modals/offer-modal.html', containerId: 'offer-modal-container' },
-          { url: 'components/modals/spell-modal.html', containerId: 'spell-modal-container' },
-          { url: 'components/modals/move-item-modal.html', containerId: 'move-item-modal-container' },
-          { url: 'components/modals/chat.html', containerId: 'chat-container' }
-        ];
-
-        // Load all components first
-        await Promise.all(componentsToLoad.map(component => 
-          fetch(component.url)
-            .then(response => response.text())
-            .then(html => {
-              console.log(`Loading component: ${component.url} into ${component.containerId}`);
-              if (component.containerId === 'top-bar-icons-container') {
-                // For top-bar-icons, we need to move it to the correct location
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = html;
-                const topBar = tempDiv.querySelector('#top-button-bar');
-                console.log('Found top-bar element:', topBar);
-                if (topBar) {
-                  document.getElementById(component.containerId).appendChild(topBar);
-                  console.log('Successfully appended top-bar to container');
-                } else {
-                  console.error('Could not find #top-button-bar in loaded HTML');
-                }
-              } else {
-                document.getElementById(component.containerId).innerHTML = html;
-              }
-            })
-            .catch(error => {
-              console.error(`Error loading ${component.url}:`, error);
-            })
-        ));
-
-        // Now load the game bundle after components are loaded
-        const script = document.createElement('script');
-        script.src = 'bundle.js';
-        script.defer = true;
-        document.body.appendChild(script);
-      });
-    </script>
+      <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+        
+          const inject = async (url, hostQuery) => {
+            const host = document.querySelector(hostQuery);
+            if (!host) { console.warn('❗ host', hostQuery, 'missing'); return; }
+            const html = await fetch(url).then(r => r.text());
+            host.innerHTML = html;
+            console.log('✅', url);
+          };
+        
+          await Promise.all([
+            inject('components/audio.html',              '#audio-container'),
+            inject('components/prototypes.html',         '#prototypes-container'),
+            inject('components/windows.html',            '#windows-container'),   
+            inject('components/additional-modals.html',  '#additional-modals-container'),
+            inject('components/hotbar.html',             '#hotbar-container'),
+            inject('components/topbar.html',             '#topbar-container')
+          ]);
+        
+          const modals = [
+            ['components/modals/login-modal.html',      '#login-modal-container'],
+            ['components/modals/settings-modal.html',   '#settings-modal-container'],
+            ['components/modals/skill-modal.html',      '#skill-modal-container'],
+            ['components/modals/outfit-modal.html',     '#outfit-modal-container'],
+            ['components/modals/battle-modal.html',     '#battle-modal-container'],
+            ['components/modals/friends-modal.html',    '#friends-modal-container'],
+            ['components/modals/chat-modal.html',       '#chat-modal-container'],
+            ['components/modals/redable-modal.html',    '#redable-modal-container'],
+            ['components/modals/map-modal.html',        '#map-modal-container'],
+            ['components/modals/enter-name-modal.html', '#enter-name-modal-container'],
+            ['components/modals/confirm-modal.html',    '#confirm-modal-container'],
+            ['components/modals/offer-modal.html',      '#offer-modal-container'],
+            ['components/modals/spell-modal.html',      '#spell-modal-container'],
+            ['components/modals/move-item-modal.html',  '#move-item-modal-container'],
+            ['components/modals/chat.html',             '#chat-container']
+          ];
+          await Promise.all(modals.map(([u,h]) => inject(u,h)));
+        
+          console.log('🟢 every fragment in DOM');
+        
+          const s = document.createElement('script');
+          s.src = 'bundle.js';
+          s.onload = () => {
+            console.log('🟢 bundle.js executed');
+            if (window?.gameClient?.interface) {
+              window.gameClient.interface.enableTopbarListeners();
+              console.log('🟢 top-bar listeners attached');
+            } else {
+              console.error('❌ window.gameClient.interface is missing!');
+            }
+          };
+          document.body.appendChild(s);
+        });
+      </script>
   </body>
 
 </html>

@@ -35,135 +35,15 @@
   <link rel="stylesheet" type="text/css" href="./css/achievement.css">
   <link rel="stylesheet" type="text/css" href="./css/skill-modal.css">
 
-  <!-- Ambient Music -->
-  <audio id="rain" src="sounds/rain.ogg" preload="auto" type="audio/ogg"></audio>
-  <audio id="field" src="sounds/field.ogg" preload="auto" type="audio/ogg"></audio>
-  <audio id="cave" src="sounds/cave.ogg" preload="auto" type="audio/ogg"></audio>
-  <audio id="forest" src="sounds/forest.ogg" preload="auto" type="audio/ogg"></audio>
-  <audio id="wind" src="sounds/wind.ogg" preload="auto" type="audio/ogg"></audio>
-
-  <!-- Sound bits -->
-  <audio id="thunder-1" src="sounds/thunder1.ogg" preload="auto" type="audio/ogg"></audio>
-  <audio id="thunder-2" src="sounds/thunder2.ogg" preload="auto" type="audio/ogg"></audio>
-  <audio id="thunder-3" src="sounds/thunder3.ogg" preload="auto" type="audio/ogg"></audio>
-  <audio id="thunder-4" src="sounds/thunder4.ogg" preload="auto" type="audio/ogg"></audio>
-
-  <!-- Sound bits -->
-  <audio id="grass-1" src="sounds/grass1.ogg" preload="auto" type="audio/ogg"></audio>
-  <audio id="grass-2" src="sounds/grass2.ogg" preload="auto" type="audio/ogg"></audio>
-  <audio id="grass-3" src="sounds/grass3.ogg" preload="auto" type="audio/ogg"></audio>
-  <audio id="grass-4" src="sounds/grass4.ogg" preload="auto" type="audio/ogg"></audio>
-  <audio id="grass-5" src="sounds/grass5.ogg" preload="auto" type="audio/ogg"></audio>
-  <audio id="grass-6" src="sounds/grass6.ogg" preload="auto" type="audio/ogg"></audio>
-  <audio id="grass-7" src="sounds/grass7.ogg" preload="auto" type="audio/ogg"></audio>
-  <audio id="grass-8" src="sounds/grass8.ogg" preload="auto" type="audio/ogg"></audio>
-
-  <audio id="wood-2" src="sounds/wood2.ogg" preload="auto" type="audio/ogg"></audio>
-
-
   <body>
-    <!-- Separated html for in-game menus -->
-
-    <div id="spellbook-wrapper-prototype" class="spellbook-wrapper">
-    <canvas></canvas>
-    <span></span>
-    </div>
-
-    <!-- The Context Menu's -->
-    <div class="contextmenu modal" id="screen-menu">
-      <div class="menu-header">Menu</div>
-      <button action="look">Look</button>
-      <br><button action="use">Use</button>
-    </div>
-
-    <!-- Menu for chat header -->
-    <div class="contextmenu modal" id="chat-header-menu">
-      <div class="menu-header">Menu</div>
-      <button action="close">Close</button>
-    </div>
-
-    <!-- Menu for chat entry -->
-    <div class="contextmenu modal" id="hotbar-menu">
-      <div class="menu-header">Menu</div>
-      <button action="add">Add</button>
-      <button action="remove">Remove</button>
-    </div>
-
-    <!-- Menu for chat entry -->
-    <div class="contextmenu modal" id="chat-entry-menu">
-      <div class="menu-header">Menu</div>
-      <button action="whisper">Whisper</button>
-    </div>
-
-    <!-- Menu for chat entry -->
-    <div class="contextmenu modal" id="chat-body-menu">
-      <div class="menu-header">Menu</div>
-      <button action="clear">Clear Chat</button>
-    </div>
-
-    <!-- The Slot Prototype -->
-    <div style="display: none;">
-      <div id="slot-prototype" class="slot">
-        <canvas width="32" height="32"></canvas>
-        <span class="count">
-      </div>
-    </div>
-
-    <!-- The Floating Element Prototype -->
-    <div id="floating-element-prototype" class="prototype text-window">
-      <span></span>
-    </div>
-
-    <!-- The Message Element Prototype -->
-    <div id="message-element-prototype" class="prototype text-window text-bubble">
-      <span></span>
-      <br>
-      <span></span>
-    </div>
-
-    <!-- The Character Element Prototype -->
-    <div id="character-element-prototype" class="prototype text-window">
-      <span></span>
-      <div class="character-element-bar">
-        <div class="value-health"></div>
-      </div> 
-      
-    </div>
-
-    <!-- The Container Prototype -->
-    <div id="container-prototype" class="prototype window">
-      <div class="header">
-        <button class="symbol-button small" action="close" title="Close">✕</button>
-        <button class="symbol-button small" action="minimize" title="Minimize">&#x2212</button>
-        <span class="title"></span>
-      </div>
-      <div class="body"></div>
-      <div class="footer"></div>
-    </div>
-    
-    
-    
-    <div class="modal-wrapper">
-      <div id="login-modal-container"></div>
-      <div id="settings-modal-container"></div>
-      <div id="skill-modal-container"></div>
-      <div id="outfit-modal-container"></div>
-      <div id="battle-modal-container"></div>
-      <div id="chat-modal-container"></div>
-      <div id="map-modal-container"></div>
-      <div id="redable-modal-container"></div>
-      <div id="friends-modal-container"></div>
-      <div id="enter-name-modal-container"></div>
-      <div id="confirm-modal-container"></div>
-      <div id="offer-modal-container"></div>
-      <div id="spell-modal-container"></div>
-      <div id="move-item-modal-container"></div>
-      
-    </div>
+    <!-- Components will be loaded here -->
+    <div id="audio-container"></div>
+    <div id="prototypes-container"></div>
+    <div id="windows-container"></div>
+    <div id="additional-modals-container"></div>
 
     <!-- The Game Interface -->
     <div id="game-wrapper">
-
       <div id="top-button-bar">
         <div class="icon-button" title="Logout (Ctrl+G)"> <img id="logout-button" src="png/icons/logout.png" /> <span class="shortcut">Ctrl+G</span> </div>
         <div class="icon-button" title="Settings (Ctrl+O)"> <img id="openSettings" src="png/icons/config.png" /> <span class="shortcut">Ctrl+O</span> </div>
@@ -177,18 +57,11 @@
       
       <!-- Main body for the screen etc.. -->   
       <div class="main">
-
         <div id="chat-container"></div>
-
         <div class="middle"></div>
-
         <div class="upper">
-
           <div id="canvas-id" class="canvas-wrapper">
-    
-          <!-- Modals for the game screen --> 
-   
-          <canvas id="screen"></canvas>
+            <canvas id="screen"></canvas>
             <!-- Wrapper for elements on top of the gamescreen -->
             <div id="text-wrapper" class="no-select">
               <span id="server-message"></span>
@@ -199,13 +72,11 @@
             <!-- Notifications etc.. -->
             <div id="notification" class="canvas-notification"></div>
             <div id="achievement" class="canvas-notification hidden"></div>
-    
           </div>
         </div>
 
         <div class="middle">
           <div class="hotbar">
-            
             <div class="hotbar-item"><canvas></canvas><span class="hotbar-text"></span><span class="hotbar-key">F1</span></div>
             <div class="hotbar-item"><canvas></canvas><span class="hotbar-text"></span><span class="hotbar-key">F2</span></div>
             <div class="hotbar-item"><canvas></canvas><span class="hotbar-text"></span><span class="hotbar-key">F3</span></div>
@@ -221,45 +92,51 @@
           </div>
         </div>
       </div>
-
     </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-    const modalsToLoad = [
-      { url: 'modals/login-modal.html', containerId: 'login-modal-container' },
-      { url: 'modals/settings-modal.html', containerId: 'settings-modal-container' },
-      { url: 'modals/skill-modal.html', containerId: 'skill-modal-container' },
-      { url: 'modals/outfit-modal.html', containerId: 'outfit-modal-container' },
-      { url: 'modals/battle-modal.html', containerId: 'battle-modal-container' },
-      { url: 'modals/friends-modal.html', containerId: 'friends-modal-container' },
-      { url: 'modals/chat-modal.html', containerId: 'chat-modal-container' },
-      { url: 'modals/redable-modal.html', containerId: 'redable-modal-container' },
-      { url: 'modals/map-modal.html', containerId: 'map-modal-container' },
-      { url: 'modals/enter-name-modal.html', containerId: 'enter-name-modal-container' },
-      { url: 'modals/confirm-modal.html', containerId: 'confirm-modal-container' },
-      { url: 'modals/offer-modal.html', containerId: 'offer-modal-container' },
-      { url: 'modals/spell-modal.html', containerId: 'spell-modal-container' },
-      { url: 'modals/move-item-modal.html', containerId: 'move-item-modal-container' },
-      { url: 'modals/move-item-modal.html', containerId: 'move-item-modal-container' }, 
+    <script>
+      document.addEventListener('DOMContentLoaded', async function() {
+        const componentsToLoad = [
+          { url: 'components/audio.html', containerId: 'audio-container' },
+          { url: 'components/prototypes.html', containerId: 'prototypes-container' },
+          { url: 'components/windows.html', containerId: 'windows-container' },
+          { url: 'components/additional-modals.html', containerId: 'additional-modals-container' },
+          { url: 'modals/login-modal.html', containerId: 'login-modal-container' },
+          { url: 'modals/settings-modal.html', containerId: 'settings-modal-container' },
+          { url: 'modals/skill-modal.html', containerId: 'skill-modal-container' },
+          { url: 'modals/outfit-modal.html', containerId: 'outfit-modal-container' },
+          { url: 'modals/battle-modal.html', containerId: 'battle-modal-container' },
+          { url: 'modals/friends-modal.html', containerId: 'friends-modal-container' },
+          { url: 'modals/chat-modal.html', containerId: 'chat-modal-container' },
+          { url: 'modals/redable-modal.html', containerId: 'redable-modal-container' },
+          { url: 'modals/map-modal.html', containerId: 'map-modal-container' },
+          { url: 'modals/enter-name-modal.html', containerId: 'enter-name-modal-container' },
+          { url: 'modals/confirm-modal.html', containerId: 'confirm-modal-container' },
+          { url: 'modals/offer-modal.html', containerId: 'offer-modal-container' },
+          { url: 'modals/spell-modal.html', containerId: 'spell-modal-container' },
+          { url: 'modals/move-item-modal.html', containerId: 'move-item-modal-container' },
+          { url: 'modals/chat.html', containerId: 'chat-container' }
+        ];
 
-      { url: 'modals/chat.html', containerId: 'chat-container' }, 
-    ];
+        // Load all components first
+        await Promise.all(componentsToLoad.map(component => 
+          fetch(component.url)
+            .then(response => response.text())
+            .then(html => {
+              document.getElementById(component.containerId).innerHTML = html;
+            })
+            .catch(error => {
+              console.error(`Error loading ${component.url}:`, error);
+            })
+        ));
 
-    modalsToLoad.forEach(modal => {
-      fetch(modal.url)
-        .then(response => response.text())
-        .then(html => {
-          document.getElementById(modal.containerId).innerHTML = html;
-        })
-        .catch(error => {
-          console.error(`Error loading ${modal.url}:`, error);
-        });
-    });
-  });
-  </script>
-
-  <script src="bundle.js" defer></script>
+        // Now load the game bundle after components are loaded
+        const script = document.createElement('script');
+        script.src = 'bundle.js';
+        script.defer = true;
+        document.body.appendChild(script);
+      });
+    </script>
   </body>
 
 </html>

@@ -17,16 +17,17 @@
   <link rel="stylesheet" type="text/css" href="./css/screen-element.css">
   <link rel="stylesheet" type="text/css" href="./css/canvas.css">
   <link rel="stylesheet" type="text/css" href="./css/new.css">
-
   <link rel="stylesheet" type="text/css" href="./css/equipment.css">
   <link rel="stylesheet" type="text/css" href="./css/window.css">
   <link rel="stylesheet" type="text/css" href="./css/minimap.css">
   <link rel="stylesheet" type="text/css" href="./css/slot.css">
   <link rel="stylesheet" type="text/css" href="./css/slider.css">
   <link rel="stylesheet" type="text/css" href="./css/achievement.css">
+  <link rel="stylesheet" type="text/css" href="./css/login.css">
 
   <body>
     <!-- Components will be loaded here -->
+    <div id="login-modal-container"></div>
     <div id="audio-container"></div>
     <div id="prototypes-container"></div>
     <div id="windows-container"></div>
@@ -71,18 +72,18 @@
             host.innerHTML = html;
             console.log('✅', url);
           };
-        
+
           await Promise.all([
+            inject('components/login/login-modal.html',  '#login-modal-container'),
+            inject('components/modals-wrapper.html',     '#modals-wrapper-container'),
             inject('components/audio.html',              '#audio-container'),
             inject('components/prototypes.html',         '#prototypes-container'),
             inject('components/windows.html',            '#windows-container'),   
             inject('components/hotbar.html',             '#hotbar-container'),
             inject('components/topbar.html',             '#topbar-container'),
-            inject('components/modals-wrapper.html',     '#modals-wrapper-container')
           ]);
         
           const modals = [
-            ['components/modals/login-modal.html',      '#login-modal-container'],
             ['components/modals/settings-modal.html',   '#settings-modal-container'],
             ['components/modals/skill-modal.html',      '#skill-modal-container'],
             ['components/modals/outfit-modal.html',     '#outfit-modal-container'],
@@ -97,7 +98,7 @@
             ['components/modals/spell-modal.html',      '#spell-modal-container'],
             ['components/modals/move-item-modal.html',  '#move-item-modal-container'],
             ['components/modals/chat.html',             '#chat-container'],
-            ['components/modals/additional-modals.html','#additional-modals-container']
+            //['components/modals/additional-modals.html','#additional-modals-container']
           ];
           await Promise.all(modals.map(([u,h]) => inject(u,h)));
         
@@ -109,6 +110,7 @@
             console.log('🟢 bundle.js executed');
             if (window?.gameClient?.interface) {
               window.gameClient.interface.enableTopbarListeners();
+              window.gameClient.interface.modalManager.addEventListeners();
               console.log('🟢 top-bar listeners attached');
             } else {
               console.error('❌ window.gameClient.interface is missing!');

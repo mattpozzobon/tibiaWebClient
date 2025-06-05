@@ -44,10 +44,9 @@ export default class ModalManager {
     this.register(MapModal, "map-modal");
     this.register(SpellbookModal, "spellbook-modal");
 
-    this.__addEventListeners();
   }
 
-  private __addEventListeners(): void {
+  public addEventListeners(): void {
     document.getElementById("open-chat-modal")?.addEventListener("click", this.open.bind(this, "chat-modal"));
     document.getElementById("openOutfit")?.addEventListener("click", this.open.bind(this, "outfit-modal"));
     document.getElementById("openSettings")?.addEventListener("click", this.open.bind(this, "settings-modal"));

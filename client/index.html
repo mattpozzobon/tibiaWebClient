@@ -14,6 +14,7 @@
   <link rel="shortcut icon" type="image/png" href="/png/forby.png"/>
 
   <!-- Stylesheets -->
+  <link rel="stylesheet" type="text/css" href="./css/login.css">
   <link rel="stylesheet" type="text/css" href="./css/screen-element.css">
   <link rel="stylesheet" type="text/css" href="./css/canvas.css">
   <link rel="stylesheet" type="text/css" href="./css/new.css">
@@ -23,7 +24,6 @@
   <link rel="stylesheet" type="text/css" href="./css/slot.css">
   <link rel="stylesheet" type="text/css" href="./css/slider.css">
   <link rel="stylesheet" type="text/css" href="./css/achievement.css">
-  <link rel="stylesheet" type="text/css" href="./css/login.css">
 
   <body>
     <!-- Components will be loaded here -->
@@ -32,7 +32,6 @@
     <div id="prototypes-container"></div>
     <div id="windows-container"></div>
     <div id="modals-wrapper-container"></div>
-
 
     <!-- The Game Interface -->
     <div id="game-wrapper" style="display: none;">
@@ -73,8 +72,9 @@
             console.log('✅', url);
           };
 
+          await inject('components/login/login-modal.html',  '#login-modal-container');
+
           await Promise.all([
-            inject('components/login/login-modal.html',  '#login-modal-container'),
             inject('components/modals-wrapper.html',     '#modals-wrapper-container'),
             inject('components/audio.html',              '#audio-container'),
             inject('components/prototypes.html',         '#prototypes-container'),

@@ -1,15 +1,16 @@
-import { ChangelogService, ChangelogEntry } from '../../services/changelog-service';
+import { ChangelogService } from '../../services/changelog-service';
 
 export class LoginModal {
-  private changelogService = new ChangelogService();
-  private debugElement     = document.getElementById('changelog-debug');
-  private changelogContent = document.getElementById('changelog-content');
+  private changelogService: ChangelogService;
+  private debugElement: HTMLElement | null;
+  private changelogContent: HTMLElement | null;
 
   constructor() {
-    console.log('LoginModal: Constructor called');
+    this.changelogService = new ChangelogService();
+    this.debugElement = document.getElementById('changelog-debug');
+    this.changelogContent = document.getElementById('changelog-content');
 
     if (!this.changelogContent) {
-      console.error('LoginModal: #changelog-content element not found!');
       return;
     }
 
@@ -24,26 +25,35 @@ export class LoginModal {
   }
 
   private async loadChangelog(): Promise<void> {
-    console.log('LoginModal: Loading changelog…');
+    if (!this.changelogContent) {
+      return;
+    }
 
     try {
-      const changelog: ChangelogEntry[] = await this.changelogService.fetchChangelog();
-      console.log('LoginModal: Changelog entries received:', changelog.length);
+      const changelog = await this.changelogService.fetchChangelog();
 
-      if (!changelog.length) {
-        this.changelogContent!.innerHTML = '<div class="no-updates">No recent updates</div>';
+      if (changelog.length === 0) {
+        this.changelogContent.innerHTML = '<div class="no-updates">No recent updates</div>';
         return;
       }
 
-      this.changelogContent!.innerHTML = changelog
-        .map(entry => this.changelogService.formatChangelogEntry(entry))
+      const changelogHTML = changelog
+        .map((entry) => {
+          const date = new Date(entry.timestamp).toLocaleDateString();
+          return `
+            <div class="changelog-entry">
+              <div class="changelog-date">${date}</div>
+              <div class="changelog-message">${entry.content}</div>
+            </div>
+          `;
+        })
         .join('');
 
+      this.changelogContent.innerHTML = changelogHTML;
       this.updateDebugInfo('Changelog loaded successfully');
-    } catch (err: any) {
-      console.error('LoginModal: Error loading changelog:', err);
-      this.changelogContent!.innerHTML = '<div class="error">Failed to load changelog</div>';
-      this.updateDebugInfo(err?.message ?? 'Unknown error');
+    } catch (error: any) {
+      this.changelogContent.innerHTML = '<div class="error">Failed to load changelog</div>';
+      this.updateDebugInfo(error.message || 'Unknown error occurred');
     }
   }
 }

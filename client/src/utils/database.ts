@@ -10,7 +10,6 @@ export default class Database {
   private readonly VERSION_CHECK_URL = `${this.ASSET_BASE}/version.json`;
 
   constructor() {
-    
     this.__database = null;
     this.__minimapChunkSize = 128;
     this.__loadedMinimapChunks = {};
@@ -295,7 +294,6 @@ export default class Database {
     try {
       const response = await fetch(this.VERSION_CHECK_URL);
       const versionInfo = await response.json();
-      
       const versionElement = document.getElementById("client-version");
       if (versionElement) {
         versionElement.innerHTML = versionInfo.version;

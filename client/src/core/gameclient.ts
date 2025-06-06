@@ -30,7 +30,7 @@ export default class GameClient {
   database: Database;
   world!: World;
   renderer: Renderer;
-  private __tickInterval: number = 0;
+  tickInterval: number = 0;
   serverVersion: number | null = null;
   clientVersion: number | null = null;
 
@@ -94,7 +94,7 @@ export default class GameClient {
   }
 
   getTickInterval(): number {
-    return this.__tickInterval;
+    return this.tickInterval;
   }
 
   setErrorModal(message: string): void {
@@ -180,7 +180,7 @@ export default class GameClient {
   }
 
   private __setTickInterval(tick: number): void {
-    this.__tickInterval = tick;
+    this.tickInterval = tick;
   }
 
   private __loop(): void {

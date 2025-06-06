@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import http.server
 import json
+import mimetypes
 import os
 import re
 import ssl
@@ -10,7 +11,10 @@ from functools import partial
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, parse_qs, urlparse
 from urllib.request import Request, urlopen
-from dotenv import load_dotenv           # ← pip install python-dotenv
+from dotenv import load_dotenv          
+
+# ───────────────────────── teach Python about JSON ─────────────────────────
+mimetypes.add_type('application/json', '.json')
 
 # ────────────────────────── load secrets early ───────────────────────────────
 load_dotenv()                            # looks for .env next to the script
@@ -24,7 +28,6 @@ ADDRESS: tuple[str, int] = ("127.0.0.1", 8000)
 
 DATA_RE = re.compile(r"^/data/1098/(Tibia\.(spr|dat|otfi)|constants\.json)$", re.I)
 
-
 class TibiaHandler(http.server.SimpleHTTPRequestHandler):
     """
     • Normal file serving from ./client
@@ -32,9 +35,7 @@ class TibiaHandler(http.server.SimpleHTTPRequestHandler):
     • /api/changelog endpoint that hits Discord’s REST API once and relays JSON
     """
 
-    # ───────────────────────── helpers ────────────────────────────────
     def _maybe_redirect(self) -> bool:
-        """Redirect /data/1098/* files to R2 and return True if we did so."""
         if DATA_RE.match(self.path):
             target = f"{ASSET_BASE}/{quote(self.path.split('/')[-1])}"
             self.send_response(302)
@@ -43,13 +44,11 @@ class TibiaHandler(http.server.SimpleHTTPRequestHandler):
             return True
         return False
 
-    # Silence the redirect noise
     def log_message(self, fmt: str, *args):
         if self.command in ("GET", "HEAD") and DATA_RE.match(self.path):
             return
         super().log_message(fmt, *args)
 
-    # ───────────────────────── verb handlers ──────────────────────────
     def do_GET(self):
         if self.path.startswith("/api/changelog"):
             self._serve_changelog()
@@ -66,12 +65,10 @@ class TibiaHandler(http.server.SimpleHTTPRequestHandler):
             return
         super().do_HEAD()
 
-    # ───────────────────────── /api/changelog ─────────────────────────
     def _serve_changelog(self):
         bot_token   = os.getenv("DISCORD_BOT_TOKEN")
         channel_id  = os.getenv("DISCORD_CHANGELOG_CHANNEL_ID")
 
-        # Allow quick overrides via query params when hacking locally
         if (not bot_token or not channel_id) and "?" in self.path:
             qs = parse_qs(urlparse(self.path).query)
             bot_token  = bot_token  or qs.get("token",   [None])[0]
@@ -79,8 +76,7 @@ class TibiaHandler(http.server.SimpleHTTPRequestHandler):
 
         if not bot_token or not channel_id:
             self._send_json(500, {
-                "error": ("Server mis-config: set DISCORD_BOT_TOKEN and "
-                          "DISCORD_CHANGELOG_CHANNEL_ID (or pass ?token=&channel=)")
+                "error": "Server mis-config: set DISCORD_BOT_TOKEN and DISCORD_CHANGELOG_CHANNEL_ID"
             })
             return
 
@@ -93,32 +89,27 @@ class TibiaHandler(http.server.SimpleHTTPRequestHandler):
 
         try:
             with urlopen(req, timeout=10) as resp:
-                # load full, unfiltered JSON from Discord
                 full = json.loads(resp.read().decode("utf-8"))
-
-                # if you really want to slim it down, you can pick-and-choose fields here,
-                # but passing 'full' gives you author, embeds, attachments, etc.
+                # here we send the full raw Discord JSON (author, embeds, etc)
                 self._send_json(200, full)
 
         except HTTPError as e:
             self._send_json(e.code, {"error": f"HTTPError {e.code}"})
         except URLError as e:
             self._send_json(502, {"error": f"Failed to reach Discord API: {e.reason}"})
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:
             self._send_json(500, {"error": str(e)})
 
-    # ───────────────────────── small helper ───────────────────────────
     def _send_json(self, status: int, payload):
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")   # browser-friendly
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
 
 
-# ────────────────────────── entrypoint ───────────────────────────────
 def main() -> None:
     mode = sys.argv[1].lower() if len(sys.argv) == 2 else "http"
     if mode not in {"http", "https"}:
@@ -143,7 +134,6 @@ def main() -> None:
     except KeyboardInterrupt:
         print("\nShutting down…")
         httpd.server_close()
-
 
 if __name__ == "__main__":
     main()

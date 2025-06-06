@@ -5,6 +5,9 @@ export default class Database {
   private __database: IDBDatabase | null;
   private __minimapChunkSize: number;
   private __loadedMinimapChunks: { [id: string]: { imageData: ImageData; view: Uint32Array } };
+  private readonly ASSET_BASE = "https://pub-731c9162b7da4ead9743fb831880fd77.r2.dev/data/1098";
+  private readonly FILE_VERSIONS_KEY = 'file_versions';
+  private readonly VERSION_CHECK_URL = `${this.ASSET_BASE}/version.json`;
 
   constructor() {
     
@@ -96,6 +99,18 @@ export default class Database {
     console.log("filename", filename);
     localStorage.setItem(filename, "true");
 
+    // If storing SPR file, also store its version
+    if (filename === 'Tibia.spr') {
+      fetch(this.VERSION_CHECK_URL)
+        .then(response => response.json())
+        .then(version => {
+          localStorage.setItem('spr_version', version.version);
+        })
+        .catch(error => {
+          console.error('Error storing SPR version:', error);
+        });
+    }
+
     const fileStore = this.transaction("files", "readwrite");
     const request = fileStore.put({
       filename: filename,
@@ -112,9 +127,13 @@ export default class Database {
   }
 
   public loadGameAssets(): void {
-    this.loadConstants().then((constants: any) => {
+    this.loadConstants().then(async (constants: any) => {
       (window as any).CONST = constants;
-      if (!localStorage.getItem("Tibia.spr") || !localStorage.getItem("Tibia.dat")) {
+      
+      // Check if SPR needs updating
+      const needsUpdate = await this.__checkSprVersion();
+      
+      if (!localStorage.getItem("Tibia.spr") || !localStorage.getItem("Tibia.dat") || needsUpdate) {
         return window.gameClient.networkManager.loadGameFilesServer();
       }
       this.__loadGameAssets();
@@ -127,14 +146,16 @@ export default class Database {
     // Set the database; event.target is an IDBOpenDBRequest.
     this.__database = (event.target as IDBOpenDBRequest).result;
   
-    const objectStore = this.__database.createObjectStore("minimap", { keyPath: "chunk" });
-    objectStore.createIndex("id", "chunk");
+    // Check if stores exist before creating them
+    if (!this.__database.objectStoreNames.contains("minimap")) {
+      const objectStore = this.__database.createObjectStore("minimap", { keyPath: "chunk" });
+      objectStore.createIndex("id", "chunk");
+    }
   
-    const fileStore = this.__database.createObjectStore("files", { keyPath: "filename" });
-    fileStore.createIndex("id", "filename");
-  
-    // Instead of fileStore.onsuccess (which doesn't exist), call loadGameAssets immediately.
-    //this.loadGameAssets();
+    if (!this.__database.objectStoreNames.contains("files")) {
+      const fileStore = this.__database.createObjectStore("files", { keyPath: "filename" });
+      fileStore.createIndex("id", "filename");
+    }
   }
   
   private __handleOpenError(event: Event): void {
@@ -210,5 +231,62 @@ export default class Database {
     request.onsuccess = (): void => {
       delete this.__loadedMinimapChunks[id];
     };
+  }
+
+  private async __checkFileVersions(): Promise<boolean> {
+    try {
+      // Get server file versions
+      const response = await fetch(`/data/${window.gameClient.SERVER_VERSION}/file_versions.json`);
+      const serverVersions = await response.json();
+      
+      // Get local file versions
+      const localVersions = JSON.parse(localStorage.getItem(this.FILE_VERSIONS_KEY) || '{}');
+      
+      // Check if files need updating
+      const needsUpdate = Object.entries(serverVersions).some(([filename, version]) => {
+        return !localVersions[filename] || localVersions[filename] !== version;
+      });
+
+      if (needsUpdate) {
+        console.log('Game files need updating');
+        // Clear old files
+        localStorage.removeItem('Tibia.spr');
+        localStorage.removeItem('Tibia.dat');
+        // Update version info
+        localStorage.setItem(this.FILE_VERSIONS_KEY, JSON.stringify(serverVersions));
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error checking file versions:', error);
+      return false;
+    }
+  }
+
+  private async __checkSprVersion(): Promise<boolean> {
+    try {
+      // Get server version info
+      const response = await fetch(this.VERSION_CHECK_URL);
+      const serverInfo = await response.json();
+      
+      // Get local version
+      const localVersion = localStorage.getItem('spr_version');
+      
+      // If versions don't match or no local version exists
+      if (!localVersion || localVersion !== serverInfo.version) {
+        console.log('SPR file needs updating - version changed');
+        // Clear old SPR file
+        localStorage.removeItem('Tibia.spr');
+        // Update version
+        localStorage.setItem('spr_version', serverInfo.version);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error checking SPR version:', error);
+      return false;
+    }
   }
 }

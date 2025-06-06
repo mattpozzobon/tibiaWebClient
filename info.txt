@@ -2,3 +2,4 @@ Tibia.spr       https://pub-731c9162b7da4ead9743fb831880fd77.r2.dev/data/1098/Ti
 Tibia.dat	    https://pub-731c9162b7da4ead9743fb831880fd77.r2.dev/data/1098/Tibia.dat
 Tibia.otfi	    https://pub-731c9162b7da4ead9743fb831880fd77.r2.dev/data/1098/Tibia.otfi
 constants.json	https://pub-731c9162b7da4ead9743fb831880fd77.r2.dev/data/1098/constants.json
+version.json	https://pub-731c9162b7da4ead9743fb831880fd77.r2.dev/data/1098/version.json

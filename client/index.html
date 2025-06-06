@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html>
   <meta charset="utf-8"/>
-
-  <!-- Metadata -->
   <meta name="description" content="Forby HTML5 Open Tibia Client">
   <meta name="keywords" content="HTML5, JavaScript, NodeJS, Open Tibia, Client, Forby">
   <meta name="author" content="Forby & Matt">
@@ -10,10 +8,8 @@
 
   <title>Forby HTML5 Open Tibia Client</title>
 
-  <!-- Style Icon -->
   <link rel="shortcut icon" type="image/png" href="/png/forby.png"/>
 
-  <!-- Stylesheets -->
   <link rel="stylesheet" type="text/css" href="./css/login.css">
   <link rel="stylesheet" type="text/css" href="./css/screen-element.css">
   <link rel="stylesheet" type="text/css" href="./css/canvas.css">
@@ -27,7 +23,7 @@
 
   <body>
     <!-- Components will be loaded here -->
-    <div id="login-modal-container"></div>
+    <div id="login-page-container"></div>
     <div id="audio-container"></div>
     <div id="prototypes-container"></div>
     <div id="windows-container"></div>
@@ -72,7 +68,7 @@
             console.log('✅', url);
           };
 
-          await inject('components/login/login-modal.html',  '#login-modal-container');
+          await inject('components/login/login-page.html',  '#login-page-container');
 
           await Promise.all([
             inject('components/modals-wrapper.html',     '#modals-wrapper-container'),

@@ -75,6 +75,28 @@
         </div>
     </div>
 
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Login</h2>
+        </div>
+        <div class="modal-body">
+            <!-- Login form -->
+            <form id="login-form">
+            <!-- ... existing form content ... -->
+            </form>
+        
+            <!-- Changelog section -->
+            <div class="changelog-section">
+            <h3>Latest Updates</h3>
+            <div id="changelog-content" class="changelog-content">
+                <div class="loading">Loading changelog...</div>
+            </div>
+            <!-- Debug info -->
+            <div id="changelog-debug" style="display: none; color: #666; font-size: 12px; margin-top: 10px;"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="login-version">
         Client Version: <span id="client-version"></span><br>
         Sprites:        <span id="sprites-loaded" style="color: red;">Missing</span><br>
@@ -97,3 +119,60 @@
         <button id="information">Information</button>
     </div>
 </div>
+
+<style>
+  .changelog-section {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+  }
+
+  .changelog-section h3 {
+    margin: 0 0 10px 0;
+    color: #fff;
+    font-size: 16px;
+  }
+
+  .changelog-content {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .changelog-entry {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+  }
+
+  .changelog-date {
+    color: #888;
+    font-size: 12px;
+    margin-bottom: 5px;
+  }
+
+  .changelog-message {
+    color: #fff;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .loading {
+    color: #888;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .error {
+    color: #ff6b6b;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .no-updates {
+    color: #888;
+    text-align: center;
+    padding: 20px;
+  }
+</style>

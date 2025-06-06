@@ -15,6 +15,7 @@ export default class Database {
     this.__minimapChunkSize = 128;
     this.__loadedMinimapChunks = {};
     this.init();
+    this.updateClientVersion();
   }
 
   public init(): void {
@@ -287,6 +288,20 @@ export default class Database {
     } catch (error) {
       console.error('Error checking SPR version:', error);
       return false;
+    }
+  }
+
+  private async updateClientVersion(): Promise<void> {
+    try {
+      const response = await fetch(this.VERSION_CHECK_URL);
+      const versionInfo = await response.json();
+      
+      const versionElement = document.getElementById("client-version");
+      if (versionElement) {
+        versionElement.innerHTML = versionInfo.version;
+      }
+    } catch (error) {
+      console.error('Error updating client version:', error);
     }
   }
 }

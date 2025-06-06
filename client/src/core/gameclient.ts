@@ -17,7 +17,6 @@ import Renderer from "../renderer/renderer";
 
 export default class GameClient {
   SERVER_VERSION: string = "1098";
-  CLIENT_VERSION: string = "0.0.1";
 
   spriteBuffer: SpriteBuffer;
   dataObjects: ObjectBuffer;
@@ -36,11 +35,6 @@ export default class GameClient {
   clientVersion: number | null = null;
 
   constructor() {
-    /*
-     * Class GameClient
-     * Main container for the HTML5 ForbyJS Game Client
-     */
-
     this.renderer = new Renderer();
     this.interface = new Interface();
     this.spriteBuffer = new SpriteBuffer(32);
@@ -51,8 +45,6 @@ export default class GameClient {
     this.keyboard = new Keyboard();
     this.mouse = new Mouse();
     this.eventQueue = new EventQueue();
-
-    document.getElementById("client-version")!.innerHTML = this.CLIENT_VERSION;
   }
 
   setServerData(packet: PacketReader): void {

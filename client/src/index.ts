@@ -1,3 +1,4 @@
+import { LoginModal } from "./components/login/login-modal";
 import GameClient from "./core/gameclient";
 
 declare global {
@@ -6,11 +7,18 @@ declare global {
   }
 }
 
-/* make it global right away */
 (window as any).gameClient = new GameClient();
 
-/* optional – DOM-ready stuff that needs buttons, etc. */
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('enter-game') as HTMLButtonElement | null;
+function initLogin() {
+  console.log("✨ Initialising LoginModal");
+  new LoginModal();
+
+  const btn = document.getElementById("enter-game") as HTMLButtonElement | null;
   if (btn) btn.disabled = true;
-});
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initLogin);
+} else {
+  initLogin();
+}

@@ -7,3 +7,4 @@ packets.wal
 *.spr
 *.dat
 .wrangler/
+.env

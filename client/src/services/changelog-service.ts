@@ -1,9 +1,12 @@
-// services/changelog-service.ts
-
 export interface ChangelogEntry {
   id: string;
-  content: string;
   timestamp: string;
+  content: string;
+  author: {
+    username: string;
+    avatarUrl?: string;
+  };
+  attachments?: { url: string; filename: string }[];
 }
 
 export class ChangelogService {
@@ -24,23 +27,16 @@ export class ChangelogService {
     }
 
     const messages: any[] = await resp.json();
-    const changelog = messages.map(msg => {
+    const changelog: ChangelogEntry[] = messages.map(msg => {
+      // Gather content, embeds, attachments as before
       const parts: string[] = [];
-
-      // 1) plain-text content
-      if (msg.content) {
-        parts.push(msg.content);
-      }
-
-      // 2) any embeds (title + description)
+      if (msg.content) parts.push(msg.content);
       if (Array.isArray(msg.embeds)) {
         for (const embed of msg.embeds) {
-          if (embed.title)       parts.push(embed.title);
+          if (embed.title) parts.push(embed.title);
           if (embed.description) parts.push(embed.description);
         }
       }
-
-      // 3) attachments (just link to them)
       if (Array.isArray(msg.attachments)) {
         for (const att of msg.attachments) {
           if (att.url) parts.push(att.url);
@@ -48,30 +44,45 @@ export class ChangelogService {
       }
 
       return {
-        id:        msg.id,
+        id: msg.id,
         timestamp: msg.timestamp,
-        content:   parts.join('\n\n') || '[no textual content]',
+        content: parts.join('\n\n') || '[no textual content]',
+        author: {
+          username: msg.author?.username || 'Unknown',
+          avatarUrl: msg.author?.avatar
+            ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
+            : undefined,
+        },
+        attachments: Array.isArray(msg.attachments)
+          ? msg.attachments.map((att: { url: any; filename: any; }) => ({ url: att.url, filename: att.filename }))
+          : undefined,
       };
     });
 
-    this.cache     = changelog;
+    this.cache = changelog;
     this.lastFetch = Date.now();
     return changelog;
   }
 
-  /** Renders a single entry as HTML */
+  /** Renders a single entry as HTML, including author and avatar */
   formatChangelogEntry(entry: ChangelogEntry): string {
     const date = new Date(entry.timestamp);
-    // simple linkify of any URLs
+    // sanitize and linkify URLs
     const htmlContent = entry.content.replace(
       /(https?:\/\/[^\s]+)/g,
       '<a href="$1" target="_blank">$1</a>'
     );
 
+    const avatarImg = entry.author.avatarUrl
+      ? `<img class="changelog-avatar" src="${entry.author.avatarUrl}" alt="${entry.author.username}" />`
+      : '';
+
     return `
       <div class="changelog-entry">
-        <div class="changelog-date">
-          ${date.toLocaleDateString()} ${date.toLocaleTimeString()}
+        <div class="changelog-header">
+          ${avatarImg}
+          <span class="changelog-author">${entry.author.username}</span>
+          <span class="changelog-date">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</span>
         </div>
         <div class="changelog-message">${htmlContent}</div>
       </div>

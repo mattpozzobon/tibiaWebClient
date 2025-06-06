@@ -1,4 +1,4 @@
-import { ChangelogService } from '../../services/changelog-service';
+import { ChangelogService, ChangelogEntry } from '../../services/changelog-service';
 
 export class LoginModal {
   private changelogService = new ChangelogService();
@@ -16,8 +16,6 @@ export class LoginModal {
     this.loadChangelog();
   }
 
-  /* ────────────────────────────────────────────────────────────────────────── */
-
   private updateDebugInfo(message: string): void {
     if (this.debugElement) {
       this.debugElement.style.display = 'block';
@@ -29,17 +27,14 @@ export class LoginModal {
     console.log('LoginModal: Loading changelog…');
 
     try {
-      const changelog = await this.changelogService.fetchChangelog();
+      const changelog: ChangelogEntry[] = await this.changelogService.fetchChangelog();
       console.log('LoginModal: Changelog entries received:', changelog.length);
 
-      /* empty -> “no updates” */
       if (!changelog.length) {
-        this.changelogContent!.innerHTML =
-          '<div class="no-updates">No recent updates</div>';
+        this.changelogContent!.innerHTML = '<div class="no-updates">No recent updates</div>';
         return;
       }
 
-      /* render */
       this.changelogContent!.innerHTML = changelog
         .map(entry => this.changelogService.formatChangelogEntry(entry))
         .join('');
@@ -47,8 +42,7 @@ export class LoginModal {
       this.updateDebugInfo('Changelog loaded successfully');
     } catch (err: any) {
       console.error('LoginModal: Error loading changelog:', err);
-      this.changelogContent!.innerHTML =
-        '<div class="error">Failed to load changelog</div>';
+      this.changelogContent!.innerHTML = '<div class="error">Failed to load changelog</div>';
       this.updateDebugInfo(err?.message ?? 'Unknown error');
     }
   }

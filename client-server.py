@@ -93,12 +93,12 @@ class TibiaHandler(http.server.SimpleHTTPRequestHandler):
 
         try:
             with urlopen(req, timeout=10) as resp:
+                # load full, unfiltered JSON from Discord
                 full = json.loads(resp.read().decode("utf-8"))
-                trimmed = [
-                    {"id": m["id"], "content": m["content"], "timestamp": m["timestamp"]}
-                    for m in full
-                ]
-                self._send_json(200, trimmed)
+
+                # if you really want to slim it down, you can pick-and-choose fields here,
+                # but passing 'full' gives you author, embeds, attachments, etc.
+                self._send_json(200, full)
 
         except HTTPError as e:
             self._send_json(e.code, {"error": f"HTTPError {e.code}"})

@@ -81,6 +81,14 @@
         Objects:        <span id="data-loaded" style="color: red;">Missing</span>
     </div>
     
+    <div id="download-progress" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.8); padding: 20px; border-radius: 5px; color: white; text-align: center;">
+        <div>Downloading game assets...</div>
+        <div style="margin: 10px 0;">
+            <div id="download-progress-bar" style="width: 0%; height: 20px; background: #4CAF50; transition: width 0.3s;"></div>
+        </div>
+        <div id="download-status">0%</div>
+    </div>
+    
     <div class="login-settings">
         <button id="login-info">Enter Game</button>
         <button id="create-account">Create Account</button>
@@ -88,5 +96,4 @@
         <button id="settings">Options</button>
         <button id="information">Information</button>
     </div>
-
 </div>

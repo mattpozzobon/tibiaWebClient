@@ -3,7 +3,7 @@ import { CONST } from "../helper/appContext";
 import SpriteBuffer from "../renderer/sprite-buffer";
 import PacketHandler from "./packet-handler";
 import PacketReader from "./packetreader";
-
+import { DownloadManager, DownloadProgress } from "./download-manager";
 
 class NetworkManager {
   socket!: WebSocket;
@@ -11,9 +11,9 @@ class NetworkManager {
   public packetHandler: PacketHandler;
   nPacketsSent: number = 0;
   __latency: number = 0;
+  private downloadManager: DownloadManager;
 
   constructor() {
-    
     this.state = {
       bytesRecv: null,
       bytesSent: null,
@@ -22,6 +22,7 @@ class NetworkManager {
       connected: false,
     };
     this.packetHandler = new PacketHandler();
+    this.downloadManager = new DownloadManager();
   }
 
   close(): void {
@@ -231,26 +232,59 @@ class NetworkManager {
   }
 
   public loadGameFilesServer(): void {
-    // The resources to load from the server.
-    const resources = ["Tibia.spr", "Tibia.dat"];
-  
-    // Map each resource to a fetch promise using template literals.
-    const promises = resources.map(url =>
-      fetch(`/data/${window.gameClient.SERVER_VERSION}/${url}`).then(this.fetchCallback)
-    );
-  
-    // Wait for all resources to load.
-    Promise.all(promises)
-      .then(([dataSprites, dataObjects]) => {
+    // Show the download progress UI
+    const progressElement = document.getElementById('download-progress');
+    const progressBar = document.getElementById('download-progress-bar');
+    const statusElement = document.getElementById('download-status');
+    if (progressElement) progressElement.style.display = 'block';
 
-        window.gameClient.dataObjects.load("Tibia.dat", {target: {result: dataObjects} } as unknown as ProgressEvent<FileReader>);
-        SpriteBuffer.load("Tibia.spr", { target: { result: dataSprites } } as unknown as ProgressEvent<FileReader>);
-        
+    // Set up progress callback
+    this.downloadManager.setProgressCallback((progress: DownloadProgress) => {
+      if (progressBar) progressBar.style.width = `${progress.percentage}%`;
+      if (statusElement) {
+        const loadedMB = (progress.loaded / (1024 * 1024)).toFixed(1);
+        const totalMB = (progress.total / (1024 * 1024)).toFixed(1);
+        statusElement.textContent = `${progress.currentFile}: ${loadedMB}MB / ${totalMB}MB (${Math.round(progress.percentage)}%)`;
+      }
+    });
+
+    // Define the files to download
+    const files = [
+      {
+        url: `/data/${window.gameClient.SERVER_VERSION}/Tibia.spr`,
+        filename: "Tibia.spr"
+      },
+      {
+        url: `/data/${window.gameClient.SERVER_VERSION}/Tibia.dat`,
+        filename: "Tibia.dat"
+      }
+    ];
+
+    // Download the files
+    this.downloadManager.downloadFiles(files)
+      .then(results => {
+        // Hide progress UI
+        if (progressElement) progressElement.style.display = 'none';
+
+        // Load the data into the appropriate buffers
+        const datData = results.get("Tibia.dat");
+        const sprData = results.get("Tibia.spr");
+
+        if (datData && sprData) {
+          window.gameClient.dataObjects.load("Tibia.dat", {target: {result: datData} } as unknown as ProgressEvent<FileReader>);
+          SpriteBuffer.load("Tibia.spr", { target: { result: sprData } } as unknown as ProgressEvent<FileReader>);
+        } else {
+          throw new Error("Failed to load one or more asset files");
+        }
       })
       .catch(error => {
+        // Hide progress UI
+        if (progressElement) progressElement.style.display = 'none';
+        
+        console.error('Asset loading error:', error);
         return window.gameClient.interface.modalManager.open(
           "floater-connecting",
-          "Failed loading client data from server. Please select them manually using the Load Assets button."
+          `Failed loading client data: ${error.message}. Please try again or select files manually using the Load Assets button.`
         );
       });
   }

@@ -200,7 +200,7 @@ class PacketHandler {
   }
 
   handleLatency(): void {
-    window.gameClient.networkManager.state.latency = performance.now() - window.gameClient.networkManager.__latency;
+    window.gameClient.networkManager.state.latency = performance.now() - window.gameClient.networkManager.latency;
   }
 
   handleChunk(chunk: { id: number }): void {

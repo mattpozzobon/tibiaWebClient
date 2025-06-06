@@ -8,9 +8,9 @@ import { DownloadManager, DownloadProgress } from "./download-manager";
 class NetworkManager {
   socket!: WebSocket;
   state: Record<string, any>;
-  public packetHandler: PacketHandler;
   nPacketsSent: number = 0;
-  __latency: number = 0;
+  latency: number = 0;
+  public packetHandler: PacketHandler;
   private downloadManager: DownloadManager;
 
   constructor() {
@@ -33,7 +33,7 @@ class NetworkManager {
     return this.state.connected;
   }
 
-  public readPacket(packet: PacketReader): any {
+  readPacket(packet: PacketReader): any {
     // Increase the packet counter.
     this.state.nPackets++;
   
@@ -200,7 +200,7 @@ class NetworkManager {
   }
 
   getLatency(): void {
-    this.__latency = performance.now();
+    this.latency = performance.now();
     this.send(new LatencyPacket());
   }
 
@@ -231,7 +231,7 @@ class NetworkManager {
     return response.arrayBuffer();
   }
 
-  public loadGameFilesServer(): void {
+  loadGameFilesServer(): void {
     // Show the download progress UI
     const progressElement = document.getElementById('download-progress');
     const progressBar = document.getElementById('download-progress-bar');
@@ -289,7 +289,6 @@ class NetworkManager {
       });
   }
   
-
   connect(): void {
     const host: string = this.getConnectionSettings();
     const { account, password } = window.gameClient.interface.getAccountDetails();
@@ -319,7 +318,6 @@ class NetworkManager {
       })
       .catch((x: any) => window.gameClient.interface.modalManager.open("floater-connecting", x));
   }
-
 
   private __handlePacket(event: MessageEvent): void {
     const packet = new PacketReader(event.data);

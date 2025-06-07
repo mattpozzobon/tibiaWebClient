@@ -204,6 +204,7 @@ class Keyboard {
     input.toggleInputLock();
     this.__setChatOpacity(0.6); // fade out when not typing
   }
+  
   private __handleEscapeKey(): void {
     if (window.gameClient.interface.modalManager.getOpenedModal() == "floater-create" || window.gameClient.interface.modalManager.getOpenedModal() == "floater-recover"){
       window.gameClient.interface.modalManager.open("floater-enter");

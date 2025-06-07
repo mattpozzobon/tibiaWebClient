@@ -89,6 +89,11 @@ export default class ModalManager {
   public handleConfirm(): void {
     if (!this.isOpened()) return;
     this.__openedModal!.handleConfirm();
+
+    if (this.__openedModal?.id === "floater-create") {
+      return;
+    }
+
     this.close();
   }
 
@@ -127,6 +132,7 @@ export default class ModalManager {
   }
 
   public open(id: string, options?: any): Modal | null {
+    console.log('open', id);
     // if we're switching between our two auth panels, hide both first
     if (id === 'floater-enter' || id === 'floater-create' || id === 'floater-recover') {
       document.getElementById('floater-enter')?.style.setProperty('display','none');

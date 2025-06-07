@@ -10,7 +10,6 @@ declare global {
 (window as any).gameClient = new GameClient();
 
 function initLogin() {
-  console.log("✨ Initialising LoginModal");
   new LoginModal();
 
   const btn = document.getElementById("enter-game") as HTMLButtonElement | null;

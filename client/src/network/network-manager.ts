@@ -212,19 +212,25 @@ class NetworkManager {
     return (document.getElementById("host") as HTMLInputElement).value;
   }
 
-  createAccount(options: any): void {
+  public createAccount(options: { account: string; password: string }): void {
     const host = this.getConnectionSettings();
-    const url = `${location.protocol}//${host}/?account=${options.account}&password=${options.password}&name=${options.name}&sex=${options.sex}`;
+    const url = `${location.protocol}//${host}/?account=${encodeURIComponent(options.account)}&password=${encodeURIComponent(options.password)}`;
+  
+    fetch(url, { method: "POST" }).then(response => {
+      if (response.status === 400) {
+        return;
+      }
 
-    fetch(url, { method: "POST" })
-      .then((response) => {
-        if (response.status !== 201) throw new Error("Account creation failed");
-        (document.getElementById("user-username") as HTMLInputElement).value = options.account;
-        (document.getElementById("user-password") as HTMLInputElement).value = options.password;
-        window.gameClient.interface.modalManager.open("floater-connecting", "The account and character have been created.");
-      })
-      .catch((err) => window.gameClient.interface.modalManager.open("floater-connecting", err));
+      (document.getElementById("user-username") as HTMLInputElement).value = options.account;
+      (document.getElementById("user-password") as HTMLInputElement).value = options.password;
+
+    }).catch(err => {
+      const message = err instanceof Error ? err.message : String(err);
+    });
+
+    //window.gameClient.interface.modalManager.open("floater-create");
   }
+  
 
   fetchCallback(response: Response): Promise<ArrayBuffer> {
     if (response.status !== 200) return Promise.reject(response);

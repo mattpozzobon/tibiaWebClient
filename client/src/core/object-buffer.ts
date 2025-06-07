@@ -143,8 +143,6 @@ class ObjectBuffer {
       const flags = this.__readFlags(packet);
       // Create a new data object.
 
-      if (id === 100)
-        console.log('flags',flags);
       const dataObject = new DataObject(flags);
   
       // Update the group count if this is an outfit.

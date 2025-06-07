@@ -146,7 +146,7 @@ export default class Interface {
       alert("The Tibia.spr and Tibia.dat must be loaded first.");
       return;
     }
-    this.modalManager.open("floater-enter");
+    //this.modalManager.open("floater-enter");
   }
 
   login(): void {

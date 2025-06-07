@@ -204,9 +204,13 @@ class Keyboard {
     input.toggleInputLock();
     this.__setChatOpacity(0.6); // fade out when not typing
   }
-
   private __handleEscapeKey(): void {
-    if (window.gameClient.interface.modalManager.isOpened()) {
+    if (window.gameClient.interface.modalManager.getOpenedModal() == "floater-create" || window.gameClient.interface.modalManager.getOpenedModal() == "floater-recover"){
+      window.gameClient.interface.modalManager.open("floater-enter");
+      return;
+    }
+    
+    if (window.gameClient.interface.modalManager.isOpened() && window.gameClient.interface.modalManager.getOpenedModal() !== "floater-enter") {
       window.gameClient.interface.modalManager.close();
     } else if (window.gameClient.interface.menuManager.isOpened()) {
       window.gameClient.interface.menuManager.close();

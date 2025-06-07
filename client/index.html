@@ -6,9 +6,11 @@
   <meta name="author" content="Forby & Matt">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Forby HTML5 Open Tibia Client</title>
+  <title>Emperia</title>
 
   <link rel="shortcut icon" type="image/png" href="/png/forby.png"/>
+  
+  <link rel="stylesheet" type="text/css" href="./css/base-components.css">
 
 
   <link rel="stylesheet" type="text/css" href="./css/screen-element.css">
@@ -39,7 +41,6 @@
       <!-- Main body for the screen etc.. -->   
       <div class="main">
 
-        <div class="middle"></div>
         <div class="upper">
           <div id="canvas-id" class="canvas-wrapper">
             <canvas id="screen"></canvas>
@@ -69,6 +70,7 @@
           };
 
           await inject('components/login/login-page.html',  '#login-page-container');
+          document.querySelector('#login-page-container')?.classList.add('loaded');
 
           await Promise.all([
             inject('components/modals-wrapper.html',     '#modals-wrapper-container'),

@@ -1,0 +1,88 @@
+#center-container {
+  flex: 1;                      /* take all remaining space */
+  display: flex;               
+  align-items: center;         /* vertical center */
+  justify-content: center;     /* horizontal center */
+  /* optional: padding so it never touches the edges */
+  padding: 2rem;
+}
+
+/* make sure your modal-content sits as an ordinary block in there */
+#center-container .modal-content {
+  position: static;            /* drop any absolute/transform centering */
+  width: 500px;                /* or whatever fixed width you like */
+  max-width: 100%;             /* never overflow its container */
+}
+
+.changelog-section {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+}
+
+.changelog-section h3 {
+  margin: 0 0 10px 0;
+  color: #fff;
+  font-size: 16px;
+}
+
+.changelog-content {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.changelog-entry {
+  margin-bottom: 15px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.changelog-date {
+  color: #888;
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+
+.changelog-message {
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.loading {
+  color: #888;
+  text-align: center;
+  padding: 20px;
+}
+
+.error {
+  color: #ff6b6b;
+  text-align: center;
+  padding: 20px;
+}
+
+.no-updates {
+  color: #888;
+  text-align: center;
+  padding: 20px;
+}
+
+.changelog-avatar {
+width: 24px;
+height: 24px;
+border-radius: 50%;
+vertical-align: middle;
+margin-right: 8px;
+}
+.changelog-header {
+display: flex;
+align-items: center;
+margin-bottom: 5px;
+}
+.changelog-author {
+font-weight: bold;
+color: #fff;
+margin-right: 8px;
+}

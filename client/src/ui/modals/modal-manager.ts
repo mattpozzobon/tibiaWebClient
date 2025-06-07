@@ -29,6 +29,7 @@ export default class ModalManager {
     this.register(Modal, "settings-modal");
     this.register(Modal, "settings-box");
     this.register(Modal, "floater-enter");
+    this.register(Modal, "floater-recover");
     this.register(CreateAccountModal, "floater-create");
 
 
@@ -48,12 +49,12 @@ export default class ModalManager {
   public addEventListeners(): void {
     document.getElementById("login-info")?.addEventListener("click", this.open.bind(this, "floater-enter"));
     document.getElementById("create-account")?.addEventListener("click", this.open.bind(this, "floater-create"));
-
+    document.getElementById("recover-account")?.addEventListener("click", this.open.bind(this, "floater-recover"));
     
     document.getElementById("open-chat-modal")?.addEventListener("click", this.open.bind(this, "chat-modal"));
     document.getElementById("openOutfit")?.addEventListener("click", this.open.bind(this, "outfit-modal"));
     document.getElementById("openSettings")?.addEventListener("click", this.open.bind(this, "settings-modal"));
-    document.getElementById("information")?.addEventListener("click", this.open.bind(this, "information-modal"));
+
     document.getElementById("settings")?.addEventListener("click", this.open.bind(this, "settings-box"));
     document.getElementById("openSkills")?.addEventListener("click", this.open.bind(this, "skill-modal"));
 
@@ -127,9 +128,10 @@ export default class ModalManager {
 
   public open(id: string, options?: any): Modal | null {
     // if we're switching between our two auth panels, hide both first
-    if (id === 'floater-enter' || id === 'floater-create') {
+    if (id === 'floater-enter' || id === 'floater-create' || id === 'floater-recover') {
       document.getElementById('floater-enter')?.style.setProperty('display','none');
       document.getElementById('floater-create')?.style.setProperty('display','none');
+      document.getElementById('floater-recover')?.style.setProperty('display','none');
     }
 
     // toggle-off if same panel
@@ -155,4 +157,7 @@ export default class ModalManager {
     return this.__openedModal;
   }
   
+  public getOpenedModal(): string | null {
+    return this.__openedModal ? this.__openedModal.id : null;
+  }
 }

@@ -190,6 +190,7 @@ export default class Interface {
   hideGameInterface(): void {
     document.getElementById("login-wrapper")!.style.display = "flex";
     document.getElementById("game-wrapper")!.style.display = "none";
+    window.gameClient.interface.modalManager.open("floater-enter");
     window.onresize?.(new UIEvent("resize"));
   }
 
@@ -279,7 +280,6 @@ export default class Interface {
     const modal = this.modalManager.open("confirm-modal");
     if (modal) {
       (modal as any).handleOpen(() => {
-        // Block logout in no-logout zones.
         if (window.gameClient.player!.getTile().isNoLogoutZone()) {
           window.gameClient.interface.setCancelMessage("You may not logout here.");
           return;

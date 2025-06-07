@@ -1,24 +1,7 @@
-html {
-  height: 100%;
-}
-
 .oogwrap {
   max-width: 360px;
   display: flex;
   flex-direction: column;
-}
-
-body {
-  height: 100%;
-  margin: 0px;
-  font-family: Verdana, "Sans-Serif";
-  font-weight: bold;
-  text-shadow: 0 0 2px black, 0 0 2px black, 0 0 2px black, 0 0 2px black;
-  font-size: 12px;
-  color: white;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(24, 24, 24, 1) rgba(51, 51, 51, 1);
-  background-image: url("/png/bg2.png");
 }
 
 #battle-window-target {
@@ -185,64 +168,6 @@ body {
   background: none;
 }
 
-/* Styling for input */
-input {
-  background-image: url("/png/bg3.png");
-  height: 14px;
-  outline: none;
-  padding: 4px;
-  text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
-  font-weight: bold;
-  border: 0px;
-}
-
-hr {
-    border: 0;
-    height: 1px;
-    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), grey, rgba(0, 0, 0, 0));
-    margin: 8px;
-}
-
-/* Styling for buttons */
-button {
-  font-size: 10px;
-  color: white;
-  cursor: pointer;
-  font-weight: bold;
-  background-image: url("/png/bg3.png");
-  border: 1px solid black;
-  margin: 2px;
-  padding: 4px;
-  border-radius: 4px;
-}
-
-button:hover {
-  border: 1px solid white;
-  background-image: url("/png/bg2.png");
-}
-
-button:disabled {
-  color: grey;
-}
-
-button:disabled:hover {
-  border: 1px solid grey;
-  box-shadow: 0 0 4px 1px grey;
-}
-
-/* Styling for custom buttons */
-button.symbol-button.small {
-  font-size: 8px;
-}
-
-button.symbol-button {
-  padding: 0px;
-  width: 18px;
-  height: 18px;
-  min-width: 18px;
-  max-width: 18px;
-}
-
 .close-button {
   position: absolute;
   right: 6px;
@@ -263,14 +188,6 @@ button.symbol-button {
   position: absolute;
   top: 4px;
   left: 4px;
-}
-
-.main .middle {
-  display: flex;
-  flex: 1 1 auto;
-  justify-content: center;
-  align-items: flex-end;
-  background-image: url("/png/bg.png");
 }
 
 .main .upper {

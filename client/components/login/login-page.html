@@ -1,6 +1,7 @@
 <link rel="stylesheet" type="text/css" href="../../css/login.css">
+<link rel="stylesheet" type="text/css" href="../../css/changelog.css">
+<link rel="stylesheet" type="text/css" href="../../css/auth.css">
 
-<!-- Wrapper for the login screen -->
 <div id="login-wrapper">
     
     <div id="floater-connecting" class="modal">
@@ -41,61 +42,62 @@
     
     <div id="auth-container">
 
+      <div class="auth-banner">
+        <img src="/png/banner.png" alt="Game Logo">
+      </div>
+
       <div id="floater-enter">
-        <div class="modal-header">Account Information</div>
-        <div class="modal-body">
-          <form>
-            <p>Username:<br>
-              <input class="password-input" name="username" id="user-username" value="111111" type="text" placeholder="Account Name">
-            <p>Password:<br>
-              <input class="password-input" name="password" id="user-password" value="tibia" type="password" placeholder="Account Password">
-          </form>
+          <label for="user-username">Email:</label>
+          <input class="password-input" name="username" id="user-username" value="111111" type="text" placeholder="Account Name">
+          <label for="user-password">Password:</label>
+          <input class="password-input" name="password" id="user-password" value="tibia" type="password" placeholder="Account Password">
+          <button id="enter-game" class="btn-primary" type="button" onclick="window.gameClient.interface.login()">Login</button>
           <hr>
-          <div class="modal-footer">
-            <button id="enter-game" onclick="window.gameClient.interface.login()">Login</button>
-          </div>
-          <button id="create-account">Create Account</button>
-        </div>
+          <p class="register-text">
+            Don’t have an account?<a href="#" id="create-account" class="register-link">Register!</a>
+            Forgot your<a href="#" id="recover-account" class="register-link">account</a>?
+          </p>
       </div>
     
       <div id="floater-create">
-        <div class="modal-header">Create Account</div>
-        <div class="modal-body">
-          <p><input class="password-input" id="create-username" type="text" placeholder="Account Number">
-          <p><input class="password-input" id="create-password" type="password" placeholder="Account Password">
-          <p><input class="password-input" id="create-name" type="text" placeholder="Character Name">
-          <p><select class="password-input" id="create-sex">
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-            </select>
-          <hr>
-          <div class="modal-footer">
-            <button action="confirm" id="create-account-close">Create Account</button>
-          </div>
-          <button id="login-info">Enter Game</button>
-        </div>
+          <label for="create-username">Email:</label>
+          <input class="password-input" id="create-username" type="text" placeholder="Email">
+          <label for="create-password">Password:</label>
+          <input class="password-input" id="create-password" type="password" placeholder="Password">
+          <label for="create-confirm-password">Confirm Password:</label>
+          <input class="password-input" id="create-confirm-password" type="password" placeholder="Confirm Password">
+          <button action="confirm" id="create-account-close" class="btn-primary" type="button">Create Account</button>
       </div>
 
+      <div id="floater-recover">
+        <label for="recover-email">Recover Account:</label>
+        <input class="password-input" id="recover-email" type="text" placeholder="Email">
+        
     </div>
 
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Changelog</h2>
-        </div>
-        <div class="modal-body">
+      <!-- <button id="login-info">Back</button> -->
+    </div>
 
-            <form id="login-form">
-            </form>
+    <div id="center-container">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h2>Changelog</h2>
+          </div>
+          <div class="modal-body">
 
-            <div class="changelog-section">
-            <h3>Latest Updates</h3>
-            <div id="changelog-content" class="changelog-content">
-                <div class="loading">Loading changelog...</div>
-            </div>
-       
-            <div id="changelog-debug" style="display: none; color: #666; font-size: 12px; margin-top: 10px;"></div>
-            </div>
-        </div>
+              <form id="login-form">
+              </form>
+
+              <div class="changelog-section">
+              <h3>Latest Updates</h3>
+              <div id="changelog-content" class="changelog-content">
+                  <div class="loading">Loading changelog...</div>
+              </div>
+        
+              <div id="changelog-debug" style="display: none; color: #666; font-size: 12px; margin-top: 10px;"></div>
+              </div>
+          </div>
+      </div>
     </div>
     
     <div id="download-progress" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.8); padding: 20px; border-radius: 5px; color: white; text-align: center;">

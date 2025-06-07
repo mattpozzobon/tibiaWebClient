@@ -53,9 +53,7 @@ export default class GameClient {
      */
     let serverData = packet.readServerData();
 
-    if (
-      serverData.clientVersion !== SpriteBuffer.__version ||
-      serverData.clientVersion !== this.dataObjects.getVersion()
+    if (serverData.clientVersion !== SpriteBuffer.__version || serverData.clientVersion !== this.dataObjects.getVersion()
     ) {
       this.disconnect();
       packet.discard();

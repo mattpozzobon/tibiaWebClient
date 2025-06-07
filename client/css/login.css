@@ -1,13 +1,16 @@
+#login-page-container {
+  visibility: hidden;
+}
+
+#login-page-container.loaded {
+  visibility: visible;
+}
+
 #login-wrapper {
   display: flex;
-  align-items: center;
-  justify-content: center;
   width: 100vw;
   height: 100vh;
   position: fixed;
-  top: 0;
-  left: 0;
-
   background-image: url('/png/background.png');
   background-size: cover;
   background-position: center;
@@ -44,120 +47,16 @@
   position: absolute;
   bottom: 8px;
   right: 8px;
-  font-size: 10px;                      /* extra small */
-  color: rgba(255, 255, 255, 0.3);       /* white at 30% opacity */
+  font-size: 10px;                      
+  color: rgba(255, 255, 255, 0.3);       
   font-family: sans-serif;
-  pointer-events: none;                  /* click-through */
+  pointer-events: none;                  
   user-select: none;
-  z-index: 100;                          /* stay on top */
+  z-index: 100;                       
 }
 
 .login-version {
   position: absolute;
   top: 2px;
   left: 2px;
-}
-
-.changelog-section {
-  margin-top: 20px;
-  padding: 15px;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 5px;
-}
-
-.changelog-section h3 {
-  margin: 0 0 10px 0;
-  color: #fff;
-  font-size: 16px;
-}
-
-.changelog-content {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.changelog-entry {
-  margin-bottom: 15px;
-  padding: 10px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-}
-
-.changelog-date {
-  color: #888;
-  font-size: 12px;
-  margin-bottom: 5px;
-}
-
-.changelog-message {
-  color: #fff;
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.loading {
-  color: #888;
-  text-align: center;
-  padding: 20px;
-}
-
-.error {
-  color: #ff6b6b;
-  text-align: center;
-  padding: 20px;
-}
-
-.no-updates {
-  color: #888;
-  text-align: center;
-  padding: 20px;
-}
-
-.changelog-avatar {
-width: 24px;
-height: 24px;
-border-radius: 50%;
-vertical-align: middle;
-margin-right: 8px;
-}
-.changelog-header {
-display: flex;
-align-items: center;
-margin-bottom: 5px;
-}
-.changelog-author {
-font-weight: bold;
-color: #fff;
-margin-right: 8px;
-}
-
-/* 1) Container that lives on the left edge */
-#auth-container {
-  position: absolute;
-  top: 20vh;              /* vertical offset — tweak as you like */
-  left: 5vw;              /* how far from the left edge */
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;              /* space between the two panels */
-  z-index: 100;           /* so it sits above your background */
-}
-
-/* 2) Remove any centering transforms on the two auth modals */
-#auth-container .modal {
-  position: relative;     /* let the container position them */
-  top: auto;
-  left: auto;
-  transform: none !important;
-  margin: 0 !important;   /* drop any centering margins */
-}
-
-/* both panels hidden by default */
-#auth-container #floater-enter,
-#auth-container #floater-create {
-  display: none;
-}
-
-/* but show the login panel immediately */
-#auth-container #floater-enter {
-  display: block;
 }

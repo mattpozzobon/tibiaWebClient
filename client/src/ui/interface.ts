@@ -11,8 +11,6 @@ import SoundManager from "../audio/sound-manager";
 import State from "../core/state";
 import WindowManager from "./window/window-manager";
 import spriteBuffer from "../renderer/sprite-buffer";
-import SpriteBuffer from "../renderer/sprite-buffer";
-
 
 export default class Interface {
   settings: Settings;
@@ -96,7 +94,6 @@ export default class Interface {
     ]);
 
   constructor() {
-    
     this.settings = new Settings( this);
     this.channelManager = new ChannelManager();
     this.hotbarManager = new HotbarManager();
@@ -112,11 +109,7 @@ export default class Interface {
     this.state.add("spritesLoaded", this.enableEnterGame.bind(this));
     this.state.add("dataLoaded", this.enableEnterGame.bind(this));
 
-    //(document.getElementById("chat-input") as HTMLInputElement).disabled = true;
-
-
     document.getElementById("keyring")?.addEventListener("click", this.__openKeyRing.bind(this));
-
   }
 
   getSpell(id: number) {
@@ -229,17 +222,14 @@ export default class Interface {
   loadAssetCallback(which: string, filename: string): void {
     if (which === "sprite") {
       this.state.spritesLoaded = true;
-      const element = document.getElementById("sprites-loaded");
-      if (element) {
-        element.style.color = "green";
-        element.innerHTML = `${filename} (${SpriteBuffer.__version})`;
-      }
     } else if (which === "data") {
       this.state.dataLoaded = true;
-      const element = document.getElementById("data-loaded");
-      if (element) {
-        element.style.color = "green";
-        element.innerHTML = `${filename} (${window.gameClient.dataObjects.__version})`;
+    }
+  
+    if (this.state.spritesLoaded && this.state.dataLoaded) {
+      const assetsEl = document.getElementById("data-assets");
+      if (assetsEl) {
+        assetsEl.textContent = "🟢";
       }
     }
   }
@@ -264,7 +254,6 @@ export default class Interface {
   getSpriteScaling(): number {
     return 32 * this.getResolutionScale();
   }
-
 
   getResolutionScale(): number {
     const viewport = window.visualViewport ?? { width: window.innerWidth, height: window.innerHeight };

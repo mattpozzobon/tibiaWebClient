@@ -3,7 +3,6 @@
 <!-- Wrapper for the login screen -->
 <div id="login-wrapper">
     
-    <!-- Login Modal for Generic Text -->
     <div id="floater-connecting" class="modal">
         <div class="modal-header">Information</div>
         <div class="modal-body">
@@ -11,7 +10,6 @@
         </div>
     </div>
     
-    <!-- Login Modal for Connection Settings -->
     <div id="settings-box" class="modal">
         <div class="modal-header">Connection Settings</div>
         <div class="modal-body">
@@ -25,13 +23,12 @@
         </div>
     </div>
     
-    <!-- Login Modal for Information -->
     <div id="information-modal" class="modal">
         <div class="modal-header">Information</div>
         <div class="modal-body" style="text-align: center; max-width: 500px;">
         <p> Tibia Game Client and Game Server written in NodeJS/JavaScript.
         <hr>
-        <img src="png/forby.png" style="width: 68px; heigiht: 68px;"></img>
+        <img src="png/forby.png" style="width: 68px; height: 68px;"></img>
         <hr>
         Load the required <b>Tibia.spr</b> and <b>Tibia.dat</b> files by clicking Load Assets. The asset versions must match the server version and both client/server support versions 7.4 and 10.98 but nothing in between.
         <p> Copyright by Forby, 2019 - 2022
@@ -42,67 +39,63 @@
         </div>
     </div>
     
-    <!-- Login Modal for Enter World -->
-    <div id="floater-enter" class="modal">
+    <div id="auth-container">
+
+      <div id="floater-enter">
         <div class="modal-header">Account Information</div>
         <div class="modal-body">
-        <form>
-        <p>Username:
-        <br><input class="password-input" name='username' id="user-username" value="111111" type="text" placeholder="Account Name">
-        <p>Password:
-        <br><input class="password-input" name='password' id="user-password" value="tibia" type="password" placeholder="Account Password">
-        </form>
-        <hr>
-        <div class="modal-footer">
+          <form>
+            <p>Username:<br>
+              <input class="password-input" name="username" id="user-username" value="111111" type="text" placeholder="Account Name">
+            <p>Password:<br>
+              <input class="password-input" name="password" id="user-password" value="tibia" type="password" placeholder="Account Password">
+          </form>
+          <hr>
+          <div class="modal-footer">
             <button id="enter-game" onclick="window.gameClient.interface.login()">Login</button>
+          </div>
+          <button id="create-account">Create Account</button>
         </div>
-        </div>
-    </div>
+      </div>
     
-    <!-- Login Modal for Enter World -->
-    <div id="floater-create" class="modal">
+      <div id="floater-create">
         <div class="modal-header">Create Account</div>
         <div class="modal-body">
-        <p><input class="password-input" id="create-username" type="password" placeholder="Account Number">
-        <p><input class="password-input" id="create-password" type="password" placeholder="Account Password">
-        <p><input class="password-input" id="create-name" placeholder="Character Name">
-        <p><select class="password-input" id="create-sex">
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-        </select>
-        <hr>
-        <div class="modal-footer">
+          <p><input class="password-input" id="create-username" type="text" placeholder="Account Number">
+          <p><input class="password-input" id="create-password" type="password" placeholder="Account Password">
+          <p><input class="password-input" id="create-name" type="text" placeholder="Character Name">
+          <p><select class="password-input" id="create-sex">
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          <hr>
+          <div class="modal-footer">
             <button action="confirm" id="create-account-close">Create Account</button>
+          </div>
+          <button id="login-info">Enter Game</button>
         </div>
-        </div>
+      </div>
+
     </div>
 
     <div class="modal-content">
         <div class="modal-header">
-            <h2>Login</h2>
+            <h2>Changelog</h2>
         </div>
         <div class="modal-body">
-            <!-- Login form -->
+
             <form id="login-form">
-            <!-- ... existing form content ... -->
             </form>
-        
-            <!-- Changelog section -->
+
             <div class="changelog-section">
             <h3>Latest Updates</h3>
             <div id="changelog-content" class="changelog-content">
                 <div class="loading">Loading changelog...</div>
             </div>
-            <!-- Debug info -->
+       
             <div id="changelog-debug" style="display: none; color: #666; font-size: 12px; margin-top: 10px;"></div>
             </div>
         </div>
-    </div>
-
-    <div class="login-version">
-        Client Version: <span id="client-version"></span><br>
-        Sprites:        <span id="sprites-loaded" style="color: red;">Missing</span><br>
-        Objects:        <span id="data-loaded" style="color: red;">Missing</span>
     </div>
     
     <div id="download-progress" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.8); padding: 20px; border-radius: 5px; color: white; text-align: center;">
@@ -112,87 +105,10 @@
         </div>
         <div id="download-status">0%</div>
     </div>
-    
-    <div class="login-settings">
-        <button id="login-info">Enter Game</button>
-        <button id="create-account">Create Account</button>
-        <button id="load-assets">Load Assets</button>
-        <button id="settings">Options</button>
-        <button id="information">Information</button>
+
+    <div class="build-info">
+      Build: <span id="client-version"></span>
+      <span id="data-assets">⚪</span>
     </div>
+    
 </div>
-
-<style>
-  .changelog-section {
-    margin-top: 20px;
-    padding: 15px;
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 5px;
-  }
-
-  .changelog-section h3 {
-    margin: 0 0 10px 0;
-    color: #fff;
-    font-size: 16px;
-  }
-
-  .changelog-content {
-    max-height: 300px;
-    overflow-y: auto;
-  }
-
-  .changelog-entry {
-    margin-bottom: 15px;
-    padding: 10px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
-  }
-
-  .changelog-date {
-    color: #888;
-    font-size: 12px;
-    margin-bottom: 5px;
-  }
-
-  .changelog-message {
-    color: #fff;
-    font-size: 14px;
-    line-height: 1.4;
-  }
-
-  .loading {
-    color: #888;
-    text-align: center;
-    padding: 20px;
-  }
-
-  .error {
-    color: #ff6b6b;
-    text-align: center;
-    padding: 20px;
-  }
-
-  .no-updates {
-    color: #888;
-    text-align: center;
-    padding: 20px;
-  }
-
-  .changelog-avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  vertical-align: middle;
-  margin-right: 8px;
-}
-.changelog-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 5px;
-}
-.changelog-author {
-  font-weight: bold;
-  color: #fff;
-  margin-right: 8px;
-}
-</style>

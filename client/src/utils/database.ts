@@ -182,8 +182,6 @@ export default class Database {
   }
 
   private __loadGameAssets(): void {
-    console.log('LOAD FROM GAME');
-    window.gameClient.setErrorModal("Welcome back! Loading game assets from local storage.");
     this.transaction("files", "readonly").getAll().onsuccess = (event: Event): void => {
       const target = event.target as IDBRequest;
       if (target.result.length === 0) {

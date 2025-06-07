@@ -10,9 +10,9 @@ import Keyboard from "../input/keyboard";
 import Mouse from "../input/mouse";
 import Creature from "../game/creature";
 import SpriteBuffer from "../renderer/sprite-buffer";
-import ObjectBuffer from "../utils/object-buffer";
 import World from "../game/world";
 import Renderer from "../renderer/renderer";
+import ObjectBuffer from "./object-buffer";
 
 
 export default class GameClient {

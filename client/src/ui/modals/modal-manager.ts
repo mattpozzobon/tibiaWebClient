@@ -29,30 +29,31 @@ export default class ModalManager {
     this.register(Modal, "settings-modal");
     this.register(Modal, "settings-box");
     this.register(Modal, "floater-enter");
-    this.register(SkillModal, "skill-modal");
+    this.register(CreateAccountModal, "floater-create");
 
+
+    this.register(SkillModal, "skill-modal");
     this.register(OutfitModal, "outfit-modal");
     this.register(MoveItemModal, "move-item-modal");
-
     this.register(ChatModal, "chat-modal");
     this.register(EnterNameModal, "enter-name-modal");
     this.register(ConfirmModal, "confirm-modal");
     this.register(TextModal, "floater-connecting");
-    this.register(CreateAccountModal, "floater-create");
     this.register(ReadableModal, "readable-modal");
     this.register(OfferModal, "offer-modal");
     this.register(MapModal, "map-modal");
     this.register(SpellbookModal, "spellbook-modal");
-
   }
 
   public addEventListeners(): void {
+    document.getElementById("login-info")?.addEventListener("click", this.open.bind(this, "floater-enter"));
+    document.getElementById("create-account")?.addEventListener("click", this.open.bind(this, "floater-create"));
+
+    
     document.getElementById("open-chat-modal")?.addEventListener("click", this.open.bind(this, "chat-modal"));
     document.getElementById("openOutfit")?.addEventListener("click", this.open.bind(this, "outfit-modal"));
     document.getElementById("openSettings")?.addEventListener("click", this.open.bind(this, "settings-modal"));
     document.getElementById("information")?.addEventListener("click", this.open.bind(this, "information-modal"));
-    document.getElementById("login-info")?.addEventListener("click", this.open.bind(this, "floater-enter"));
-    document.getElementById("create-account")?.addEventListener("click", this.open.bind(this, "floater-create"));
     document.getElementById("settings")?.addEventListener("click", this.open.bind(this, "settings-box"));
     document.getElementById("openSkills")?.addEventListener("click", this.open.bind(this, "skill-modal"));
 
@@ -61,19 +62,10 @@ export default class ModalManager {
     });
   }
 
-  /**
-   * Handles dragging of modal windows. The event listener is attached to modal header elements.
-   */
   private __handleHeaderMouseDown(event: MouseEvent): void {
     event.preventDefault();
   }
   
-
-  /**
-   * Registers a modal class with a given identifier.
-   */
-
-
   public register(ModalClass: ModalConstructor, id: string): void {
     if (this.__modals.hasOwnProperty(id)) {
       console.error("A modal with identifier " + id + " already exists.");
@@ -133,26 +125,30 @@ export default class ModalManager {
     return this.__openedModal !== null;
   }
 
-  /**
-   * Opens the modal with the given identifier and passes optional options to it.
-   */
   public open(id: string, options?: any): Modal | null {
-    // If the modal is already opened and it's the same one, close it (toggle off)
+    // if we're switching between our two auth panels, hide both first
+    if (id === 'floater-enter' || id === 'floater-create') {
+      document.getElementById('floater-enter')?.style.setProperty('display','none');
+      document.getElementById('floater-create')?.style.setProperty('display','none');
+    }
+
+    // toggle-off if same panel
     if (this.isOpened() && this.__openedModal?.id === id) {
       this.close();
       return null;
     }
-  
-    // If another modal is opened, close it first
+
+    // if another modal is open, close it
     if (this.isOpened()) {
       this.close();
     }
-  
-    // Open the requested modal
+
+    // only continue if we actually registered it
     if (!this.__modals.hasOwnProperty(id)) {
       return null;
     }
-  
+
+    // show the one we want
     this.__openedModal = this.get(id);
     this.__openedModal!.show();
     this.__openedModal!.handleOpen(options);

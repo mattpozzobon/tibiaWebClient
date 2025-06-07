@@ -251,11 +251,11 @@ class NetworkManager {
     // Define the files to download
     const files = [
       {
-        url: `/data/${window.gameClient.SERVER_VERSION}/Tibia.spr`,
+        url: `/data/sprites/Tibia.spr`,
         filename: "Tibia.spr"
       },
       {
-        url: `/data/${window.gameClient.SERVER_VERSION}/Tibia.dat`,
+        url: `/data/sprites/Tibia.dat`,
         filename: "Tibia.dat"
       }
     ];

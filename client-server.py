@@ -12,27 +12,28 @@ from urllib.parse import quote, parse_qs, urlparse
 from urllib.request import Request, urlopen
 from dotenv import load_dotenv         
 
-
 load_dotenv()                            
 
-ASSET_BASE = (
-    "https://pub-731c9162b7da4ead9743fb831880fd77.r2.dev"   
-    "/data/1098"
-)
-ADDRESS: tuple[str, int] = ("127.0.0.1", 8000)
+ASSET_BASE =    ("https://pub-731c9162b7da4ead9743fb831880fd77.r2.dev/data")
+ADDRESS:        tuple[str, int] = ("127.0.0.1", 8000)
+DATA_RE =       re.compile(r"^/data/(sprites|sounds)/(.+)$", re.I)
 
-DATA_RE = re.compile(r"^/data/1098/(Tibia\.(spr|dat|otfi)|constants\.json)$", re.I)
 
 class TibiaHandler(http.server.SimpleHTTPRequestHandler):
 
     def _maybe_redirect(self) -> bool:
-        if DATA_RE.match(self.path):
-            target = f"{ASSET_BASE}/{quote(self.path.split('/')[-1])}"
-            self.send_response(302)
-            self.send_header("Location", target)
-            self.end_headers()
-            return True
-        return False
+        m = DATA_RE.match(self.path)
+        if not m:
+            return False
+
+        # m.group(1) is "sprites" or "sounds"
+        # m.group(2) is the rest of the path
+        key = f"{m.group(1)}/{m.group(2)}"
+        target = f"{ASSET_BASE}/{quote(key)}"
+        self.send_response(302)
+        self.send_header("Location", target)
+        self.end_headers()
+        return True
 
     def log_message(self, fmt: str, *args):
         if self.command in ("GET", "HEAD") and DATA_RE.match(self.path):

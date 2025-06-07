@@ -5,7 +5,7 @@ export default class Database {
   private __database: IDBDatabase | null;
   private __minimapChunkSize: number;
   private __loadedMinimapChunks: { [id: string]: { imageData: ImageData; view: Uint32Array } };
-  private readonly ASSET_BASE = "https://pub-731c9162b7da4ead9743fb831880fd77.r2.dev/data/1098";
+  private readonly ASSET_BASE = "https://pub-731c9162b7da4ead9743fb831880fd77.r2.dev/data/sprites";
   private readonly FILE_VERSIONS_KEY = 'file_versions';
   private readonly VERSION_CHECK_URL = `${this.ASSET_BASE}/version.json`;
 
@@ -122,7 +122,7 @@ export default class Database {
   }
 
   public async loadConstants(): Promise<any> {
-    const response = await fetch(`/data/${window.gameClient.SERVER_VERSION}/constants.json`);
+    const response = await fetch(`/data/sprites/constants.json`);
     return await response.json();
   }
 

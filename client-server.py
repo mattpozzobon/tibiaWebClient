@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import http.server
 import json
-import mimetypes
 import os
 import re
 import ssl
@@ -11,17 +10,13 @@ from functools import partial
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, parse_qs, urlparse
 from urllib.request import Request, urlopen
-from dotenv import load_dotenv          
+from dotenv import load_dotenv         
 
-# ───────────────────────── teach Python about JSON ─────────────────────────
-mimetypes.add_type('application/json', '.json')
 
-# ────────────────────────── load secrets early ───────────────────────────────
-load_dotenv()                            # looks for .env next to the script
+load_dotenv()                            
 
-# ────────────────────────── static configuration ─────────────────────────────
 ASSET_BASE = (
-    "https://pub-731c9162b7da4ead9743fb831880fd77.r2.dev"   # your public R2 URL
+    "https://pub-731c9162b7da4ead9743fb831880fd77.r2.dev"   
     "/data/1098"
 )
 ADDRESS: tuple[str, int] = ("127.0.0.1", 8000)
@@ -29,11 +24,6 @@ ADDRESS: tuple[str, int] = ("127.0.0.1", 8000)
 DATA_RE = re.compile(r"^/data/1098/(Tibia\.(spr|dat|otfi)|constants\.json)$", re.I)
 
 class TibiaHandler(http.server.SimpleHTTPRequestHandler):
-    """
-    • Normal file serving from ./client
-    • 302 redirect for the four large game-data files
-    • /api/changelog endpoint that hits Discord’s REST API once and relays JSON
-    """
 
     def _maybe_redirect(self) -> bool:
         if DATA_RE.match(self.path):
@@ -108,6 +98,24 @@ class TibiaHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+    
+    def end_headers(self):
+        # if the request was for anything in /png/, tell browsers:
+        #   • public       → shared caches too
+        #   • max-age=1y   → 365 days
+        #   • immutable    → “I promise this file will never change”
+        if self.path.startswith('/png/'):
+            self.send_header(
+                'Cache-Control',
+                'public, max-age=31536000, immutable'
+            )
+        else:
+            # default: no caching
+            self.send_header(
+                'Cache-Control',
+                'no-store, no-cache, must-revalidate, max-age=0'
+            )
+        super().end_headers()
 
 
 def main() -> None:

@@ -12,8 +12,7 @@ declare global {
 function initLogin() {
   new LoginModal();
 
-  const btn = document.getElementById("enter-game") as HTMLButtonElement | null;
-  if (btn) btn.disabled = true;
+  window.gameClient.interface.modalManager.open("floater-enter");
 }
 
 if (document.readyState === "loading") {

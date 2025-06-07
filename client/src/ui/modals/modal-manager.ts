@@ -83,24 +83,23 @@ export default class ModalManager {
     this.__modals[id] = instance;
   }
 
-  /**
-   * Delegates the confirm action to the currently opened modal.
-   */
+
   public handleConfirm(): void {
     if (!this.isOpened()) return;
     this.__openedModal!.handleConfirm();
 
-    if (this.__openedModal?.id === "floater-create") {
+    if (this.__openedModal?.id === "floater-create" || this.__openedModal?.id === "floater-enter") {
       return;
     }
 
     this.close();
   }
 
-  /**
-   * Closes the currently opened modal.
-   */
   public close(): void {
+    if (this.__openedModal?.id === "floater-enter") {
+      return;
+    }
+
     if (!this.isOpened()) return;
     this.__openedModal!.element.style.display = "none";
     this.__openedModal = null;
@@ -132,8 +131,7 @@ export default class ModalManager {
   }
 
   public open(id: string, options?: any): Modal | null {
-    console.log('open', id);
-    // if we're switching between our two auth panels, hide both first
+
     if (id === 'floater-enter' || id === 'floater-create' || id === 'floater-recover') {
       document.getElementById('floater-enter')?.style.setProperty('display','none');
       document.getElementById('floater-create')?.style.setProperty('display','none');

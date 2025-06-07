@@ -322,7 +322,7 @@ class NetworkManager {
         this.socket.onclose = this.__handleClose.bind(this);
         this.socket.onerror = this.__handleError.bind(this);
       })
-      .catch((x: any) => window.gameClient.interface.modalManager.open("floater-connecting", x));
+      .catch((x: any) => console.log('error', x));
   }
 
   private __handlePacket(event: MessageEvent): void {

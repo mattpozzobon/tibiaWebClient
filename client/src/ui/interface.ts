@@ -150,7 +150,6 @@ export default class Interface {
   }
 
   login(): void {
-    this.modalManager.open("floater-connecting", "Connecting to Gameworld...");
     window.gameClient.connect();
   }
 

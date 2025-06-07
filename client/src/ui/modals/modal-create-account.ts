@@ -38,7 +38,6 @@ export default class CreateAccountModal extends Modal {
   }
 
   public handleConfirm: () => boolean = () => {
-    console.log('handleConfirm');
     const accountInput = document.getElementById("create-username") as HTMLInputElement;
     const passwordInput = document.getElementById("create-password") as HTMLInputElement;
     const confirmInput = document.getElementById("create-confirm-password") as HTMLInputElement;

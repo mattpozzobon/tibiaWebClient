@@ -146,10 +146,10 @@ export default class Interface {
       alert("The Tibia.spr and Tibia.dat must be loaded first.");
       return;
     }
-    //this.modalManager.open("floater-enter");
   }
 
   login(): void {
+    window.gameClient.interface.modalManager.close();
     window.gameClient.connect();
   }
 
@@ -189,7 +189,7 @@ export default class Interface {
   hideGameInterface(): void {
     document.getElementById("login-wrapper")!.style.display = "flex";
     document.getElementById("game-wrapper")!.style.display = "none";
-    window.gameClient.interface.modalManager.open("floater-enter");
+    this.modalManager.open("floater-enter");
     window.onresize?.(new UIEvent("resize"));
   }
 

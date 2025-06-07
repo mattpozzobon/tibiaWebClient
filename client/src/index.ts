@@ -11,7 +11,6 @@ declare global {
 
 function initLogin() {
   new LoginModal();
-
   window.gameClient.interface.modalManager.open("floater-enter");
 }
 

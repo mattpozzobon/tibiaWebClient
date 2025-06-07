@@ -31,8 +31,6 @@ export default class ModalManager {
     this.register(Modal, "floater-enter");
     this.register(Modal, "floater-recover");
     this.register(CreateAccountModal, "floater-create");
-
-
     this.register(SkillModal, "skill-modal");
     this.register(OutfitModal, "outfit-modal");
     this.register(MoveItemModal, "move-item-modal");
@@ -50,11 +48,9 @@ export default class ModalManager {
     document.getElementById("login-info")?.addEventListener("click", this.open.bind(this, "floater-enter"));
     document.getElementById("create-account")?.addEventListener("click", this.open.bind(this, "floater-create"));
     document.getElementById("recover-account")?.addEventListener("click", this.open.bind(this, "floater-recover"));
-    
     document.getElementById("open-chat-modal")?.addEventListener("click", this.open.bind(this, "chat-modal"));
     document.getElementById("openOutfit")?.addEventListener("click", this.open.bind(this, "outfit-modal"));
     document.getElementById("openSettings")?.addEventListener("click", this.open.bind(this, "settings-modal"));
-
     document.getElementById("settings")?.addEventListener("click", this.open.bind(this, "settings-box"));
     document.getElementById("openSkills")?.addEventListener("click", this.open.bind(this, "skill-modal"));
 
@@ -83,7 +79,6 @@ export default class ModalManager {
     this.__modals[id] = instance;
   }
 
-
   public handleConfirm(): void {
     if (!this.isOpened()) return;
     this.__openedModal!.handleConfirm();
@@ -96,36 +91,20 @@ export default class ModalManager {
   }
 
   public close(): void {
-    if (this.__openedModal?.id === "floater-enter") {
-      return;
-    }
-
     if (!this.isOpened()) return;
     this.__openedModal!.element.style.display = "none";
     this.__openedModal = null;
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
   }
 
-  /**
-   * Renders the currently opened modal.
-   */
   public render(): void {
     if (!this.isOpened()) return;
     this.__openedModal!.handleRender();
   }
 
-  /**
-   * Returns the modal registered with the given identifier, or null if not found.
-   */
   public get(id: string): Modal | null {
     return this.__modals.hasOwnProperty(id) ? this.__modals[id] : null;
   }
 
-  /**
-   * Returns true if a modal is currently opened.
-   */
   public isOpened(): boolean {
     return this.__openedModal !== null;
   }

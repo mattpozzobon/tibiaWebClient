@@ -1,4 +1,7 @@
+import { auth } from "../../firebase";
 import Modal from "./modal";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+
 
 interface CreateAccountOptions {
   account: string;
@@ -8,7 +11,9 @@ interface CreateAccountOptions {
 export default class CreateAccountModal extends Modal {
   constructor(id: string) {
     super(id);
-    document.getElementById("create-account-close")?.addEventListener("click", this.handleConfirm.bind(this));
+    document
+      .getElementById("create-account-close")
+      ?.addEventListener("click", this.handleConfirm);
   }
 
   private __clearValidation(): void {
@@ -20,7 +25,6 @@ export default class CreateAccountModal extends Modal {
 
   private __isValidSubmission(options: CreateAccountOptions, confirm: string): boolean {
     this.__clearValidation();
-
     let valid = true;
     if (!options.account || options.account.length < 6) {
       (document.getElementById("create-username") as HTMLInputElement).style.border = "1px solid red";
@@ -37,10 +41,11 @@ export default class CreateAccountModal extends Modal {
     return valid;
   }
 
+  // match base class property signature
   public handleConfirm: () => boolean = () => {
-    const accountInput = document.getElementById("create-username") as HTMLInputElement;
-    const passwordInput = document.getElementById("create-password") as HTMLInputElement;
-    const confirmInput = document.getElementById("create-confirm-password") as HTMLInputElement;
+    const accountInput  = document.getElementById("create-username")         as HTMLInputElement;
+    const passwordInput = document.getElementById("create-password")         as HTMLInputElement;
+    const confirmInput  = document.getElementById("create-confirm-password") as HTMLInputElement;
 
     const options: CreateAccountOptions = {
       account: accountInput.value.trim(),
@@ -52,7 +57,18 @@ export default class CreateAccountModal extends Modal {
       return false;
     }
 
-    window.gameClient.networkManager.createAccount({account: options.account,password: options.password});
-    return true;
+    // async signup
+    createUserWithEmailAndPassword(auth, options.account, options.password)
+      .then(() => {
+        (document.getElementById("user-username") as HTMLInputElement).value = options.account;
+        (document.getElementById("user-password") as HTMLInputElement).value = options.password;
+        window.gameClient.interface.modalManager.close();
+        window.gameClient.interface.modalManager.open("floater-enter");
+      })
+      .catch((err: any) => {
+        window.gameClient.interface.modalManager.open("floater-connecting", err.message);
+      });
+
+    return false;
   };
 }

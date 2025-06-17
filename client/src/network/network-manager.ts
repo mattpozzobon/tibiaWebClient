@@ -211,27 +211,7 @@ class NetworkManager {
   getConnectionSettings(): string {
     return (document.getElementById("host") as HTMLInputElement).value;
   }
-
-  public createAccount(options: { account: string; password: string }): void {
-    const host = this.getConnectionSettings();
-    const url = `${location.protocol}//${host}/?account=${encodeURIComponent(options.account)}&password=${encodeURIComponent(options.password)}`;
   
-    fetch(url, { method: "POST" }).then(response => {
-      if (response.status === 400) {
-        return;
-      }
-
-      (document.getElementById("user-username") as HTMLInputElement).value = options.account;
-      (document.getElementById("user-password") as HTMLInputElement).value = options.password;
-
-    }).catch(err => {
-      const message = err instanceof Error ? err.message : String(err);
-    });
-
-    //window.gameClient.interface.modalManager.open("floater-create");
-  }
-  
-
   fetchCallback(response: Response): Promise<ArrayBuffer> {
     if (response.status !== 200) return Promise.reject(response);
     return response.arrayBuffer();
@@ -294,37 +274,55 @@ class NetworkManager {
         );
       });
   }
-  
-  connect(): void {
-    const host: string = this.getConnectionSettings();
-    const { account, password } = window.gameClient.interface.getAccountDetails();
 
-    // Contact the login server using a template literal.
-    fetch(`${location.protocol}//${host}/?account=${account}&password=${password}`)
-      .then((response: Response) => {
-        switch (response.status) {
-          case 200:
-            break;
-          default:
-            break;
+  public openGameSocket(idToken: string): void {
+    // 1) Determine login-server URL from your UI settings:
+    const loginHostPort = this.getConnectionSettings(); // e.g. "127.0.0.1:1338"
+    // Choose http vs https
+    const httpProtocol = location.protocol === "https:" ? "https:" : "http:";
+    const handshakeUrl = `${httpProtocol}//${loginHostPort}/?token=${encodeURIComponent(idToken)}`;
+    console.log("Handshake URL:", handshakeUrl);
+
+    // 2) Fetch the handshake
+    fetch(handshakeUrl, {
+      method: "GET",
+      // If you need credentials or special headers, set here.
+      // In most setups, token in query param + CORS wildcard on server is enough.
+    })
+      .then(response => {
+        console.log("Handshake status:", response.status);
+        if (!response.ok) {
+          throw new Error(`Login handshake failed: ${response.status}`);
         }
-        // Proceed with the JSON response.
         return response.json();
       })
-      .then((response: any) => {
-        // Open the websocket connection: binary transfer of data.
-        this.socket = new WebSocket(this.getConnectionString(response));
+      .then((data: { token: string; host: string }) => {
+        console.log("Handshake JSON data:", data);
+        // data.host should be like "127.0.0.1:2222", WITHOUT "ws://" prefix.
+        // data.token is the base64-HMAC string.
+
+        // 3) Build WebSocket URL
+        const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
+        const wsUrl = `${wsProtocol}//${data.host}/?token=${encodeURIComponent(data.token)}`;
+        console.log("Opening WebSocket to:", wsUrl);
+
+        // 4) Open WebSocket
+        this.socket = new WebSocket(wsUrl);
         this.socket.binaryType = "arraybuffer";
-
-        // Attach callbacks.
-        this.socket.onopen = this.__handleConnection.bind(this);
+        this.socket.onopen    = this.__handleConnection.bind(this);
         this.socket.onmessage = this.__handlePacket.bind(this);
-        this.socket.onclose = this.__handleClose.bind(this);
-        this.socket.onerror = this.__handleError.bind(this);
+        this.socket.onclose   = this.__handleClose.bind(this);
+        this.socket.onerror   = this.__handleError.bind(this);
       })
-      .catch((x: any) => console.log('error', x));
+      .catch(err => {
+        console.error("openGameSocket error:", err);
+        window.gameClient.interface.modalManager.open(
+          "floater-connecting",
+          (err as Error).message
+        );
+      });
   }
-
+  
   private __handlePacket(event: MessageEvent): void {
     const packet = new PacketReader(event.data);
     this.state.bytesRecv += packet.buffer.length;

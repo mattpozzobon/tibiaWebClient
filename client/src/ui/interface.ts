@@ -148,11 +148,6 @@ export default class Interface {
     }
   }
 
-  login(): void {
-    window.gameClient.interface.modalManager.close();
-    window.gameClient.connect();
-  }
-
   reset(): void {
     this.screenElementManager.clear();
     this.windowManager.closeAll();

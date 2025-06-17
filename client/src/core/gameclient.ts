@@ -116,11 +116,6 @@ export default class GameClient {
     this.interface.reset();
   }
 
-  connect(): void {
-    if (this.networkManager.isConnected()) return;
-    this.networkManager.connect();
-  }
-
   disconnect(): void {
     this.networkManager.close();
   }

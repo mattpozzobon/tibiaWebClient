@@ -184,9 +184,6 @@ class Keyboard {
     }
   
     if (modalManager.isOpened()) {
-      if ((modalManager as any).__openedModal?.id === "floater-enter") {
-        window.gameClient.interface.login();
-      }
       modalManager.handleConfirm();
       return;
     }

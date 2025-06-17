@@ -11,6 +11,7 @@ import OfferModal from "./modal-offer";
 import MapModal from "./modal-map";
 import SpellbookModal from "./modal-spellbook";
 import SkillModal from "./modal-skills";
+import LoginModal from "./modal-login";
 
 
 type ModalConstructor = (new (id: string) => Modal);
@@ -28,7 +29,7 @@ export default class ModalManager {
     this.register(Modal, "information-modal");
     this.register(Modal, "settings-modal");
     this.register(Modal, "settings-box");
-    this.register(Modal, "floater-enter");
+    this.register(LoginModal, "floater-enter");
     this.register(Modal, "floater-recover");
     this.register(CreateAccountModal, "floater-create");
     this.register(SkillModal, "skill-modal");

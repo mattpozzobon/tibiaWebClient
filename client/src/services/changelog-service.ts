@@ -1,9 +1,12 @@
+// services/changelog-service.ts
 export interface ChangelogEntry {
   id: string;
   timestamp: string;
+  title?: string;
   content: string;
   author: {
     username: string;
+    globalName?: string;
     avatarUrl?: string;
   };
   attachments?: { url: string; filename: string }[];
@@ -12,9 +15,8 @@ export interface ChangelogEntry {
 export class ChangelogService {
   private cache: ChangelogEntry[] | null = null;
   private lastFetch = 0;
-  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 min
+  private readonly CACHE_DURATION = 5 * 60 * 1000;
 
-  /** Fetches last 10 messages from your /api/changelog proxy, caches for 5m */
   async fetchChangelog(): Promise<ChangelogEntry[]> {
     if (this.cache && Date.now() - this.lastFetch < this.CACHE_DURATION) {
       return this.cache;
@@ -28,15 +30,26 @@ export class ChangelogService {
 
     const messages: any[] = await resp.json();
     const changelog: ChangelogEntry[] = messages.map(msg => {
-      // Gather content, embeds, attachments as before
       const parts: string[] = [];
-      if (msg.content) parts.push(msg.content);
+      let title = '';
+
+      if (msg.content) {
+        const lines = msg.content.split('\n');
+        if (lines[0].startsWith('# ')) {
+          title = lines[0].substring(2).trim();
+          parts.push(...lines.slice(1));
+        } else {
+          parts.push(...lines);
+        }
+      }
+
       if (Array.isArray(msg.embeds)) {
         for (const embed of msg.embeds) {
           if (embed.title) parts.push(embed.title);
           if (embed.description) parts.push(embed.description);
         }
       }
+
       if (Array.isArray(msg.attachments)) {
         for (const att of msg.attachments) {
           if (att.url) parts.push(att.url);
@@ -46,9 +59,11 @@ export class ChangelogService {
       return {
         id: msg.id,
         timestamp: msg.timestamp,
+        title,
         content: parts.join('\n\n') || '[no textual content]',
         author: {
           username: msg.author?.username || 'Unknown',
+          globalName: msg.author?.global_name,
           avatarUrl: msg.author?.avatar
             ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
             : undefined,
@@ -64,10 +79,8 @@ export class ChangelogService {
     return changelog;
   }
 
-  /** Renders a single entry as HTML, including author and avatar */
   formatChangelogEntry(entry: ChangelogEntry): string {
     const date = new Date(entry.timestamp);
-    // sanitize and linkify URLs
     const htmlContent = entry.content.replace(
       /(https?:\/\/[^\s]+)/g,
       '<a href="$1" target="_blank">$1</a>'
@@ -77,12 +90,23 @@ export class ChangelogService {
       ? `<img class="changelog-avatar" src="${entry.author.avatarUrl}" alt="${entry.author.username}" />`
       : '';
 
-    return `
+    const name = entry.author.globalName
+      ? `${entry.author.username} <span class='global-name'>(${entry.author.globalName})</span>`
+      : entry.author.username;
+
+    const title = entry.title ? `<div class="changelog-title">${entry.title}</div>` : '';
+
+      return `
       <div class="changelog-entry">
         <div class="changelog-header">
           ${avatarImg}
-          <span class="changelog-author">${entry.author.username}</span>
-          <span class="changelog-date">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</span>
+          <div class="changelog-meta">
+            <div class="changelog-meta-row">
+              <span class="changelog-author">${name}</span>
+              <span class="changelog-date">${date.toLocaleDateString('en-GB')} ${date.toLocaleTimeString()}</span>
+            </div>
+            <div class="changelog-title">${entry.title || ''}</div>
+          </div>
         </div>
         <div class="changelog-message">${htmlContent}</div>
       </div>

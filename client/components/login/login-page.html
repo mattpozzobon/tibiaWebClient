@@ -46,9 +46,9 @@
 
         <div id="floater-enter">
             <label for="user-username">Email:</label>
-            <input class="password-input" name="username" id="user-username" value="matheuscpozzobon+1@gmail.com" type="text" placeholder="Account Email">
+            <input class="password-input" name="username" autocomplete="username" id="user-username" type="text" placeholder="Account Email">
             <label for="user-password">Password:</label>
-            <input class="password-input" name="password" id="user-password" value="5u5j7997" type="password" placeholder="Account Password">
+            <input class="password-input" name="password" autocomplete="current-password" id="user-password" type="password" placeholder="Account Password">
             <button id="enter-game" class="btn-primary btn-space" type="button">Login</button>
 
             <hr class="btn-space">
@@ -89,25 +89,9 @@
     </div>
 
     <div id="center-container">
-      <div class="modal-content">
-          <div class="modal-header">
-              <h2>Changelog</h2>
-          </div>
-          <div class="modal-body">
-
-              <form id="login-form">
-              </form>
-
-              <div class="changelog-section">
-              <h3>Latest Updates</h3>
-              <div id="changelog-content" class="changelog-content">
-                  <div class="loading">Loading changelog...</div>
-              </div>
-        
-              <div id="changelog-debug" style="display: none; color: #666; font-size: 12px; margin-top: 10px;"></div>
-              </div>
-          </div>
-      </div>
+        <div class="changelog-section">
+            <div id="changelog-content" class="changelog-content"></div>
+        </div>
     </div>
     
     <div id="download-progress" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.8); padding: 20px; border-radius: 5px; color: white; text-align: center;">

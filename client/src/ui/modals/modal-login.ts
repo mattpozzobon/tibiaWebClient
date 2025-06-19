@@ -13,7 +13,7 @@ export default class LoginModal extends Modal {
       const input = document.getElementById(id) as HTMLInputElement;
       input.style.border = "1px solid #444";
     });
-    const errorBox = document.getElementById("login-error")!;
+    const errorBox = document.getElementById("auth-error")!;
     errorBox.textContent = "";
   }
 
@@ -27,7 +27,7 @@ export default class LoginModal extends Modal {
   public handleConfirm: () => boolean = () => {
     const emailInput = document.getElementById("user-username") as HTMLInputElement;
     const passInput  = document.getElementById("user-password") as HTMLInputElement;
-    const errorBox   = document.getElementById("login-error")!;
+    const errorBox = document.getElementById("auth-error")!;
 
     const email    = emailInput.value.trim();
     const password = passInput.value;

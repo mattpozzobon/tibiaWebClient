@@ -56,14 +56,14 @@
 }
 
 .register-link {
-  color: #4CAF50;
+  color: #c98b30;
   text-decoration: underline;
   margin-left: 4px;
   cursor: pointer;
 }
 
 .register-link:hover {
-  color: #76E68A;          
+  color: #ffe89e;          
 }
 
 
@@ -91,19 +91,8 @@
   box-sizing: border-box; 
 }
 
-.back-button {
+.back-link {
   margin-top: auto;
-  align-self: center;
-  margin-bottom: 0.5rem;
-  color: #bbb;
-  font-size: 12px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  text-decoration: underline;
+  align-self: flex-start;
 }
 
-.back-button:hover {
-  color: #fff;
-  text-decoration: none;
-}

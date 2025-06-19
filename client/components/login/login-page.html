@@ -42,9 +42,7 @@
     
     <div id="auth-container">
 
-        <div class="auth-banner">
-            <img src="/png/banner.png" alt="Game Logo">
-        </div>
+        <div class="auth-banner"> <img src="/png/banner.png" alt="Game Logo"> </div>
 
         <div id="floater-enter">
             <label for="user-username">Email:</label>
@@ -59,9 +57,6 @@
                 Forgot your<a href="#" id="recover-account" class="register-link">account</a>?
             </p>
 
-            <div class="auth-footer">
-                <div id="login-error" class="input-error"></div>
-            </div>
         </div>
     
         <div id="floater-create">
@@ -79,25 +74,18 @@
             <small id="password-match" class="input-hint"></small>
         
             <button id="create-account-close" class="btn-primary btn-space" type="button" disabled>Create Account</button>
-            <div id="firebase-error" class="input-error" style="margin-top: 8px; text-align: center;"></div>
-
-            <div class="auth-footer">
-                <div id="firebase-error" class="input-error"></div>
-            </div>
         </div>
 
         <div id="floater-recover">
             <label for="recover-email">Recover Account:</label>
             <input class="password-input" id="recover-email" type="text" placeholder="Email">
-
-            <div class="auth-footer">
-                <div id="firebase-error" class="input-error"></div>
-            </div>
         </div>
 
         <div class="auth-footer">
-            <button id="auth-back-button" class="btn-secondary back-button" type="button">&laquo; Back</button>
+            <div id="auth-error" class="input-error"></div>
         </div>
+
+        <button id="auth-back-button" class="btn-round back-link" type="button">←</button>
     </div>
 
     <div id="center-container">

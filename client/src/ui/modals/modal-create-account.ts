@@ -54,7 +54,7 @@ export default class CreateAccountModal extends Modal {
       hint.textContent = "";
     }
   
-    (document.getElementById("firebase-error") as HTMLElement).textContent = "";
+    (document.getElementById("auth-error") as HTMLElement).textContent = "";
   }
 
   private __setValidationState(inputId: string, messageId: string, isValid: boolean, message: string): void {
@@ -116,7 +116,7 @@ export default class CreateAccountModal extends Modal {
   public handleConfirm: () => boolean = () => {
     const email = (document.getElementById("create-username") as HTMLInputElement).value.trim();
     const password = (document.getElementById("create-password") as HTMLInputElement).value;
-    const errorBox = document.getElementById("firebase-error")!;
+    const errorBox = document.getElementById("auth-error")!;
     errorBox.textContent = "";
 
     if (!this.__isValidForm()) return false;

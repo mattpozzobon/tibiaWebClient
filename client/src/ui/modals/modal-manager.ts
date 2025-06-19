@@ -21,7 +21,6 @@ export default class ModalManager {
   private __modals: { [id: string]: Modal };
 
   constructor() {
-    
     this.__openedModal = null;
     this.__modals = {};
 

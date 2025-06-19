@@ -66,24 +66,21 @@
   color: #76E68A;          
 }
 
-/* make each label sit above its field with space */
+
 #auth-container label {
   display: block;
-  margin: 0.6rem 0 0.3rem; /* top .6rem, bottom .3rem */
-  color: #eee;             /* optional: match your design */
-  font-size: 0.9rem;       /* optional: tweak label size */
+  margin: 0.6rem 0 0.3rem; 
+  color: #eee;             
+  font-size: 0.9rem;      
 }
 
-/* give each input some room before the next label or button */
 #auth-container .password-input {
   display: block;
-  width: 100%;             /* keep full-width */
-  margin-bottom: 1rem;     /* space after each field */
-  padding: 0.5rem;         /* comfy click/tap area */
+  width: 100%;             
+  padding: 0.5rem;         
   box-sizing: border-box;
 }
 
-/* if you want extra gap before the footer hr/button */
 #auth-container .modal-footer {
   margin-top: 1.2rem;
 }
@@ -91,5 +88,22 @@
 #auth-container .btn-primary {
   display: block;
   width: 100%;
-  box-sizing: border-box; /* include padding/border in width */
+  box-sizing: border-box; 
+}
+
+.back-button {
+  margin-top: auto;
+  align-self: center;
+  margin-bottom: 0.5rem;
+  color: #bbb;
+  font-size: 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.back-button:hover {
+  color: #fff;
+  text-decoration: none;
 }

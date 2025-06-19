@@ -272,6 +272,8 @@ export default class Database {
       const localVersion = localStorage.getItem('spr_version');
       
       // If versions don't match or no local version exists
+      console.log('localVersion', localVersion);
+      console.log('serverInfo.version', serverInfo.version);
       if (!localVersion || localVersion !== serverInfo.version) {
         console.log('SPR file needs updating - version changed');
         // Clear old SPR file

@@ -1,4 +1,4 @@
-import { LoginModal } from "./components/login/login-modal";
+
 import GameClient from "./core/gameclient";
 
 declare global {
@@ -10,7 +10,6 @@ declare global {
 (window as any).gameClient = new GameClient();
 
 function initLogin() {
-  new LoginModal();
   window.gameClient.interface.modalManager.open("floater-enter");
 }
 

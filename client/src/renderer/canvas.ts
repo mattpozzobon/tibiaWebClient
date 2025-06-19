@@ -232,100 +232,43 @@ export default class Canvas {
   }
   
   drawCharacter(creature: Creature, position: Position, size: number, offset: number): void {
-    let frames = creature.getCharacterFrames();
-    
-    if (frames === null) return;
+    const frames = creature.getCharacterFrames();
+    if (!frames) return;
   
-    let xPattern = creature.__lookDirection % 4;
-    let zPattern = frames.characterGroup.pattern.z > 1 && creature.isMounted() ? 1 : 0;
+    const xPattern = creature.__lookDirection % 4;
+    const zPattern = frames.characterGroup.pattern.z > 1 && creature.isMounted() ? 1 : 0;
   
-    this.__drawCharacter(
-      creature.spriteBuffer,
-      creature.spriteBufferMount,
-      creature.outfit,
-      position,
-      frames.characterGroup,
-      frames.mountGroup,
-      frames.characterFrame,
-      frames.mountFrame,
-      frames.headGroup,
-      frames.bodyGroup,
-      frames.legsGroup,
-      frames.feetGroup,
-      frames.hairGroup,
-      frames.leftHandGroup,
-      frames.rightHandGroup,
-      frames.headFrame,
-      frames.bodyFrame,
-      frames.legsFrame,
-      frames.feetFrame,
-      frames.hairFrame,
-      frames.leftHandFrame,
-      frames.rightHandFrame,
-      xPattern,
-      zPattern,
-      size,
-      offset,
-      frames.isMoving
-    );
-  }
+    const drawPosition = new Position(position.x - offset, position.y - offset, 0);
   
-  __drawCharacter(
-    spriteBuffer: any,
-    spriteBufferMount: any,
-    outfit: any,
-    position: Position,
-    characterGroup: any,
-    mountGroup: any,
-    characterFrame: number,
-    mountFrame: number,
-    headGroup: any,
-    bodyGroup: any,
-    legsGroup: any,
-    feetGroup: any,
-    hairGroup: any,
-    leftHandGroup: any,
-    rightHandGroup: any,
-    headFrame: number,
-    bodyFrame: number,
-    legsFrame: number,
-    feetFrame: number,
-    hairFrame: number,
-    leftHandFrame: number,
-    rightHandFrame: number,
-    xPattern: number,
-    zPattern: number,
-    size: number,
-    offset: number,
-    isMoving: boolean
-  ): void {
-    /*
-     * Draws a character with all layers (armor, outfit, weapons, mount).
-     */
-    let drawPosition = new Position(position.x - offset, position.y - offset, 0);
+    const LAYERS = [
+      //{ name: "mount", group: frames.mountGroup, frame: frames.mountFrame, buffer: creature.spriteBufferMount },
+      { name: "base", group: frames.characterGroup, frame: frames.characterFrame, buffer: creature.spriteBuffer },
+      { name: "body", group: frames.bodyGroup, frame: frames.bodyFrame },
+      { name: "legs", group: frames.legsGroup, frame: frames.legsFrame },
+      { name: "feet", group: frames.feetGroup, frame: frames.feetFrame },
+      { name: "lefthand", group: frames.leftHandGroup, frame: frames.leftHandFrame },
+      { name: "righthand", group: frames.rightHandGroup, frame: frames.rightHandFrame },
+      { name: "head", group: frames.headGroup, frame: frames.headFrame },
+      { name: "hair", group: frames.hairGroup, frame: frames.hairFrame, condition: !frames.headGroup, hasMask: true },
+    ];
   
-    //TODO: Revisit spriteBuffer
-    this.__drawCharacterLayer(spriteBuffer, outfit, characterGroup, characterFrame, xPattern, zPattern, drawPosition, size, 0, false);
-   
-    if (bodyGroup) this.__drawCharacterLayer(new SpriteBuffer(64), outfit, bodyGroup, bodyFrame, xPattern, zPattern, drawPosition, size, 0, false);
-    if (legsGroup) this.__drawCharacterLayer(new SpriteBuffer(64), outfit, legsGroup, legsFrame, xPattern, zPattern, drawPosition, size, 0, false);
-    if (feetGroup) this.__drawCharacterLayer(new SpriteBuffer(64), outfit, feetGroup, feetFrame, xPattern, zPattern, drawPosition, size, 0, false);
-    if (leftHandGroup) this.__drawCharacterLayer(new SpriteBuffer(64), outfit, leftHandGroup, leftHandFrame, xPattern, zPattern, drawPosition, size, 0, false);
-    if (rightHandGroup) this.__drawCharacterLayer(new SpriteBuffer(64), outfit, rightHandGroup, rightHandFrame, xPattern, zPattern, drawPosition, size, 0, false);
+    for (const layer of LAYERS) {
+      if (!layer.group || layer.frame === undefined) continue;
+      if (layer.condition === false) continue;
   
-    if (headGroup) {
-      this.__drawCharacterLayer(new SpriteBuffer(64), outfit, headGroup, headFrame, xPattern, zPattern, drawPosition, size, 0, false);
-    } else{
-      if(hairGroup){
-        this.__drawCharacterLayer(new SpriteBuffer(64), outfit, hairGroup, hairFrame, xPattern, zPattern, drawPosition, size, 0, true);
-      }
-    }
-  
-    if (zPattern === 1 && mountGroup) {
-      let mountSprite = mountGroup.getSpriteId(mountFrame, xPattern, 0, 0, 0, 0, 0);
-      if (mountSprite !== 0) {
-        this.__drawSprite(spriteBufferMount.get(mountSprite), drawPosition, 0, 0, size);
-      }
+      const buffer = layer.buffer || new SpriteBuffer(64);
+      this.__drawCharacterLayer(
+        buffer,
+        creature.outfit,
+        layer.group,
+        layer.frame,
+        xPattern,
+        zPattern,
+        drawPosition,
+        size,
+        0,
+        layer.hasMask || false
+      );
     }
   }
   
@@ -341,33 +284,24 @@ export default class Canvas {
     yPattern: number,
     hasMask: boolean = false
   ): void {
-
-    if (!group) {
-      return;
-    }
-    
+    if (!group) return;
+  
     for (let x = 0; x < group.width; x++) {
       for (let y = 0; y < group.height; y++) {
-        let spriteId = group.getSpriteId(frame, xPattern, yPattern, zPattern, 0, x, y);
-        
+        const spriteId = group.getSpriteId(frame, xPattern, yPattern, zPattern, 0, x, y);
         if (spriteId === 0) continue;
-        
-        let sprite: Sprite | null = null;
-        
-        if (hasMask) {
-          if (!spriteBuffer.has(spriteId)) {
-              //console.log(`🟢 Adding composed outfit for spriteId: ${spriteId} at (${x}, ${y})`);
-              spriteBuffer.addComposedOutfit(spriteId, outfit, group, frame, xPattern, zPattern, x, y);
-          }
+  
+        if (hasMask && !spriteBuffer.has(spriteId)) {
+          spriteBuffer.addComposedOutfit(spriteId, outfit, group, frame, xPattern, zPattern, x, y);
         }
-      
+  
+        let sprite: Sprite | null = null;
         try {
           sprite = spriteBuffer.get(spriteId);
         } catch (error) {
           console.error("Error in spriteBuffer.get:", error);
         }
-        
-
+  
         this.__drawSprite(sprite, position, x, y, size);
       }
     }

@@ -134,13 +134,6 @@ export default class Interface {
     return Interface.WEBCOLORS[index] || "#FFFFFF";
   }
 
-  getAccountDetails(): { account: string; password: string } {
-    return {
-      account: (document.getElementById("user-username") as HTMLInputElement).value.trim(),
-      password: (document.getElementById("user-password") as HTMLInputElement).value.trim(),
-    };
-  }
-
   enterGame(): void {
     if (!this.areAssetsLoaded()) {
       alert("The Tibia.spr and Tibia.dat must be loaded first.");

@@ -203,12 +203,8 @@ class Keyboard {
   }
 
   private __handleEscapeKey(): void {
-    if (window.gameClient.interface.modalManager.getOpenedModal() === "floater-create" || window.gameClient.interface.modalManager.getOpenedModal() === "floater-recover") {
-      window.gameClient.interface.modalManager.open("floater-enter");
-      return;
-    }
     if (window.gameClient.interface.modalManager.isOpened()) {
-      window.gameClient.interface.modalManager.close();
+      window.gameClient.interface.modalManager.handleEscape();
     } else if (window.gameClient.interface.menuManager.isOpened()) {
       window.gameClient.interface.menuManager.close();
     } else if (window.gameClient.player && window.gameClient.player.hasTarget()) {

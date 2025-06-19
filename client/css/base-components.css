@@ -55,13 +55,21 @@ button:hover {
   background-image: url("/png/bg2.png");
 }
 
-button:disabled {
+.btn-primary:disabled {
   color: grey;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  border: 2px solid #444;
+  background: #111;
+  opacity: 0.6;
 }
 
-button:disabled:hover {
-  border: 1px solid grey;
-  box-shadow: 0 0 4px 1px grey;
+.btn-primary:disabled:hover,
+.btn-primary:disabled:focus {
+  color: grey;
+  box-shadow: none !important;
+  background: #111;
+  border: 2px solid #444;
 }
 
 /* Styling for custom buttons */
@@ -115,4 +123,21 @@ button.symbol-button {
   box-shadow:
     inset 0 0 4px rgba(0,128,0,0.8),
     0 0 4px rgba(0,128,0,0.8);
+}
+
+.btn-secondary {
+  box-sizing: border-box;
+  padding: 0.5rem 1rem;
+  background: #222;
+  color: #aaa;
+  border: 1px solid #555;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #333;
+  color: #fff;
+  border-color: #888;
 }

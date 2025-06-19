@@ -83,17 +83,30 @@ export default class ModalManager {
   public handleConfirm(): void {
     if (!this.isOpened()) return;
     this.__openedModal!.handleConfirm();
+    this.handleEscape();
+  }
 
-    if (this.__openedModal?.id === "floater-create" || this.__openedModal?.id === "floater-enter") {
+  public handleEscape(): void {
+    if (!this.__openedModal) return;
+  
+    const currentId = this.__openedModal.id;
+  
+    if (currentId === "floater-enter") {
       return;
     }
-
+  
+    if (currentId === "floater-create" || currentId === "floater-recover") {
+      this.close();
+      this.open("floater-enter");
+      return;
+    }
+  
     this.close();
   }
 
   public close(): void {
-    if (!this.isOpened()) return;
-    this.__openedModal!.element.style.display = "none";
+    if (!this.isOpened()) return;  // Let the modal handle its own closing behavior
+    this.__openedModal!.close();
     this.__openedModal = null;
   }
 
@@ -111,13 +124,6 @@ export default class ModalManager {
   }
 
   public open(id: string, options?: any): Modal | null {
-
-    if (id === 'floater-enter' || id === 'floater-create' || id === 'floater-recover') {
-      document.getElementById('floater-enter')?.style.setProperty('display','none');
-      document.getElementById('floater-create')?.style.setProperty('display','none');
-      document.getElementById('floater-recover')?.style.setProperty('display','none');
-    }
-
     // toggle-off if same panel
     if (this.isOpened() && this.__openedModal?.id === id) {
       this.close();
@@ -134,6 +140,7 @@ export default class ModalManager {
       return null;
     }
 
+    console.log('open modal', id);
     // show the one we want
     this.__openedModal = this.get(id);
     this.__openedModal!.show();

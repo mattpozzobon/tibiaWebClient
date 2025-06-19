@@ -47,15 +47,17 @@ for (const absPath of walk(SRC)) {
   const sha1    = hashFile(absPath);
   nextManifest[relKey] = sha1;    // remember for next time
 
-  if (previous[relKey] === sha1) {               // unchanged
+  if (previous[relKey] === sha1) {
     console.log(`⏭  ${relKey} (unchanged)`);
     continue;
   }
 
   console.log(`↗  ${relKey}`);
+  const isVersionFile = relKey.endsWith('version.json');
+  const cacheHeader = isVersionFile ? '--cache-control "no-store"' : '';
+
   execSync(
-    // --remote ==> hit the real bucket, not the local Miniflare store :contentReference[oaicite:0]{index=0}
-    `npx wrangler r2 object put "${r2Key}" --file "${absPath}" --remote`,
+    `npx wrangler r2 object put "${r2Key}" --file "${absPath}" --remote${cacheHeader ? ' ' + cacheHeader : ''}`,
     { stdio: 'inherit' },
   );
   uploaded++;

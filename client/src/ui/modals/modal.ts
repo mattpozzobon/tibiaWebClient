@@ -3,12 +3,6 @@ export default class Modal {
   public isOpen: boolean;
   public id: string;
 
-  // Subclasses may override these:
-  public handleConfirm: () => boolean = () => true;
-  public handleCancel: () => boolean = () => true;
-  public handleOpen: (options?: any) => void = () => {};
-  public handleRender: () => void = () => {};
-
   constructor(id: string) {
     const el = document.getElementById(id);
     if (!el) {
@@ -28,16 +22,10 @@ export default class Modal {
   }
 
   public show(): void {
-    // Centering the modal: resetting left and top.
     this.element.style.left = "";
     this.element.style.top = "";
     this.element.style.display = "block";
     this.isOpen = true;
-  }
-
-  public close(): void {
-    this.element.style.display = "none";
-    this.isOpen = false;
   }
 
   public isOpened(): boolean {
@@ -45,7 +33,6 @@ export default class Modal {
   }
 
   public setTitle(title: string): void {
-    // Capitalize title: simple implementation.
     const capitalizedTitle = title.charAt(0).toUpperCase() + title.slice(1);
     const header = this.element.querySelector(".modal-header");
     if (header) {
@@ -53,11 +40,11 @@ export default class Modal {
     }
   }
 
-  private __addAction(element: Element): void {
+  protected __addAction(element: Element): void {
     element.addEventListener("click", this.__buttonClick.bind(this));
   }
 
-  private __internalButtonClick(target: HTMLElement): boolean {
+  protected __internalButtonClick(target: HTMLElement): boolean {
     const action = target.getAttribute("action");
     switch (action) {
       case "cancel":
@@ -69,11 +56,32 @@ export default class Modal {
     }
   }
 
-  __buttonClick(event: Event): void {
+  protected __buttonClick(event: Event): void {
     const target = event.target as HTMLElement;
     if (this.__internalButtonClick(target)) {
-      // If the action returns true, close the modal via the global gameClient.
       window.gameClient.interface.modalManager.close();
     }
+  }
+
+  // These can now be overridden cleanly by subclasses
+  public handleConfirm(): boolean {
+    return true;
+  }
+
+  public close(): void {
+    this.element.style.display = "none";
+    this.isOpen = false;
+  }
+
+  public handleCancel(): boolean {
+    return true;
+  }
+
+  public handleOpen(options?: any): void {
+    console.log('BASIC MODAL OPEN', this.id);
+  }
+
+  public handleRender(): void {
+    // noop
   }
 }

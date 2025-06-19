@@ -42,40 +42,62 @@
     
     <div id="auth-container">
 
-      <div class="auth-banner">
-        <img src="/png/banner.png" alt="Game Logo">
-      </div>
+        <div class="auth-banner">
+            <img src="/png/banner.png" alt="Game Logo">
+        </div>
 
-      <div id="floater-enter">
-          <label for="user-username">Email:</label>
-          <input class="password-input" name="username" id="user-username" value="matheuscpozzobon+1@gmail.com" type="text" placeholder="Account Email">
-          <label for="user-password">Password:</label>
-          <input class="password-input" name="password" id="user-password" value="5u5j7997" type="password" placeholder="Account Password">
-          <button id="enter-game" class="btn-primary" type="button">Login</button>
-          <hr>
-          <p class="register-text">
-            Don’t have an account?<a href="#" id="create-account" class="register-link">Register!</a>
-            Forgot your<a href="#" id="recover-account" class="register-link">account</a>?
-          </p>
-      </div>
+        <div id="floater-enter">
+            <label for="user-username">Email:</label>
+            <input class="password-input" name="username" id="user-username" value="matheuscpozzobon+1@gmail.com" type="text" placeholder="Account Email">
+            <label for="user-password">Password:</label>
+            <input class="password-input" name="password" id="user-password" value="5u5j7997" type="password" placeholder="Account Password">
+            <button id="enter-game" class="btn-primary btn-space" type="button">Login</button>
+
+            <hr class="btn-space">
+            <p class="register-text">
+                Don’t have an account?<a href="#" id="create-account" class="register-link">Register!</a>
+                Forgot your<a href="#" id="recover-account" class="register-link">account</a>?
+            </p>
+
+            <div class="auth-footer">
+                <div id="login-error" class="input-error"></div>
+            </div>
+        </div>
     
-      <div id="floater-create">
-          <label for="create-username">Email:</label>
-          <input class="password-input" id="create-username" type="text" placeholder="Email">
-          <label for="create-password">Password:</label>
-          <input class="password-input" id="create-password" type="password" placeholder="Password">
-          <label for="create-confirm-password">Confirm Password:</label>
-          <input class="password-input" id="create-confirm-password" type="password" placeholder="Confirm Password">
-          <button id="create-account-close" class="btn-primary" type="button">Create Account</button>
-      </div>
-
-      <div id="floater-recover">
-        <label for="recover-email">Recover Account:</label>
-        <input class="password-input" id="recover-email" type="text" placeholder="Email">
+        <div id="floater-create">
+            <label for="create-username">Email:</label>
+            <input class="password-input" id="create-username" type="text" placeholder="Email">
+            <small id="email-validation" class="input-hint"></small>
+            
+            <label for="create-password">Password:</label>
+            <input class="password-input" id="create-password" type="password" placeholder="Password">
+            <small id="password-strength" class="input-hint"></small>
+            
         
-    </div>
+            <label for="create-confirm-password">Confirm Password:</label>
+            <input class="password-input" id="create-confirm-password" type="password" placeholder="Confirm Password">
+            <small id="password-match" class="input-hint"></small>
+        
+            <button id="create-account-close" class="btn-primary btn-space" type="button" disabled>Create Account</button>
+            <div id="firebase-error" class="input-error" style="margin-top: 8px; text-align: center;"></div>
 
-      <!-- <button id="login-info">Back</button> -->
+            <div class="auth-footer">
+                <div id="firebase-error" class="input-error"></div>
+            </div>
+        </div>
+
+        <div id="floater-recover">
+            <label for="recover-email">Recover Account:</label>
+            <input class="password-input" id="recover-email" type="text" placeholder="Email">
+
+            <div class="auth-footer">
+                <div id="firebase-error" class="input-error"></div>
+            </div>
+        </div>
+
+        <div class="auth-footer">
+            <button id="auth-back-button" class="btn-secondary back-button" type="button">&laquo; Back</button>
+        </div>
     </div>
 
     <div id="center-container">

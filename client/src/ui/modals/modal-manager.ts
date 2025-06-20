@@ -12,6 +12,7 @@ import MapModal from "./modal-map";
 import SpellbookModal from "./modal-spellbook";
 import SkillModal from "./modal-skills";
 import LoginModal from "./modal-login";
+import RecoverAccountModal from "./modal-recover-account";
 
 
 type ModalConstructor = (new (id: string) => Modal);
@@ -29,7 +30,7 @@ export default class ModalManager {
     this.register(Modal, "settings-modal");
     this.register(Modal, "settings-box");
     this.register(LoginModal, "floater-enter");
-    this.register(Modal, "floater-recover");
+    this.register(RecoverAccountModal, "floater-recover");
     this.register(CreateAccountModal, "floater-create");
     this.register(SkillModal, "skill-modal");
     this.register(OutfitModal, "outfit-modal");
@@ -82,19 +83,20 @@ export default class ModalManager {
   public handleConfirm(): void {
     if (!this.isOpened()) return;
     this.__openedModal!.handleConfirm();
-    this.handleEscape();
+
+    if (!this.isAuthFormModal()) {
+      this.handleEscape();
+    }
   }
 
   public handleEscape(): void {
     if (!this.__openedModal) return;
   
-    const currentId = this.__openedModal.id;
-  
-    if (currentId === "floater-enter") {
+    if (this.isLoginModal()) {
       return;
     }
   
-    if (currentId === "floater-create" || currentId === "floater-recover") {
+    if (this.isAuthFormModal()) {
       this.close();
       this.open("floater-enter");
       return;
@@ -149,5 +151,14 @@ export default class ModalManager {
   
   public getOpenedModal(): string | null {
     return this.__openedModal ? this.__openedModal.id : null;
+  }
+
+  private isAuthFormModal(): boolean {
+    const id = this.__openedModal?.id;
+    return id === "floater-create" || id === "floater-recover";
+  }
+  
+  private isLoginModal(): boolean {
+    return this.__openedModal?.id === "floater-enter";
   }
 }

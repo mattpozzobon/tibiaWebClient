@@ -1,6 +1,8 @@
 import { auth } from "../../config/firebase";
+
 import Modal from "./modal";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import {createUserWithEmailAndPassword, sendEmailVerification} from "firebase/auth";
+
 
 export default class CreateAccountModal extends Modal {
   constructor(id: string) {
@@ -22,7 +24,7 @@ export default class CreateAccountModal extends Modal {
 
     document.getElementById("auth-back-button")?.addEventListener("click", () => {
       this.resetForm();
-      window.gameClient.interface.modalManager.open("floater-enter");
+      window.gameClient.interface.modalManager.handleEscape();
     });
   }
 
@@ -35,7 +37,7 @@ export default class CreateAccountModal extends Modal {
 
   public handleCancel: () => boolean = () => {
     this.resetForm();
-    window.gameClient.interface.modalManager.open("floater-enter");
+    window.gameClient.interface.modalManager.handleEscape();
     return true;
   };
 
@@ -50,7 +52,7 @@ export default class CreateAccountModal extends Modal {
       const input = document.getElementById(inputId) as HTMLInputElement;
       const hint = document.getElementById(hintId) as HTMLElement;
       input.value = "";
-      input.style.border = "1px solid #444";
+      input.classList.remove("input-invalid", "input-valid");
       hint.textContent = "";
     }
   
@@ -60,8 +62,10 @@ export default class CreateAccountModal extends Modal {
   private __setValidationState(inputId: string, messageId: string, isValid: boolean, message: string): void {
     const input = document.getElementById(inputId) as HTMLInputElement;
     const hint = document.getElementById(messageId) as HTMLElement;
-
-    input.style.border = isValid ? "1px solid #444" : "1px solid red";
+  
+    input.classList.remove("input-valid", "input-invalid");
+    input.classList.add(isValid ? "input-valid" : "input-invalid");
+  
     hint.textContent = message;
     hint.style.color = isValid ? "lightgreen" : "red";
   }
@@ -122,11 +126,14 @@ export default class CreateAccountModal extends Modal {
     if (!this.__isValidForm()) return false;
 
     createUserWithEmailAndPassword(auth, email, password)
-      .then(() => {
-        (document.getElementById("user-username") as HTMLInputElement).value = email;
-        (document.getElementById("user-password") as HTMLInputElement).value = password;
-        window.gameClient.interface.modalManager.close();
-        window.gameClient.interface.modalManager.open("floater-enter");
+      .then(userCredential => {
+        const user = userCredential.user;
+
+        return sendEmailVerification(user).then(() => {
+          const box = document.getElementById("auth-error") as HTMLElement;
+          box.style.color = "lightgreen";
+          box.textContent = "Account created. Verification email sent.";
+        });
       })
       .catch((err: any) => {
         let message = "Account creation failed.";
@@ -145,7 +152,8 @@ export default class CreateAccountModal extends Modal {
             break;
         }
         errorBox.textContent = message;
-      });
+    });
+
 
     return false;
   };

@@ -47,27 +47,36 @@ export default class LoginModal extends Modal {
     if (!valid) return false;
 
     signInWithEmailAndPassword(auth, email, password)
-      .then(cred => cred.user.getIdToken())
-      .then(token => {
-        window.gameClient.networkManager.openGameSocket(token);
-        window.gameClient.interface.modalManager.close();
-      })
-      .catch((err: any) => {
-        let message = "Login failed.";
-        switch (err.code) {
-          case "auth/user-not-found":
-          case "auth/wrong-password":
-            message = "Incorrect email or password.";
-            break;
-          case "auth/invalid-email":
-            message = "Invalid email format.";
-            break;
-          case "auth/too-many-requests":
-            message = "Too many failed attempts. Try again later.";
-            break;
-        }
-        errorBox.textContent = message;
-      });
+    .then(cred => {
+      const user = cred.user;
+      if (!user.emailVerified) {
+        throw { code: "auth/email-not-verified" };
+      }
+      return user.getIdToken();
+    })
+    .then(token => {
+      window.gameClient.networkManager.openGameSocket(token);
+      window.gameClient.interface.modalManager.close();
+    })
+    .catch((err: any) => {
+      let message = "Login failed.";
+      switch (err.code) {
+        case "auth/user-not-found":
+        case "auth/wrong-password":
+          message = "Incorrect email or password.";
+          break;
+        case "auth/invalid-email":
+          message = "Invalid email format.";
+          break;
+        case "auth/too-many-requests":
+          message = "Too many failed attempts. Try again later.";
+          break;
+        case "auth/email-not-verified":
+          message = "You must verify your email before logging in.";
+          break;
+      }
+      errorBox.textContent = message;
+    });
 
     return false;
   };

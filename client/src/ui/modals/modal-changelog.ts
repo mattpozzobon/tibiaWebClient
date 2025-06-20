@@ -2,23 +2,14 @@ import { ChangelogService } from '../../services/changelog-service';
 
 export class ChangelogModal {
   private changelogService: ChangelogService;
-  private debugElement: HTMLElement | null;
   private changelogContent: HTMLElement | null;
 
   constructor() {
     this.changelogService = new ChangelogService();
-    this.debugElement = document.getElementById('changelog-debug');
     this.changelogContent = document.getElementById('changelog-content');
 
     if (this.changelogContent) {
       this.loadChangelog();
-    }
-  }
-
-  private updateDebugInfo(message: string): void {
-    if (this.debugElement) {
-      this.debugElement.style.display = 'block';
-      this.debugElement.textContent = `Debug: ${message}`;
     }
   }
 
@@ -36,12 +27,10 @@ export class ChangelogModal {
       const changelogHTML = changelog.map(entry => this.changelogService.formatChangelogEntry(entry)).join('');
 
       this.changelogContent.innerHTML = changelogHTML;
-      this.updateDebugInfo('Changelog loaded successfully');
       this.attachEntryToggleEvents();
 
     } catch (error: any) {
       this.changelogContent.innerHTML = '<div class="error">Failed to load changelog</div>';
-      this.updateDebugInfo(error.message || 'Unknown error occurred');
     }
   }
 

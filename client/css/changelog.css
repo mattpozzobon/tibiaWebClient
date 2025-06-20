@@ -120,8 +120,8 @@
 }
 
 .changelog-avatar {
-  width: 42px;          
-  height: 42px;
+  width: 56px;          
+  height: 56px;
   flex-shrink: 0;
   border-radius: 50%;
   object-fit: cover;   

@@ -13,6 +13,8 @@ import SpellbookModal from "./modal-spellbook";
 import SkillModal from "./modal-skills";
 import LoginModal from "./modal-login";
 import RecoverAccountModal from "./modal-recover-account";
+import { CharacterCreatorModal } from "./modal-character-creator";
+import { CharacterSelectorModal } from "./modal-character-select";
 
 
 type ModalConstructor = (new (id: string) => Modal);
@@ -26,6 +28,8 @@ export default class ModalManager {
     this.__modals = {};
 
     // Register all the modals.
+    this.register(CharacterSelectorModal, "character-selector");
+    this.register(CharacterCreatorModal, "character-creator");
     this.register(Modal, "information-modal");
     this.register(Modal, "settings-modal");
     this.register(Modal, "settings-box");
@@ -160,5 +164,15 @@ export default class ModalManager {
   
   private isLoginModal(): boolean {
     return this.__openedModal?.id === "floater-enter";
+  }
+
+  openCharacterSelector(token: string, characters: any[], loginHost: string, gameHost: string) {
+    const modal = this.open("character-selector") as CharacterSelectorModal;
+    if (modal) modal.open(characters, token, loginHost, gameHost);
+  }
+  
+  openCharacterCreator(token: string, loginHost: string, gameHost: string) {
+    const modal = this.open("character-creator") as CharacterCreatorModal;
+    if (modal) modal.open(token, loginHost, gameHost);
   }
 }

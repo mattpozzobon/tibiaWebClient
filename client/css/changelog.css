@@ -105,16 +105,11 @@
 .changelog-message {
   white-space: normal !important; 
   padding: 2px;
-  background-color: red;
   color: #ddd;
   margin-top: 8px;
   white-space: pre-wrap;
   line-height: 1.4;
   display: none;
-}
-
-.changelog-message::first-line {
-  background: rgba(255,0,0,0.2);
 }
 
 .changelog-image {
@@ -139,4 +134,24 @@
 .changelog-entry:not(.expanded) .changelog-message {
   opacity: 0;
   pointer-events: none;
+}
+
+.changelog-reactions {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: #aaa;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: rgba(255, 255, 255, 0.08); /* subtle dark background */
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  color: #ccc;
 }

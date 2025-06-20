@@ -10,6 +10,13 @@ export interface ChangelogEntry {
     avatarUrl?: string;
   };
   attachments?: { url: string; filename: string }[];
+  reactions?: {
+    emoji: {
+      id: string | null;
+      name: string;
+    };
+    count: number;
+  }[];
 }
 
 export class ChangelogService {
@@ -50,12 +57,6 @@ export class ChangelogService {
         }
       }
 
-      // if (Array.isArray(msg.attachments)) {
-      //   for (const att of msg.attachments) {
-      //     if (att.url) parts.push(att.url);
-      //   }
-      // }
-
       return {
         id: msg.id,
         timestamp: msg.timestamp,
@@ -64,11 +65,14 @@ export class ChangelogService {
         author: {
           username: msg.author?.username || 'Unknown',
           globalName: msg.author?.global_name,
-          avatarUrl: msg.author?.avatar ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png` : undefined,
+          avatarUrl: msg.author?.avatar
+            ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
+            : undefined,
         },
         attachments: Array.isArray(msg.attachments)
           ? msg.attachments.map((att: { url: any; filename: any; }) => ({ url: att.url, filename: att.filename }))
           : undefined,
+        reactions: msg.reactions ?? [],
       };
     });
 
@@ -113,20 +117,30 @@ export class ChangelogService {
       .map(att => `<img class="changelog-image" src="${att.url}" alt="${att.filename}" />`)
       .join('') || '';
   
-    const title = entry.title
-      ? `<div class="changelog-title">${entry.title}</div>`
+    const title = entry.title ? `<div class="changelog-title">${entry.title}</div>` : '';
+    
+    const thumbs = entry['reactions']?.filter(r =>
+      r.emoji?.name === '👍🏻' || r.emoji?.name === '👎🏻'
+    ) || [];
+    
+    const reactionsHTML = thumbs.length > 0
+      ? `<div class="changelog-reactions">
+          ${thumbs.map(r => `<span class="reaction">${r.emoji.name} ${r.count}</span>`).join(' ')}
+         </div>`
       : '';
-  
-    return `
+      
+      return `
       <div class="changelog-entry">
         <div class="changelog-header">
           ${avatarImg}
           <div class="changelog-meta">
             <div class="changelog-meta-row">
               <span class="changelog-author">${name}</span>
-              <span class="changelog-date">${date.toLocaleDateString('en-GB')} ${date.toLocaleTimeString()}</span>
+              <span class="changelog-date">
+                ${date.toLocaleDateString('en-GB')} ${date.toLocaleTimeString()}
+              </span>
             </div>
-            ${title}
+            ${title} ${reactionsHTML}
           </div>
         </div>
         <div class="changelog-message">

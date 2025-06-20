@@ -95,14 +95,19 @@ export class ChangelogService {
       .map(line => line.trimEnd()); // Trim trailing space
   
     const firstLine = lines[0] || '';
-    const restLines = lines.slice(1).join('<br>');
+    const restLines = lines.slice(1).map(line => {
+      if (line.startsWith('## ')) {
+        return `<div class="changelog-subtitle">${line.slice(3).trim()}</div>`;
+      }
+      return `<div class="changelog-line">${line}</div>`;
+    }).join('');
   
-    const fullHtmlContent = `
-      ${firstLine}
-      ${restLines ? '<br>' + restLines : ''}
-    `.replace(/(https?:\/\/[^\s]+)/g, (url) =>
-      imageUrls.has(url) ? '' : `<a href="${url}" target="_blank">${url}</a>`
-    );
+    const fullHtmlContent = lines.map(line => {
+      if (line.startsWith('## ')) {
+        return `<div class="changelog-subtitle">${line.slice(3).trim()}</div>`;
+      }
+      return `<div class="changelog-line">${line}</div>`;
+    }).join('');
   
     const avatarImg = entry.author.avatarUrl
       ? `<img class="changelog-avatar" src="${entry.author.avatarUrl}" alt="${entry.author.username}" />`

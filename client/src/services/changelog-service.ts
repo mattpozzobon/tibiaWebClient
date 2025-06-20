@@ -64,9 +64,7 @@ export class ChangelogService {
         author: {
           username: msg.author?.username || 'Unknown',
           globalName: msg.author?.global_name,
-          avatarUrl: msg.author?.avatar
-            ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
-            : undefined,
+          avatarUrl: msg.author?.avatar ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png` : undefined,
         },
         attachments: Array.isArray(msg.attachments)
           ? msg.attachments.map((att: { url: any; filename: any; }) => ({ url: att.url, filename: att.filename }))
@@ -86,28 +84,40 @@ export class ChangelogService {
         .filter(att => att.url.match(/\.(png|jpe?g|gif|webp)$/i))
         .map(att => att.url)
     );
-
-    const htmlContent = entry.content.replace(
-      /(https?:\/\/[^\s]+)/g,
-      (url) => imageUrls.has(url) ? '' : `<a href="${url}" target="_blank">${url}</a>`
+  
+    const lines = entry.content
+      .split('\n')
+      .filter((line, i) => !(i === 0 && line.trim() === '')) // Skip possible blank after title
+      .map(line => line.trimEnd()); // Trim trailing space
+  
+    const firstLine = lines[0] || '';
+    const restLines = lines.slice(1).join('<br>');
+  
+    const fullHtmlContent = `
+      ${firstLine}
+      ${restLines ? '<br>' + restLines : ''}
+    `.replace(/(https?:\/\/[^\s]+)/g, (url) =>
+      imageUrls.has(url) ? '' : `<a href="${url}" target="_blank">${url}</a>`
     );
-
+  
     const avatarImg = entry.author.avatarUrl
       ? `<img class="changelog-avatar" src="${entry.author.avatarUrl}" alt="${entry.author.username}" />`
       : '';
-
+  
     const name = entry.author.globalName
       ? `${entry.author.username} <span class='global-name'>(${entry.author.globalName})</span>`
       : entry.author.username;
-
+  
     const imageHTML = entry.attachments
       ?.filter(att => /\.(png|jpe?g|gif|webp)(\?.*)?$/i.test(att.url))
       .map(att => `<img class="changelog-image" src="${att.url}" alt="${att.filename}" />`)
       .join('') || '';
-
-    const title = entry.title ? `<div class="changelog-title">${entry.title}</div>` : '';
-
-      return `
+  
+    const title = entry.title
+      ? `<div class="changelog-title">${entry.title}</div>`
+      : '';
+  
+    return `
       <div class="changelog-entry">
         <div class="changelog-header">
           ${avatarImg}
@@ -116,14 +126,15 @@ export class ChangelogService {
               <span class="changelog-author">${name}</span>
               <span class="changelog-date">${date.toLocaleDateString('en-GB')} ${date.toLocaleTimeString()}</span>
             </div>
-            <div class="changelog-title">${entry.title || ''}</div>
+            ${title}
           </div>
         </div>
         <div class="changelog-message">
-          ${htmlContent}
+          ${fullHtmlContent}
           ${imageHTML}
         </div>
       </div>
     `;
   }
+  
 }

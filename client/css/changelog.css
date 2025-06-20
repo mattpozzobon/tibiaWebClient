@@ -103,6 +103,9 @@
 }
 
 .changelog-message {
+  white-space: normal !important; 
+  padding: 2px;
+  background-color: red;
   color: #ddd;
   margin-top: 8px;
   white-space: pre-wrap;
@@ -110,12 +113,15 @@
   display: none;
 }
 
+.changelog-message::first-line {
+  background: rgba(255,0,0,0.2);
+}
+
 .changelog-image {
   max-width: 100%;
   height: auto;
   margin-top: 12px;
   border-radius: 6px;
-  border: 1px solid #333;
 }
 
 .changelog-avatar {

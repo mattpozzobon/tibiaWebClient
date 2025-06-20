@@ -1,4 +1,4 @@
-import { auth } from "../../firebase";
+import { auth } from "../../config/firebase";
 import Modal from "./modal";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 

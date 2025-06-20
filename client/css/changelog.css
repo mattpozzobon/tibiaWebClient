@@ -18,16 +18,19 @@
   top: 20px;
   right: 20px;
   bottom: 100px; 
-  width: 420px;
+  max-width: 100vw; 
+  height: 100vw;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  align-items: flex-end;
 }
 
 .changelog-entry {
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid #333;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255,255,255,0.15);
   border-radius: 6px;
+  width: 400px;
   padding: 10px;
   cursor: pointer;
   overflow: hidden;
@@ -37,7 +40,9 @@
 }
 
 .changelog-entry.expanded {
-  max-height: 100%;
+  width: 600px; 
+  min-height: 600px;
+  max-height: 80%;
   flex-grow: 1;
   overflow-y: auto;
   position: relative;
@@ -54,6 +59,8 @@
   color: #ddd;
   white-space: pre-wrap;
   line-height: 1.4;
+  word-wrap: break-word;    
+  overflow-wrap: anywhere;
 }
 
 .changelog-entry.expanded .changelog-message {
@@ -101,6 +108,14 @@
   white-space: pre-wrap;
   line-height: 1.4;
   display: none;
+}
+
+.changelog-image {
+  max-width: 100%;
+  height: auto;
+  margin-top: 12px;
+  border-radius: 6px;
+  border: 1px solid #333;
 }
 
 .changelog-avatar {

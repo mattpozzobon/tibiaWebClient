@@ -50,11 +50,11 @@ export class ChangelogService {
         }
       }
 
-      if (Array.isArray(msg.attachments)) {
-        for (const att of msg.attachments) {
-          if (att.url) parts.push(att.url);
-        }
-      }
+      // if (Array.isArray(msg.attachments)) {
+      //   for (const att of msg.attachments) {
+      //     if (att.url) parts.push(att.url);
+      //   }
+      // }
 
       return {
         id: msg.id,
@@ -81,9 +81,15 @@ export class ChangelogService {
 
   formatChangelogEntry(entry: ChangelogEntry): string {
     const date = new Date(entry.timestamp);
+    const imageUrls = new Set(
+      (entry.attachments ?? [])
+        .filter(att => att.url.match(/\.(png|jpe?g|gif|webp)$/i))
+        .map(att => att.url)
+    );
+
     const htmlContent = entry.content.replace(
       /(https?:\/\/[^\s]+)/g,
-      '<a href="$1" target="_blank">$1</a>'
+      (url) => imageUrls.has(url) ? '' : `<a href="${url}" target="_blank">${url}</a>`
     );
 
     const avatarImg = entry.author.avatarUrl
@@ -93,6 +99,11 @@ export class ChangelogService {
     const name = entry.author.globalName
       ? `${entry.author.username} <span class='global-name'>(${entry.author.globalName})</span>`
       : entry.author.username;
+
+    const imageHTML = entry.attachments
+      ?.filter(att => /\.(png|jpe?g|gif|webp)(\?.*)?$/i.test(att.url))
+      .map(att => `<img class="changelog-image" src="${att.url}" alt="${att.filename}" />`)
+      .join('') || '';
 
     const title = entry.title ? `<div class="changelog-title">${entry.title}</div>` : '';
 
@@ -108,7 +119,10 @@ export class ChangelogService {
             <div class="changelog-title">${entry.title || ''}</div>
           </div>
         </div>
-        <div class="changelog-message">${htmlContent}</div>
+        <div class="changelog-message">
+          ${htmlContent}
+          ${imageHTML}
+        </div>
       </div>
     `;
   }

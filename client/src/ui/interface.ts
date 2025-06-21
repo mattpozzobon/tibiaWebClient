@@ -355,10 +355,6 @@ export default class Interface {
     this.handleResize();
   }
 
-  /**
-   * Asks the client to confirm the browser close when connected.
-   * @returns True if confirmation is needed, otherwise undefined.
-   */
   __closeClientConfirm(event: Event): boolean | void {
     if (window.gameClient.isConnected()) {
       return true;

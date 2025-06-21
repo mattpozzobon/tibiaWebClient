@@ -148,7 +148,7 @@ export default class World {
            worldPosition.z < this.depth;
   }
 
-  public findChunk(position: Position): any {
+  public findChunk(position: Position): Chunk | null {
     const index = this.getChunkIndex(this.getChunkPositionFromWorldPosition(position));
     for (let i = 0; i < this.chunks.length; i++) {
       if (index === this.chunks[i].id) {

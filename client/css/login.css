@@ -7,10 +7,13 @@
 }
 
 #login-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
   display: flex;
+  flex-direction: row;
   width: 100vw;
   height: 100vh;
-  position: fixed;
   background-image: url('/png/background.png');
   background-size: cover;
   background-position: center;
@@ -25,6 +28,11 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+}
+
+#login-wrapper.post-login {
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .login-settings {

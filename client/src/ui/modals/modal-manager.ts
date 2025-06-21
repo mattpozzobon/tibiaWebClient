@@ -30,9 +30,7 @@ export default class ModalManager {
     // Register all the modals.
     this.register(CharacterSelectorModal, "character-selector");
     this.register(CharacterCreatorModal, "character-creator");
-    this.register(Modal, "information-modal");
     this.register(Modal, "settings-modal");
-    this.register(Modal, "settings-box");
     this.register(LoginModal, "floater-enter");
     this.register(RecoverAccountModal, "floater-recover");
     this.register(CreateAccountModal, "floater-create");
@@ -56,7 +54,6 @@ export default class ModalManager {
     document.getElementById("open-chat-modal")?.addEventListener("click", this.open.bind(this, "chat-modal"));
     document.getElementById("openOutfit")?.addEventListener("click", this.open.bind(this, "outfit-modal"));
     document.getElementById("openSettings")?.addEventListener("click", this.open.bind(this, "settings-modal"));
-    document.getElementById("settings")?.addEventListener("click", this.open.bind(this, "settings-box"));
     document.getElementById("openSkills")?.addEventListener("click", this.open.bind(this, "skill-modal"));
 
     Array.from(document.querySelectorAll(".modal-header")).forEach(header => {
@@ -129,24 +126,19 @@ export default class ModalManager {
   }
 
   public open(id: string, options?: any): Modal | null {
-    // toggle-off if same panel
     if (this.isOpened() && this.__openedModal?.id === id) {
       this.close();
       return null;
     }
 
-    // if another modal is open, close it
     if (this.isOpened()) {
       this.close();
     }
 
-    // only continue if we actually registered it
     if (!this.__modals.hasOwnProperty(id)) {
       return null;
     }
 
-    console.log('open modal', id);
-    // show the one we want
     this.__openedModal = this.get(id);
     this.__openedModal!.show();
     this.__openedModal!.handleOpen(options);
@@ -167,6 +159,18 @@ export default class ModalManager {
   }
 
   openCharacterSelector(token: string, characters: any[], loginHost: string, gameHost: string) {
+    // Show post-login UI
+    const preLoginWrapper = document.getElementById('pre-login-wrapper');
+    const postLoginWrapper = document.getElementById('post-login-wrapper');
+  
+    if (preLoginWrapper) preLoginWrapper.style.display = 'none';
+    if (postLoginWrapper) postLoginWrapper.style.display = 'block';
+  
+    document.getElementById('changelog-container')!.classList.add('post-login-mode');
+    document.getElementById('login-wrapper')!.classList.add('post-login');
+    
+
+    // Open character selector modal
     const modal = this.open("character-selector") as CharacterSelectorModal;
     if (modal) modal.open(characters, token, loginHost, gameHost);
   }

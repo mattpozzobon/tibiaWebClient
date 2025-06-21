@@ -1,28 +1,19 @@
-#center-container {
+#changelog-container {
   position: absolute;
-  top: 0;
-  right: 0;
-  padding: 2rem;
+  top: 80px; 
+  right: 24px;
   max-width: 480px;
-  height: 100%;
+  z-index: 5;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   align-items: flex-end;
-  z-index: 10;
   pointer-events: auto;
 }
 
 .changelog-section {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  bottom: 100px; 
-  max-width: 100vw; 
-  height: 100vw;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px; 
   align-items: flex-end;
 }
 
@@ -36,7 +27,16 @@
   overflow: hidden;
   max-height: 64px;
   transition: all 0.3s ease;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+}
+
+.changelog-entry.expanded {
+  width: 600px;
+  min-height: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  z-index: 10;
 }
 
 .changelog-entry.expanded {

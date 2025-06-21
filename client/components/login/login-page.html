@@ -1,6 +1,7 @@
 <link rel="stylesheet" type="text/css" href="../../css/login.css">
 <link rel="stylesheet" type="text/css" href="../../css/changelog.css">
-<link rel="stylesheet" type="text/css" href="../../css/auth.css">
+<link rel="stylesheet" type="text/css" href="../../css/pre-login.css">
+<link rel="stylesheet" type="text/css" href="../../css/post-login.css">
 
 <div id="login-wrapper">
     
@@ -10,37 +11,8 @@
         <div style="text-align: center;"><span id="serve-feedback"></span></div>
         </div>
     </div>
-    
-    <div id="settings-box" class="modal">
-        <div class="modal-header">Connection Settings</div>
-        <div class="modal-body">
-        <p> Login Server Address:
-        <br><input style="text-align: center;" id="host" value="127.0.0.1:1338" placeholder="127.0.0.1:1338">
-        <hr>
-        <button id="clear-database" onclick="gameClient.database.clear()">Reset Client</button>
-        <div class="modal-footer">
-            <button action="confirm">Close</button>
-        </div>
-        </div>
-    </div>
-    
-    <div id="information-modal" class="modal">
-        <div class="modal-header">Information</div>
-        <div class="modal-body" style="text-align: center; max-width: 500px;">
-        <p> Tibia Game Client and Game Server written in NodeJS/JavaScript.
-        <hr>
-        <img src="png/forby.png" style="width: 68px; height: 68px;"></img>
-        <hr>
-        Load the required <b>Tibia.spr</b> and <b>Tibia.dat</b> files by clicking Load Assets. The asset versions must match the server version and both client/server support versions 7.4 and 10.98 but nothing in between.
-        <p> Copyright by Forby, 2019 - 2022
-        <hr>
-        <div class="modal-footer">
-            <button action="confirm">Close</button>
-        </div>
-        </div>
-    </div>
-    
-    <div id="auth-container">
+
+    <div id="pre-login-wrapper">
 
         <div class="auth-banner"> <img src="/png/banner.png" alt="Game Logo"> </div>
 
@@ -89,38 +61,67 @@
         <button id="auth-back-button" class="btn-round back-link" type="button">←</button>
     </div>
 
-    <div id="center-container">
-        <div class="changelog-section">
-            <div id="changelog-content" class="changelog-content"></div>
+    <div id="post-login-wrapper" style="display: none;">
+
+        <!-- Topbar: Shows user info -->
+        <div id="post-login-topbar" class="topbar">
+          <div class="user-info">
+            <img id="user-avatar" src="/png/avatar-placeholder.png" alt="Avatar" />
+            <div class="user-details">
+              <div id="user-name">Username</div>
+              <div class="user-meta">
+                <span id="account-type">Normal Account</span>
+                <span id="diamond-count">💎 0</span>
+              </div>
+            </div>
+          </div>
+          <button id="donate-button" class="donate-button">Donate</button>
         </div>
+      
+        <!-- Body below topbar -->
+        <div id="post-login-body" class="post-login-body">
+          
+          <!-- Character Selector -->
+          <div id="character-selector" class="character-selector">
+            <h2>Select Character</h2>
+            <div id="character-list" class="character-grid">
+              <!-- character cards go here -->
+            </div>
+            <button id="enter-game-button" class="btn-primary go-button">GO!</button>
+          </div>
+        </div>
+      
+        <!-- Character Creator -->
+        <div id="character-creator" style="display: none;">
+          <h2>Create Character</h2>
+          <input id="char-name" placeholder="Name" />
+          <select id="char-sex">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+          <button id="create-char-btn">Create</button>
+        </div>
+      
+        <!-- Asset Download Progress -->
+        <div id="download-progress" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.8); padding: 20px; border-radius: 5px; color: white; text-align: center;">
+          <div>Downloading game assets...</div>
+          <div style="margin: 10px 0;">
+            <div id="download-progress-bar" style="width: 0%; height: 20px; background: #4CAF50; transition: width 0.3s;"></div>
+          </div>
+          <div id="download-status">0%</div>
+        </div>
+      
     </div>
     
-    <div id="download-progress" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.8); padding: 20px; border-radius: 5px; color: white; text-align: center;">
-        <div>Downloading game assets...</div>
-        <div style="margin: 10px 0;">
-            <div id="download-progress-bar" style="width: 0%; height: 20px; background: #4CAF50; transition: width 0.3s;"></div>
+    <div id="changelog-container" class="changelog-container">
+        <div class="changelog-section">
+          <div id="changelog-content" class="changelog-content"></div>
         </div>
-        <div id="download-status">0%</div>
     </div>
-
-    <div id="character-selector" style="display: none;">
-        <h2>Select a Character</h2>
-        <div id="character-list"></div>
-    </div>
-
-    <div id="character-creator" style="display: none;">
-        <h2>Create Character</h2>
-        <input id="char-name" placeholder="Name" />
-        <select id="char-sex">
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-        </select>
-        <button id="create-char-btn">Create</button>
-      </div>
 
     <div class="build-info">
-      Build: <span id="client-version"></span>
-      <span id="data-assets">⚪</span>
+        Build: <span id="client-version"></span>
+        <span id="data-assets">⚪</span>
     </div>
     
 </div>

@@ -1,4 +1,4 @@
-#auth-container {
+#pre-login-wrapper {
   flex: 0 0 200px;
   width: 200px;               
   display: flex;
@@ -14,15 +14,15 @@
   margin-top: -1rem;  
 }
 
-#auth-container .modal-body label {
+#pre-login-wrapper .modal-body label {
   display: block;
   margin: 0.5rem 0 0.2rem; /* space above and a little below each label */
   font-size: 0.85rem;
   color: #eee;
 }
 
-#auth-container .modal-body input,
-#auth-container .modal-body select {
+#pre-login-wrapper .modal-body input,
+#pre-login-wrapper .modal-body select {
   width: 100%;
   margin-bottom: 1rem;      /* space after each field */
   padding: 0.5rem;
@@ -36,13 +36,13 @@
   display: inline-block;
 }
 
-#auth-container #floater-enter,
-#auth-container #floater-recover,
-#auth-container #floater-create {
+#pre-login-wrapper #floater-enter,
+#pre-login-wrapper #floater-recover,
+#pre-login-wrapper #floater-create {
   display: none;
 }
 
-#auth-container .modal {
+#pre-login-wrapper .modal {
   width: 100%;
   position: static;
   transform: none;
@@ -64,25 +64,25 @@
 }
 
 
-#auth-container label {
+#pre-login-wrapper label {
   display: block;
   margin: 0.6rem 0 0.3rem; 
   color: #eee;             
   font-size: 0.9rem;      
 }
 
-#auth-container .password-input {
+#pre-login-wrapper .password-input {
   display: block;
   width: 100%;             
   padding: 0.5rem;         
   box-sizing: border-box;
 }
 
-#auth-container .modal-footer {
+#pre-login-wrapper .modal-footer {
   margin-top: 1.2rem;
 }
 
-#auth-container .btn-primary {
+#pre-login-wrapper .btn-primary {
   display: block;
   width: 100%;
   box-sizing: border-box; 

@@ -164,7 +164,7 @@ class NetworkManager {
   }
 
   getConnectionSettings(): string {
-    return (document.getElementById("host") as HTMLInputElement).value;
+    return "127.0.0.1:1338";
   }
 
   fetchCallback(response: Response): Promise<ArrayBuffer> {
@@ -234,11 +234,10 @@ class NetworkManager {
           .then(res => res.json())
           .then(characters => {
             if (!Array.isArray(characters)) throw new Error("Invalid characters list");
-            if (characters.length === 0) {
-              return window.gameClient.interface.modalManager.openCharacterCreator(data.token, data.loginHost, data.gameHost);
-            } else {
+            
+              //return window.gameClient.interface.modalManager.openCharacterCreator(data.token, data.loginHost, data.gameHost);
               return window.gameClient.interface.modalManager.openCharacterSelector(data.token, characters, data.loginHost, data.gameHost);
-            }
+            
           });
       })
       .catch(err => {

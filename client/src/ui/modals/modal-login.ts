@@ -8,6 +8,10 @@ export default class LoginModal extends Modal {
     document.getElementById("enter-game")?.addEventListener("click", this.handleConfirm);
   }
 
+  public override shouldStayOpenOnReopen(): boolean {
+    return true;
+  }
+  
   private __clearValidation(): void {
     ["user-username", "user-password"].forEach(id => {
       const input = document.getElementById(id) as HTMLInputElement;

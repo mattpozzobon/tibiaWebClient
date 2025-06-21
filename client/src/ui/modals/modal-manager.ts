@@ -96,7 +96,7 @@ export default class ModalManager {
   public handleEscape(): void {
     if (!this.__openedModal) return;
   
-    if (this.isLoginModal()) {
+    if (this.__openedModal!.shouldStayOpenOnReopen()) {
       return;
     }
   
@@ -129,6 +129,10 @@ export default class ModalManager {
   }
 
   public open(id: string, options?: any): Modal | null {
+    if (this.isOpened() && this.__openedModal?.id === id && this.__openedModal!.shouldStayOpenOnReopen()) {
+      return null;
+    }
+
     if (this.isOpened() && this.__openedModal?.id === id) {
       this.close();
       return null;
@@ -157,7 +161,4 @@ export default class ModalManager {
     return id === "floater-create" || id === "floater-recover";
   }
   
-  private isLoginModal(): boolean {
-    return this.__openedModal?.id === "floater-enter";
-  }
 }

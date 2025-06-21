@@ -60,4 +60,23 @@ export class CharacterSelectorModal extends Modal {
     window.gameClient.interface.modalManager.close();
     window.gameClient.networkManager.connectGameServer(this.gameHost, this.token, this.selectedCharacterId);
   }
+
+  /** Prevent closing with ESC */
+  public override handleCancel(): boolean {
+    return false;
+  }
+
+  /** Prevent default confirm unless a character is selected */
+  public override handleConfirm(): boolean {
+    if (this.selectedCharacterId === null) {
+      alert("Select a character before proceeding.");
+      return false;
+    }
+    this.enterGame();
+    return true;
+  }
+
+  public override shouldStayOpenOnReopen(): boolean {
+    return true;
+  }
 }

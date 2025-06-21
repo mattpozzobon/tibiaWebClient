@@ -84,4 +84,8 @@ export default class Modal {
   public handleRender(): void {
     // noop
   }
+
+  public shouldStayOpenOnReopen(): boolean {
+    return false;
+  }
 }

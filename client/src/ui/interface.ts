@@ -11,8 +11,10 @@ import SoundManager from "../audio/sound-manager";
 import State from "../core/state";
 import WindowManager from "./window/window-manager";
 import spriteBuffer from "../renderer/sprite-buffer";
+import LoginFlowManager from "./managers/login-manager";
 
 export default class Interface {
+  loginFlowManager: LoginFlowManager;
   settings: Settings;
   channelManager: ChannelManager;
   hotbarManager: HotbarManager;
@@ -91,10 +93,11 @@ export default class Interface {
       [7, { name: "Hearthstone", description: "Teleport yourself to the temple.", icon: { x: 3, y: 3 } }],
       [8, { name: "Velocitas", description: "Increases your movement speed", icon: { x: 4, y: 8 } }],
       [9, { name: "Levitate", description: "Move up or down a mountain", icon: { x: 4, y: 10 } }],
-    ]);
+  ]);
 
   constructor() {
     this.settings = new Settings( this);
+    this.loginFlowManager = new LoginFlowManager();
     this.channelManager = new ChannelManager();
     this.hotbarManager = new HotbarManager();
     this.notificationManager = new NotificationManager();
@@ -175,15 +178,13 @@ export default class Interface {
   }
 
   hideGameInterface(): void {
-    document.getElementById("login-wrapper")!.style.display = "flex";
-    document.getElementById("game-wrapper")!.style.display = "none";
+    this.loginFlowManager.showPreLogin();
     this.modalManager.open("floater-enter");
     window.onresize?.(new UIEvent("resize"));
   }
 
   showGameInterface(): void {
-    document.getElementById("login-wrapper")!.style.display = "none";
-    document.getElementById("game-wrapper")!.style.display = "flex";
+    this.loginFlowManager.showGame();
     window.onresize?.(new UIEvent("resize"));
   }
 
@@ -354,13 +355,6 @@ export default class Interface {
     // Handle resizing of the game screen.
     this.handleResize();
   }
-
-  __closeClientConfirm(event: Event): boolean | void {
-    if (window.gameClient.isConnected()) {
-      return true;
-    }
-    return;
-  } 
 
   public enableTopbarListeners(): void {
     document.getElementById("openSkills")?.addEventListener("click", () => this.toggleWindow("skill-window"));

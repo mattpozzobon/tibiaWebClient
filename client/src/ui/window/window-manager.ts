@@ -4,9 +4,7 @@ import BattleWindow from "./window-battle";
 import FriendWindow from "./window-friend";
 
 
-
 export default class WindowManager {
-  ;
   public windows: { [name: string]: InteractiveWindow };
   public stacks: HTMLCollectionOf<Element>;
   public state: State;

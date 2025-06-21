@@ -2,8 +2,9 @@ import Modal from "./modal";
 
 export class CharacterSelectorModal extends Modal {
   private characters: any[] = [];
-  private token: string = "";
-  private gameHost: string = "";
+  private token = "";
+  private gameHost = "";
+  private selectedCharacterId: number | null = null;
 
   constructor(id: string) {
     super(id);
@@ -13,8 +14,15 @@ export class CharacterSelectorModal extends Modal {
     this.characters = characters;
     this.token = token;
     this.gameHost = gameHost;
+    this.selectedCharacterId = null;
+
     this.render();
     super.handleOpen();
+
+    const goButton = document.getElementById("enter-game-button");
+    if (goButton) {
+      goButton.onclick = () => this.enterGame();
+    }
   }
 
   private render(): void {
@@ -22,16 +30,34 @@ export class CharacterSelectorModal extends Modal {
     if (!list) return;
 
     list.innerHTML = "";
+
     for (const char of this.characters) {
-      const item = document.createElement("button");
-      item.textContent = char.name;
-      item.onclick = () => this.selectCharacter(char.id);
-      list.appendChild(item);
+      const card = document.createElement("div");
+      card.className = "character-card";
+      card.textContent = char.name;
+
+      card.onclick = () => {
+        this.selectedCharacterId = char.id;
+        this.updateSelection(card);
+      };
+
+      list.appendChild(card);
     }
   }
 
-  private selectCharacter(characterId: number): void {
+  private updateSelection(selectedCard: HTMLElement): void {
+    const allCards = document.querySelectorAll(".character-card");
+    allCards.forEach(card => card.classList.remove("selected"));
+    selectedCard.classList.add("selected");
+  }
+
+  private enterGame(): void {
+    if (this.selectedCharacterId === null) {
+      alert("Please select a character first.");
+      return;
+    }
+
     window.gameClient.interface.modalManager.close();
-    window.gameClient.networkManager.connectGameServer(this.gameHost, this.token, characterId);
+    window.gameClient.networkManager.connectGameServer(this.gameHost, this.token, this.selectedCharacterId);
   }
 }

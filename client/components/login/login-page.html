@@ -75,7 +75,16 @@
               </div>
             </div>
           </div>
-          <button id="donate-button" class="donate-button">Donate</button>
+          
+            <div class="topbar-center">
+                <button id="topbar-play-btn" class="topbar-button">Play</button>
+                <button id="topbar-news-btn" class="topbar-button">News</button>
+            </div>
+
+            <!-- Right: Donate Button -->
+            <div class="topbar-right">
+                <button id="donate-button" class="donate-button">Donate</button>
+            </div>
         </div>
       
         <!-- Body below topbar -->
@@ -84,9 +93,9 @@
           <!-- Character Selector -->
           <div id="character-selector" class="character-selector">
             <h2>Select Character</h2>
-            <div id="character-list" class="character-grid">
-              <!-- character cards go here -->
-            </div>
+            <div class="character-container">
+                <div id="character-list" class="character-grid"></div>
+              </div>
             <button id="enter-game-button" class="btn-primary go-button">GO!</button>
           </div>
         </div>
@@ -119,9 +128,6 @@
         </div>
     </div>
 
-    <div class="build-info">
-        Build: <span id="client-version"></span>
-        <span id="data-assets">⚪</span>
-    </div>
+    <div class="build-info">Build: <span id="client-version"></span> <span id="data-assets">⚪</span></div>
     
 </div>

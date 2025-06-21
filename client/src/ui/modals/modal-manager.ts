@@ -56,6 +56,9 @@ export default class ModalManager {
     document.getElementById("openSettings")?.addEventListener("click", this.open.bind(this, "settings-modal"));
     document.getElementById("openSkills")?.addEventListener("click", this.open.bind(this, "skill-modal"));
 
+    document.getElementById("topbar-play-btn")?.addEventListener("click", () => {window.gameClient.interface.loginFlowManager.showPostLogin()});
+    document.getElementById("topbar-news-btn")?.addEventListener("click", () => {window.gameClient.interface.loginFlowManager.showChangelog()});
+
     Array.from(document.querySelectorAll(".modal-header")).forEach(header => {
       header.addEventListener("mousedown", this.__handleHeaderMouseDown.bind(this) as EventListener);
     });
@@ -156,27 +159,5 @@ export default class ModalManager {
   
   private isLoginModal(): boolean {
     return this.__openedModal?.id === "floater-enter";
-  }
-
-  openCharacterSelector(token: string, characters: any[], loginHost: string, gameHost: string) {
-    // Show post-login UI
-    const preLoginWrapper = document.getElementById('pre-login-wrapper');
-    const postLoginWrapper = document.getElementById('post-login-wrapper');
-  
-    if (preLoginWrapper) preLoginWrapper.style.display = 'none';
-    if (postLoginWrapper) postLoginWrapper.style.display = 'block';
-  
-    document.getElementById('changelog-container')!.classList.add('post-login-mode');
-    document.getElementById('login-wrapper')!.classList.add('post-login');
-    
-
-    // Open character selector modal
-    const modal = this.open("character-selector") as CharacterSelectorModal;
-    if (modal) modal.open(characters, token, loginHost, gameHost);
-  }
-  
-  openCharacterCreator(token: string, loginHost: string, gameHost: string) {
-    const modal = this.open("character-creator") as CharacterCreatorModal;
-    if (modal) modal.open(token, loginHost, gameHost);
   }
 }

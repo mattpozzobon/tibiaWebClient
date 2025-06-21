@@ -221,7 +221,7 @@ class NetworkManager {
     const httpProtocol = location.protocol === "https:" ? "https:" : "http:";
     const handshakeUrl = `${httpProtocol}//${loginHostPort}/?token=${encodeURIComponent(idToken)}`;
     console.log("Handshake URL:", handshakeUrl);
-
+  
     fetch(handshakeUrl, { method: "GET" })
       .then(response => {
         console.log("Handshake status:", response.status);
@@ -234,10 +234,15 @@ class NetworkManager {
           .then(res => res.json())
           .then(characters => {
             if (!Array.isArray(characters)) throw new Error("Invalid characters list");
-            
-              //return window.gameClient.interface.modalManager.openCharacterCreator(data.token, data.loginHost, data.gameHost);
-              return window.gameClient.interface.modalManager.openCharacterSelector(data.token, characters, data.loginHost, data.gameHost);
-            
+  
+            window.gameClient.interface.loginFlowManager.setLoginInfo(
+              data.token,
+              characters,
+              data.loginHost,
+              data.gameHost
+            );
+  
+            window.gameClient.interface.loginFlowManager.showPostLogin();
           });
       })
       .catch(err => {

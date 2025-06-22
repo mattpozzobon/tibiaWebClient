@@ -1,139 +1,157 @@
 import Modal from "./modal";
+import LoginModal from "./modal-login";
+import CreateAccountModal from "./modal-create-account";
+import RecoverAccountModal from "./modal-recover-account";
+import CharacterCreatorModal from "./modal-character-creator";
+import CharacterSelectorModal from "./modal-character-select";
 import OutfitModal from "./modal-outfit";
 import MoveItemModal from "./modal-move-item";
 import ChatModal from "./modal-chat";
 import EnterNameModal from "./modal-enter-name";
 import ConfirmModal from "./modal-confirm";
-import TextModal from "./modal-text";
-import CreateAccountModal from "./modal-create-account";
 import ReadableModal from "./modal-readable";
 import OfferModal from "./modal-offer";
 import MapModal from "./modal-map";
 import SpellbookModal from "./modal-spellbook";
 import SkillModal from "./modal-skills";
-import LoginModal from "./modal-login";
-import RecoverAccountModal from "./modal-recover-account";
-import { CharacterCreatorModal } from "./modal-character-creator";
-import { CharacterSelectorModal } from "./modal-character-select";
+import TextModal from "./modal-text";
 
+const MODAL_IDS = {
+  LOGIN: "floater-enter",
+  CREATE_ACCOUNT: "floater-create",
+  RECOVER_ACCOUNT: "floater-recover",
+  
+  CHARACTER_SELECTOR: "character-selector",
+  CHARACTER_CREATOR: "character-creator",
+  
+  SETTINGS: "settings-modal",
+  SKILL: "skill-modal",
+  OUTFIT: "outfit-modal",
+  MOVE_ITEM: "move-item-modal",
+  CHAT: "chat-modal",
+  ENTER_NAME: "enter-name-modal",
+  CONFIRM: "confirm-modal",
+  READABLE: "readable-modal",
+  OFFER: "offer-modal",
+  MAP: "map-modal",
+  SPELLBOOK: "spellbook-modal",
 
-type ModalConstructor = (new (id: string) => Modal);
+  CONNECTING: "floater-connecting"
+} as const;
+
+const ELEMENT_IDS = {
+  CREATE_ACCOUNT: "create-account",
+  RECOVER_ACCOUNT: "recover-account",
+  OPEN_CHAT_MODAL: "open-chat-modal",
+  OPEN_OUTFIT: "openOutfit",
+  OPEN_SETTINGS: "openSettings",
+  OPEN_SKILLS: "openSkills",
+  TOPBAR_PLAY_BTN: "topbar-play-btn",
+  TOPBAR_NEWS_BTN: "topbar-news-btn"
+} as const;
+
+type ModalConstructor = new (id: string) => Modal;
+
+interface ModalOptions {
+  [key: string]: any;
+}
 
 export default class ModalManager {
-  private __openedModal: Modal | null;
-  private __modals: { [id: string]: Modal };
+  private openedModal: Modal | null = null;
+  private modals: Map<string, Modal> = new Map();
 
   constructor() {
-    this.__openedModal = null;
-    this.__modals = {};
-
-    // Register all the modals.
-    this.register(CharacterSelectorModal, "character-selector");
-    this.register(CharacterCreatorModal, "character-creator");
-    this.register(Modal, "settings-modal");
-    this.register(LoginModal, "floater-enter");
-    this.register(RecoverAccountModal, "floater-recover");
-    this.register(CreateAccountModal, "floater-create");
-    this.register(SkillModal, "skill-modal");
-    this.register(OutfitModal, "outfit-modal");
-    this.register(MoveItemModal, "move-item-modal");
-    this.register(ChatModal, "chat-modal");
-    this.register(EnterNameModal, "enter-name-modal");
-    this.register(ConfirmModal, "confirm-modal");
-    this.register(TextModal, "floater-connecting");
-    this.register(ReadableModal, "readable-modal");
-    this.register(OfferModal, "offer-modal");
-    this.register(MapModal, "map-modal");
-    this.register(SpellbookModal, "spellbook-modal");
+    this.registerModals();
   }
 
-  public addEventListeners(): void {
-    document.getElementById("login-info")?.addEventListener("click", this.open.bind(this, "floater-enter"));
-    document.getElementById("create-account")?.addEventListener("click", this.open.bind(this, "floater-create"));
-    document.getElementById("recover-account")?.addEventListener("click", this.open.bind(this, "floater-recover"));
-    document.getElementById("open-chat-modal")?.addEventListener("click", this.open.bind(this, "chat-modal"));
-    document.getElementById("openOutfit")?.addEventListener("click", this.open.bind(this, "outfit-modal"));
-    document.getElementById("openSettings")?.addEventListener("click", this.open.bind(this, "settings-modal"));
-    document.getElementById("openSkills")?.addEventListener("click", this.open.bind(this, "skill-modal"));
+  private registerModals(): void {
+    const modalRegistrations = [
+      [CharacterSelectorModal, MODAL_IDS.CHARACTER_SELECTOR],
+      [CharacterCreatorModal, MODAL_IDS.CHARACTER_CREATOR],
+      [Modal, MODAL_IDS.SETTINGS],
+      [LoginModal, MODAL_IDS.LOGIN],
+      [RecoverAccountModal, MODAL_IDS.RECOVER_ACCOUNT],
+      [CreateAccountModal, MODAL_IDS.CREATE_ACCOUNT],
+      [SkillModal, MODAL_IDS.SKILL],
+      [OutfitModal, MODAL_IDS.OUTFIT],
+      [MoveItemModal, MODAL_IDS.MOVE_ITEM],
+      [ChatModal, MODAL_IDS.CHAT],
+      [EnterNameModal, MODAL_IDS.ENTER_NAME],
+      [ConfirmModal, MODAL_IDS.CONFIRM],
+      [TextModal, MODAL_IDS.CONNECTING],
+      [ReadableModal, MODAL_IDS.READABLE],
+      [OfferModal, MODAL_IDS.OFFER],
+      [MapModal, MODAL_IDS.MAP],
+      [SpellbookModal, MODAL_IDS.SPELLBOOK]
+    ] as const;
 
-    document.getElementById("topbar-play-btn")?.addEventListener("click", () => {window.gameClient.interface.loginFlowManager.showPostLogin()});
-    document.getElementById("topbar-news-btn")?.addEventListener("click", () => {window.gameClient.interface.loginFlowManager.showChangelog()});
-
-    Array.from(document.querySelectorAll(".modal-header")).forEach(header => {
-      header.addEventListener("mousedown", this.__handleHeaderMouseDown.bind(this) as EventListener);
+    modalRegistrations.forEach(([ModalClass, id]) => {
+      this.register(ModalClass, id);
     });
   }
 
-  private __handleHeaderMouseDown(event: MouseEvent): void {
-    event.preventDefault();
-  }
-  
-  public register(ModalClass: ModalConstructor, id: string): void {
-    if (this.__modals.hasOwnProperty(id)) {
-      console.error("A modal with identifier " + id + " already exists.");
+  private register(ModalClass: ModalConstructor, id: string): void {
+    if (this.modals.has(id)) {
+      console.error(`A modal with identifier "${id}" already exists.`);
       return;
     }
     
-    let instance: Modal;
-    // ModalClass.length gives the number of expected parameters.
-    if (ModalClass.length === 1) {
-      instance = new (ModalClass as new (id: string) => Modal)(id);
-    } else {
-      instance = new (ModalClass as new (id: string) => Modal)(id);
-    }
-    this.__modals[id] = instance;
+    const instance = new ModalClass(id);
+    this.modals.set(id, instance);
   }
 
-  public handleConfirm(): void {
-    if (!this.isOpened()) return;
-    this.__openedModal!.handleConfirm();
-
-    if (!this.isAuthFormModal()) {
-      this.handleEscape();
-    }
+  public addEventListeners(): void {
+    this.addModalTriggerListeners();
+    this.addTopbarListeners();
+    this.addModalHeaderListeners();
   }
 
-  public handleEscape(): void {
-    if (!this.__openedModal) return;
-  
-    if (this.__openedModal!.shouldStayOpenOnReopen()) {
-      return;
-    }
-  
-    if (this.isAuthFormModal()) {
-      this.close();
-      this.open("floater-enter");
-      return;
-    }
-  
-    this.close();
+  private addModalTriggerListeners(): void {
+    const triggerMappings = [
+      [ELEMENT_IDS.CREATE_ACCOUNT, MODAL_IDS.CREATE_ACCOUNT],
+      [ELEMENT_IDS.RECOVER_ACCOUNT, MODAL_IDS.RECOVER_ACCOUNT],
+      [ELEMENT_IDS.OPEN_CHAT_MODAL, MODAL_IDS.CHAT],
+      [ELEMENT_IDS.OPEN_OUTFIT, MODAL_IDS.OUTFIT],
+      [ELEMENT_IDS.OPEN_SETTINGS, MODAL_IDS.SETTINGS],
+      [ELEMENT_IDS.OPEN_SKILLS, MODAL_IDS.SKILL]
+    ] as const;
+
+    triggerMappings.forEach(([elementId, modalId]) => {
+      const element = document.getElementById(elementId);
+      element?.addEventListener("click", () => this.open(modalId));
+    });
   }
 
-  public close(): void {
-    if (!this.isOpened()) return;  // Let the modal handle its own closing behavior
-    this.__openedModal!.close();
-    this.__openedModal = null;
+  private addTopbarListeners(): void {
+    const topbarPlayBtn = document.getElementById(ELEMENT_IDS.TOPBAR_PLAY_BTN);
+    const topbarNewsBtn = document.getElementById(ELEMENT_IDS.TOPBAR_NEWS_BTN);
+
+    topbarPlayBtn?.addEventListener("click", () => {
+      window.gameClient.interface.loginFlowManager.showPostLogin();
+    });
+
+    topbarNewsBtn?.addEventListener("click", () => {
+      window.gameClient.interface.loginFlowManager.showChangelog();
+    });
   }
 
-  public render(): void {
-    if (!this.isOpened()) return;
-    this.__openedModal!.handleRender();
+  private addModalHeaderListeners(): void {
+    const modalHeaders = document.querySelectorAll(".modal-header");
+    modalHeaders.forEach(header => {
+      header.addEventListener("mousedown", this.handleHeaderMouseDown.bind(this) as EventListener);
+    });
   }
 
-  public get(id: string): Modal | null {
-    return this.__modals.hasOwnProperty(id) ? this.__modals[id] : null;
+  private handleHeaderMouseDown(event: MouseEvent): void {
+    event.preventDefault();
   }
 
-  public isOpened(): boolean {
-    return this.__openedModal !== null;
-  }
-
-  public open(id: string, options?: any): Modal | null {
-    if (this.isOpened() && this.__openedModal?.id === id && this.__openedModal!.shouldStayOpenOnReopen()) {
+  public open(id: string, options?: ModalOptions): Modal | null {
+    if (this.isOpened() && this.openedModal?.id === id && this.openedModal.shouldStayOpenOnReopen()) {
       return null;
     }
 
-    if (this.isOpened() && this.__openedModal?.id === id) {
+    if (this.isOpened() && this.openedModal?.id === id) {
       this.close();
       return null;
     }
@@ -142,23 +160,69 @@ export default class ModalManager {
       this.close();
     }
 
-    if (!this.__modals.hasOwnProperty(id)) {
+    const modal = this.get(id);
+    if (!modal) {
       return null;
     }
 
-    this.__openedModal = this.get(id);
-    this.__openedModal!.show();
-    this.__openedModal!.handleOpen(options);
-    return this.__openedModal;
+    this.openedModal = modal;
+    modal.show();
+    modal.handleOpen(options);
+    return modal;
   }
-  
+
+  public close(): void {
+    if (!this.isOpened()) return;
+    
+    this.openedModal!.close();
+    this.openedModal = null;
+  }
+
+  public get(id: string): Modal | null {
+    return this.modals.get(id) || null;
+  }
+
+  public isOpened(): boolean {
+    return this.openedModal !== null;
+  }
+
   public getOpenedModal(): string | null {
-    return this.__openedModal ? this.__openedModal.id : null;
+    return this.openedModal?.id || null;
+  }
+
+  public handleConfirm(): void {
+    if (!this.isOpened()) return;
+    
+    this.openedModal!.handleConfirm();
+
+    if (!this.isAuthFormModal()) {
+      this.handleEscape();
+    }
+  }
+
+  public handleEscape(): void {
+    if (!this.openedModal) return;
+
+    if (this.openedModal.shouldStayOpenOnReopen()) {
+      return;
+    }
+
+    if (this.isAuthFormModal()) {
+      this.close();
+      this.open(MODAL_IDS.LOGIN);
+      return;
+    }
+
+    this.close();
+  }
+
+  public render(): void {
+    if (!this.isOpened()) return;
+    this.openedModal!.handleRender();
   }
 
   private isAuthFormModal(): boolean {
-    const id = this.__openedModal?.id;
-    return id === "floater-create" || id === "floater-recover";
+    const id = this.openedModal?.id;
+    return id === MODAL_IDS.CREATE_ACCOUNT || id === MODAL_IDS.RECOVER_ACCOUNT;
   }
-  
 }

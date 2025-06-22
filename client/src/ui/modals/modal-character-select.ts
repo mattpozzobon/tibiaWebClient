@@ -1,6 +1,6 @@
 import Modal from "./modal";
 
-export class CharacterSelectorModal extends Modal {
+export default class CharacterSelectorModal extends Modal {
   private characters: any[] = [];
   private token = "";
   private gameHost = "";

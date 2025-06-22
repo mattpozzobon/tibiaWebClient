@@ -1,4 +1,4 @@
-import { CharacterSelectorModal } from "../modals/modal-character-select";
+import CharacterSelectorModal from "../modals/modal-character-select";
 
 export default class LoginFlowManager {
   private token = "";

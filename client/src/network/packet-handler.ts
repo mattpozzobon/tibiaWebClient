@@ -224,7 +224,7 @@ class PacketHandler {
   }
 
   handleServerError(message: string): void {
-    window.gameClient.interface.modalManager.open("floater-connecting", message);
+    window.gameClient.interface.modalManager.open("floater-connecting", { message });
   }
 
   handleServerMessage(string: string): void {

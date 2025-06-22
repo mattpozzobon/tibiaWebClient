@@ -60,7 +60,7 @@ export default class GameClient {
 
       this.interface.modalManager.open(
         "floater-connecting",
-        `Server version (${serverData.clientVersion}) mismatch with client sprite (${SpriteBuffer.__version}) or object (${this.dataObjects.getVersion()}) data.`
+        { message: `Server version (${serverData.clientVersion}) mismatch with client sprite (${SpriteBuffer.__version}) or object (${this.dataObjects.getVersion()}) data.` }
       );
     }
 
@@ -96,7 +96,7 @@ export default class GameClient {
   }
 
   setErrorModal(message: string): void {
-    this.interface.modalManager.open("floater-connecting", message);
+    this.interface.modalManager.open("floater-connecting", { message });
   }
 
   reset(): void {

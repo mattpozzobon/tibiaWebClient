@@ -211,7 +211,7 @@ class NetworkManager {
         console.error('Asset loading error:', error);
         return window.gameClient.interface.modalManager.open(
           "floater-connecting",
-          `Failed loading client data: ${error.message}. Please try again or select files manually using the Load Assets button.`
+          { message: `Failed loading client data: ${error.message}. Please try again or select files manually using the Load Assets button.` }
         );
       });
   }

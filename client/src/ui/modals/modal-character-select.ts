@@ -4,6 +4,7 @@ export default class CharacterSelectorModal extends Modal {
   private characters: any[] = [];
   private token = "";
   private gameHost = "";
+  private loginHost = "";
   private selectedCharacterId: number | null = null;
 
   constructor(id: string) {
@@ -13,6 +14,7 @@ export default class CharacterSelectorModal extends Modal {
   public open(characters: any[], token: string, loginHost: string, gameHost: string): void {
     this.characters = characters;
     this.token = token;
+    this.loginHost = loginHost;
     this.gameHost = gameHost;
     this.selectedCharacterId = null;
 
@@ -28,36 +30,36 @@ export default class CharacterSelectorModal extends Modal {
   private render(): void {
     const list = document.getElementById("character-list");
     if (!list) return;
-  
+
     list.innerHTML = "";
-  
+
     const maxSlots = 5;
-    const charactersToRender = this.characters.slice(0, maxSlots); // Cap at 5 just in case
-  
+    const charactersToRender = this.characters.slice(0, maxSlots);
+
     // Render existing characters
-    charactersToRender.forEach((char, index) => {
+    charactersToRender.forEach((char) => {
       const card = document.createElement("div");
       card.className = "character-card";
       card.textContent = char.name;
-  
+
       card.onclick = () => {
         this.selectedCharacterId = char.id;
         this.updateSelection(card);
       };
-  
+
       list.appendChild(card);
     });
-  
+
     // Fill remaining slots with "New Character"
     const remaining = maxSlots - charactersToRender.length;
     for (let i = 0; i < remaining; i++) {
       const card = document.createElement("div");
       card.className = "character-card flip-container";
-    
+
       const flipper = document.createElement("div");
       flipper.className = "flipper";
-    
-      // Front
+
+      // Front side with SVG
       const front = document.createElement("div");
       front.className = "front";
       front.innerHTML = `
@@ -68,36 +70,30 @@ export default class CharacterSelectorModal extends Modal {
       front.onclick = () => {
         flipper.classList.add("flipped");
       };
-    
-      // Back (form)
+
+      // Back side with form
       const back = document.createElement("div");
       back.className = "back";
       back.innerHTML = `
-        <input type="text" id="new-char-name" placeholder="Name" />
-        <select id="new-char-vocation">
+        <input type="text" id="char-name" placeholder="Name" />
+        <select id="char-sex">
           <option value="male">Male</option>
-          <option value="female">Femake</option>
+          <option value="female">Female</option>
         </select>
         <button class="btn-border btn-green">Create</button>
       `;
-    
-      back.querySelector("button")!.onclick = () => {
-        const name = (back.querySelector("#new-char-name") as HTMLInputElement).value;
-        const vocation = (back.querySelector("#new-char-vocation") as HTMLSelectElement).value;
-        console.log("Create character:", name, vocation);
-        // your creation logic
-      };
-    
+      back.querySelector("button")!.onclick = this.handleCreate;
+
       flipper.appendChild(front);
       flipper.appendChild(back);
       card.appendChild(flipper);
       list.appendChild(card);
-    }    
+    }
   }
 
   private updateSelection(selectedCard: HTMLElement): void {
     const allCards = document.querySelectorAll(".character-card");
-    allCards.forEach(card => card.classList.remove("selected"));
+    allCards.forEach((card) => card.classList.remove("selected"));
     selectedCard.classList.add("selected");
   }
 
@@ -111,12 +107,10 @@ export default class CharacterSelectorModal extends Modal {
     window.gameClient.networkManager.connectGameServer(this.gameHost, this.token, this.selectedCharacterId);
   }
 
-  /** Prevent closing with ESC */
   public override handleCancel(): boolean {
     return false;
   }
 
-  /** Prevent default confirm unless a character is selected */
   public override handleConfirm(): boolean {
     if (this.selectedCharacterId === null) {
       alert("Select a character before proceeding.");
@@ -129,4 +123,28 @@ export default class CharacterSelectorModal extends Modal {
   public override shouldStayOpenOnReopen(): boolean {
     return true;
   }
+
+  public handleCreate = (): void => {
+    const nameInput = document.getElementById("char-name") as HTMLInputElement;
+    const sexInput = document.getElementById("char-sex") as HTMLSelectElement;
+
+    const name = nameInput?.value.trim();
+    const sex = sexInput?.value as "male" | "female";
+
+    if (!name || !sex) return;
+
+    fetch(`http://${this.loginHost}/characters/create?token=${this.token}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, sex }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        window.gameClient.interface.modalManager.close();
+        window.gameClient.networkManager.connectGameServer(this.gameHost, this.token, data.characterId);
+      })
+      .catch((err) => {
+        alert("Failed to create character: " + err.message);
+      });
+  };
 }

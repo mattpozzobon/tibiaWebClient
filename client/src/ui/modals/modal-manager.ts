@@ -2,7 +2,6 @@ import Modal from "./modal";
 import LoginModal from "./modal-login";
 import CreateAccountModal from "./modal-create-account";
 import RecoverAccountModal from "./modal-recover-account";
-import CharacterCreatorModal from "./modal-character-creator";
 import CharacterSelectorModal from "./modal-character-select";
 import OutfitModal from "./modal-outfit";
 import MoveItemModal from "./modal-move-item";
@@ -22,7 +21,6 @@ const MODAL_IDS = {
   RECOVER_ACCOUNT: "floater-recover",
   
   CHARACTER_SELECTOR: "character-selector",
-  CHARACTER_CREATOR: "character-creator",
   
   SETTINGS: "settings-modal",
   SKILL: "skill-modal",
@@ -67,7 +65,6 @@ export default class ModalManager {
   private registerModals(): void {
     const modalRegistrations = [
       [CharacterSelectorModal, MODAL_IDS.CHARACTER_SELECTOR],
-      [CharacterCreatorModal, MODAL_IDS.CHARACTER_CREATOR],
       [Modal, MODAL_IDS.SETTINGS],
       [LoginModal, MODAL_IDS.LOGIN],
       [RecoverAccountModal, MODAL_IDS.RECOVER_ACCOUNT],

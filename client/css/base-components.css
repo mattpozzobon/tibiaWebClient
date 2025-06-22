@@ -71,52 +71,174 @@ hr {
     margin: 8px;
 }
 
-button {
+@keyframes shimmer {
+  0% {
+    border-image-source: linear-gradient(145deg, #888, #222, #888);
+  }
+  50% {
+    border-image-source: linear-gradient(145deg, #ccc, #444, #ccc);
+  }
+  100% {
+    border-image-source: linear-gradient(145deg, #888, #222, #888);
+  }
+}
+
+.special,
+.special::before {
+  animation: shimmer 2s infinite ease-in-out;
+}
+
+.btn-border {
+  background-color: transparent;
+  padding: 6px 10px;
   font-size: 12px;
-  font-weight: bold;
-  font-family: Verdana, sans-serif;
-  text-shadow: 0 0 2px black;
-  color: white;
-  background-color: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  margin: 0 6px;
+  position: relative;
+  border: 2px solid;
+  border-image: linear-gradient(145deg, #333, #111, #333) 1;
   border-radius: 4px;
-  padding: 6px 12px;
+  z-index: 1;
   cursor: pointer;
-  transition: 
-    background-color 0.2s ease-in-out,
-    border-color 0.2s ease-in-out,
-    box-shadow 0.2s ease-in-out;
-  box-shadow:
-    inset 0 0 6px rgba(0, 0, 0, 0.4),
-    0 0 4px rgba(255, 255, 255, 0.1);
+  transition:
+    border-image 0.2s ease-in-out;
 }
 
-/* Hover effect */
-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-color: #f9c349;
-  box-shadow:
-    inset 0 0 6px rgba(249, 195, 73, 0.3),
-    0 0 4px rgba(249, 195, 73, 0.2);
+.btn-border::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  bottom: -5px;
+  left: -5px;
+  border: 1px solid;
+  border-image: linear-gradient(145deg, #333, #111, #333) 1;
+  border-radius: 5px;
+  z-index: -1;
+  background: transparent;
+  pointer-events: none;
+  transition: border-image 0.2s ease-in-out;
 }
 
-/* Active/click effect */
-button.active {
-  background-color: rgba(249, 195, 73, 0.2);
-  border-color: #f9c349;
+.btn-border:active:not(:disabled):not(.disabled) {
+  transform: scale(0.97);
   box-shadow:
-    inset 0 0 4px rgba(249, 195, 73, 0.5),
-    0 0 2px rgba(249, 195, 73, 0.3);
+    inset 0 0 2px rgba(0, 0, 0, 0.6),
+    0 0 2px rgba(255, 255, 255, 0.2);
 }
 
-
-/* Disabled state */
-button.disabled {
-  opacity: 0.6;
+.btn-border:disabled,
+.btn-border.disabled {
   cursor: not-allowed;
-  background-color: rgba(60, 60, 60, 0.5);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: none;
+  pointer-events: none;
+  opacity: 0.6;
+  border-image: linear-gradient(145deg, #222, #111, #222) 1;
+}
+
+.btn-border:disabled::before,
+.btn-border.disabled::before {
+  border-image: linear-gradient(145deg, #222, #111, #222) 1;
+}
+
+/* 🔴 Red Theme */
+.btn-red {
+  color: rgba(255, 80, 80, 0.8);
+  box-shadow: inset 0 0 3px rgba(180, 40, 40, 0.4);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-red:hover {
+  background-color: rgba(100, 0, 0, 0.4);
+  color: rgba(255, 200, 200, 0.9);
+  box-shadow: inset 0 0 12px rgba(255, 0, 0, 0.5);
+}
+
+.btn-red.active {
+  background-color: rgba(80, 0, 0, 0.4);
+  box-shadow:
+    inset 0 0 8px rgba(180, 40, 40, 0.4),
+    0 0 2px rgba(120, 20, 20, 0.3);
+  border-image: linear-gradient(145deg, #6f2f2f, #222, #6f2f2f) 1;
+}
+
+.btn-red.active::before {
+  border-image: linear-gradient(145deg, #6f2f2f, #222, #6f2f2f) 1;
+}
+
+
+/* 🟢 Green Theme */
+.btn-green {
+  color: rgba(0, 255, 120, 0.7);
+  box-shadow: inset 0 0 3px rgba(0, 255, 120, 0.5);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-green:hover {
+  background-color: rgba(0, 60, 30, 0.4);
+  color: rgba(100, 255, 180, 0.85);
+  box-shadow: inset 0 0 12px rgba(0, 255, 120, 0.6);
+}
+
+.btn-green.active {
+  background-color: rgba(0, 50, 20, 0.4);
+  box-shadow:
+    inset 0 0 8px rgba(60, 200, 120, 0.4),
+    0 0 2px rgba(40, 120, 80, 0.3);
+  border-image: linear-gradient(145deg, #2f6f4f, #222, #2f6f4f) 1;
+}
+
+.btn-green.active::before {
+  border-image: linear-gradient(145deg, #2f6f4f, #222, #2f6f4f) 1;
+}
+
+
+/* 🟡 Gold Theme */
+.btn-gold {
+  color: rgba(255, 220, 140, 0.85);
+  box-shadow: inset 0 0 3px rgba(249, 195, 73, 0.4);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-gold:hover {
+  background-color: rgba(80, 60, 20, 0.4);
+  color: rgba(255, 240, 200, 0.9);
+  box-shadow: inset 0 0 12px rgba(255, 204, 102, 0.6);
+}
+
+.btn-gold.active {
+  background-color: rgba(100, 80, 30, 0.3);
+  box-shadow:
+    inset 0 0 8px rgba(249, 195, 73, 0.5),
+    0 0 2px rgba(249, 195, 73, 0.3);
+  border-image: linear-gradient(145deg, #f9c349, #222, #f9c349) 1;
+}
+
+.btn-gold.active::before {
+  border-image: linear-gradient(145deg, #f9c349, #222, #f9c349) 1;
+}
+
+/* ⚪ White Theme */
+.btn-white {
+  color: rgba(240, 240, 240, 0.85);
+  box-shadow: inset 0 0 3px rgba(255, 255, 255, 0.3);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-white:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.95);
+  box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.4);
+}
+
+.btn-white.active {
+  background-color: rgba(200, 200, 200, 0.2);
+  box-shadow:
+    inset 0 0 8px rgba(255, 255, 255, 0.4),
+    0 0 2px rgba(200, 200, 200, 0.3);
+  border-image: linear-gradient(145deg, #ccc, #222, #ccc) 1;
+}
+
+.btn-white.active::before {
+  border-image: linear-gradient(145deg, #ccc, #222, #ccc) 1;
 }
 
 .btn-primary,

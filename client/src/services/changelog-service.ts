@@ -139,13 +139,11 @@ export class ChangelogService {
         <div class="changelog-header">
           ${avatarImg}
           <div class="changelog-meta">
+            ${title}
             <div class="changelog-meta-row">
-              <span class="changelog-author">${name}</span>
-              <span class="changelog-date">
-                ${date.toLocaleDateString('en-GB')} ${date.toLocaleTimeString()}
-              </span>
+              <span class="changelog-author">${name} ${date.toLocaleDateString('en-GB')} </span> 
             </div>
-            ${title} ${reactionsHTML}
+            ${reactionsHTML}
           </div>
         </div>
         <div class="changelog-message">

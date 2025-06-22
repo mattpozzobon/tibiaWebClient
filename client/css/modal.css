@@ -9,24 +9,42 @@
 }
 
 .modal {
+  padding-top: 10px;
+  padding-bottom: 10px;
   display: none;
   position: fixed;
-  left: 100px;  /* default, will be overridden */
+  left: 100px; 
   top: 100px;
   z-index: 300000;
-  border: 1px solid black;
-  box-shadow: 0px 0px 10px 0px black;
-  background-image: url("/png/bg.png");
-
-  /* Add these: */
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: auto;
+  background: rgba(10, 10, 10, 0.95);
+  overflow: hidden;
+}
+
+.modal::before,
+.modal::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(to right, #2a2a2a, #3c3c3c, #2a2a2a); /* metallic steel grey */
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5); /* subtle inner shadow */
+  z-index: 1;
+}
+
+.modal::before {
+  top: 0;
+}
+
+.modal::after {
+  bottom: 0;
 }
 
 .modal-header {
-  background-image: url("/png/bg2.png");
   cursor: grab;
   text-align: center;
   padding: 4px;
@@ -48,7 +66,6 @@
 .offer-tab {
   flex: 1 1 auto;
   padding: 4px;
-  background-image: url("/png/bg2.png");
 }
 
 .offers {

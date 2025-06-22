@@ -1,6 +1,6 @@
 #pre-login-wrapper {
-  flex: 0 0 200px;
-  width: 200px;               
+  flex: 0 0 270px;
+  width: 270px;               
   display: flex;
   flex-direction: column;        /* stack banner → login form */
   justify-content: flex-start;  
@@ -50,6 +50,10 @@
 
 .register-text {
   font-size: 10px;
+}
+
+.register-line {
+  display: block;
 }
 
 .register-link {

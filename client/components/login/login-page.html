@@ -25,8 +25,8 @@
 
             <hr class="btn-space">
             <p class="register-text">
-                Don’t have an account?<a id="create-account" class="register-link">Register!</a>
-                Forgot your<a id="recover-account" class="register-link">account</a>?
+                <span class="register-line">Don’t have an account?<a id="create-account" class="register-link">Register!</a></span>
+                <span class="register-line">Forgot your account?<a id="recover-account" class="register-link">Recover!</a></span>
             </p>
 
         </div>
@@ -66,9 +66,8 @@
         <!-- Topbar: Shows user info -->
         <div id="post-login-topbar" class="topbar">
           <div class="user-info">
-            <img id="user-avatar" src="/png/avatar-placeholder.png" alt="Avatar" />
+
             <div class="user-details">
-              <div id="user-name">Username</div>
               <div class="user-meta">
                 <span id="account-type">Normal Account</span>
                 <span id="diamond-count">💎 0</span>
@@ -77,13 +76,13 @@
           </div>
           
             <div class="topbar-center">
-                <button id="topbar-play-btn">Play</button>
-                <button id="topbar-news-btn">News</button>
+                <button class="btn-border btn-gold" id="topbar-play-btn">Play</button>
+                <button class="btn-border btn-gold" id="topbar-news-btn">News</button>
             </div>
 
             <!-- Right: Donate Button -->
             <div class="topbar-right">
-                <button id="donate-button">Donate</button>
+                <button class="btn-border btn-white special" id="donate-button">Donate</button>
             </div>
         </div>
       
@@ -91,7 +90,7 @@
         <div id="post-login-body" class="post-login-body">
           
           <!-- Character Selector -->
-          <div id="character-selector" class="character-selector">
+          <div id="character-selector" class="modal">
             <h2>Select Character</h2>
             <div class="character-container">
                 <div id="character-list" class="character-grid"></div>

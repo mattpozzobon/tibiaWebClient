@@ -1,7 +1,7 @@
 #changelog-container {
   position: absolute;
   top: 80px; 
-  right: 24px;
+  right: 2px;
   max-width: 480px;
   z-index: 5;
   display: flex;
@@ -25,28 +25,17 @@
   padding: 10px;
   cursor: pointer;
   overflow: hidden;
-  max-height: 64px;
+  max-height: 80px;
   transition: all 0.3s ease;
   margin-bottom: 12px;
 }
 
 .changelog-entry.expanded {
   width: 600px;
-  min-height: 600px;
+  min-height: 400px;
   max-height: 80vh;
   overflow-y: auto;
   position: relative;
-  z-index: 10;
-}
-
-.changelog-entry.expanded {
-  width: 600px; 
-  min-height: 600px;
-  max-height: 80%;
-  flex-grow: 1;
-  overflow-y: auto;
-  position: relative;
-  z-index: 2;
 }
 
 .changelog-entry:not(.expanded).hidden {

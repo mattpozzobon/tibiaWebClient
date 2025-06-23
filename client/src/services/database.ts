@@ -1,4 +1,5 @@
-import SpriteBuffer from "../renderer/sprite-buffer";
+import AssetManager from "./asset-manager";
+
 
 interface MinimapChunk {
   imageData: ImageData;
@@ -11,35 +12,21 @@ interface Position3D {
   z: number;
 }
 
-interface StoredFile {
-  filename: string;
-  data: any;
-}
-
-interface FileVersions {
-  [filename: string]: string;
-}
-
-interface VersionInfo {
-  version: string;
-}
-
 export default class Database {
   private database: IDBDatabase | null = null;
   private readonly minimapChunkSize: number = 128;
   private loadedMinimapChunks: { [id: string]: MinimapChunk } = {};
+  private assetManager: AssetManager;
   
   // Constants from process.env
   private readonly DATABASE_NAME = process.env.DATABASE_NAME!;
   private readonly DATABASE_VERSION = parseInt(process.env.DATABASE_VERSION!, 10);
   private readonly MINIMAP_STORE = "minimap";
   private readonly FILES_STORE = "files";
-  private readonly FILE_VERSIONS_KEY = process.env.FILE_VERSIONS_KEY!;
-  private readonly REQUIRED_FILES = process.env.REQUIRED_FILES!.split(',').map(s => s.trim());
 
   constructor() {
+    this.assetManager = new AssetManager();
     this.initializeDatabase();
-    this.updateClientVersion();
   }
 
   // Database Initialization
@@ -69,42 +56,23 @@ export default class Database {
 
   // Asset Management
   public async loadGameConstants(): Promise<any> {
-    const response = await fetch(`/data/sprites/constants.json`);
-    return await response.json();
+    return await this.assetManager.loadGameConstants();
   }
 
   public async initializeGameAssets(): Promise<void> {
-    const constants = await this.loadGameConstants();
-    (window as any).CONST = constants;
+    await this.assetManager.initializeGameAssets();
     
-    if (await this.areAssetsUpToDate()) {
-      this.loadCachedGameAssets();
+    if (await this.assetManager.areAssetsUpToDate()) {
+      this.assetManager.loadCachedGameAssets(this);
     }
-  }
-
-  public async areAssetsUpToDate(): Promise<boolean> {
-    const needsUpdate = await this.checkFileVersions();
-    const hasRequiredFiles = this.REQUIRED_FILES.every(file => localStorage.getItem(file));
-    return hasRequiredFiles && !needsUpdate;
   }
 
   public storeGameFile(filename: string, data: any): void {
-    console.log("Storing file:", filename);
-    localStorage.setItem(filename, "true");
+    this.assetManager.storeGameFile(filename, data, this);
+  }
 
-    // Store version info for SPR files
-    if (filename === 'Tibia.spr') {
-      this.updateSpriteFileVersion();
-    }
-
-    const fileStore = this.createTransaction(this.FILES_STORE, "readwrite");
-    const request = fileStore.put({
-      filename: filename,
-      data: data,
-    });
-    request.onsuccess = (): void => {
-      console.debug(`Cached file ${filename} to IndexedDB.`);
-    };
+  public async areAssetsUpToDate(): Promise<boolean> {
+    return await this.assetManager.areAssetsUpToDate();
   }
 
   // Minimap Management
@@ -227,32 +195,6 @@ export default class Database {
     return new ImageData(new Uint8ClampedArray(size), this.minimapChunkSize, this.minimapChunkSize);
   }
 
-  private loadCachedGameAssets(): void {
-    this.createTransaction(this.FILES_STORE, "readonly").getAll().onsuccess = (event: Event): void => {
-      const target = event.target as IDBRequest;
-      if (target.result.length === 0) {
-        return;
-      }
-      
-      target.result.forEach((file: StoredFile) => {
-        this.loadGameFile(file);
-      });
-    };
-  }
-
-  private loadGameFile(file: StoredFile): void {
-    switch (file.filename) {
-      case "Tibia.dat":
-        window.gameClient.dataObjects.__load(file.filename, file.data);
-        break;
-      case "Tibia.spr":
-        SpriteBuffer.load(file.filename, file.data);
-        break;
-      default:
-        console.warn(`Unknown file type: ${file.filename}`);
-    }
-  }
-
   private saveMinimapChunk(id: string): void {
     const minimapStore = this.createTransaction(this.MINIMAP_STORE, "readwrite");
     const request = minimapStore.put({
@@ -263,100 +205,4 @@ export default class Database {
       delete this.loadedMinimapChunks[id];
     };
   }
-
-  private async checkFileVersions(): Promise<boolean> {
-    try {
-      const serverVersions = await this.fetchServerFileVersions();
-      const localVersions = this.getLocalFileVersions();
-      
-      const needsUpdate = this.compareFileVersions(serverVersions, localVersions);
-
-      if (needsUpdate) {
-        console.log('Game files need updating');
-        this.clearCachedFiles();
-        this.updateLocalFileVersions(serverVersions);
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error('Error checking file versions:', error);
-      return false;
-    }
-  }
-
-  private async fetchServerFileVersions(): Promise<FileVersions> {
-    try {
-      // Try to fetch the main version file first
-      const response = await fetch('/data/sprites/version.json');
-      
-      if (!response.ok) {
-        console.debug('Version file not found at /data/sprites/version.json, skipping version check');
-        return {};
-      }
-      
-      const versionInfo: VersionInfo = await response.json();
-      
-      // Create a simple version mapping based on the main version
-      // This assumes all files are at the same version
-      const fileVersions: FileVersions = {};
-      this.REQUIRED_FILES.forEach(filename => {
-        fileVersions[filename] = versionInfo.version;
-      });
-      
-      return fileVersions;
-    } catch (error) {
-      console.debug('Could not fetch server file versions, skipping version check:', error);
-      return {};
-    }
-  }
-
-  private getLocalFileVersions(): FileVersions {
-    return JSON.parse(localStorage.getItem(this.FILE_VERSIONS_KEY) || '{}');
-  }
-
-  private compareFileVersions(serverVersions: FileVersions, localVersions: FileVersions): boolean {
-    return Object.entries(serverVersions).some(([filename, version]) => {
-      return !localVersions[filename] || localVersions[filename] !== version;
-    });
-  }
-
-  private clearCachedFiles(): void {
-    this.REQUIRED_FILES.forEach(file => localStorage.removeItem(file));
-  }
-
-  private updateLocalFileVersions(versions: FileVersions): void {
-    localStorage.setItem(this.FILE_VERSIONS_KEY, JSON.stringify(versions));
-  }
-
-  private async updateSpriteFileVersion(): Promise<void> {
-    try {
-      const response = await fetch('/data/sprites/version.json');
-      if (!response.ok) {
-        console.debug('Version file not available, skipping SPR version update');
-        return;
-      }
-      const versionInfo: VersionInfo = await response.json();
-      localStorage.setItem('spr_version', versionInfo.version);
-    } catch (error) {
-      console.debug('Error updating SPR file version:', error);
-    }
-  }
-
-  private async updateClientVersion(): Promise<void> {
-    try {
-      const response = await fetch('/data/sprites/version.json');
-      if (!response.ok) {
-        console.debug('Version file not available, skipping client version update');
-        return;
-      }
-      const versionInfo: VersionInfo = await response.json();
-      const versionElement = document.getElementById("client-version");
-      if (versionElement) {
-        versionElement.innerHTML = versionInfo.version;
-      }
-    } catch (error) {
-      console.debug('Error updating client version:', error);
-    }
-  }
-}
+} 

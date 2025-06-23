@@ -1,5 +1,5 @@
 import Chunk from "./chunk";
-import Database from "../utils/database";
+import Database from "../services/database";
 import EventQueue from "./event-queue";
 import GameLoop from "./game-loop";
 import Interface from "../ui/interface";

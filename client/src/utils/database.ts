@@ -130,14 +130,16 @@ export default class Database {
     this.loadConstants().then(async (constants: any) => {
       (window as any).CONST = constants;
       
-      // Check if SPR needs updating
-      const needsUpdate = await this.__checkSprVersion();
-      
-      if (!localStorage.getItem("Tibia.spr") || !localStorage.getItem("Tibia.dat") || needsUpdate) {
+      if (await this.checkNeedsUpdate()) {
         return window.gameClient.networkManager.loadGameFilesServer();
       }
       this.__loadGameAssets();
     });
+  }
+
+  public async checkNeedsUpdate(): Promise<boolean> {
+    const needsUpdate = await this.__checkFileVersions();
+    return (!localStorage.getItem("Tibia.spr") || !localStorage.getItem("Tibia.dat") || needsUpdate);
   }
 
   private __handleUpgrade(event: IDBVersionChangeEvent): void {

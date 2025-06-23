@@ -28,16 +28,54 @@ export default class LoginFlowManager {
     this.setActiveButton(null);
   }
 
-  public showPostLogin(): void {
+  public async showPostLogin(): Promise<void> {
     this.setDisplay("none", "block", "none");
     if (this.changelog) this.changelog.style.display = "none";
     this.loginWrapper?.classList.add("post-login");
     this.setActiveButton("play");
-
+  
     const modal = window.gameClient.interface.modalManager.open("character-selector") as CharacterSelectorModal;
-    modal?.open(this.characters, this.token, this.loginHost, this.gameHost);
+    const playBtn = document.getElementById("topbar-play-btn") as HTMLButtonElement;
+  
+    try {
+      const needsUpdate = await window.gameClient.database.checkNeedsUpdate();
+  
+      if (!needsUpdate) {
+        modal?.open(this.characters, this.token, this.loginHost, this.gameHost);
+        return;
+      }
+  
+      // ⏳ Assets are missing or outdated — disable UI until they're downloaded
+      if (playBtn) {
+        playBtn.disabled = true;
+        playBtn.title = "Downloading game assets...";
+      }
+  
+      window.gameClient.networkManager.loadGameFilesServer();
+  
+      const checkInterval = setInterval(async () => {
+        const updateStillNeeded = await window.gameClient.database.checkNeedsUpdate();
+        if (!updateStillNeeded) {
+          clearInterval(checkInterval);
+  
+          if (playBtn) {
+            playBtn.disabled = false;
+            playBtn.removeAttribute("title");
+          }
+  
+          modal?.open(this.characters, this.token, this.loginHost, this.gameHost);
+        }
+      }, 500);
+    } catch (error) {
+      console.error("Error checking or downloading assets:", error);
+      if (playBtn) {
+        playBtn.disabled = false;
+        playBtn.removeAttribute("title");
+      }
+      // Optionally show an error modal or toast
+    }
   }
-
+  
   public showChangelog(): void {
     this.setDisplay("none", "block", "none");
     if (this.changelog) this.changelog.style.display = "flex";

@@ -71,6 +71,10 @@
   transition: border 0.2s, background 0.2s;
 }
 
+#character-selector h2 {
+  text-align: center;
+}
+
 .character-card:hover {
   background: rgba(255, 255, 255, 0.1);
 }

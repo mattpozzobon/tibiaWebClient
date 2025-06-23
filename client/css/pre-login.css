@@ -1,10 +1,9 @@
 #pre-login-wrapper {
-  flex: 0 0 270px;
-  width: 270px;               
+  flex: 0 0 200px;
+  align-items: stretch;                
   display: flex;
   flex-direction: column;        /* stack banner → login form */
-  justify-content: flex-start;  
-  align-items: center;           
+  justify-content: flex-start;         
   background: rgba(0, 0, 0, 0.8);
   padding: 2rem 2rem 1rem;       
   gap: 1.5rem;                   
@@ -12,22 +11,6 @@
 
 .auth-banner {
   margin-top: -1rem;  
-}
-
-#pre-login-wrapper .modal-body label {
-  display: block;
-  margin: 0.5rem 0 0.2rem; /* space above and a little below each label */
-  font-size: 0.85rem;
-  color: #eee;
-}
-
-#pre-login-wrapper .modal-body input,
-#pre-login-wrapper .modal-body select {
-  width: 100%;
-  margin-bottom: 1rem;      /* space after each field */
-  padding: 0.5rem;
-  background: #222;
-  color: #fff;
 }
 
 .auth-banner img {
@@ -42,10 +25,9 @@
   display: none;
 }
 
-#pre-login-wrapper .modal {
-  width: 100%;
-  position: static;
-  transform: none;
+.auth-footer {
+  align-self: center;
+  text-align: center;
 }
 
 .register-text {
@@ -66,7 +48,6 @@
 .register-link:hover {
   color: #ffe89e;          
 }
-
 
 #pre-login-wrapper label {
   display: block;

@@ -1,256 +1,280 @@
 import SpriteBuffer from "../renderer/sprite-buffer";
 
+interface MinimapChunk {
+  imageData: ImageData;
+  view: Uint32Array;
+}
+
+interface Position3D {
+  x: number;
+  y: number;
+  z: number;
+}
+
+interface StoredFile {
+  filename: string;
+  data: any;
+}
+
+interface FileVersions {
+  [filename: string]: string;
+}
+
+interface VersionInfo {
+  version: string;
+}
+
 export default class Database {
- 
-  private __database: IDBDatabase | null;
-  private __minimapChunkSize: number;
-  private __loadedMinimapChunks: { [id: string]: { imageData: ImageData; view: Uint32Array } };
-  private readonly ASSET_BASE = "https://pub-731c9162b7da4ead9743fb831880fd77.r2.dev/data/sprites";
-  private readonly FILE_VERSIONS_KEY = 'file_versions';
-  private readonly VERSION_CHECK_URL = `${this.ASSET_BASE}/version.json`;
+  private database: IDBDatabase | null = null;
+  private readonly minimapChunkSize: number = 128;
+  private loadedMinimapChunks: { [id: string]: MinimapChunk } = {};
+  
+  // Constants from process.env
+  private readonly DATABASE_NAME = process.env.DATABASE_NAME!;
+  private readonly DATABASE_VERSION = parseInt(process.env.DATABASE_VERSION!, 10);
+  private readonly MINIMAP_STORE = "minimap";
+  private readonly FILES_STORE = "files";
+  private readonly FILE_VERSIONS_KEY = process.env.FILE_VERSIONS_KEY!;
+  private readonly REQUIRED_FILES = process.env.REQUIRED_FILES!.split(',').map(s => s.trim());
 
   constructor() {
-    this.__database = null;
-    this.__minimapChunkSize = 128;
-    this.__loadedMinimapChunks = {};
-    this.init();
+    this.initializeDatabase();
     this.updateClientVersion();
   }
 
-  public init(): void {
-    const VERSION = 1098;
-    const openRequest: IDBOpenDBRequest = indexedDB.open("game", VERSION);
-    openRequest.onerror = (event: Event) => this.__handleOpenError(event);
-    openRequest.onsuccess = (event: Event) => this.__handleOpenSuccess(event);
-    openRequest.onupgradeneeded = (event: IDBVersionChangeEvent) => this.__handleUpgrade(event);
+  // Database Initialization
+  public initializeDatabase(): void {
+    const openRequest: IDBOpenDBRequest = indexedDB.open(this.DATABASE_NAME, this.DATABASE_VERSION);
+    openRequest.onerror = (event: Event) => this.handleDatabaseOpenError(event);
+    openRequest.onsuccess = (event: Event) => this.handleDatabaseOpenSuccess(event);
+    openRequest.onupgradeneeded = (event: IDBVersionChangeEvent) => this.handleDatabaseUpgrade(event);
   }
 
-  public clear(): void {
+  public clearDatabase(): void {
     if (!confirm("Are you sure you want to reset the client?")) {
       return;
     }
     localStorage.clear();
-    indexedDB.deleteDatabase("game");
+    indexedDB.deleteDatabase(this.DATABASE_NAME);
     window.location.reload();
   }
 
-  public transaction(store: string, mode: IDBTransactionMode): IDBObjectStore {
-    if (!this.__database) {
+  // Database Transactions
+  private createTransaction(store: string, mode: IDBTransactionMode): IDBObjectStore {
+    if (!this.database) {
       throw new Error("Database not initialized.");
     }
-    return this.__database.transaction(store, mode).objectStore(store);
+    return this.database.transaction(store, mode).objectStore(store);
   }
 
-  public saveChunks(): void {
-    Object.keys(this.__loadedMinimapChunks).forEach((id: string) => {
-      this.__saveChunk(id);
+  // Asset Management
+  public async loadGameConstants(): Promise<any> {
+    const response = await fetch(`/data/sprites/constants.json`);
+    return await response.json();
+  }
+
+  public async initializeGameAssets(): Promise<void> {
+    const constants = await this.loadGameConstants();
+    (window as any).CONST = constants;
+    
+    if (await this.areAssetsUpToDate()) {
+      this.loadCachedGameAssets();
+    }
+  }
+
+  public async areAssetsUpToDate(): Promise<boolean> {
+    const needsUpdate = await this.checkFileVersions();
+    const hasRequiredFiles = this.REQUIRED_FILES.every(file => localStorage.getItem(file));
+    return hasRequiredFiles && !needsUpdate;
+  }
+
+  public storeGameFile(filename: string, data: any): void {
+    console.log("Storing file:", filename);
+    localStorage.setItem(filename, "true");
+
+    // Store version info for SPR files
+    if (filename === 'Tibia.spr') {
+      this.updateSpriteFileVersion();
+    }
+
+    const fileStore = this.createTransaction(this.FILES_STORE, "readwrite");
+    const request = fileStore.put({
+      filename: filename,
+      data: data,
+    });
+    request.onsuccess = (): void => {
+      console.debug(`Cached file ${filename} to IndexedDB.`);
+    };
+  }
+
+  // Minimap Management
+  public saveAllMinimapChunks(): void {
+    Object.keys(this.loadedMinimapChunks).forEach((id: string) => {
+      this.saveMinimapChunk(id);
     });
   }
 
-  public preloadCallback(
-    positions: { x: number; y: number; z: number }[],
-    callback: (chunks: { [id: string]: { imageData: ImageData; view: Uint32Array } }) => void
+  public preloadMinimapChunks(
+    positions: Position3D[],
+    callback: (chunks: { [id: string]: MinimapChunk }) => void
   ): void {
-    positions = positions.filter(this.isValidMinimapChunk.bind(this));
+    const validPositions = positions.filter(this.isValidMinimapPosition.bind(this));
 
-    let count = 0;
-    const finishCallback = (): void => {
-      if (++count === positions.length) {
-        return callback(this.getLoadedMinimapChunks());
+    let loadedCount = 0;
+    const onChunkLoaded = (): void => {
+      if (++loadedCount === validPositions.length) {
+        callback(this.getLoadedMinimapChunks());
       }
     };
 
-    positions.forEach((position) => {
-      this.loadChunk(this.getChunkIdentifier(position), finishCallback);
+    validPositions.forEach((position) => {
+      this.loadMinimapChunk(this.getMinimapChunkId(position), onChunkLoaded);
     });
   }
 
-  public isValidMinimapChunk(position: { x: number; y: number; z: number }): boolean {
+  public isValidMinimapPosition(position: Position3D): boolean {
     return position.x >= 0 && position.y >= 0 && position.z >= 0;
   }
 
-  public getChunkIdentifier(position: { x: number; y: number; z: number }): string {
-    const xChunk = Math.floor(position.x / this.__minimapChunkSize);
-    const yChunk = Math.floor(position.y / this.__minimapChunkSize);
+  public getMinimapChunkId(position: Position3D): string {
+    const xChunk = Math.floor(position.x / this.minimapChunkSize);
+    const yChunk = Math.floor(position.y / this.minimapChunkSize);
     return `${xChunk}.${yChunk}.${position.z}`;
   }
 
-  public getLoadedMinimapChunks(): { [id: string]: { imageData: ImageData; view: Uint32Array } } {
-    return this.__loadedMinimapChunks;
+  public getLoadedMinimapChunks(): { [id: string]: MinimapChunk } {
+    return this.loadedMinimapChunks;
   }
 
-  public loadChunk(id: string, callback: () => void): void {
-    if (this.__loadedMinimapChunks.hasOwnProperty(id)) {
+  public loadMinimapChunk(id: string, callback: () => void): void {
+    if (this.loadedMinimapChunks.hasOwnProperty(id)) {
       return callback();
     }
-    const request = this.transaction("minimap", "readonly").get(id);
+
+    const request = this.createTransaction(this.MINIMAP_STORE, "readonly").get(id);
     request.onsuccess = (event: Event): void => {
       const target = event.target as IDBRequest;
       if (target.result === undefined) {
-        this.__loadedMinimapChunks[id] = this.__createView(this.__createChunk());
+        this.loadedMinimapChunks[id] = this.createMinimapChunkView(this.createEmptyMinimapChunk());
       } else {
-        this.__loadedMinimapChunks[id] = this.__createView(target.result.data);
+        this.loadedMinimapChunks[id] = this.createMinimapChunkView(target.result.data);
       }
       callback();
     };
   }
 
-  public storeFile(filename: string, data: any): void {
-    console.log("filename", filename);
-    localStorage.setItem(filename, "true");
-
-    // If storing SPR file, also store its version
-    if (filename === 'Tibia.spr') {
-      fetch(this.VERSION_CHECK_URL)
-        .then(response => response.json())
-        .then(version => {
-          localStorage.setItem('spr_version', version.version);
-        })
-        .catch(error => {
-          console.error('Error storing SPR version:', error);
-        });
-    }
-
-    const fileStore = this.transaction("files", "readwrite");
-    const request = fileStore.put({
-      filename: filename,
-      data: data,
-    });
-    request.onsuccess = (event: Event): void => {
-      console.debug("Cached file " + filename + " to indexDB.");
-    };
-  }
-
-  public async loadConstants(): Promise<any> {
-    const response = await fetch(`/data/sprites/constants.json`);
-    return await response.json();
-  }
-
-  public loadGameAssets(): void {
-    this.loadConstants().then(async (constants: any) => {
-      (window as any).CONST = constants;
-      
-      if (!await this.checkNeedsUpdate()) {
-        this.__loadGameAssets();
+  public cleanupDistantMinimapChunks(position: Position3D): void {
+    const currentChunkId = this.getMinimapChunkId(position);
+    const [currentX, currentY, currentZ] = currentChunkId.split(".").map(Number);
+    
+    Object.keys(this.loadedMinimapChunks).forEach((chunkId: string) => {
+      const [x, y, z] = chunkId.split(".").map(Number);
+      if (Math.abs(currentX - x) > 2 || Math.abs(currentY - y) > 2 || currentZ !== z) {
+        delete this.loadedMinimapChunks[chunkId];
       }
     });
   }
 
-  public async checkNeedsUpdate(): Promise<boolean> {
-    const needsUpdate = await this.__checkFileVersions();
-    return (!localStorage.getItem("Tibia.spr") || !localStorage.getItem("Tibia.dat") || needsUpdate);
+  public saveMinimapChunksForCurrentLevel(): void {
+    const playerZ = window.gameClient.player!.getPosition().z;
+    Object.keys(this.loadedMinimapChunks).forEach((id: string) => {
+      const [, , z] = id.split(".").map(Number);
+      if (playerZ !== z) {
+        this.saveMinimapChunk(id);
+      }
+    });
   }
 
-  private __handleUpgrade(event: IDBVersionChangeEvent): void {
+  // Private Helper Methods
+  private handleDatabaseUpgrade(event: IDBVersionChangeEvent): void {
     console.debug("Initializing IndexedDB with new version.");
+    this.database = (event.target as IDBOpenDBRequest).result;
+    this.createDatabaseStores();
+  }
   
-    // Set the database; event.target is an IDBOpenDBRequest.
-    this.__database = (event.target as IDBOpenDBRequest).result;
-  
-    // Check if stores exist before creating them
-    if (!this.__database.objectStoreNames.contains("minimap")) {
-      const objectStore = this.__database.createObjectStore("minimap", { keyPath: "chunk" });
+  private handleDatabaseOpenError(event: Event): void {
+    const target = event.target as IDBOpenDBRequest;
+    console.error("Database open error:", target.error);
+  }
+
+  private handleDatabaseOpenSuccess(event: Event): void {
+    console.debug("Successfully initialized IndexedDB.");
+    this.database = (event.target as IDBOpenDBRequest).result;
+    this.initializeGameAssets();
+  }
+
+  private createDatabaseStores(): void {
+    if (!this.database!.objectStoreNames.contains(this.MINIMAP_STORE)) {
+      const objectStore = this.database!.createObjectStore(this.MINIMAP_STORE, { keyPath: "chunk" });
       objectStore.createIndex("id", "chunk");
     }
   
-    if (!this.__database.objectStoreNames.contains("files")) {
-      const fileStore = this.__database.createObjectStore("files", { keyPath: "filename" });
+    if (!this.database!.objectStoreNames.contains(this.FILES_STORE)) {
+      const fileStore = this.database!.createObjectStore(this.FILES_STORE, { keyPath: "filename" });
       fileStore.createIndex("id", "filename");
     }
   }
-  
-  private __handleOpenError(event: Event): void {
-    const target = event.target as IDBOpenDBRequest;
-    console.error("Error", target.error);
-  }
 
-  private __handleOpenSuccess(event: Event): void {
-    console.debug("Successfully initialized IndexedDB.");
-    this.__database = (event.target as IDBOpenDBRequest).result;
-    this.loadGameAssets();
-  }
-
-  private __createView(chunk: ImageData): { imageData: ImageData; view: Uint32Array } {
+  private createMinimapChunkView(chunk: ImageData): MinimapChunk {
     return {
       imageData: chunk,
       view: new Uint32Array(chunk.data.buffer),
     };
   }
 
-  private __createChunk(): ImageData {
-    const size = 4 * this.__minimapChunkSize * this.__minimapChunkSize;
-    return new ImageData(new Uint8ClampedArray(size), this.__minimapChunkSize, this.__minimapChunkSize);
+  private createEmptyMinimapChunk(): ImageData {
+    const size = 4 * this.minimapChunkSize * this.minimapChunkSize;
+    return new ImageData(new Uint8ClampedArray(size), this.minimapChunkSize, this.minimapChunkSize);
   }
 
-  private __loadGameAssets(): void {
-    this.transaction("files", "readonly").getAll().onsuccess = (event: Event): void => {
+  private loadCachedGameAssets(): void {
+    this.createTransaction(this.FILES_STORE, "readonly").getAll().onsuccess = (event: Event): void => {
       const target = event.target as IDBRequest;
       if (target.result.length === 0) {
         return;
       }
-      target.result.forEach((file: any) => {
-        switch (file.filename) {
-          case "Tibia.dat":
-            return window.gameClient.dataObjects.__load(file.filename, file.data);
-          case "Tibia.spr":
-            return SpriteBuffer.load(file.filename, file.data);
-          default:
-            return;
-        }
+      
+      target.result.forEach((file: StoredFile) => {
+        this.loadGameFile(file);
       });
     };
   }
 
-  public dropWorldMapChunks(position: { x: number; y: number; z: number }): void {
-    const id = this.getChunkIdentifier(position);
-    const [rx, ry, rz] = id.split(".").map(Number);
-    Object.keys(this.__loadedMinimapChunks).forEach((chunkId: string) => {
-      const [x, y, z] = chunkId.split(".").map(Number);
-      if (Math.abs(rx - x) > 2 || Math.abs(ry - y) > 2 || rz !== z) {
-        delete this.__loadedMinimapChunks[chunkId];
-      }
-    });
+  private loadGameFile(file: StoredFile): void {
+    switch (file.filename) {
+      case "Tibia.dat":
+        window.gameClient.dataObjects.__load(file.filename, file.data);
+        break;
+      case "Tibia.spr":
+        SpriteBuffer.load(file.filename, file.data);
+        break;
+      default:
+        console.warn(`Unknown file type: ${file.filename}`);
+    }
   }
 
-  public checkChunks(): void {
-    Object.keys(this.__loadedMinimapChunks).forEach((id: string) => {
-      const [x, y, z] = id.split(".").map(Number);
-      if (window.gameClient.player!.getPosition().z !== z) {
-        this.__saveChunk(id);
-      }
-    });
-  }
-
-  private __saveChunk(id: string): void {
-    const minimapStore = this.transaction("minimap", "readwrite");
+  private saveMinimapChunk(id: string): void {
+    const minimapStore = this.createTransaction(this.MINIMAP_STORE, "readwrite");
     const request = minimapStore.put({
       chunk: id,
-      data: this.__loadedMinimapChunks[id].imageData,
+      data: this.loadedMinimapChunks[id].imageData,
     });
     request.onsuccess = (): void => {
-      delete this.__loadedMinimapChunks[id];
+      delete this.loadedMinimapChunks[id];
     };
   }
 
-  private async __checkFileVersions(): Promise<boolean> {
+  private async checkFileVersions(): Promise<boolean> {
     try {
-      // Get server file versions
-      const response = await fetch(`/data/${window.gameClient.SERVER_VERSION}/file_versions.json`);
-      const serverVersions = await response.json();
+      const serverVersions = await this.fetchServerFileVersions();
+      const localVersions = this.getLocalFileVersions();
       
-      // Get local file versions
-      const localVersions = JSON.parse(localStorage.getItem(this.FILE_VERSIONS_KEY) || '{}');
-      
-      // Check if files need updating
-      const needsUpdate = Object.entries(serverVersions).some(([filename, version]) => {
-        return !localVersions[filename] || localVersions[filename] !== version;
-      });
+      const needsUpdate = this.compareFileVersions(serverVersions, localVersions);
 
       if (needsUpdate) {
         console.log('Game files need updating');
-        localStorage.removeItem('Tibia.spr');
-        localStorage.removeItem('Tibia.dat');
-        localStorage.setItem(this.FILE_VERSIONS_KEY, JSON.stringify(serverVersions));
+        this.clearCachedFiles();
+        this.updateLocalFileVersions(serverVersions);
         return true;
       }
 
@@ -261,44 +285,78 @@ export default class Database {
     }
   }
 
-  // private async __checkSprVersion(): Promise<boolean> {
-  //   try {
-  //     // Get server version info
-  //     const response = await fetch(this.VERSION_CHECK_URL);
-  //     const serverInfo = await response.json();
+  private async fetchServerFileVersions(): Promise<FileVersions> {
+    try {
+      // Try to fetch the main version file first
+      const response = await fetch('/data/sprites/version.json');
       
-  //     // Get local version
-  //     const localVersion = localStorage.getItem('spr_version');
+      if (!response.ok) {
+        console.debug('Version file not found at /data/sprites/version.json, skipping version check');
+        return {};
+      }
       
-  //     // If versions don't match or no local version exists
-  //     console.log('localVersion', localVersion);
-  //     console.log('serverInfo.version', serverInfo.version);
-  //     if (!localVersion || localVersion !== serverInfo.version) {
-  //       console.log('SPR file needs updating - version changed');
-  //       // Clear old SPR file
-  //       localStorage.removeItem('Tibia.spr');
-  //       // Update version
-  //       localStorage.setItem('spr_version', serverInfo.version);
-  //       return true;
-  //     }
+      const versionInfo: VersionInfo = await response.json();
       
-  //     return false;
-  //   } catch (error) {
-  //     console.error('Error checking SPR version:', error);
-  //     return false;
-  //   }
-  // }
+      // Create a simple version mapping based on the main version
+      // This assumes all files are at the same version
+      const fileVersions: FileVersions = {};
+      this.REQUIRED_FILES.forEach(filename => {
+        fileVersions[filename] = versionInfo.version;
+      });
+      
+      return fileVersions;
+    } catch (error) {
+      console.debug('Could not fetch server file versions, skipping version check:', error);
+      return {};
+    }
+  }
+
+  private getLocalFileVersions(): FileVersions {
+    return JSON.parse(localStorage.getItem(this.FILE_VERSIONS_KEY) || '{}');
+  }
+
+  private compareFileVersions(serverVersions: FileVersions, localVersions: FileVersions): boolean {
+    return Object.entries(serverVersions).some(([filename, version]) => {
+      return !localVersions[filename] || localVersions[filename] !== version;
+    });
+  }
+
+  private clearCachedFiles(): void {
+    this.REQUIRED_FILES.forEach(file => localStorage.removeItem(file));
+  }
+
+  private updateLocalFileVersions(versions: FileVersions): void {
+    localStorage.setItem(this.FILE_VERSIONS_KEY, JSON.stringify(versions));
+  }
+
+  private async updateSpriteFileVersion(): Promise<void> {
+    try {
+      const response = await fetch('/data/sprites/version.json');
+      if (!response.ok) {
+        console.debug('Version file not available, skipping SPR version update');
+        return;
+      }
+      const versionInfo: VersionInfo = await response.json();
+      localStorage.setItem('spr_version', versionInfo.version);
+    } catch (error) {
+      console.debug('Error updating SPR file version:', error);
+    }
+  }
 
   private async updateClientVersion(): Promise<void> {
     try {
-      const response = await fetch(this.VERSION_CHECK_URL);
-      const versionInfo = await response.json();
+      const response = await fetch('/data/sprites/version.json');
+      if (!response.ok) {
+        console.debug('Version file not available, skipping client version update');
+        return;
+      }
+      const versionInfo: VersionInfo = await response.json();
       const versionElement = document.getElementById("client-version");
       if (versionElement) {
         versionElement.innerHTML = versionInfo.version;
       }
     } catch (error) {
-      console.error('Error updating client version:', error);
+      console.debug('Error updating client version:', error);
     }
   }
 }

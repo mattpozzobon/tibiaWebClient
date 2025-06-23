@@ -65,9 +65,9 @@ export default class LoginFlowManager {
     this.ui.loginWrapper?.classList.add("post-login");
 
     try {
-      const needsUpdate = await window.gameClient.database.checkNeedsUpdate();
+      const assetsAreUpToDate = await window.gameClient.database.areAssetsUpToDate();
 
-      if (!needsUpdate) {
+      if (assetsAreUpToDate) {
         this.enableCharacterSelection();
         return;
       }

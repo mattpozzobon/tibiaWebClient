@@ -1,14 +1,14 @@
-import { initializeApp }     from "firebase/app";
-import { getAuth }           from "firebase/auth";
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey:            "AIzaSyAhLwsTXTQFF_nvYLs15R3TJH6AChIxN9E",
-  authDomain:        "emperia-online.firebaseapp.com",
-  projectId:         "emperia-online",
-  storageBucket:     "emperia-online.appspot.com",
-  messagingSenderId: "28744750453",
-  appId:             "1:28744750453:web:YOUR_APP_ID", 
+  apiKey: process.env.FIREBASE_API_KEY!,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN!,
+  projectId: process.env.FIREBASE_PROJECT_ID!,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET!,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID!,
+  appId: process.env.FIREBASE_APP_ID!,
 };
 
-const app  = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);

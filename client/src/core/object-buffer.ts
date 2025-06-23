@@ -94,7 +94,7 @@ class ObjectBuffer {
       const result = (event.target as FileReader).result;
       if (result instanceof ArrayBuffer) {
         this.__load(name, result);
-        window.gameClient.database.storeFile(name, result);
+        window.gameClient.database.storeGameFile(name, result);
       } else {
         throw new Error("Failed to load Tibia.dat: result is not an ArrayBuffer.");
       }

@@ -76,7 +76,7 @@ export default class SpriteBuffer {
             } else {
                 throw new Error("Failed to load sprite: result is not an ArrayBuffer.");
             }
-            window.gameClient.database.storeFile(name, result);
+            window.gameClient.database.storeGameFile(name, result);
         }
     } catch (exception) {
         window.gameClient.interface.modalManager.open("floater-connecting", {

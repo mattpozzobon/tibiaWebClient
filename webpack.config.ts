@@ -32,6 +32,9 @@ const config: webpack.Configuration = {
       systemvars: true, // Load all the predefined 'process.env' variables
       silent: false, // Hide any errors
     }),
+    new webpack.DefinePlugin({
+      'process.env': JSON.stringify(process.env),
+    }),
   ],
 };
 

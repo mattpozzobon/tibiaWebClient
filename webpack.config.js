@@ -1,4 +1,5 @@
 const path = require('path');
+const Dotenv = require('dotenv-webpack');
 
 module.exports = {
   entry: './client/src/index.ts',
@@ -47,4 +48,12 @@ module.exports = {
   optimization: {
     splitChunks: false,
   },
+  plugins: [
+    new Dotenv({
+      path: './.env',
+      safe: false,
+      systemvars: true,
+      silent: false,
+    }),
+  ],
 };

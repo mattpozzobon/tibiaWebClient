@@ -100,7 +100,7 @@ export default class MapModal extends Modal {
     this.canvas.clear();
 
     // Load visible chunks from the database.
-    window.gameClient.database.preloadCallback(chunkPositions, (chunks: { [id: string]: any }) => {
+    window.gameClient.database.preloadMinimapChunks(chunkPositions, (chunks: { [id: string]: any }) => {
       Object.entries(chunks).forEach(([id, chunk]) => {
         const [x, y, z] = id.split(".").map(Number);
         this.canvas.context.putImageData(
@@ -121,6 +121,6 @@ export default class MapModal extends Modal {
 
     // Optionally, retrieve the player's position (unused here) and drop old map chunks.
     const pos = window.gameClient.player!.getPosition();
-    window.gameClient.database.dropWorldMapChunks(this.__center);
+    window.gameClient.database.cleanupDistantMinimapChunks(this.__center);
   }
 }

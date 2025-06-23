@@ -78,7 +78,7 @@ export default class Modal {
   }
 
   public handleOpen(options?: any): void {
-    console.log('BASIC MODAL OPEN', this.id);
+   
   }
 
   public handleRender(): void {

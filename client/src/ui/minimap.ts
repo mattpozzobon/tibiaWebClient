@@ -113,7 +113,7 @@ export default class Minimap {
     const west = new Position(position.x - 80, position.y, this.__renderLayer);
 
     // Preemptively load the chunks.
-    window.gameClient.database.preloadCallback(
+    window.gameClient.database.preloadMinimapChunks(
       [position, upperWest, upper, upperEast, east, lowerEast, lower, lowerWest, west],
       this.chunkUpdate.bind(this)
     );
@@ -172,7 +172,7 @@ export default class Minimap {
         if (!window.gameClient.player!.canSee(tile)) return;
         const color = this.__getTileColor(tile);
         if (color === null) return;
-        const buffer = chunks[ window.gameClient.database.getChunkIdentifier(tile.getPosition())];
+        const buffer = chunks[ window.gameClient.database.getMinimapChunkId(tile.getPosition())];
         const index = (tile.getPosition().x % 128) + ((tile.getPosition().y % 128) * 128);
         buffer.view[index] = this.colors[color];
       });
@@ -193,8 +193,8 @@ export default class Minimap {
     this.cache();
   }
 
-  public save(): void {
-    window.gameClient.database.saveChunks();
+  public saveChunks(): void {
+    window.gameClient.database.saveAllMinimapChunks();
   }
 
   public render(chunks: any): void {

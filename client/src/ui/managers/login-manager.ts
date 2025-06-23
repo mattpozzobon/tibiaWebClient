@@ -1,37 +1,68 @@
 import CharacterSelectorModal from "../modals/modal-character-select";
 
+interface LoginInfo {
+  token: string;
+  characters: any[];
+  loginHost: string;
+  gameHost: string;
+}
+
+interface UIElements {
+  preLoginWrapper: HTMLElement;
+  postLoginWrapper: HTMLElement;
+  gameWrapper: HTMLElement;
+  changelog: HTMLElement | null;
+  loginWrapper: HTMLElement | null;
+  playBtn: HTMLButtonElement | null;
+  newsBtn: HTMLButtonElement | null;
+}
+
+type ActiveButton = "play" | "news" | null;
+
 export default class LoginFlowManager {
-  private token = "";
-  private characters: any[] = [];
-  private loginHost = "";
-  private gameHost = "";
+  private loginInfo: LoginInfo = {
+    token: "",
+    characters: [],
+    loginHost: "",
+    gameHost: ""
+  };
 
-  private readonly preLoginWrapper = document.getElementById("pre-login-wrapper")!;
-  private readonly postLoginWrapper = document.getElementById("post-login-wrapper")!;
-  private readonly gameWrapper = document.getElementById("game-wrapper")!;
-  private readonly changelog = document.getElementById("changelog-container");
-  private readonly loginWrapper = document.getElementById("login-wrapper");
+  private readonly ui: UIElements;
 
-  private readonly playBtn = document.getElementById("topbar-play-btn") as HTMLButtonElement;
-  private readonly newsBtn = document.getElementById("topbar-news-btn") as HTMLButtonElement;
+  constructor() {
+    this.ui = {
+      preLoginWrapper: this.getElementOrThrow("pre-login-wrapper"),
+      postLoginWrapper: this.getElementOrThrow("post-login-wrapper"),
+      gameWrapper: this.getElementOrThrow("game-wrapper"),
+      changelog: document.getElementById("changelog-container"),
+      loginWrapper: document.getElementById("login-wrapper"),
+      playBtn: document.getElementById("topbar-play-btn") as HTMLButtonElement,
+      newsBtn: document.getElementById("topbar-news-btn") as HTMLButtonElement
+    };
+  }
+
+  private getElementOrThrow(id: string): HTMLElement {
+    const element = document.getElementById(id);
+    if (!element) {
+      throw new Error(`Required element with id '${id}' not found`);
+    }
+    return element;
+  }
 
   public setLoginInfo(token: string, characters: any[], loginHost: string, gameHost: string): void {
-    this.token = token;
-    this.characters = characters;
-    this.loginHost = loginHost;
-    this.gameHost = gameHost;
+    this.loginInfo = { token, characters, loginHost, gameHost };
   }
 
   public showPreLogin(): void {
     this.setDisplay("flex", "none", "none");
-    this.loginWrapper?.classList.remove("post-login");
-    if (this.changelog) this.changelog.style.display = "flex";
+    this.ui.loginWrapper?.classList.remove("post-login");
+    this.showChangelogElement();
     this.setActiveButton(null);
   }
 
   public async showPostLogin(): Promise<void> {
     this.setDisplay("none", "block", "none");
-    this.loginWrapper?.classList.add("post-login");
+    this.ui.loginWrapper?.classList.add("post-login");
 
     try {
       const needsUpdate = await window.gameClient.database.checkNeedsUpdate();
@@ -41,35 +72,18 @@ export default class LoginFlowManager {
         return;
       }
 
-      // Assets not ready — prepare UI
-      this.setActiveButton("news");
-      if (this.changelog) this.changelog.style.display = "flex";
-
-      if (this.playBtn) {
-        this.playBtn.disabled = true;
-        this.playBtn.title = "Downloading required assets...";
-      }
-      if (this.newsBtn) this.newsBtn.disabled = false;
-
-      await window.gameClient.networkManager.downloadManager.loadGameAssetsWithUI(() => {
-        this.enableCharacterSelection();
-      });
+      this.prepareForAssetDownload();
+      await this.downloadAssets();
     } catch (error) {
       console.error("Asset check/download failed:", error);
-      if (this.playBtn) {
-        this.playBtn.disabled = false;
-        this.playBtn.removeAttribute("title");
-      }
-      if (this.newsBtn) this.newsBtn.disabled = false;
-      this.setActiveButton("news");
-      if (this.changelog) this.changelog.style.display = "flex";
+      this.handleAssetDownloadError();
     }
   }
 
   public showChangelog(): void {
     this.setDisplay("none", "block", "none");
-    if (this.changelog) this.changelog.style.display = "flex";
-    this.loginWrapper?.classList.add("post-login");
+    this.showChangelogElement();
+    this.ui.loginWrapper?.classList.add("post-login");
     this.setActiveButton("news");
     window.gameClient.interface.modalManager.close();
   }
@@ -84,29 +98,85 @@ export default class LoginFlowManager {
   }
 
   private setDisplay(pre: string, post: string, game: string): void {
-    this.preLoginWrapper.style.display = pre;
-    this.postLoginWrapper.style.display = post;
-    this.gameWrapper.style.display = game;
+    this.ui.preLoginWrapper.style.display = pre;
+    this.ui.postLoginWrapper.style.display = post;
+    this.ui.gameWrapper.style.display = game;
   }
 
-  private setActiveButton(active: "play" | "news" | null): void {
-    if (this.playBtn) {
-      this.playBtn.classList.toggle("active", active === "play");
+  private setActiveButton(active: ActiveButton): void {
+    if (this.ui.playBtn) {
+      this.ui.playBtn.classList.toggle("active", active === "play");
     }
-    if (this.newsBtn) {
-      this.newsBtn.classList.toggle("active", active === "news");
+    if (this.ui.newsBtn) {
+      this.ui.newsBtn.classList.toggle("active", active === "news");
+    }
+  }
+
+  private showChangelogElement(): void {
+    if (this.ui.changelog) {
+      this.ui.changelog.style.display = "flex";
+    }
+  }
+
+  private hideChangelogElement(): void {
+    if (this.ui.changelog) {
+      this.ui.changelog.style.display = "none";
+    }
+  }
+
+  private prepareForAssetDownload(): void {
+    this.setActiveButton("news");
+    this.showChangelogElement();
+    this.disablePlayButton("Downloading required assets...");
+    this.enableNewsButton();
+  }
+
+  private async downloadAssets(): Promise<void> {
+    await window.gameClient.networkManager.downloadManager.loadGameAssetsWithUI(() => {
+      this.enableCharacterSelection();
+    });
+  }
+
+  private handleAssetDownloadError(): void {
+    this.enablePlayButton();
+    this.enableNewsButton();
+    this.setActiveButton("news");
+    this.showChangelogElement();
+  }
+
+  private disablePlayButton(title?: string): void {
+    if (this.ui.playBtn) {
+      this.ui.playBtn.disabled = true;
+      if (title) {
+        this.ui.playBtn.title = title;
+      }
+    }
+  }
+
+  private enablePlayButton(): void {
+    if (this.ui.playBtn) {
+      this.ui.playBtn.disabled = false;
+      this.ui.playBtn.removeAttribute("title");
+    }
+  }
+
+  private enableNewsButton(): void {
+    if (this.ui.newsBtn) {
+      this.ui.newsBtn.disabled = false;
     }
   }
 
   private enableCharacterSelection(): void {
-    if (this.playBtn) {
-      this.playBtn.disabled = false;
-      this.playBtn.removeAttribute("title");
-    }
-    if (this.changelog) this.changelog.style.display = "none";
+    this.enablePlayButton();
+    this.hideChangelogElement();
     this.setActiveButton("play");
 
     const modal = window.gameClient.interface.modalManager.open("character-selector") as CharacterSelectorModal;
-    modal?.open(this.characters, this.token, this.loginHost, this.gameHost);
+    modal?.open(
+      this.loginInfo.characters, 
+      this.loginInfo.token, 
+      this.loginInfo.loginHost, 
+      this.loginInfo.gameHost
+    );
   }
 }

@@ -10,9 +10,11 @@
 
   <link rel="shortcut icon" type="image/png" href="/png/forby.png"/>
   
+  <!-- Critical CSS - Load immediately to prevent white flash -->
+  <link rel="stylesheet" type="text/css" href="./css/critical.css">
+
+  <!-- Non-critical CSS - Load after initial render -->
   <link rel="stylesheet" type="text/css" href="./css/base-components.css">
-
-
   <link rel="stylesheet" type="text/css" href="./css/screen-element.css">
   <link rel="stylesheet" type="text/css" href="./css/canvas.css">
   <link rel="stylesheet" type="text/css" href="./css/new.css">
@@ -22,8 +24,22 @@
   <link rel="stylesheet" type="text/css" href="./css/slot.css">
   <link rel="stylesheet" type="text/css" href="./css/slider.css">
   <link rel="stylesheet" type="text/css" href="./css/achievement.css">
+  <link rel="stylesheet" type="text/css" href="./css/login.css">
+  <link rel="stylesheet" type="text/css" href="./css/changelog.css">
+  <link rel="stylesheet" type="text/css" href="./css/pre-login.css">
+  <link rel="stylesheet" type="text/css" href="./css/post-login.css">
 
   <body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+      <div class="loading-logo"></div>
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Loading Emperia...</div>
+      <div class="loading-progress">
+        <div class="loading-progress-bar" id="loading-progress-bar"></div>
+      </div>
+    </div>
+
     <!-- Components will be loaded here -->
     <div id="login-page-container"></div>
     <div id="audio-container"></div>
@@ -56,67 +72,98 @@
             </div>
           </div>
         </div>
-      </div>
+    </div>
 
-      <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-        
-          const inject = async (url, hostQuery) => {
-            const host = document.querySelector(hostQuery);
-            if (!host) { console.warn('❗ host', hostQuery, 'missing'); return; }
-            const html = await fetch(url).then(r => r.text());
-            host.innerHTML = html;
-            console.log('✅', url);
-          };
+    <script>
+      // Loading progress tracking
+      let loadingProgress = 0;
+      const progressBar = document.getElementById('loading-progress-bar');
+      const loadingText = document.querySelector('.loading-text');
+      
+      function updateProgress(progress, text) {
+        loadingProgress = progress;
+        if (progressBar) progressBar.style.width = progress + '%';
+        if (loadingText) loadingText.textContent = text;
+      }
+      
+      function hideLoadingScreen() {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+          loadingScreen.classList.add('hidden');
+          setTimeout(() => {
+            loadingScreen.style.display = 'none';
+          }, 500);
+        }
+      }
+      
+      document.addEventListener('DOMContentLoaded', async () => {
+        updateProgress(10, 'Initializing...');
+      
+        const inject = async (url, hostQuery) => {
+          const host = document.querySelector(hostQuery);
+          if (!host) { console.warn('❗ host', hostQuery, 'missing'); return; }
+          const html = await fetch(url).then(r => r.text());
+          host.innerHTML = html;
+          console.log('✅', url);
+        };
 
-          await inject('components/login/login-page.html',  '#login-page-container');
-          document.querySelector('#login-page-container')?.classList.add('loaded');
+        updateProgress(20, 'Loading login page...');
+        await inject('components/login/login-page.html',  '#login-page-container');
+        document.querySelector('#login-page-container')?.classList.add('loaded');
 
-          await Promise.all([
-            inject('components/modals-wrapper.html',     '#modals-wrapper-container'),
-            inject('components/audio.html',              '#audio-container'),
-            inject('components/prototypes.html',         '#prototypes-container'),
-            inject('components/windows.html',            '#windows-container'),   
-            inject('components/hotbar.html',             '#hotbar-container'),
-            inject('components/topbar.html',             '#topbar-container'),
-          ]);
-        
-          const modals = [
-            ['components/modals/settings-modal.html',   '#settings-modal-container'],
-            ['components/modals/skill-modal.html',      '#skill-modal-container'],
-            ['components/modals/outfit-modal.html',     '#outfit-modal-container'],
-            ['components/modals/battle-modal.html',     '#battle-modal-container'],
-            ['components/modals/friends-modal.html',    '#friends-modal-container'],
-            ['components/modals/chat-modal.html',       '#chat-modal-container'],
-            ['components/modals/redable-modal.html',    '#redable-modal-container'],
-            ['components/modals/map-modal.html',        '#map-modal-container'],
-            ['components/modals/enter-name-modal.html', '#enter-name-modal-container'],
-            ['components/modals/confirm-modal.html',    '#confirm-modal-container'],
-            ['components/modals/offer-modal.html',      '#offer-modal-container'],
-            ['components/modals/spell-modal.html',      '#spell-modal-container'],
-            ['components/modals/move-item-modal.html',  '#move-item-modal-container'],
-            ['components/modals/chat.html',             '#chat-container'],
-            //['components/modals/additional-modals.html','#additional-modals-container']
-          ];
-          await Promise.all(modals.map(([u,h]) => inject(u,h)));
-        
-          console.log('🟢 every fragment in DOM');
-        
-          const s = document.createElement('script');
-          s.src = 'bundle.js';
-          s.onload = () => {
-            console.log('🟢 bundle.js executed');
-            if (window?.gameClient?.interface) {
-              window.gameClient.interface.enableTopbarListeners();
-              window.gameClient.interface.modalManager.addEventListeners();
-              console.log('🟢 top-bar listeners attached');
-            } else {
-              console.error('❌ window.gameClient.interface is missing!');
-            }
-          };
-          document.body.appendChild(s);
-        });
-      </script>
-
+        updateProgress(40, 'Loading components...');
+        await Promise.all([
+          inject('components/modals-wrapper.html',     '#modals-wrapper-container'),
+          inject('components/audio.html',              '#audio-container'),
+          inject('components/prototypes.html',         '#prototypes-container'),
+          inject('components/windows.html',            '#windows-container'),   
+          inject('components/hotbar.html',             '#hotbar-container'),
+          inject('components/topbar.html',             '#topbar-container'),
+        ]);
+      
+        updateProgress(60, 'Loading modals...');
+        const modals = [
+          ['components/modals/settings-modal.html',   '#settings-modal-container'],
+          ['components/modals/skill-modal.html',      '#skill-modal-container'],
+          ['components/modals/outfit-modal.html',     '#outfit-modal-container'],
+          ['components/modals/battle-modal.html',     '#battle-modal-container'],
+          ['components/modals/friends-modal.html',    '#friends-modal-container'],
+          ['components/modals/chat-modal.html',       '#chat-modal-container'],
+          ['components/modals/redable-modal.html',    '#redable-modal-container'],
+          ['components/modals/map-modal.html',        '#map-modal-container'],
+          ['components/modals/enter-name-modal.html', '#enter-name-modal-container'],
+          ['components/modals/confirm-modal.html',    '#confirm-modal-container'],
+          ['components/modals/offer-modal.html',      '#offer-modal-container'],
+          ['components/modals/spell-modal.html',      '#spell-modal-container'],
+          ['components/modals/move-item-modal.html',  '#move-item-modal-container'],
+          ['components/modals/chat.html',             '#chat-container'],
+        ];
+        await Promise.all(modals.map(([u,h]) => inject(u,h)));
+      
+        updateProgress(80, 'Loading game engine...');
+        console.log('🟢 every fragment in DOM');
+      
+        const s = document.createElement('script');
+        s.src = 'bundle.js';
+        s.onload = () => {
+          updateProgress(100, 'Ready!');
+          console.log('🟢 bundle.js executed');
+          
+          // Hide loading screen after a short delay
+          setTimeout(() => {
+            hideLoadingScreen();
+          }, 500);
+          
+          if (window?.gameClient?.interface) {
+            window.gameClient.interface.enableTopbarListeners();
+            window.gameClient.interface.modalManager.addEventListeners();
+            console.log('🟢 top-bar listeners attached');
+          } else {
+            console.error('❌ window.gameClient.interface is missing!');
+          }
+        };
+        document.body.appendChild(s);
+      });
+    </script>
   </body>
 </html>

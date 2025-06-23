@@ -11,7 +11,7 @@ class NetworkManager {
   nPacketsSent: number = 0;
   latency: number = 0;
   public packetHandler: PacketHandler;
-  private downloadManager: DownloadManager;
+  public downloadManager: DownloadManager;
 
   constructor() {
     this.state = {
@@ -170,50 +170,6 @@ class NetworkManager {
   fetchCallback(response: Response): Promise<ArrayBuffer> {
     if (response.status !== 200) return Promise.reject(response);
     return response.arrayBuffer();
-  }
-
-  loadGameFilesServer(): void {
-    const progressElement = document.getElementById('download-progress');
-    const progressBar = document.getElementById('download-progress-bar');
-    const statusElement = document.getElementById('download-status');
-    if (progressElement) progressElement.style.display = 'block';
-
-    this.downloadManager.setProgressCallback((progress: DownloadProgress) => {
-      if (progressBar) progressBar.style.width = `${progress.percentage}%`;
-      if (statusElement) {
-        const loadedMB = (progress.loaded / (1024 * 1024)).toFixed(1);
-        const totalMB = (progress.total / (1024 * 1024)).toFixed(1);
-        statusElement.textContent = `${progress.currentFile}: ${loadedMB}MB / ${totalMB}MB (${Math.round(progress.percentage)}%)`;
-      }
-    });
-
-    const files = [
-      { url: `/data/sprites/Tibia.spr`, filename: "Tibia.spr" },
-      { url: `/data/sprites/Tibia.dat`, filename: "Tibia.dat" },
-    ];
-
-    this.downloadManager.downloadFiles(files)
-      .then(results => {
-        if (progressElement) progressElement.style.display = 'none';
-
-        const datData = results.get("Tibia.dat");
-        const sprData = results.get("Tibia.spr");
-
-        if (datData && sprData) {
-          window.gameClient.dataObjects.load("Tibia.dat", { target: { result: datData } } as unknown as ProgressEvent<FileReader>);
-          SpriteBuffer.load("Tibia.spr", { target: { result: sprData } } as unknown as ProgressEvent<FileReader>);
-        } else {
-          throw new Error("Failed to load one or more asset files");
-        }
-      })
-      .catch(error => {
-        if (progressElement) progressElement.style.display = 'none';
-        console.error('Asset loading error:', error);
-        return window.gameClient.interface.modalManager.open(
-          "floater-connecting",
-          { message: `Failed loading client data: ${error.message}. Please try again or select files manually using the Load Assets button.` }
-        );
-      });
   }
 
   public openGameSocket(idToken: string): void {

@@ -12,8 +12,8 @@ export default class LoginFlowManager {
   private readonly changelog = document.getElementById("changelog-container");
   private readonly loginWrapper = document.getElementById("login-wrapper");
 
-  private readonly playBtn = document.getElementById("topbar-play-btn");
-  private readonly newsBtn = document.getElementById("topbar-news-btn");
+  private readonly playBtn = document.getElementById("topbar-play-btn") as HTMLButtonElement;
+  private readonly newsBtn = document.getElementById("topbar-news-btn") as HTMLButtonElement;
 
   public setLoginInfo(token: string, characters: any[], loginHost: string, gameHost: string): void {
     this.token = token;
@@ -25,57 +25,47 @@ export default class LoginFlowManager {
   public showPreLogin(): void {
     this.setDisplay("flex", "none", "none");
     this.loginWrapper?.classList.remove("post-login");
+    if (this.changelog) this.changelog.style.display = "flex";
     this.setActiveButton(null);
   }
 
   public async showPostLogin(): Promise<void> {
     this.setDisplay("none", "block", "none");
-    if (this.changelog) this.changelog.style.display = "none";
     this.loginWrapper?.classList.add("post-login");
-    this.setActiveButton("play");
-  
-    const modal = window.gameClient.interface.modalManager.open("character-selector") as CharacterSelectorModal;
-    const playBtn = document.getElementById("topbar-play-btn") as HTMLButtonElement;
-  
+
     try {
       const needsUpdate = await window.gameClient.database.checkNeedsUpdate();
-  
+
       if (!needsUpdate) {
-        modal?.open(this.characters, this.token, this.loginHost, this.gameHost);
+        this.enableCharacterSelection();
         return;
       }
-  
-      // ⏳ Assets are missing or outdated — disable UI until they're downloaded
-      if (playBtn) {
-        playBtn.disabled = true;
-        playBtn.title = "Downloading game assets...";
+
+      // Assets not ready — prepare UI
+      this.setActiveButton("news");
+      if (this.changelog) this.changelog.style.display = "flex";
+
+      if (this.playBtn) {
+        this.playBtn.disabled = true;
+        this.playBtn.title = "Downloading required assets...";
       }
-  
-      window.gameClient.networkManager.loadGameFilesServer();
-  
-      const checkInterval = setInterval(async () => {
-        const updateStillNeeded = await window.gameClient.database.checkNeedsUpdate();
-        if (!updateStillNeeded) {
-          clearInterval(checkInterval);
-  
-          if (playBtn) {
-            playBtn.disabled = false;
-            playBtn.removeAttribute("title");
-          }
-  
-          modal?.open(this.characters, this.token, this.loginHost, this.gameHost);
-        }
-      }, 500);
+      if (this.newsBtn) this.newsBtn.disabled = false;
+
+      await window.gameClient.networkManager.downloadManager.loadGameAssetsWithUI(() => {
+        this.enableCharacterSelection();
+      });
     } catch (error) {
-      console.error("Error checking or downloading assets:", error);
-      if (playBtn) {
-        playBtn.disabled = false;
-        playBtn.removeAttribute("title");
+      console.error("Asset check/download failed:", error);
+      if (this.playBtn) {
+        this.playBtn.disabled = false;
+        this.playBtn.removeAttribute("title");
       }
-      // Optionally show an error modal or toast
+      if (this.newsBtn) this.newsBtn.disabled = false;
+      this.setActiveButton("news");
+      if (this.changelog) this.changelog.style.display = "flex";
     }
   }
-  
+
   public showChangelog(): void {
     this.setDisplay("none", "block", "none");
     if (this.changelog) this.changelog.style.display = "flex";
@@ -106,5 +96,17 @@ export default class LoginFlowManager {
     if (this.newsBtn) {
       this.newsBtn.classList.toggle("active", active === "news");
     }
+  }
+
+  private enableCharacterSelection(): void {
+    if (this.playBtn) {
+      this.playBtn.disabled = false;
+      this.playBtn.removeAttribute("title");
+    }
+    if (this.changelog) this.changelog.style.display = "none";
+    this.setActiveButton("play");
+
+    const modal = window.gameClient.interface.modalManager.open("character-selector") as CharacterSelectorModal;
+    modal?.open(this.characters, this.token, this.loginHost, this.gameHost);
   }
 }

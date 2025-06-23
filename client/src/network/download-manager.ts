@@ -1,3 +1,5 @@
+import SpriteBuffer from "../renderer/sprite-buffer";
+
 export interface DownloadProgress {
   total: number;
   loaded: number;
@@ -74,4 +76,54 @@ export class DownloadManager {
     
     return results;
   }
+
+  public async loadGameAssetsWithUI(onComplete?: () => void): Promise<void> {
+    const progressElement = document.getElementById('download-progress');
+    const progressBar = document.getElementById('download-progress-bar');
+    const statusElement = document.getElementById('download-status');
+  
+    if (progressElement) progressElement.style.display = 'block';
+  
+    this.setProgressCallback((progress: DownloadProgress) => {
+      if (progressBar) progressBar.style.width = `${progress.percentage}%`;
+      if (statusElement) {
+        const loadedMB = (progress.loaded / (1024 * 1024)).toFixed(1);
+        const totalMB = (progress.total / (1024 * 1024)).toFixed(1);
+        statusElement.textContent = `${progress.currentFile}: ${loadedMB}MB / ${totalMB}MB (${Math.round(progress.percentage)}%)`;
+      }
+    });
+  
+    const files = [
+      { url: `/data/sprites/Tibia.spr`, filename: "Tibia.spr" },
+      { url: `/data/sprites/Tibia.dat`, filename: "Tibia.dat" },
+    ];
+  
+    try {
+      const results = await this.downloadFiles(files);
+      if (progressElement) progressElement.style.display = 'none';
+  
+      const datData = results.get("Tibia.dat");
+      const sprData = results.get("Tibia.spr");
+  
+      if (datData && sprData) {
+        window.gameClient.dataObjects.load("Tibia.dat", {
+          target: { result: datData }
+        } as unknown as ProgressEvent<FileReader>);
+      
+        SpriteBuffer.load("Tibia.spr", {
+          target: { result: sprData }
+        } as unknown as ProgressEvent<FileReader>);
+      
+        if (onComplete) onComplete(); 
+      }
+    } catch (error: any) {
+      if (progressElement) progressElement.style.display = 'none';
+      console.error('Asset loading error:', error);
+  
+      window.gameClient.interface.modalManager.open("floater-connecting", {
+        message: `Failed loading client data: ${error.message}. Please try again or select files manually using the Load Assets button.`,
+      });
+    }
+  }
+  
 }

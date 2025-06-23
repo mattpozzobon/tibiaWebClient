@@ -109,8 +109,8 @@ export default class Interface {
     this.screenElementManager = new ScreenElementManager();
     this.state = new State();
     
-    this.state.add("spritesLoaded", this.enableEnterGame.bind(this));
-    this.state.add("dataLoaded", this.enableEnterGame.bind(this));
+    // this.state.add("spritesLoaded", this.enableEnterGame.bind(this));
+    // this.state.add("dataLoaded", this.enableEnterGame.bind(this));
 
     document.getElementById("keyring")?.addEventListener("click", this.__openKeyRing.bind(this));
   }
@@ -137,23 +137,10 @@ export default class Interface {
     return Interface.WEBCOLORS[index] || "#FFFFFF";
   }
 
-  enterGame(): void {
-    if (!this.areAssetsLoaded()) {
-      alert("The Tibia.spr and Tibia.dat must be loaded first.");
-      return;
-    }
-  }
-
   reset(): void {
     this.screenElementManager.clear();
     this.windowManager.closeAll();
     this.hideGameInterface();
-  }
-
-  enableEnterGame(): void {
-    if (this.areAssetsLoaded()) {
-      document.getElementById("enter-game")?.removeAttribute("disabled");
-    }
   }
 
   loadAssetsDelegator(): void {
@@ -363,7 +350,7 @@ export default class Interface {
     document.getElementById("logoutButton")?.addEventListener("click", () => this.sendLogout());
     document.getElementById("load-assets")?.addEventListener("click", () => this.loadAssetsDelegator());
     document.getElementById("asset-selector")?.addEventListener("change", (event) => this.loadGameFiles(event));
-    document.getElementById("enter-game")?.addEventListener("click", () => this.enterGame());
+    //document.getElementById("enter-game")?.addEventListener("click", () => this.enterGame());
     window.onbeforeunload = () => window.gameClient.isConnected() ? true : undefined;
     window.onresize = () => this.handleResize();
   }  

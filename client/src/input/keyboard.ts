@@ -178,10 +178,10 @@ class Keyboard {
     const modalManager = window.gameClient.interface.modalManager;
     const input = window.gameClient.interface.channelManager;
   
-    if (!modalManager.isOpened() && !window.gameClient.isConnected()) {
-      window.gameClient.interface.enterGame();
-      return;
-    }
+    // if (!modalManager.isOpened() && !window.gameClient.isConnected()) {
+      //window.gameClient.interface.enterGame();
+    //   return;
+    // }
   
     if (modalManager.isOpened()) {
       modalManager.handleConfirm();

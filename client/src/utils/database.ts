@@ -130,10 +130,9 @@ export default class Database {
     this.loadConstants().then(async (constants: any) => {
       (window as any).CONST = constants;
       
-      if (await this.checkNeedsUpdate()) {
-        return window.gameClient.networkManager.loadGameFilesServer();
+      if (!await this.checkNeedsUpdate()) {
+        this.__loadGameAssets();
       }
-      this.__loadGameAssets();
     });
   }
 
@@ -249,10 +248,8 @@ export default class Database {
 
       if (needsUpdate) {
         console.log('Game files need updating');
-        // Clear old files
         localStorage.removeItem('Tibia.spr');
         localStorage.removeItem('Tibia.dat');
-        // Update version info
         localStorage.setItem(this.FILE_VERSIONS_KEY, JSON.stringify(serverVersions));
         return true;
       }
@@ -264,33 +261,33 @@ export default class Database {
     }
   }
 
-  private async __checkSprVersion(): Promise<boolean> {
-    try {
-      // Get server version info
-      const response = await fetch(this.VERSION_CHECK_URL);
-      const serverInfo = await response.json();
+  // private async __checkSprVersion(): Promise<boolean> {
+  //   try {
+  //     // Get server version info
+  //     const response = await fetch(this.VERSION_CHECK_URL);
+  //     const serverInfo = await response.json();
       
-      // Get local version
-      const localVersion = localStorage.getItem('spr_version');
+  //     // Get local version
+  //     const localVersion = localStorage.getItem('spr_version');
       
-      // If versions don't match or no local version exists
-      console.log('localVersion', localVersion);
-      console.log('serverInfo.version', serverInfo.version);
-      if (!localVersion || localVersion !== serverInfo.version) {
-        console.log('SPR file needs updating - version changed');
-        // Clear old SPR file
-        localStorage.removeItem('Tibia.spr');
-        // Update version
-        localStorage.setItem('spr_version', serverInfo.version);
-        return true;
-      }
+  //     // If versions don't match or no local version exists
+  //     console.log('localVersion', localVersion);
+  //     console.log('serverInfo.version', serverInfo.version);
+  //     if (!localVersion || localVersion !== serverInfo.version) {
+  //       console.log('SPR file needs updating - version changed');
+  //       // Clear old SPR file
+  //       localStorage.removeItem('Tibia.spr');
+  //       // Update version
+  //       localStorage.setItem('spr_version', serverInfo.version);
+  //       return true;
+  //     }
       
-      return false;
-    } catch (error) {
-      console.error('Error checking SPR version:', error);
-      return false;
-    }
-  }
+  //     return false;
+  //   } catch (error) {
+  //     console.error('Error checking SPR version:', error);
+  //     return false;
+  //   }
+  // }
 
   private async updateClientVersion(): Promise<void> {
     try {

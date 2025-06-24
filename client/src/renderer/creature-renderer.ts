@@ -6,8 +6,10 @@ import Sprite from "./sprite";
 
 export default class CreatureRenderer {
   private creature: Creature;
+
   public spriteBuffer: SpriteBuffer;
   public spriteBufferMount?: SpriteBuffer;
+  
   
   constructor(creature: Creature) {
     this.creature = creature;

@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 
 load_dotenv()                            
 
-ASSET_BASE =    ("https://pub-731c9162b7da4ead9743fb831880fd77.r2.dev/data")
-ADDRESS:        tuple[str, int] = ("127.0.0.1", 8000)
+ASSET_BASE =    os.getenv("ASSET_BASE_URL")
+ADDRESS:        tuple[str, int] = (os.getenv("SERVER_HOST"), int(os.getenv("SERVER_PORT")))
 DATA_RE =       re.compile(r"^/data/(sprites|sounds)/(.+)$", re.I)
 
 

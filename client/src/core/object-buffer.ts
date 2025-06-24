@@ -5,7 +5,6 @@ import FrameGroup from "../utils/frame-group";
 
 
 class ObjectBuffer {
-  ;
   private dataObjects: Record<number, DataObject>;
   __version: number;
   private itemCount: number;

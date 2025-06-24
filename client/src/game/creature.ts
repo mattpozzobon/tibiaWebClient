@@ -131,13 +131,13 @@ export default class Creature {
     const legsObject = this.outfit.equipment.legs !== 0 ? this.outfit.getLegsDataObject() : null;
     const feetObject = this.outfit.equipment.feet !== 0 ? this.outfit.getFeetDataObject() : null;
 
+    const leftHandObject = this.outfit.equipment.lefthand !== 0 ? this.outfit.getLeftHandDataObject() : null;
+    const rightHandObject = this.outfit.equipment.righthand !== 0 ? this.outfit.getRightHandDataObject() : null;
+
     let hairObject: any = null;
     if (this.outfit.equipment.head === 0) {
       hairObject = this.outfit.getHairDataObject();
     }
-
-    const leftHandObject = this.outfit.equipment.lefthand !== 0 ? this.outfit.getLeftHandDataObject() : null;
-    const rightHandObject = this.outfit.equipment.righthand !== 0 ? this.outfit.getRightHandDataObject() : null;
 
     if (characterObject === null) {
       return null;

@@ -103,9 +103,7 @@ export default class Outfit {
     }
   
     getSpriteBufferSize(object: any): number {
-      return Math.ceil(
-        Math.sqrt(object.frameGroups.reduce((a: number, b: any) => a + 4 * b.width * b.height * b.animationLength, 0))
-      );
+      return Math.ceil(Math.sqrt(object.frameGroups.reduce((a: number, b: any) => a + 4 * b.width * b.height * b.animationLength, 0)));
     }
   
     getDataObjectMount(): any {

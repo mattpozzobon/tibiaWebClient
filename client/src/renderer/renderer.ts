@@ -47,9 +47,10 @@ export default class Renderer {
     // Create main canvases using values from Interface.
     this.screen = new Canvas("screen", Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
     this.lightscreen = new LightCanvas(null, Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
-
     this.weatherCanvas = new WeatherCanvas(this.screen);
     this.outlineCanvas = new OutlineCanvas(null, 130, 130);
+
+    
     //this.minimap = new Minimap(); // TODO: CHECK IF THIS IS NECESSARY: gameClient.world.width, gameClient.world.height
     this.debugger = new Debugger();
 

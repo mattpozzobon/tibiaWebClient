@@ -177,7 +177,7 @@ export default class Canvas {
     }
   }
 
-  private __drawSprite(sprite: any, position: Position, x: number, y: number, size: number): void {
+  __drawSprite(sprite: any, position: Position, x: number, y: number, size: number): void {
     if (!sprite) return;
 
     window.gameClient.renderer.drawCalls++;
@@ -232,79 +232,7 @@ export default class Canvas {
   }
   
   drawCharacter(creature: Creature, position: Position, size: number, offset: number): void {
-    const frames = creature.getCharacterFrames();
-    if (!frames) return;
-  
-    const xPattern = creature.__lookDirection % 4;
-    const zPattern = frames.characterGroup.pattern.z > 1 && creature.isMounted() ? 1 : 0;
-  
-    const drawPosition = new Position(position.x - offset, position.y - offset, 0);
-  
-    const LAYERS = [
-      //{ name: "mount", group: frames.mountGroup, frame: frames.mountFrame, buffer: creature.spriteBufferMount },
-      { name: "base", group: frames.characterGroup, frame: frames.characterFrame, buffer: creature.spriteBuffer },
-      { name: "body", group: frames.bodyGroup, frame: frames.bodyFrame },
-      { name: "legs", group: frames.legsGroup, frame: frames.legsFrame },
-      { name: "feet", group: frames.feetGroup, frame: frames.feetFrame },
-      { name: "lefthand", group: frames.leftHandGroup, frame: frames.leftHandFrame },
-      { name: "righthand", group: frames.rightHandGroup, frame: frames.rightHandFrame },
-      { name: "head", group: frames.headGroup, frame: frames.headFrame },
-      { name: "hair", group: frames.hairGroup, frame: frames.hairFrame, condition: !frames.headGroup, hasMask: true },
-    ];
-  
-    for (const layer of LAYERS) {
-      if (!layer.group || layer.frame === undefined) continue;
-      if (layer.condition === false) continue;
-  
-      const buffer = layer.buffer || new SpriteBuffer(64);
-      this.__drawCharacterLayer(
-        buffer,
-        creature.outfit,
-        layer.group,
-        layer.frame,
-        xPattern,
-        zPattern,
-        drawPosition,
-        size,
-        0,
-        layer.hasMask || false
-      );
-    }
-  }
-  
-  private __drawCharacterLayer(
-    spriteBuffer: SpriteBuffer,
-    outfit: any,
-    group: any,
-    frame: number,
-    xPattern: number,
-    zPattern: number,
-    position: Position,
-    size: number,
-    yPattern: number,
-    hasMask: boolean = false
-  ): void {
-    if (!group) return;
-  
-    for (let x = 0; x < group.width; x++) {
-      for (let y = 0; y < group.height; y++) {
-        const spriteId = group.getSpriteId(frame, xPattern, yPattern, zPattern, 0, x, y);
-        if (spriteId === 0) continue;
-  
-        if (hasMask && !spriteBuffer.has(spriteId)) {
-          spriteBuffer.addComposedOutfit(spriteId, outfit, group, frame, xPattern, zPattern, x, y);
-        }
-  
-        let sprite: Sprite | null = null;
-        try {
-          sprite = spriteBuffer.get(spriteId);
-        } catch (error) {
-          console.error("Error in spriteBuffer.get:", error);
-        }
-  
-        this.__drawSprite(sprite, position, x, y, size);
-      }
-    }
+    creature.renderer.draw(position, size, offset);
   }
   
 }

@@ -46,8 +46,8 @@ export default class BattleWindow extends InteractiveWindow {
     if (!canvasParent) return;
     const canvas = new Canvas(canvasParent, 64, 64);
   
-    const frames = creature.getCharacterFrames();
-    const zPattern = (frames.characterGroup.pattern.z > 1 && creature.isMounted()) ? 1 : 0;
+    //const frames = creature.getCharacterFrames();
+    //const zPattern = (frames.characterGroup.pattern.z > 1 && creature.isMounted()) ? 1 : 0;
   
     // TODO: Draw the character on the canvas.
     // canvas.__drawCharacter(

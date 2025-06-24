@@ -11,6 +11,7 @@ import Interface from "../ui/interface";
 import CastingManager from "../ui/managers/casting-manager";
 import CharacterElement from "../ui/screen-elements/screen-element-character";
 import BoxAnimation from "../utils/box-animation";
+import CreatureRenderer from "../renderer/creature-renderer";
 
 
 export interface CreatureData {
@@ -51,8 +52,6 @@ export default class Creature {
   public __previousPosition: Position;
   public outfit: Outfit;
   public castingManager: CastingManager;
-  public spriteBuffer: SpriteBuffer;
-  public spriteBufferMount?: SpriteBuffer;
   public textBuffer = [];
   public __movementEvent: any;
   public __lookDirectionBuffer: any;
@@ -65,7 +64,8 @@ export default class Creature {
   // Assume characterElement is provided (e.g., by Creature or assigned later)
   public characterElement: CharacterElement;
   public vitals: Vitals;
-
+  public renderer: CreatureRenderer;
+  
   // gameClient is injected to replace global references.
 
   constructor(data: CreatureData) {
@@ -79,11 +79,8 @@ export default class Creature {
     this.outfit = new Outfit(data.outfit);
     this.castingManager = new CastingManager();
 
-    // Initialize spriteBuffer using outfit's sprite buffer size.
-    this.spriteBuffer = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObject()));
-    if (this.outfit.getDataObjectMount()) {
-      this.spriteBufferMount = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObjectMount()));
-    }
+
+    this.renderer = new CreatureRenderer(this);
 
     this.__movementEvent = null;
     this.__lookDirectionBuffer = null;
@@ -122,118 +119,6 @@ export default class Creature {
       .getFirstFloorFromBottom(this.getPosition());
   }
 
-  public getCharacterFrames(): CharacterFrames | null {
-    const characterObject = this.outfit.getDataObject();
-    const mountObject = this.outfit.getDataObjectMount();
-
-    const headObject = this.outfit.equipment.head !== 0 ? this.outfit.getHeadDataObject() : null;
-    const bodyObject = this.outfit.equipment.body !== 0 ? this.outfit.getBodyDataObject() : null;
-    const legsObject = this.outfit.equipment.legs !== 0 ? this.outfit.getLegsDataObject() : null;
-    const feetObject = this.outfit.equipment.feet !== 0 ? this.outfit.getFeetDataObject() : null;
-
-    const leftHandObject = this.outfit.equipment.lefthand !== 0 ? this.outfit.getLeftHandDataObject() : null;
-    const rightHandObject = this.outfit.equipment.righthand !== 0 ? this.outfit.getRightHandDataObject() : null;
-
-    let hairObject: any = null;
-    if (this.outfit.equipment.head === 0) {
-      hairObject = this.outfit.getHairDataObject();
-    }
-
-    if (characterObject === null) {
-      return null;
-    }
-
-    let characterGroup: any, mountGroup: any, characterFrame: number, mountFrame: number;
-    let headGroup: any, bodyGroup: any, legsGroup: any, feetGroup: any, hairGroup: any;
-    let leftHandGroup: any, rightHandGroup: any, leftHandFrame: number, rightHandFrame: number;
-    let headFrame: number, bodyFrame: number, legsFrame: number, feetFrame: number, hairFrame: number;
-    let isMoving: boolean;
-
-    if (!this.isMoving()) {
-      isMoving = false;
-      characterGroup = characterObject.getFrameGroup(FrameGroup.GROUP_IDLE);
-      characterFrame = (characterObject.frameGroups.length === 1 && !characterObject.isAlwaysAnimated())
-        ? 0
-        : characterGroup.getAlwaysAnimatedFrame();
-
-      headGroup = headObject ? headObject.getFrameGroup(FrameGroup.GROUP_IDLE) : null;
-      bodyGroup = bodyObject ? bodyObject.getFrameGroup(FrameGroup.GROUP_IDLE) : null;
-      legsGroup = legsObject ? legsObject.getFrameGroup(FrameGroup.GROUP_IDLE) : null;
-      feetGroup = feetObject ? feetObject.getFrameGroup(FrameGroup.GROUP_IDLE) : null;
-      hairGroup = hairObject ? hairObject.getFrameGroup(FrameGroup.GROUP_IDLE) : null;
-
-      headFrame = headGroup ? headGroup.getAlwaysAnimatedFrame() : 0;
-      bodyFrame = bodyGroup ? bodyGroup.getAlwaysAnimatedFrame() : 0;
-      legsFrame = legsGroup ? legsGroup.getAlwaysAnimatedFrame() : 0;
-      feetFrame = feetGroup ? feetGroup.getAlwaysAnimatedFrame() : 0;
-      hairFrame = hairGroup ? hairGroup.getAlwaysAnimatedFrame() : 0;
-
-      leftHandGroup = leftHandObject ? leftHandObject.getFrameGroup(FrameGroup.GROUP_IDLE) : null;
-      rightHandGroup = rightHandObject ? rightHandObject.getFrameGroup(FrameGroup.GROUP_IDLE) : null;
-      leftHandFrame = leftHandGroup ? leftHandGroup.getAlwaysAnimatedFrame() : 0;
-      rightHandFrame = rightHandGroup ? rightHandGroup.getAlwaysAnimatedFrame() : 0;
-
-      if (window.gameClient.clientVersion === 1098) {
-        mountGroup = mountObject.getFrameGroup(FrameGroup.GROUP_IDLE);
-        mountFrame = mountGroup.getAlwaysAnimatedFrame();
-      } else {
-        mountGroup = 0;
-        mountFrame = 0;
-      }
-    } else {
-      isMoving = true;
-      characterGroup = characterObject.getFrameGroup(FrameGroup.GROUP_MOVING);
-      characterFrame = this.__getWalkingFrame(characterGroup);
-
-      headGroup = headObject ? headObject.getFrameGroup(FrameGroup.GROUP_MOVING) : null;
-      bodyGroup = bodyObject ? bodyObject.getFrameGroup(FrameGroup.GROUP_MOVING) : null;
-      legsGroup = legsObject ? legsObject.getFrameGroup(FrameGroup.GROUP_MOVING) : null;
-      feetGroup = feetObject ? feetObject.getFrameGroup(FrameGroup.GROUP_MOVING) : null;
-      hairGroup = hairObject ? hairObject.getFrameGroup(FrameGroup.GROUP_MOVING) : null;
-
-      headFrame = headGroup ? this.__getWalkingFrame(headGroup) : 0;
-      bodyFrame = bodyGroup ? this.__getWalkingFrame(bodyGroup) : 0;
-      legsFrame = legsGroup ? this.__getWalkingFrame(legsGroup) : 0;
-      feetFrame = feetGroup ? this.__getWalkingFrame(feetGroup) : 0;
-      hairFrame = hairGroup ? this.__getWalkingFrame(hairGroup) : 0;
-
-      leftHandGroup = leftHandObject ? leftHandObject.getFrameGroup(FrameGroup.GROUP_MOVING) : null;
-      rightHandGroup = rightHandObject ? rightHandObject.getFrameGroup(FrameGroup.GROUP_MOVING) : null;
-      leftHandFrame = leftHandGroup ? this.__getWalkingFrame(leftHandGroup) : 0;
-      rightHandFrame = rightHandGroup ? this.__getWalkingFrame(rightHandGroup) : 0;
-
-      if (window.gameClient.clientVersion === 1098) {
-        mountGroup = mountObject.getFrameGroup(FrameGroup.GROUP_MOVING);
-        mountFrame = this.__getWalkingFrame(mountGroup);
-      } else {
-        mountGroup = 0;
-        mountFrame = 0;
-      }
-    }
-
-      return {
-        characterGroup,
-        mountGroup,
-        characterFrame,
-        mountFrame,
-        headGroup,
-        bodyGroup,
-        legsGroup,
-        feetGroup,
-        hairGroup,
-        leftHandGroup,
-        rightHandGroup,
-        headFrame,
-        bodyFrame,
-        legsFrame,
-        feetFrame,
-        hairFrame,
-        leftHandFrame,
-        rightHandFrame,
-        isMoving,
-      };
-  }
-
   public getPosition(): Position {
     return this.vitals.position;
   }
@@ -253,10 +138,10 @@ export default class Creature {
   public serverSetOutfit(outfit: Outfit): void {
     this.outfit = outfit;
     // Clear the outfit sprite buffer to make room for the new sprite.
-    this.spriteBuffer = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObject()));
+    this.renderer.spriteBuffer = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObject()));
     // If the creature has a mount, create a sprite buffer for it as well.
     if (this.outfit.getDataObjectMount()) {
-      this.spriteBufferMount = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObjectMount()));
+      this.renderer.spriteBufferMount = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObjectMount()));
     }
   }
 

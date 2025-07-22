@@ -290,9 +290,6 @@ class Keyboard {
         if (lowerKey === Keyboard.KEYS.F8) {
           return window.gameClient.renderer.debugger.toggleStatistics();
         }
-        if (lowerKey === Keyboard.KEYS.F12) {
-          return window.gameClient.renderer.takeScreenshot(event);
-        }
       }
       return window.gameClient.interface.hotbarManager.handleKeyPress(code);
     }

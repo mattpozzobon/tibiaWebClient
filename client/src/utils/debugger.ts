@@ -112,6 +112,9 @@ export default class Debugger {
     const debugInfo = [
       `Server Version: ${window.gameClient.serverVersion}`,
       `Client Version: ${window.gameClient.clientVersion}`,
+      `Tile Pool Size: ${window.gameClient.renderer.tileRenderer.getPoolStats().total}`,
+      `Tile Pool Used: ${window.gameClient.renderer.tileRenderer.getPoolStats().used}`,
+      `Tile Pool Available: ${window.gameClient.renderer.tileRenderer.getPoolStats().available}`,
       `Server Tick Interval: ${window.gameClient.getTickInterval()}ms`,
       `Current Frame: ${window.gameClient.eventQueue.getFrame()}`,
       `Frame Rate: ${this.__averageFPS}fps`,

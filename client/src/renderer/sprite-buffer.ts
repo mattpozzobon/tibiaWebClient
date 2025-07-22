@@ -17,8 +17,6 @@ export default class SpriteBuffer {
   public static __version: number | null = null;
   nEvictions: number = 0;
   static SIGNATURES: Record<string, number> = {
-    "41B9EA86": 740,
-    "439852BE": 760,
     "57BBD603": 1098
   };
 
@@ -62,7 +60,6 @@ export default class SpriteBuffer {
     return this.__get(id);
   }
 
-  /** 🔹 Global Sprite Loader */
   static load(name: string, data: ArrayBuffer | ProgressEvent<FileReader>): void {
     try {
       if (data instanceof ArrayBuffer) {
@@ -86,17 +83,17 @@ export default class SpriteBuffer {
   private static __loadGlobal(name: string, buffer: ArrayBuffer): void {
     this.__globalPacket = new PacketReader(buffer);
 
-    let signature = this.__globalPacket.readUInt32().toString(16).toUpperCase();
+    const signature = this.__globalPacket.readUInt32().toString(16).toUpperCase();
     if (!SpriteBuffer.SIGNATURES.hasOwnProperty(signature)) {
       throw new Error("Unknown Tibia.spr file supplied.");
     }
 
     this.__version = SpriteBuffer.SIGNATURES[signature];
-    let spriteCount = this.__version > 760 ? this.__globalPacket.readUInt32() : this.__globalPacket.readUInt16();
+    const spriteCount = this.__globalPacket.readUInt32();
 
     let storedCount = 0;
     for (let i = 1; i <= spriteCount; i++) {
-      let address = this.__globalPacket.readUInt32();
+      const address = this.__globalPacket.readUInt32();
       if (address !== 0) {
         this.__globalSpriteAddressPointers[i] = address;
         storedCount++;
@@ -107,10 +104,9 @@ export default class SpriteBuffer {
     window.gameClient.interface.loadAssetCallback("sprite", name);
   }
 
-  /** 🔹 Add sprite as PIXI.Texture to the local buffer */
   private __add(id: number): PIXI.Texture {
-    let position = this.reserve(id);
-    let imageData = this.__getImageData(id);
+    const position = this.reserve(id);
+    const imageData = this.__getImageData(id);
 
     // Convert ImageData to canvas, then to PIXI.Texture
     const canvas = document.createElement("canvas");
@@ -125,7 +121,7 @@ export default class SpriteBuffer {
   }
 
   private __get(id: number): PIXI.Texture {
-    let index = this.__spriteBufferLookup[id];
+    const index = this.__spriteBufferLookup[id];
     return this.__spriteBufferArray[index]!;
   }
 
@@ -141,12 +137,11 @@ export default class SpriteBuffer {
   }
 
   private __getPosition(index: number): Position {
-    let x = index % this.size;
-    let y = Math.floor(index / this.size);
+    const x = index % this.size;
+    const y = Math.floor(index / this.size);
     return new Position(x, y, 0);
   }
 
-  /** 🔹 Load image data from global storage */
   private __getImageData(id: number): ImageData {
     const address = SpriteBuffer.__globalSpriteAddressPointers[id];
     return this.__loadSingleSprite(address);
@@ -157,26 +152,26 @@ export default class SpriteBuffer {
       throw new Error("❌ Global sprite data has not been loaded yet!");
     }
 
-    let spriteLength = SpriteBuffer.__globalPacket.buffer[address + 3] + (SpriteBuffer.__globalPacket.buffer[address + 4] << 8);
-    let spritePacket = SpriteBuffer.__globalPacket.slice(address, address + 5 + spriteLength);
+    const spriteLength = SpriteBuffer.__globalPacket.buffer[address + 3] + (SpriteBuffer.__globalPacket.buffer[address + 4] << 8);
+    const spritePacket = SpriteBuffer.__globalPacket.slice(address, address + 5 + spriteLength);
 
-    let alpha = spritePacket.readRGB();
+    const alpha = spritePacket.readRGB();
     spritePacket.skip(2);
 
-    let buffer = new Uint32Array(32 * 32);
+    const buffer = new Uint32Array(32 * 32);
     let index = 0;
 
     while (spritePacket.readable()) {
-      let transparentPixels = spritePacket.readUInt16();
-      let coloredPixels = spritePacket.readUInt16();
+      const transparentPixels = spritePacket.readUInt16();
+      const coloredPixels = spritePacket.readUInt16();
 
       index += transparentPixels;
 
       for (let i = index; i < index + coloredPixels; i++) {
-        let r = spritePacket.readUInt8();
-        let g = spritePacket.readUInt8();
-        let b = spritePacket.readUInt8();
-        let a = spritePacket.readUInt8();
+        const r = spritePacket.readUInt8();
+        const g = spritePacket.readUInt8();
+        const b = spritePacket.readUInt8();
+        const a = spritePacket.readUInt8();
         buffer[i] = (a << 24) | (b << 16) | (g << 8) | r;
       }
       index += coloredPixels;
@@ -185,12 +180,11 @@ export default class SpriteBuffer {
     return new ImageData(new Uint8ClampedArray(buffer.buffer), 32, 32);
   }
 
-  // --- Outfit/Composed not changed: handled same as before ---
   addComposedOutfit(baseIdentifier: number, outfit: Outfit, item: any, frame: number, xPattern: number, zPattern: number, x: number, y: number): void {
     if (this.has(baseIdentifier)) {
       return;
     }
-    let position = this.reserve(baseIdentifier);
+    const position = this.reserve(baseIdentifier);
     this.addComposedOutfitLayer(position, outfit, item, frame, xPattern, 0, zPattern, x, y);
   }
 
@@ -205,8 +199,8 @@ export default class SpriteBuffer {
     x: number,
     y: number
   ): void {
-    let groundSprite = item.getSpriteId(frame, xPattern, yPattern, zPattern, 0, x, y);
-    let maskSprite = item.getSpriteId(frame, xPattern, yPattern, zPattern, 1, x, y);
+    const groundSprite = item.getSpriteId(frame, xPattern, yPattern, zPattern, 0, x, y);
+    const maskSprite = item.getSpriteId(frame, xPattern, yPattern, zPattern, 1, x, y);
     this.addComposed(position, outfit, groundSprite, maskSprite);
   }
 
@@ -215,7 +209,7 @@ export default class SpriteBuffer {
       return;
     }
 
-    let baseData = this.__getImageData(base);
+    const baseData = this.__getImageData(base);
 
     if (mask !== 0) {
       this.__compose(outfit, baseData, this.__getImageData(mask));
@@ -226,16 +220,16 @@ export default class SpriteBuffer {
   }
 
   private __compose(outfit: Outfit, baseData: ImageData, maskData: ImageData): void {
-    let HEAD = outfit.getColor(outfit.details.head);
-    let BODY = outfit.getColor(outfit.details.body);
-    let LEGS = outfit.getColor(outfit.details.legs);
-    let FEET = outfit.getColor(outfit.details.feet);
+    const HEAD = outfit.getColor(outfit.details.head);
+    const BODY = outfit.getColor(outfit.details.body);
+    const LEGS = outfit.getColor(outfit.details.legs);
+    const FEET = outfit.getColor(outfit.details.feet);
 
-    let mask = new Uint32Array(maskData.data.buffer);
-    let base = baseData.data;
+    const mask = new Uint32Array(maskData.data.buffer);
+    const base = baseData.data;
 
     for (let i = 0; i < mask.length; i++) {
-      let offset = 4 * i;
+      const offset = 4 * i;
       switch (mask[i]) {
         case 0xFF00FFFF: // Head
           base[offset] = (base[offset] * ((HEAD >> 0) & 0xFF)) / 0xFF;

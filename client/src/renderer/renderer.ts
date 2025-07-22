@@ -1,11 +1,11 @@
-
+import { Application, Container, Sprite } from 'pixi.js';
 import Canvas from "./canvas";
 import LightCanvas from "./light-canvas";
 import WeatherCanvas from "./weather-canvas";
 import OutlineCanvas from "./outline-canvas";
-import Item from "../game/item";
 import Debugger from "../utils/debugger";
 import Interface from "../ui/interface";
+import Item from "../game/item";
 import Position from "../game/position";
 import DistanceAnimation from "../utils/distance-animation";
 import ConditionManager from "../game/condition";
@@ -17,44 +17,54 @@ import Tile from "../game/tile";
 import Creature from "../game/creature";
 import Chunk from "../core/chunk";
 import Animation from "../utils/animation";
+import FrameGroup from '../utils/frame-group';
 
 export default class Renderer {
-  __animationLayers = new Array();
-  // Main game screen canvas.
+  __animationLayers = new Array<Set<any>>();
+  __nMiliseconds: number;
+
   public screen: Canvas;
-  // Canvas used for lighting effects.
   public lightscreen: LightCanvas;
-  // Canvas for weather effects.
   public weatherCanvas: WeatherCanvas;
-  // Canvas for rendering item outlines.
   public outlineCanvas: OutlineCanvas;
-  // Minimap for world preview.
-  //public minimap: Minimap;
-  // Debugger for internal statistics.
   public debugger: Debugger;
 
-  // Internal state variables.
   private __start: number;
-  __nMiliseconds: number;
+  private __tileCache: any[];
   public totalDrawTime: number;
   public drawCalls: number;
   public numberOfTiles: number;
 
-  // Cache of tiles to be rendered.
-  private __tileCache: any[];
+  public app: Application;
+  public tileContainer: Container;
 
-  constructor() {
-    // Create main canvases using values from Interface.
+  private tileSpritePool: Sprite[] = [];
+  private tilePoolSize = 27 * 13;   
+  
+  constructor(app: Application) {
     this.screen = new Canvas("screen", Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
     this.lightscreen = new LightCanvas(null, Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
     this.weatherCanvas = new WeatherCanvas(this.screen);
     this.outlineCanvas = new OutlineCanvas(null, 130, 130);
 
+    this.app = app;
+    this.tileContainer = new Container();
+    this.app.stage.addChild(this.tileContainer);
     
-    //this.minimap = new Minimap(); // TODO: CHECK IF THIS IS NECESSARY: gameClient.world.width, gameClient.world.height
+    // Debug: Check if container is added to stage
+    console.log("TileContainer added to stage:", this.app.stage.children.includes(this.tileContainer));
+    console.log("Stage children count:", this.app.stage.children.length);
+
+    this.tileSpritePool = [];
+    for (let i = 0; i < this.tilePoolSize; i++) {
+        const sprite = new Sprite();
+        sprite.visible = false;
+        this.tileContainer.addChild(sprite);
+        this.tileSpritePool.push(sprite);
+    }
+    
     this.debugger = new Debugger();
 
-    // Initialize state variables.
     this.__start = performance.now();
     this.__nMiliseconds = 0;
     this.totalDrawTime = 0;
@@ -62,8 +72,24 @@ export default class Renderer {
     this.numberOfTiles = 0;
     this.__tileCache = [];
 
-    // Create animation layers.
     this.__createAnimationLayers();
+  }
+
+  static async create(): Promise<Renderer> {
+    const app = new Application();
+    await app.init({
+      width: Interface.SCREEN_WIDTH_MIN,
+      height: Interface.SCREEN_HEIGHT_MIN,
+      backgroundColor: 0x1099bb,
+      antialias: false,
+      resolution: 1,
+      backgroundAlpha: 0,
+    });
+
+    const container = document.getElementById("game-container")!;
+    container.appendChild(app.canvas);
+
+    return new Renderer(app);
   }
 
   public render(): void {
@@ -71,6 +97,12 @@ export default class Renderer {
     this.__increment();
     this.__renderWorld();
     this.__renderOther();
+  }
+
+  private __increment(): void {
+    // Increments the renderer by a number of milliseconds
+    this.debugger.__nFrames++;
+    this.__nMiliseconds = performance.now() - this.__start;
   }
 
   public getTileCache(): any[] {
@@ -188,12 +220,6 @@ export default class Renderer {
     );
   }
   
-  private __increment(): void {
-    // Increments the renderer by a number of milliseconds
-    this.debugger.__nFrames++;
-    this.__nMiliseconds = performance.now() - this.__start;
-  }
-  
   private __getFloorTilesTiles(floor: number): Tile[] {
     // Returns the tiles in the viewport sorted by distinctive layers
     const tiles: Tile[] = [];
@@ -216,37 +242,96 @@ export default class Renderer {
   
     // Clear the full game canvas
     this.screen.clear();
+    this.tileContainer.removeChildren();
   
     // Render all of the cached tiles: only needs to be updated when the character moves
     this.getTileCache().forEach(this.__renderFloor, this);
   
-    // If requested render the weather canvas
-    if (window.gameClient.interface.settings.isWeatherEnabled()) {
-      this.weatherCanvas.drawWeather();
-    }
+    // // If requested render the weather canvas
+    // if (window.gameClient.interface.settings.isWeatherEnabled()) {
+    //   this.weatherCanvas.drawWeather();
+    // }
   
-    // Finally draw the lightscreen to the canvas and reset it
-    if (window.gameClient.interface.settings.isLightingEnabled()) {
-      if (window.gameClient.player!.hasCondition(ConditionManager.LIGHT)) {
-        this.lightscreen.renderLightBubble(7, 5, 5, 23);
-      } else {
-        this.lightscreen.renderLightBubble(7, 5, 2, 23);
-      }
-      this.screen.context.drawImage(this.lightscreen.canvas, 0, 0);
-      this.lightscreen.setup();
-    }
+    // // Finally draw the lightscreen to the canvas and reset it
+    // if (window.gameClient.interface.settings.isLightingEnabled()) {
+    //   if (window.gameClient.player!.hasCondition(ConditionManager.LIGHT)) {
+    //     this.lightscreen.renderLightBubble(7, 5, 5, 23);
+    //   } else {
+    //     this.lightscreen.renderLightBubble(7, 5, 2, 23);
+    //   }
+    //   this.screen.context.drawImage(this.lightscreen.canvas, 0, 0);
+    //   this.lightscreen.setup();
+    // }
   
     this.totalDrawTime += performance.now() - start;
   }
   
-  public __renderFloor(tiles: any[], index: number): void {
-    // Render all the tiles on the floor
-    tiles.forEach(this.__renderFullTile, this);
+  // public __renderFloor(tiles: any[], index: number): void {
+  //   // Render all the tiles on the floor
+  //   tiles.forEach(this.__renderFullTile, this);
   
-    // Render the animations on this layer
-    this.__animationLayers[index].forEach((animation: any) => {
-      this.__renderDistanceAnimation(animation, this.__animationLayers[index]);
-    }, this);
+  //   // Render the animations on this layer
+  //   this.__animationLayers[index].forEach((animation: any) => {
+  //     this.__renderDistanceAnimation(animation, this.__animationLayers[index]);
+  //   }, this);
+  // }
+
+  public __renderFloor(tiles: Tile[], index: number): void {
+
+    for (const tile of tiles) {
+      if (tile.id === 0) continue;
+  
+      tile.setElevation(0);
+  
+      // This is pixel coordinates for the tile's base
+      const tilePosition = tile.getPosition();
+      //console.log('tilePosition', tilePosition);
+      const position = this.getStaticScreenPosition(tilePosition);
+      console.log('position', position);
+  
+      // This follows your old drawSprite logica
+      const frameGroup = tile.getFrameGroup(FrameGroup.NONE);
+      const frame = tile.getFrame();
+      const pattern = tile.getPattern();
+  
+      for (let x = 0; x < frameGroup.width; x++) {
+        for (let y = 0; y < frameGroup.height; y++) {
+          for (let l = 0; l < frameGroup.layers; l++) {
+            let spriteId = frameGroup.getSpriteIndex(frame, pattern.x, pattern.y, pattern.z, l, x, y);
+            const sprite1 = frameGroup.getSprite(spriteId);
+            if (!sprite1) continue;  
+            
+            const sprite = new Sprite(sprite1);
+
+            sprite.x = position.x * 32;
+            sprite.y = position.y * 32;
+            sprite.width = 32;
+            sprite.height = 32;
+   
+            //this.app.stage.addChild(sprite);
+            this.tileContainer.addChild(sprite);
+          }
+        }
+      }
+    }
+  }
+  
+
+  public __renderTile(tile: any): void {
+    // Rendering function for a particular tile
+    if (tile.id === 0) {
+      return;
+    }
+    // Reset the elevation of the tile
+    tile.setElevation(0);
+    // Get the position of the tile on the game screen
+    const position = this.getStaticScreenPosition(tile.getPosition());
+    // Render light if enabled and applicable
+    if (window.gameClient.interface.settings.isLightingEnabled() && tile.isLight()) {
+      this.__renderLight(tile, position, tile, undefined);
+    }
+    // Draw the sprite to the screen
+    this.screen.drawSprite(tile, position, 64);
   }
   
   public __renderFullTile(tile: any): void {
@@ -380,23 +465,6 @@ export default class Renderer {
     }, this);
   }
   
-  public __renderTile(tile: any): void {
-    // Rendering function for a particular tile
-    if (tile.id === 0) {
-      return;
-    }
-    // Reset the elevation of the tile
-    tile.setElevation(0);
-    // Get the position of the tile on the game screen
-    const position = this.getStaticScreenPosition(tile.getPosition());
-    // Render light if enabled and applicable
-    if (window.gameClient.interface.settings.isLightingEnabled() && tile.isLight()) {
-      this.__renderLight(tile, position, tile, undefined);
-    }
-    // Draw the sprite to the screen
-    this.screen.drawSprite(tile, position, 64);
-  }
-  
   public __renderDeferred(tile: any): void {
     // Renders the deferred entities on the tile
     if (tile.__deferredCreatures.size === 0) {
@@ -513,12 +581,12 @@ export default class Renderer {
   
   public __renderOther(): void {
     // Renders other information to the screen
-    window.gameClient.player!.equipment.render();
-    window.gameClient.interface.modalManager.render();
-    this.__renderContainers();
-    window.gameClient.world.clock.updateClockDOM();
-    window.gameClient.interface.screenElementManager.render();
-    window.gameClient.interface.hotbarManager.render();
+    //window.gameClient.player!.equipment.render();
+    //window.gameClient.interface.modalManager.render();
+    //this.__renderContainers();
+    //window.gameClient.world.clock.updateClockDOM();
+    //window.gameClient.interface.screenElementManager.render();
+    //window.gameClient.interface.hotbarManager.render();
     this.debugger.renderStatistics();
   }
   

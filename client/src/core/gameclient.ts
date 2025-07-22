@@ -34,10 +34,10 @@ export default class GameClient {
   serverVersion: number | null = null;
   clientVersion: number | null = null;
 
-  constructor() {
-    this.renderer = new Renderer();
+  constructor(renderer: Renderer) {
+    this.renderer = renderer;
     this.interface = new Interface();
-    this.spriteBuffer = new SpriteBuffer(32);
+    this.spriteBuffer = new SpriteBuffer(1024);
     this.dataObjects = new ObjectBuffer();
     this.networkManager = new NetworkManager();
     this.database = new Database();

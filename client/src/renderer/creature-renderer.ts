@@ -1,3 +1,4 @@
+import { Texture } from "pixi.js";
 import Creature, { CharacterFrames } from "../game/creature";
 import Position from "../game/position";
 import SpriteBuffer from "../renderer/sprite-buffer";
@@ -185,7 +186,7 @@ export default class CreatureRenderer {
           spriteBuffer.addComposedOutfit(spriteId, this.creature.outfit, group, frame, xPattern, zPattern, x, y);
         }
 
-        let sprite: Sprite | null = null;
+        let sprite: Texture | null = null;
         try {
           sprite = spriteBuffer.get(spriteId);
         } catch (err) {

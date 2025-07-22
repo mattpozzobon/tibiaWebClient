@@ -2,12 +2,12 @@ import Outfit from "../game/outfit";
 import Position from "../game/position";
 import PacketReader from "../network/packetreader";
 import Canvas from "./canvas";
-import Sprite from "./sprite";
+import * as PIXI from "pixi.js";
 
 export default class SpriteBuffer {
   size: number;
   private __spriteBufferIndex: number = 0;
-  private __spriteBufferArray: (number | null)[];
+  private __spriteBufferArray: (PIXI.Texture | null)[];
   private __spriteBufferLookup: Record<number, number> = {};
   private static __globalSpriteAddressPointers: Record<number, number> = {};
   private static __globalPacket: PacketReader | null = null;
@@ -29,7 +29,6 @@ export default class SpriteBuffer {
     this.compositionCanvas = new Canvas(null, 32, 32);
   }
 
-  /** 🔹 Get position of a sprite in the current buffer */
   getSpritePosition(id: number): Position | null {
     if (!this.has(id)) return null;
     return this.__getPosition(this.__spriteBufferLookup[id]);
@@ -48,17 +47,17 @@ export default class SpriteBuffer {
 
   reserve(id: number): Position {
     this.__evict(this.__spriteBufferIndex);
-    this.__spriteBufferArray[this.__spriteBufferIndex] = id;
+    this.__spriteBufferArray[this.__spriteBufferIndex] = null;
     this.__spriteBufferLookup[id] = this.__spriteBufferIndex;
     let position = this.__getPosition(this.__spriteBufferIndex);
     this.__spriteBufferIndex = (this.__spriteBufferIndex + 1) % this.__spriteBufferArray.length;
     return position;
   }
 
-  /** 🔹 Get a sprite, fetching if necessary */
-  get(id: number): Sprite | null {
+  /** 🔹 Get a PIXI.Texture, fetching if necessary */
+  get(id: number): PIXI.Texture | null {
     if (id === 0) return null;
-    if (!this.has(id)) 
+    if (!this.has(id))
       return this.__add(id);
     return this.__get(id);
   }
@@ -66,35 +65,30 @@ export default class SpriteBuffer {
   /** 🔹 Global Sprite Loader */
   static load(name: string, data: ArrayBuffer | ProgressEvent<FileReader>): void {
     try {
-        if (data instanceof ArrayBuffer) {
-            // Directly use ArrayBuffer from IndexedDB
-            SpriteBuffer.__loadGlobal(name, data);
+      if (data instanceof ArrayBuffer) {
+        SpriteBuffer.__loadGlobal(name, data);
+      } else {
+        const result = (data.target as FileReader).result;
+        if (result instanceof ArrayBuffer) {
+          SpriteBuffer.__loadGlobal(name, result);
         } else {
-            const result = (data.target as FileReader).result;
-            if (result instanceof ArrayBuffer) {
-                SpriteBuffer.__loadGlobal(name, result);
-            } else {
-                throw new Error("Failed to load sprite: result is not an ArrayBuffer.");
-            }
-            window.gameClient.database.storeGameFile(name, result);
+          throw new Error("Failed to load sprite: result is not an ArrayBuffer.");
         }
+        window.gameClient.database.storeGameFile(name, result);
+      }
     } catch (exception) {
-        window.gameClient.interface.modalManager.open("floater-connecting", {
-            message: exception instanceof Error ? exception.message : String(exception)
-        });
+      window.gameClient.interface.modalManager.open("floater-connecting", {
+        message: exception instanceof Error ? exception.message : String(exception)
+      });
     }
   }
 
-  /** 🔹 Load sprites into global storage */
   private static __loadGlobal(name: string, buffer: ArrayBuffer): void {
-    let start = performance.now();
-    
-    // Ensure globalPacket is initialized
     this.__globalPacket = new PacketReader(buffer);
 
     let signature = this.__globalPacket.readUInt32().toString(16).toUpperCase();
     if (!SpriteBuffer.SIGNATURES.hasOwnProperty(signature)) {
-        throw new Error("Unknown Tibia.spr file supplied.");
+      throw new Error("Unknown Tibia.spr file supplied.");
     }
 
     this.__version = SpriteBuffer.SIGNATURES[signature];
@@ -102,36 +96,48 @@ export default class SpriteBuffer {
 
     let storedCount = 0;
     for (let i = 1; i <= spriteCount; i++) {
-        let address = this.__globalPacket.readUInt32();
-
-        if (address !== 0) {
-            this.__globalSpriteAddressPointers[i] = address;
-            storedCount++;
-        }
+      let address = this.__globalPacket.readUInt32();
+      if (address !== 0) {
+        this.__globalSpriteAddressPointers[i] = address;
+        storedCount++;
+      }
     }
 
     console.log(`✅ Stored ${storedCount} global sprite addresses.`);
     window.gameClient.interface.loadAssetCallback("sprite", name);
-  } 
-
-  /** 🔹 Add sprite to the local buffer */
-  private __add(id: number): Sprite {
-    let position = this.reserve(id);
-    let imageData = this.__getImageData(id);
-    this.__spriteBufferCanvas.context.putImageData(imageData, 32 * position.x, 32 * position.y);
-    return new Sprite(this.__spriteBufferCanvas.canvas, position, 32);
   }
 
-  private __get(id: number): Sprite {
+  /** 🔹 Add sprite as PIXI.Texture to the local buffer */
+  private __add(id: number): PIXI.Texture {
+    let position = this.reserve(id);
+    let imageData = this.__getImageData(id);
+
+    // Convert ImageData to canvas, then to PIXI.Texture
+    const canvas = document.createElement("canvas");
+    canvas.width = 32;
+    canvas.height = 32;
+    const ctx = canvas.getContext("2d")!;
+    ctx.putImageData(imageData, 0, 0);
+
+    const texture = PIXI.Texture.from(canvas);
+    this.__spriteBufferArray[this.__spriteBufferLookup[id]] = texture;
+    return texture;
+  }
+
+  private __get(id: number): PIXI.Texture {
     let index = this.__spriteBufferLookup[id];
-    let position = this.__getPosition(index);
-    return new Sprite(this.__spriteBufferCanvas.canvas, position, 32);
+    return this.__spriteBufferArray[index]!;
   }
 
   private __evict(index: number): void {
     if (this.__spriteBufferArray[index] === null) return;
     this.nEvictions++;
-    delete this.__spriteBufferLookup[this.__spriteBufferArray[index]!];
+    // Destroy the PIXI.Texture to free GPU memory
+    this.__spriteBufferArray[index]?.destroy(true);
+    // Find and remove the sprite ID that maps to this index
+    const spriteId = Number(Object.keys(this.__spriteBufferLookup).find(key => this.__spriteBufferLookup[Number(key)] === index));
+    delete this.__spriteBufferLookup[spriteId];
+    this.__spriteBufferArray[index] = null;
   }
 
   private __getPosition(index: number): Position {
@@ -148,7 +154,7 @@ export default class SpriteBuffer {
 
   private __loadSingleSprite(address: number): ImageData {
     if (!SpriteBuffer.__globalPacket) {
-        throw new Error("❌ Global sprite data has not been loaded yet!");
+      throw new Error("❌ Global sprite data has not been loaded yet!");
     }
 
     let spriteLength = SpriteBuffer.__globalPacket.buffer[address + 3] + (SpriteBuffer.__globalPacket.buffer[address + 4] << 8);
@@ -161,29 +167,29 @@ export default class SpriteBuffer {
     let index = 0;
 
     while (spritePacket.readable()) {
-        let transparentPixels = spritePacket.readUInt16();
-        let coloredPixels = spritePacket.readUInt16();
+      let transparentPixels = spritePacket.readUInt16();
+      let coloredPixels = spritePacket.readUInt16();
 
-        index += transparentPixels;
+      index += transparentPixels;
 
-        for (let i = index; i < index + coloredPixels; i++) {
-            let r = spritePacket.readUInt8();
-            let g = spritePacket.readUInt8();
-            let b = spritePacket.readUInt8();
-            let a = spritePacket.readUInt8();
-            buffer[i] = (a << 24) | (b << 16) | (g << 8) | r;
-        }
-        index += coloredPixels;
+      for (let i = index; i < index + coloredPixels; i++) {
+        let r = spritePacket.readUInt8();
+        let g = spritePacket.readUInt8();
+        let b = spritePacket.readUInt8();
+        let a = spritePacket.readUInt8();
+        buffer[i] = (a << 24) | (b << 16) | (g << 8) | r;
+      }
+      index += coloredPixels;
     }
 
     return new ImageData(new Uint8ClampedArray(buffer.buffer), 32, 32);
   }
 
+  // --- Outfit/Composed not changed: handled same as before ---
   addComposedOutfit(baseIdentifier: number, outfit: Outfit, item: any, frame: number, xPattern: number, zPattern: number, x: number, y: number): void {
     if (this.has(baseIdentifier)) {
-        return;
+      return;
     }
-
     let position = this.reserve(baseIdentifier);
     this.addComposedOutfitLayer(position, outfit, item, frame, xPattern, 0, zPattern, x, y);
   }
@@ -203,31 +209,31 @@ export default class SpriteBuffer {
     let maskSprite = item.getSpriteId(frame, xPattern, yPattern, zPattern, 1, x, y);
     this.addComposed(position, outfit, groundSprite, maskSprite);
   }
-  
+
   addComposed(position: Position, outfit: Outfit, base: number, mask: number): void {
     if (base === 0) {
       return;
     }
-  
+
     let baseData = this.__getImageData(base);
-    
+
     if (mask !== 0) {
       this.__compose(outfit, baseData, this.__getImageData(mask));
     }
-  
+
     this.compositionCanvas.context.putImageData(baseData, 0, 0);
     this.__spriteBufferCanvas.context.drawImage(this.compositionCanvas.canvas, 32 * position.x, 32 * position.y);
   }
-  
+
   private __compose(outfit: Outfit, baseData: ImageData, maskData: ImageData): void {
     let HEAD = outfit.getColor(outfit.details.head);
     let BODY = outfit.getColor(outfit.details.body);
     let LEGS = outfit.getColor(outfit.details.legs);
     let FEET = outfit.getColor(outfit.details.feet);
-  
+
     let mask = new Uint32Array(maskData.data.buffer);
     let base = baseData.data;
-  
+
     for (let i = 0; i < mask.length; i++) {
       let offset = 4 * i;
       switch (mask[i]) {
@@ -254,5 +260,4 @@ export default class SpriteBuffer {
       }
     }
   }
-
 }

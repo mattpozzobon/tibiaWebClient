@@ -6,18 +6,14 @@ import FrameGroup from "../utils/frame-group";
 export default class TileRenderer {
   private tileContainer: Container;
   private tilePool: Sprite[];
-  private readonly poolSize = 27 * 13 * 3;
+  private readonly poolSize = 27 * 13 * 2;
   private app: Application;
   private getStaticScreenPosition: (pos: Position) => Position;
 
-  // --- NEW: cache of exactly the tiles we need to draw ---
   private visibleTiles: Tile[] = [];
   public numberOfTiles = 0;
 
-  constructor(
-    app: Application,
-    getStaticScreenPosition: (pos: Position) => Position
-  ) {
+  constructor(app: Application, getStaticScreenPosition: (pos: Position) => Position) {
     this.app = app;
     this.getStaticScreenPosition = getStaticScreenPosition;
 
@@ -64,7 +60,7 @@ export default class TileRenderer {
    * HOT PATH: called every frame.
    * Just walks your prebuilt list of `visibleTiles` and blits them.
    */
-  public renderFromWorld(): void {
+  public render(): void {
     // nothing to do if we haven't cached yet
     if (this.visibleTiles.length === 0) return;
 

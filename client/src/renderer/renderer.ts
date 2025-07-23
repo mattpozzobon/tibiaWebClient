@@ -139,7 +139,7 @@ export default class Renderer {
   public __renderWorld(): void {   
     const t0 = performance.now();
 
-    this.tileRenderer.renderFromWorld();
+    this.tileRenderer.render();
 
     const t1 = performance.now();
     this.__totalDrawTime += t1 - t0; // μs

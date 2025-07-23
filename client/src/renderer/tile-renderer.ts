@@ -10,7 +10,7 @@ export default class TileRenderer {
   private app: Application;
   private getStaticScreenPosition: (pos: Position) => Position;
 
-  private visibleTiles: Tile[] = [];
+  public visibleTiles: Tile[] = [];
   public numberOfTiles = 0;
 
   constructor(app: Application, getStaticScreenPosition: (pos: Position) => Position) {

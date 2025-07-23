@@ -9,7 +9,7 @@ import Thing from "./thing";
 
 export default class Tile extends Thing implements IPathNode {
   __position: Position;
-  private __renderElevation: number = 0;
+  public __renderElevation: number = 0;
   private __animations: Set<any> = new Set();
   private __deferredCreatures: Set<any> = new Set();
   flags: number;

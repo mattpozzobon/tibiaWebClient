@@ -19,6 +19,7 @@ import Chunk from "../core/chunk";
 import Animation from "../utils/animation";
 import FrameGroup from '../utils/frame-group';
 import TileRenderer from './tile-renderer';
+import ItemRenderer from './item-renderer';
 
 export default class Renderer {
   __animationLayers = new Array<Set<any>>();
@@ -35,6 +36,7 @@ export default class Renderer {
 
   public app: Application;
   public tileRenderer: TileRenderer;
+  public itemRenderer: ItemRenderer;
 
   constructor(app: Application) {
     this.screen = new Canvas("screen", Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
@@ -44,6 +46,7 @@ export default class Renderer {
 
     this.app = app;
     this.tileRenderer = new TileRenderer(app, this.getStaticScreenPosition.bind(this));
+    this.itemRenderer = new ItemRenderer(app);
     this.debugger = new Debugger();
 
     this.__start = performance.now();
@@ -140,6 +143,7 @@ export default class Renderer {
     const t0 = performance.now();
 
     this.tileRenderer.render();
+    this.itemRenderer.render(this.tileRenderer.visibleTiles, this.getStaticScreenPosition.bind(this));
 
     const t1 = performance.now();
     this.__totalDrawTime += t1 - t0; // μs

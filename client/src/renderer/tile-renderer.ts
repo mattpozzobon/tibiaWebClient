@@ -4,137 +4,84 @@ import Position from "../game/position";
 import FrameGroup from "../utils/frame-group";
 
 export default class TileRenderer {
-  private tileContainer: Container;
-  private tilePool: Sprite[];
-  private readonly poolSize = 27 * 13 * 2;
-  private app: Application;
-  private getStaticScreenPosition: (pos: Position) => Position;
+  private spritePool: Sprite[];
+  private getPoolIndex: () => number;
+  private setPoolIndex: (v: number) => void;
+  private poolSize: number;
+  public tileCache: Tile[][] = [];
 
-  public visibleTiles: Tile[] = [];
-  public numberOfTiles = 0;
-
-  constructor(app: Application, getStaticScreenPosition: (pos: Position) => Position) {
-    this.app = app;
-    this.getStaticScreenPosition = getStaticScreenPosition;
-
-    this.tileContainer = new Container();
-    this.app.stage.addChild(this.tileContainer);
-
-    this.tilePool = new Array(this.poolSize);
-    for (let i = 0; i < this.poolSize; i++) {
-      const s = new Sprite(Texture.EMPTY);
-      s.width = 32;
-      s.height = 32;
-      s.visible = false;
-      this.tileContainer.addChild(s);
-      this.tilePool[i] = s;
-    }
+  constructor(
+    spritePool: Sprite[],
+    getPoolIndex: () => number,
+    setPoolIndex: (v: number) => void,
+    poolSize: number
+  ) {
+    this.spritePool = spritePool;
+    this.getPoolIndex = getPoolIndex;
+    this.setPoolIndex = setPoolIndex;
+    this.poolSize = poolSize
   }
 
-  /**
-   * Build (or rebuild) the list of just‑visible tiles.
-   * Call this once whenever the player moves, teleports, logs in, etc.
-   */
   public refreshVisibleTiles(): void {
+    this.tileCache = [];
     const player = window.gameClient.player!;
-    const world  = window.gameClient.world!;
+    const world = window.gameClient.world!;
     const maxFloor = player.getMaxFloor();
-
-    this.visibleTiles = [];
-    this.numberOfTiles = 0;
-
-    // floor → chunk → tile, exactly once per move
+  
     for (let floor = 0; floor < maxFloor; floor++) {
+      const floorTiles: Tile[] = [];
       for (const chunk of world.chunks) {
         for (const tile of chunk.getFloorTiles(floor)) {
           if (!player.canSee(tile)) continue;
           if (tile.id === 0 && tile.items.length === 0) continue;
-          this.visibleTiles.push(tile);
-          this.numberOfTiles++;
+          floorTiles.push(tile);
         }
       }
+      this.tileCache.push(floorTiles);
     }
   }
 
-  /**
-   * HOT PATH: called every frame.
-   * Just walks your prebuilt list of `visibleTiles` and blits them.
-   */
-  public render(): void {
-    // nothing to do if we haven't cached yet
-    if (this.visibleTiles.length === 0) return;
+  public renderTile(tile: Tile, screenPos: Position): void {
+    let poolIndex = this.getPoolIndex();
 
-    const pool     = this.tilePool;
-    const poolSize = pool.length;
-    let idx        = 0;
-
-    // blit only those tiles
-    for (const tile of this.visibleTiles) {
-      if (idx >= poolSize) break;
-      idx = this.renderTile(tile, idx, poolSize);
-    }
-
-    // hide leftovers
-    for (let i = idx; i < poolSize; i++) {
-      pool[i].visible = false;
-    }
-  }
-
-  /**
-   * Renders a single tile (may take multiple sprites).
-   * Returns the next free poolIndex.
-   */
-  private renderTile(
-    tile: Tile,
-    poolIndex: number,
-    poolSize: number
-  ): number {
     tile.setElevation(0);
-
-    const pos   = this.getStaticScreenPosition(tile.getPosition());
-    const xCell = pos.x, yCell = pos.y;
-
-    // quick cull in tile‑space
-    if (xCell < -1 || xCell > 27 || yCell < -1 || yCell > 14) {
-      return poolIndex;
-    }
+    const xCell = screenPos.x, yCell = screenPos.y;
+    if (xCell < -1 || xCell > 27 || yCell < -1 || yCell > 14) return;
 
     const px = xCell * 32;
     const py = yCell * 32;
 
-    // may throw if dataObjects not yet loaded
     let fg: FrameGroup;
     try {
       fg = tile.getFrameGroup(FrameGroup.NONE);
     } catch {
-      return poolIndex;
+      return;
     }
 
     const f = tile.getFrame();
     const p = tile.getPattern();
 
-    // very common 1×1×1
     if (fg.width === 1 && fg.height === 1 && fg.layers === 1) {
-      if (poolIndex < poolSize) {
+      if (poolIndex < this.poolSize) {
         const sid = fg.getSpriteIndex(f, p.x, p.y, p.z, 0, 0, 0);
         const tex = fg.getSprite(sid);
         if (tex) {
-          const spr = this.tilePool[poolIndex++];
+          const spr = this.spritePool[poolIndex++];
           spr.texture = tex;
           spr.x = px; spr.y = py; spr.visible = true;
         }
       }
-      return poolIndex;
+      this.setPoolIndex(poolIndex);
+      return;
     }
 
-    // fallback multi‑sprite
     for (let l = 0; l < fg.layers; l++) {
       for (let cx = 0; cx < fg.width; cx++) {
         for (let cy = 0; cy < fg.height; cy++) {
-          if (poolIndex >= poolSize) return poolIndex;
+          if (poolIndex >= this.poolSize) return;
           const sid = fg.getSpriteIndex(f, p.x, p.y, p.z, l, cx, cy);
           const tex = fg.getSprite(sid);
-          const spr = this.tilePool[poolIndex++];
+          const spr = this.spritePool[poolIndex++];
           if (tex) {
             spr.texture = tex;
             spr.x = px; spr.y = py; spr.visible = true;
@@ -144,7 +91,7 @@ export default class TileRenderer {
         }
       }
     }
-
-    return poolIndex;
+    this.setPoolIndex(poolIndex);
   }
+  
 }

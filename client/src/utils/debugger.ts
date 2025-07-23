@@ -126,7 +126,7 @@ export default class Debugger {
       `Frame Rate: ${this.__averageFPS}fps`,
       `Draw Calls: ${this.__averageDrawCalls}`,
       `Draw Time: ${this.__averageDrawTime}µs`,
-      `Draw Tiles: ${window.gameClient.renderer.tileRenderer.numberOfTiles}`,
+      //`Draw Tiles: ${window.gameClient.renderer.tileRenderer.numberOfTiles}`,
       `Active Entities: ${Object.keys(window.gameClient.world.activeCreatures).length}`,
       `Sprite Buffer Hit: ${window.gameClient.spriteBuffer.hitCount}`,
       `Sprite Buffer Miss: ${window.gameClient.spriteBuffer.missCount}`,

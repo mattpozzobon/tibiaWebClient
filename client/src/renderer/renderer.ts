@@ -1,4 +1,4 @@
-import { Application, Container, Sprite } from 'pixi.js';
+import { Application, Container, Sprite, Texture } from 'pixi.js';
 import Canvas from "./canvas";
 import LightCanvas from "./light-canvas";
 import WeatherCanvas from "./weather-canvas";
@@ -37,6 +37,11 @@ export default class Renderer {
   public app: Application;
   public tileRenderer: TileRenderer;
   public itemRenderer: ItemRenderer;
+  public gameLayer: Container;
+
+  public spritePool: Sprite[] = [];
+  public readonly poolSize = 28 * 14 * 4; // (enough for all tiles + items + some headroom)
+  public poolIndex: number = 0;
 
   constructor(app: Application) {
     this.screen = new Canvas("screen", Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
@@ -45,13 +50,38 @@ export default class Renderer {
     this.outlineCanvas = new OutlineCanvas(null, 130, 130);
 
     this.app = app;
-    this.tileRenderer = new TileRenderer(app, this.getStaticScreenPosition.bind(this));
-    this.itemRenderer = new ItemRenderer(app);
-    this.debugger = new Debugger();
 
+    this.gameLayer = new Container();
+    this.app.stage.addChild(this.gameLayer);
+
+    this.debugger = new Debugger();
     this.__start = performance.now();
     this.__nMiliseconds = 0;
     this.__totalDrawTime = 0;
+    this.spritePool = new Array(this.poolSize);
+    
+    for (let i = 0; i < this.poolSize; i++) {
+      const spr = new Sprite(Texture.EMPTY);
+      spr.width = 32;
+      spr.height = 32;
+      spr.visible = false;
+      this.gameLayer.addChild(spr);
+      this.spritePool[i] = spr;
+    }
+
+    this.tileRenderer = new TileRenderer(
+      this.spritePool,
+      () => this.poolIndex,
+      (v) => { this.poolIndex = v; },
+      this.poolSize
+    );
+
+    this.itemRenderer = new ItemRenderer(
+      this.spritePool,
+      () => this.poolIndex,
+      (v) => { this.poolIndex = v; },
+      this.poolSize
+    );
 
     this.__createAnimationLayers();
   }
@@ -139,15 +169,38 @@ export default class Renderer {
     );
   }
   
-  public __renderWorld(): void {   
+  public __renderWorld(): void {
     const t0 = performance.now();
-
-    this.tileRenderer.render();
-    this.itemRenderer.render(this.tileRenderer.visibleTiles, this.getStaticScreenPosition.bind(this));
-
+  
+    // Reset pool for this frame
+    this.poolIndex = 0;
+    for (let i = 0; i < this.poolSize; i++) {
+      this.spritePool[i].visible = false;
+    }
+  
+    const tileCache = this.tileRenderer.tileCache; // Tile[][], floors from 0 (bottom) up
+  
+    // For each floor, draw all tiles, then all items, then next floor (topmost last!)
+    for (let floor = 0; floor < tileCache.length; floor++) {
+      const tiles = tileCache[floor];
+  
+      // Draw all tiles for this floor first (will cover everything below)
+      for (const tile of tiles) {
+        const screenPos = this.getStaticScreenPosition(tile.getPosition());
+        this.tileRenderer.renderTile(tile, screenPos);
+      }
+      // Now draw all items for this floor on top of its tiles
+      for (const tile of tiles) {
+        const screenPos = this.getStaticScreenPosition(tile.getPosition());
+        this.itemRenderer.renderItemsForTile(tile, screenPos);
+        this.itemRenderer.renderOnTopItemsForTile(tile, screenPos);
+      }
+    }
+  
     const t1 = performance.now();
-    this.__totalDrawTime += t1 - t0; // μs
+    this.__totalDrawTime += t1 - t0;
   }
+  
   
   // public __renderFloor(tiles: any[], index: number): void {
   //   // Render all the tiles on the floor

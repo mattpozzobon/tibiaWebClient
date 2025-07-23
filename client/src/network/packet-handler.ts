@@ -1,3 +1,4 @@
+import Chunk from "../core/chunk";
 import Book from "../game/book";
 import ConditionManager from "../game/condition";
 import Container from "../game/container";
@@ -203,7 +204,7 @@ class PacketHandler {
     window.gameClient.networkManager.state.latency = performance.now() - window.gameClient.networkManager.latency;
   }
 
-  handleChunk(chunk: { id: number }): void {
+  handleChunk(chunk: Chunk): void {
     if (window.gameClient.world.chunks.some((c) => c.id === chunk.id)) return;
 
     window.gameClient.world.chunks.push(chunk);

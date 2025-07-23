@@ -158,7 +158,7 @@ class Keyboard {
 
   private __move(direction: number, position: any): void {
     if (!window.gameClient.networkManager.packetHandler.handlePlayerMove(position)) return;
-    window.gameClient.renderer.updateTileCache();
+    window.gameClient.renderer.tileRenderer.refreshVisibleTiles();
     window.gameClient.interface.modalManager.close();
     window.gameClient.send(new MovementPacket(direction));
   }

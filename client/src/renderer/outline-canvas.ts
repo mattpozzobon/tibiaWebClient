@@ -35,13 +35,13 @@ export default class OutlineCanvas extends Canvas {
   }
 
   drawOutlineSprite(position: Position): void {
-    this.context.drawImage(
-      window.gameClient.spriteBuffer.__spriteBufferCanvas.canvas,
-      position.x * 32,
-      position.y * 32,
-      32, 32,
-      1, 1,
-      32, 32
-    );
+    // this.context.drawImage(
+    //   window.gameClient.spriteBuffer.__spriteBufferCanvas.canvas,
+    //   position.x * 32,
+    //   position.y * 32,
+    //   32, 32,
+    //   1, 1,
+    //   32, 32
+    // );
   }
 }

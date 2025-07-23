@@ -15,7 +15,7 @@ export default class World {
   public nSectorsHeight: number;
   public nSectorsDepth: number;
   public activeCreatures: { [id: string]: any };
-  public chunks: any[];
+  public chunks: Chunk[];
   public pathfinder: any;
   public clock: any;
 
@@ -41,7 +41,7 @@ export default class World {
     window.gameClient.player!.__serverWalkConfirmation = true;
     this.checkEntityReferences();
     this.checkChunks();
-    window.gameClient.renderer.updateTileCache();
+    window.gameClient.renderer.tileRenderer.refreshVisibleTiles()
     //window.gameClient.renderer.minimap.setCenter();
     if (window.gameClient.player!.__movementEvent === null) {
       window.gameClient.player!.__movementEvent = window.gameClient.eventQueue.addEvent(

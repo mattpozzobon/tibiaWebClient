@@ -180,7 +180,7 @@ export default class Canvas {
   __drawSprite(sprite: any, position: Position, x: number, y: number, size: number): void {
     if (!sprite) return;
 
-    window.gameClient.renderer.drawCalls++;
+    //window.gameClient.renderer.drawCalls++;
 
     this.context.drawImage(
       sprite.src,

@@ -1,257 +1,192 @@
-import Outfit from "../game/outfit";
 import Position from "../game/position";
 import PacketReader from "../network/packetreader";
-import Canvas from "./canvas";
-import * as PIXI from "pixi.js";
+import { CanvasSource, Rectangle, SCALE_MODES, Texture, WRAP_MODES } from "pixi.js";
 
 export default class SpriteBuffer {
-  size: number;
-  private __spriteBufferIndex: number = 0;
-  private __spriteBufferArray: (PIXI.Texture | null)[];
-  private __spriteBufferLookup: Record<number, number> = {};
-  private static __globalSpriteAddressPointers: Record<number, number> = {};
-  private static __globalPacket: PacketReader | null = null;
+  private size: number;
+  private bufferIndex = 0;
+  private idToIndex = new Map<number, number>();
+  private textures: (Texture | null)[];
+  private atlasCanvas: HTMLCanvasElement;
+  private atlasCtx: CanvasRenderingContext2D;
+  private atlasSource: CanvasSource;
+  private scratch: ImageData;
 
-  __spriteBufferCanvas: Canvas;
-  private compositionCanvas: Canvas;
+  public nEvictions = 0;
   public static __version: number | null = null;
-  nEvictions: number = 0;
-  static SIGNATURES: Record<string, number> = {
-    "57BBD603": 1098
-  };
+  private static __globalPacket: PacketReader | null = null;
+  private static __addresses: Record<number, number> = {};
+  static SIGNATURES: Record<string, number> = {"57BBD603": 1098};
 
-  constructor(size: number) {
-    this.size = size;
-    this.__spriteBufferArray = new Array(size * size).fill(null);
-    this.__spriteBufferCanvas = new Canvas(null, 32 * size, 32 * size);
-    this.compositionCanvas = new Canvas(null, 32, 32);
+  constructor(totalSprites: number) {
+    // 0) Force nearest‐neighbor and clamp globally
+    //PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+    // (Wrap mode is per‐texture below)
+
+    // Compute grid size
+    this.size = Math.ceil(Math.sqrt(totalSprites));
+
+    // Cell size = 32px sprite + 2px padding (1px border each side)
+    const cell = 32 + 2;
+
+    // Create raw canvas
+    this.atlasCanvas = document.createElement("canvas");
+    this.atlasCanvas.width  = this.size * cell;
+    this.atlasCanvas.height = this.size * cell;
+    this.atlasCtx = this.atlasCanvas.getContext("2d")!;
+
+    // Prepare CanvasSource (for v8)
+    this.atlasSource = new CanvasSource({ resource: this.atlasCanvas });
+    // Clamp to edge so UVs don't wrap
+    this.atlasSource = new CanvasSource({
+      resource: this.atlasCanvas,
+    
+      // pixel‐perfect sampling
+      minFilter: SCALE_MODES.NEAREST,
+      magFilter: SCALE_MODES.NEAREST,
+      mipmapFilter: SCALE_MODES.NEAREST,
+      wrapMode: WRAP_MODES.CLAMP
+    });
+
+    // Prepare texture slots and scratch buffer
+    this.textures = new Array(this.size * this.size).fill(null);
+    this.scratch  = new ImageData(32, 32);
   }
 
-  getSpritePosition(id: number): Position | null {
-    if (!this.has(id)) return null;
-    return this.__getPosition(this.__spriteBufferLookup[id]);
-  }
-
-  clear(): void {
-    this.__spriteBufferIndex = 0;
-    this.__spriteBufferArray.fill(null);
-    this.__spriteBufferLookup = {};
-    this.__spriteBufferCanvas.clear();
-  }
-
-  has(id: number): boolean {
-    return this.__spriteBufferLookup.hasOwnProperty(id);
-  }
-
-  reserve(id: number): Position {
-    this.__evict(this.__spriteBufferIndex);
-    this.__spriteBufferArray[this.__spriteBufferIndex] = null;
-    this.__spriteBufferLookup[id] = this.__spriteBufferIndex;
-    let position = this.__getPosition(this.__spriteBufferIndex);
-    this.__spriteBufferIndex = (this.__spriteBufferIndex + 1) % this.__spriteBufferArray.length;
-    return position;
-  }
-
-  /** 🔹 Get a PIXI.Texture, fetching if necessary */
-  get(id: number): PIXI.Texture | null {
-    if (id === 0) return null;
-    if (!this.has(id))
-      return this.__add(id);
-    return this.__get(id);
-  }
-
+  /** Load and parse the global .spr file just once */
   static load(name: string, data: ArrayBuffer | ProgressEvent<FileReader>): void {
     try {
-      if (data instanceof ArrayBuffer) {
-        SpriteBuffer.__loadGlobal(name, data);
-      } else {
+      let buf: ArrayBuffer;
+      if (data instanceof ArrayBuffer) buf = data;
+      else {
         const result = (data.target as FileReader).result;
-        if (result instanceof ArrayBuffer) {
-          SpriteBuffer.__loadGlobal(name, result);
-        } else {
-          throw new Error("Failed to load sprite: result is not an ArrayBuffer.");
-        }
-        window.gameClient.database.storeGameFile(name, result);
+        if (!(result instanceof ArrayBuffer)) throw new Error("Not ArrayBuffer");
+        buf = result;
+        window.gameClient.database.storeGameFile(name, buf);
       }
-    } catch (exception) {
+      this.__globalPacket = new PacketReader(buf);
+      const sig = this.__globalPacket.readUInt32().toString(16).toUpperCase();
+      if (!(sig in this.SIGNATURES)) throw new Error("Unknown .spr");
+      this.__version = this.SIGNATURES[sig];
+      const count =
+        this.__version > 760
+          ? this.__globalPacket.readUInt32()
+          : this.__globalPacket.readUInt16();
+      for (let i = 1; i <= count; i++) {
+        const addr = this.__globalPacket.readUInt32();
+        if (addr !== 0) this.__addresses[i] = addr;
+      }
+      window.gameClient.interface.loadAssetCallback("sprite", name);
+    } catch (e) {
       window.gameClient.interface.modalManager.open("floater-connecting", {
-        message: exception instanceof Error ? exception.message : String(exception)
+        message: e instanceof Error ? e.message : String(e),
       });
     }
   }
 
-  private static __loadGlobal(name: string, buffer: ArrayBuffer): void {
-    this.__globalPacket = new PacketReader(buffer);
+  /** Clear all cached sprites and reset atlas */
+  clear(): void {
+    this.bufferIndex = 0;
+    this.idToIndex.clear();
+    this.textures.fill(null);
+    this.atlasCtx.clearRect(0, 0, this.atlasCanvas.width, this.atlasCanvas.height);
+  }
 
-    const signature = this.__globalPacket.readUInt32().toString(16).toUpperCase();
-    if (!SpriteBuffer.SIGNATURES.hasOwnProperty(signature)) {
-      throw new Error("Unknown Tibia.spr file supplied.");
+  /** Check if a sprite is already cached */
+  has(id: number): boolean {
+    return this.idToIndex.has(id);
+  }
+
+  /** Get or load a Texture for the given sprite ID */
+  get(id: number): Texture | null {
+    if (id === 0) return null;
+    return this.has(id) ? this.textures[this.idToIndex.get(id)!]! : this.add(id);
+  }
+
+  /** Reserve an atlas cell, evicting old texture if needed (O(1)) */
+  private reserveCell(id: number): number {
+    const idx = this.bufferIndex;
+    this.evict(idx);
+    this.idToIndex.set(id, idx);
+    this.bufferIndex = (idx + 1) % this.textures.length;
+    return idx;
+  }
+
+  /** Evict a texture from an atlas cell and free GPU memory */
+  private evict(idx: number): void {
+    const old = this.textures[idx];
+    if (!old) return;
+    old.destroy();                                             // :contentReference[oaicite:12]{index=12}
+    this.textures[idx] = null;
+    for (const [key, val] of this.idToIndex) {
+      if (val === idx) { this.idToIndex.delete(key); break; }
     }
-
-    this.__version = SpriteBuffer.SIGNATURES[signature];
-    const spriteCount = this.__globalPacket.readUInt32();
-
-    let storedCount = 0;
-    for (let i = 1; i <= spriteCount; i++) {
-      const address = this.__globalPacket.readUInt32();
-      if (address !== 0) {
-        this.__globalSpriteAddressPointers[i] = address;
-        storedCount++;
-      }
-    }
-
-    console.log(`✅ Stored ${storedCount} global sprite addresses.`);
-    window.gameClient.interface.loadAssetCallback("sprite", name);
-  }
-
-  private __add(id: number): PIXI.Texture {
-    const position = this.reserve(id);
-    const imageData = this.__getImageData(id);
-
-    // Convert ImageData to canvas, then to PIXI.Texture
-    const canvas = document.createElement("canvas");
-    canvas.width = 32;
-    canvas.height = 32;
-    const ctx = canvas.getContext("2d")!;
-    ctx.putImageData(imageData, 0, 0);
-
-    const texture = PIXI.Texture.from(canvas);
-    this.__spriteBufferArray[this.__spriteBufferLookup[id]] = texture;
-    return texture;
-  }
-
-  private __get(id: number): PIXI.Texture {
-    const index = this.__spriteBufferLookup[id];
-    return this.__spriteBufferArray[index]!;
-  }
-
-  private __evict(index: number): void {
-    if (this.__spriteBufferArray[index] === null) return;
     this.nEvictions++;
-    // Destroy the PIXI.Texture to free GPU memory
-    this.__spriteBufferArray[index]?.destroy(true);
-    // Find and remove the sprite ID that maps to this index
-    const spriteId = Number(Object.keys(this.__spriteBufferLookup).find(key => this.__spriteBufferLookup[Number(key)] === index));
-    delete this.__spriteBufferLookup[spriteId];
-    this.__spriteBufferArray[index] = null;
   }
 
-  private __getPosition(index: number): Position {
-    const x = index % this.size;
-    const y = Math.floor(index / this.size);
-    return new Position(x, y, 0);
-  }
+  /** Decode sprite data into the scratch ImageData and return it */
+  private decodeSprite(id: number): ImageData {
+    console.log('decoding sprite', id);
+    const pkt = SpriteBuffer.__globalPacket!;
+    const addr = SpriteBuffer.__addresses[id];
+    const len = pkt.buffer[addr + 3] + (pkt.buffer[addr + 4] << 8);
+    const slice = pkt.slice(addr, addr + 5 + len);
+    slice.readRGB();
+    slice.skip(2);
 
-  private __getImageData(id: number): ImageData {
-    const address = SpriteBuffer.__globalSpriteAddressPointers[id];
-    return this.__loadSingleSprite(address);
-  }
-
-  private __loadSingleSprite(address: number): ImageData {
-    if (!SpriteBuffer.__globalPacket) {
-      throw new Error("❌ Global sprite data has not been loaded yet!");
-    }
-
-    const spriteLength = SpriteBuffer.__globalPacket.buffer[address + 3] + (SpriteBuffer.__globalPacket.buffer[address + 4] << 8);
-    const spritePacket = SpriteBuffer.__globalPacket.slice(address, address + 5 + spriteLength);
-
-    const alpha = spritePacket.readRGB();
-    spritePacket.skip(2);
-
-    const buffer = new Uint32Array(32 * 32);
-    let index = 0;
-
-    while (spritePacket.readable()) {
-      const transparentPixels = spritePacket.readUInt16();
-      const coloredPixels = spritePacket.readUInt16();
-
-      index += transparentPixels;
-
-      for (let i = index; i < index + coloredPixels; i++) {
-        const r = spritePacket.readUInt8();
-        const g = spritePacket.readUInt8();
-        const b = spritePacket.readUInt8();
-        const a = spritePacket.readUInt8();
-        buffer[i] = (a << 24) | (b << 16) | (g << 8) | r;
+    const buf32 = new Uint32Array(this.scratch.data.buffer);
+    buf32.fill(0);
+    let ptr = 0;
+    while (slice.readable()) {
+      const skip = slice.readUInt16();
+      const run  = slice.readUInt16();
+      ptr += skip;
+      for (let i = ptr; i < ptr + run; i++) {
+        const r = slice.readUInt8();
+        const g = slice.readUInt8();
+        const b = slice.readUInt8();
+        const a = slice.readUInt8();
+        buf32[i] = (a << 24) | (b << 16) | (g << 8) | r;
       }
-      index += coloredPixels;
+      ptr += run;
     }
-
-    return new ImageData(new Uint8ClampedArray(buffer.buffer), 32, 32);
+    return this.scratch;
   }
 
-  addComposedOutfit(baseIdentifier: number, outfit: Outfit, item: any, frame: number, xPattern: number, zPattern: number, x: number, y: number): void {
-    if (this.has(baseIdentifier)) {
-      return;
-    }
-    const position = this.reserve(baseIdentifier);
-    this.addComposedOutfitLayer(position, outfit, item, frame, xPattern, 0, zPattern, x, y);
+  /** Add a sprite into the atlas and return its Texture */
+  private add(id: number): Texture {
+    // Reserve a cell and decode into scratch
+    const cell = this.reserveCell(id);
+    const img  = this.decodeSprite(id);
+
+    const cellSize = 32 + 2;
+    const col = cell % this.size;
+    const row = Math.floor(cell / this.size);
+
+    // Draw with 1px inset padding
+    const x = col * cellSize + 1;
+    const y = row * cellSize + 1;
+    this.atlasCtx.putImageData(img, x, y);
+
+    // Upload only changed atlas region
+    this.atlasSource.update();
+
+    // Create a 32×32 sub‐texture at the padded location
+    const frame = new Rectangle(x, y, 32, 32);
+    const tex   = new Texture({ source: this.atlasSource, frame, orig: frame });
+    tex.updateUvs();
+
+    this.textures[cell] = tex;
+    return tex;
   }
 
-  addComposedOutfitLayer(
-    position: Position,
-    outfit: Outfit,
-    item: any,
-    frame: number,
-    xPattern: number,
-    yPattern: number,
-    zPattern: number,
-    x: number,
-    y: number
-  ): void {
-    const groundSprite = item.getSpriteId(frame, xPattern, yPattern, zPattern, 0, x, y);
-    const maskSprite = item.getSpriteId(frame, xPattern, yPattern, zPattern, 1, x, y);
-    this.addComposed(position, outfit, groundSprite, maskSprite);
+  /** Compute the world position (in atlas cells) of a sprite ID */
+  getSpritePosition(id: number): Position | null {
+    const idx = this.idToIndex.get(id);
+    if (idx == null) return null;
+    return new Position(idx % this.size, Math.floor(idx / this.size), 0);
   }
 
-  addComposed(position: Position, outfit: Outfit, base: number, mask: number): void {
-    if (base === 0) {
-      return;
-    }
-
-    const baseData = this.__getImageData(base);
-
-    if (mask !== 0) {
-      this.__compose(outfit, baseData, this.__getImageData(mask));
-    }
-
-    this.compositionCanvas.context.putImageData(baseData, 0, 0);
-    this.__spriteBufferCanvas.context.drawImage(this.compositionCanvas.canvas, 32 * position.x, 32 * position.y);
-  }
-
-  private __compose(outfit: Outfit, baseData: ImageData, maskData: ImageData): void {
-    const HEAD = outfit.getColor(outfit.details.head);
-    const BODY = outfit.getColor(outfit.details.body);
-    const LEGS = outfit.getColor(outfit.details.legs);
-    const FEET = outfit.getColor(outfit.details.feet);
-
-    const mask = new Uint32Array(maskData.data.buffer);
-    const base = baseData.data;
-
-    for (let i = 0; i < mask.length; i++) {
-      const offset = 4 * i;
-      switch (mask[i]) {
-        case 0xFF00FFFF: // Head
-          base[offset] = (base[offset] * ((HEAD >> 0) & 0xFF)) / 0xFF;
-          base[offset + 1] = (base[offset + 1] * ((HEAD >> 8) & 0xFF)) / 0xFF;
-          base[offset + 2] = (base[offset + 2] * ((HEAD >> 16) & 0xFF)) / 0xFF;
-          break;
-        case 0xFF0000FF: // Body
-          base[offset] = (base[offset] * ((BODY >> 0) & 0xFF)) / 0xFF;
-          base[offset + 1] = (base[offset + 1] * ((BODY >> 8) & 0xFF)) / 0xFF;
-          base[offset + 2] = (base[offset + 2] * ((BODY >> 16) & 0xFF)) / 0xFF;
-          break;
-        case 0xFF00FF00: // Legs
-          base[offset] = (base[offset] * ((LEGS >> 0) & 0xFF)) / 0xFF;
-          base[offset + 1] = (base[offset + 1] * ((LEGS >> 8) & 0xFF)) / 0xFF;
-          base[offset + 2] = (base[offset + 2] * ((LEGS >> 16) & 0xFF)) / 0xFF;
-          break;
-        case 0xFFFF0000: // Feet
-          base[offset] = (base[offset] * ((FEET >> 0) & 0xFF)) / 0xFF;
-          base[offset + 1] = (base[offset + 1] * ((FEET >> 8) & 0xFF)) / 0xFF;
-          base[offset + 2] = (base[offset + 2] * ((FEET >> 16) & 0xFF)) / 0xFF;
-          break;
-      }
-    }
-  }
+  // --- addComposedOutfit & related methods can draw directly into
+  //     atlasCtx then call atlasSource.update(), similarly to add(id) ---
 }

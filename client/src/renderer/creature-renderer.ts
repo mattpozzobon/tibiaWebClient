@@ -183,7 +183,7 @@ export default class CreatureRenderer {
         if (spriteId === 0) continue;
 
         if (hasMask && !spriteBuffer.has(spriteId)) {
-          spriteBuffer.addComposedOutfit(spriteId, this.creature.outfit, group, frame, xPattern, zPattern, x, y);
+          //spriteBuffer.addComposedOutfit(spriteId, this.creature.outfit, group, frame, xPattern, zPattern, x, y);
         }
 
         let sprite: Texture | null = null;

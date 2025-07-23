@@ -31,10 +31,7 @@ export default class Renderer {
   public debugger: Debugger;
 
   private __start: number;
-  private __tileCache: Tile[][];
-  public totalDrawTime: number;
-  public drawCalls: number;
-  public numberOfTiles: number;
+  public __totalDrawTime: number;
 
   public app: Application;
   public tileRenderer: TileRenderer;
@@ -47,15 +44,11 @@ export default class Renderer {
 
     this.app = app;
     this.tileRenderer = new TileRenderer(app, this.getStaticScreenPosition.bind(this));
-    
     this.debugger = new Debugger();
 
     this.__start = performance.now();
     this.__nMiliseconds = 0;
-    this.totalDrawTime = 0;
-    this.drawCalls = 0;
-    this.numberOfTiles = 0;
-    this.__tileCache = [];
+    this.__totalDrawTime = 0;
 
     this.__createAnimationLayers();
   }
@@ -88,23 +81,6 @@ export default class Renderer {
     // Increments the renderer by a number of milliseconds
     this.debugger.__nFrames++;
     this.__nMiliseconds = performance.now() - this.__start;
-  }
-
-  public getTileCache(): Tile[][] {
-    return this.__tileCache;
-  }
-
-  public updateTileCache(): void {
-    // Update the tile cache based on the player's maximum visible floor.
-    this.__tileCache = [];
-    this.numberOfTiles = 0;
-
-    const max = window.gameClient.player!.getMaxFloor();
-    for (let i = 0; i < max; i++) {
-      const tiles = this.__getFloorTilesTiles(i);
-      this.__tileCache.push(tiles);
-      this.numberOfTiles += tiles.length;
-    }
   }
 
   public setAmbientColor(r: number, g: number, b: number, a: number): void {
@@ -160,29 +136,13 @@ export default class Renderer {
     );
   }
   
-  private __getFloorTilesTiles(floor: number): Tile[] {
-    // Returns the tiles in the viewport sorted by distinctive layers
-    const tiles: Tile[] = [];
-    window.gameClient.world.chunks.forEach((chunk: Chunk) => {
-      chunk.getFloorTiles(floor).forEach((tile: Tile) => {
-        if (!window.gameClient.player!.canSee(tile)) {
-          return;
-        }
-        if (tile.id === 0 && tile.items.length === 0 ) { //TODO : && tile.neighbours.length === 1
-          return;
-        }
-        tiles.push(tile);
-      });
-    });
-    return tiles;
-  }
-  
-  public __renderWorld(): void {
-    const start = performance.now();
-    
-    this.tileRenderer.renderTiles(this.getTileCache());
-    
-    this.totalDrawTime += performance.now() - start;
+  public __renderWorld(): void {   
+    const t0 = performance.now();
+
+    this.tileRenderer.renderFromWorld();
+
+    const t1 = performance.now();
+    this.__totalDrawTime += t1 - t0; // μs
   }
   
   // public __renderFloor(tiles: any[], index: number): void {

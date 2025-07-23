@@ -1,0 +1,75 @@
+
+  addComposedOutfit(baseIdentifier: number, outfit: Outfit, item: any, frame: number, xPattern: number, zPattern: number, x: number, y: number): void {
+    if (this.has(baseIdentifier)) {
+      return;
+    }
+    const position = this.reserve(baseIdentifier);
+    this.addComposedOutfitLayer(position, outfit, item, frame, xPattern, 0, zPattern, x, y);
+  }
+
+  addComposedOutfitLayer(
+    position: Position,
+    outfit: Outfit,
+    item: any,
+    frame: number,
+    xPattern: number,
+    yPattern: number,
+    zPattern: number,
+    x: number,
+    y: number
+  ): void {
+    const groundSprite = item.getSpriteId(frame, xPattern, yPattern, zPattern, 0, x, y);
+    const maskSprite = item.getSpriteId(frame, xPattern, yPattern, zPattern, 1, x, y);
+    this.addComposed(position, outfit, groundSprite, maskSprite);
+  }
+
+  addComposed(position: Position, outfit: Outfit, base: number, mask: number): void {
+    if (base === 0) {
+      return;
+    }
+
+    const baseData = this.__getImageData(base);
+
+    if (mask !== 0) {
+      this.__compose(outfit, baseData, this.__getImageData(mask));
+    }
+
+    this.compositionCanvas.context.putImageData(baseData, 0, 0);
+    this.__spriteBufferCanvas.context.drawImage(this.compositionCanvas.canvas, 32 * position.x, 32 * position.y);
+  }
+
+  private __compose(outfit: Outfit, baseData: ImageData, maskData: ImageData): void {
+    const HEAD = outfit.getColor(outfit.details.head);
+    const BODY = outfit.getColor(outfit.details.body);
+    const LEGS = outfit.getColor(outfit.details.legs);
+    const FEET = outfit.getColor(outfit.details.feet);
+
+    const mask = new Uint32Array(maskData.data.buffer);
+    const base = baseData.data;
+
+    for (let i = 0; i < mask.length; i++) {
+      const offset = 4 * i;
+      switch (mask[i]) {
+        case 0xFF00FFFF: // Head
+          base[offset] = (base[offset] * ((HEAD >> 0) & 0xFF)) / 0xFF;
+          base[offset + 1] = (base[offset + 1] * ((HEAD >> 8) & 0xFF)) / 0xFF;
+          base[offset + 2] = (base[offset + 2] * ((HEAD >> 16) & 0xFF)) / 0xFF;
+          break;
+        case 0xFF0000FF: // Body
+          base[offset] = (base[offset] * ((BODY >> 0) & 0xFF)) / 0xFF;
+          base[offset + 1] = (base[offset + 1] * ((BODY >> 8) & 0xFF)) / 0xFF;
+          base[offset + 2] = (base[offset + 2] * ((BODY >> 16) & 0xFF)) / 0xFF;
+          break;
+        case 0xFF00FF00: // Legs
+          base[offset] = (base[offset] * ((LEGS >> 0) & 0xFF)) / 0xFF;
+          base[offset + 1] = (base[offset + 1] * ((LEGS >> 8) & 0xFF)) / 0xFF;
+          base[offset + 2] = (base[offset + 2] * ((LEGS >> 16) & 0xFF)) / 0xFF;
+          break;
+        case 0xFFFF0000: // Feet
+          base[offset] = (base[offset] * ((FEET >> 0) & 0xFF)) / 0xFF;
+          base[offset + 1] = (base[offset + 1] * ((FEET >> 8) & 0xFF)) / 0xFF;
+          base[offset + 2] = (base[offset + 2] * ((FEET >> 16) & 0xFF)) / 0xFF;
+          break;
+      }
+    }
+  }

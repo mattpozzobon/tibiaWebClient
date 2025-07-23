@@ -73,17 +73,17 @@ export default class Debugger {
     // Calculate average statistics over the interval.
     this.__averageEvictions = parseFloat(((1E3 * window.gameClient.spriteBuffer.nEvictions) / elapsed).toFixed(0));
     this.__averageFPS = parseFloat(((1E3 * this.UPDATE_INTERVAL) / elapsed).toFixed(0));
-    this.__averageDrawCalls = parseFloat((window.gameClient.renderer.drawCalls / this.UPDATE_INTERVAL).toFixed(0));
-    this.__averageDrawTime = parseFloat(((1E3 * window.gameClient.renderer.totalDrawTime) / this.UPDATE_INTERVAL).toFixed(0));
+    //this.__averageDrawCalls = parseFloat((window.gameClient.renderer.drawCalls / this.UPDATE_INTERVAL).toFixed(0));
+    this.__averageDrawTime = parseFloat(((1E3 * window.gameClient.renderer.__totalDrawTime) / this.UPDATE_INTERVAL).toFixed(0));
 
     this.__nSeconds = performance.now();
 
     window.gameClient.networkManager.getLatency();
 
     // Reset counters.
-    window.gameClient.renderer.drawCalls = 0;
+    //window.gameClient.renderer.drawCalls = 0;
     window.gameClient.spriteBuffer.nEvictions = 0;
-    window.gameClient.renderer.totalDrawTime = 0;
+    window.gameClient.renderer.__totalDrawTime = 0;
   }
 
   private __shouldUpdate(): boolean {
@@ -112,22 +112,24 @@ export default class Debugger {
     const debugInfo = [
       `Server Version: ${window.gameClient.serverVersion}`,
       `Client Version: ${window.gameClient.clientVersion}`,
-      `Tile Pool Size: ${window.gameClient.renderer.tileRenderer.getPoolStats().total}`,
-      `Tile Pool Used: ${window.gameClient.renderer.tileRenderer.getPoolStats().used}`,
-      `Tile Pool Available: ${window.gameClient.renderer.tileRenderer.getPoolStats().available}`,
+      // `Tile Pool Size: ${window.gameClient.renderer.tileRenderer.getPoolStats().total}`,
+      // `Tile Pool Used: ${window.gameClient.renderer.tileRenderer.getPoolStats().used}`,
+      // `Tile Pool Available: ${window.gameClient.renderer.tileRenderer.getPoolStats().available}`,
       `Server Tick Interval: ${window.gameClient.getTickInterval()}ms`,
+      '--------------------------------',
       `Current Frame: ${window.gameClient.eventQueue.getFrame()}`,
       `Frame Rate: ${this.__averageFPS}fps`,
       `Draw Calls: ${this.__averageDrawCalls}`,
       `Draw Time: ${this.__averageDrawTime}µs`,
-      `Draw Tiles: ${window.gameClient.renderer.numberOfTiles}`,
+      // `Draw Tiles: ${window.gameClient.renderer.tileRenderer.numberOfTiles}`,
       `Active Entities: ${Object.keys(window.gameClient.world.activeCreatures).length}`,
+      '--------------------------------',
       `Latency: ${Math.round(window.gameClient.networkManager.state.latency)}ms`,
       `Packets Received: ${window.gameClient.networkManager.state.nPackets}`,
       `Packets Sent: ${window.gameClient.networkManager.nPacketsSent}`,
       `Bytes Recieved: ${Math.round(1E-3 * window.gameClient.networkManager.state.bytesRecv)}KB`,
       `Bytes Sent: ${Math.round(1E-3 * window.gameClient.networkManager.state.bytesSent)}KB`,
-      `Sprite Buffer Size: ${Math.round(1E-6 * window.gameClient.spriteBuffer.size * window.gameClient.spriteBuffer.size * 4 * 32 * 32)}MB`,
+      //`Sprite Buffer Size: ${Math.round(1E-6 * window.gameClient.spriteBuffer.size * window.gameClient.spriteBuffer.size * 4 * 32 * 32)}MB`,
       `Sprite Buffer Evictions: ${this.__averageEvictions}`,
       `Memory Usage: ${this.__getMemoryUsage()}`,
       `GPU: ${this.__GPU}`,

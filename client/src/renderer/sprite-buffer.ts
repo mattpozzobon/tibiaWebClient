@@ -13,6 +13,10 @@ export default class SpriteBuffer {
   private scratch: ImageData;
 
   public nEvictions = 0;
+  public decodeCount = 0;
+  public hitCount = 0;
+  public missCount = 0;
+
   public static __version: number | null = null;
   private static __globalPacket: PacketReader | null = null;
   private static __addresses: Record<number, number> = {};
@@ -100,7 +104,13 @@ export default class SpriteBuffer {
   /** Get or load a Texture for the given sprite ID */
   get(id: number): Texture | null {
     if (id === 0) return null;
-    return this.has(id) ? this.textures[this.idToIndex.get(id)!]! : this.add(id);
+    if (this.has(id)) {
+      this.hitCount++;
+      return this.textures[this.idToIndex.get(id)!]!;
+    } else {
+      this.missCount++;
+      return this.add(id);
+    }
   }
 
   /** Reserve an atlas cell, evicting old texture if needed (O(1)) */
@@ -126,7 +136,7 @@ export default class SpriteBuffer {
 
   /** Decode sprite data into the scratch ImageData and return it */
   private decodeSprite(id: number): ImageData {
-    console.log('decoding sprite', id);
+    this.decodeCount++;
     const pkt = SpriteBuffer.__globalPacket!;
     const addr = SpriteBuffer.__addresses[id];
     const len = pkt.buffer[addr + 3] + (pkt.buffer[addr + 4] << 8);
@@ -185,6 +195,10 @@ export default class SpriteBuffer {
     const idx = this.idToIndex.get(id);
     if (idx == null) return null;
     return new Position(idx % this.size, Math.floor(idx / this.size), 0);
+  }
+
+  getAtlasFillInfo(): string {
+    return `${this.idToIndex.size} / ${this.textures.length} (${(100 * this.idToIndex.size / this.textures.length).toFixed(1)}%)`;
   }
 
   // --- addComposedOutfit & related methods can draw directly into

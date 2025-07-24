@@ -2,6 +2,7 @@ import { IPathNode } from "../core/pathfinder";
 import { PropBitFlag } from "../utils/bitflag";
 import FrameGroup from "../utils/frame-group";
 import ConditionManager from "./condition";
+import Creature from "./creature";
 import Item from "./item";
 import Position from "./position";
 import Thing from "./thing";
@@ -15,7 +16,7 @@ export default class Tile extends Thing implements IPathNode {
   flags: number;
   zone: number;
   items: Item[];
-  monsters: Set<any> = new Set();
+  monsters: Set<Creature> = new Set();
 
   // Pathfinding properties
   public __f: number = 0;

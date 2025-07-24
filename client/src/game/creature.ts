@@ -1,17 +1,14 @@
 
 import Position from "./position";
 import { CONST } from "../helper/appContext";
-
 import Outfit from "./outfit";
-import SpriteBuffer from "../renderer/sprite-buffer";
-import FrameGroup from "../utils/frame-group";
 import ConditionManager from "./condition";
 import { Vitals, VitalsData } from "./player/vitals/vitals";
 import Interface from "../ui/interface";
 import CastingManager from "../ui/managers/casting-manager";
 import CharacterElement from "../ui/screen-elements/screen-element-character";
 import BoxAnimation from "../utils/box-animation";
-import CreatureRenderer from "../renderer/creature-renderer";
+import CreatureRendererHelper from "../renderer/creature-renderer-helper";
 
 
 export interface CreatureData {
@@ -20,28 +17,6 @@ export interface CreatureData {
   outfit: any;
   vitals: VitalsData;
   conditions: any;
-}
-
-export interface CharacterFrames {
-  characterGroup: any;
-  mountGroup: any;
-  characterFrame: number;
-  mountFrame: number;
-  headGroup: any;
-  bodyGroup: any;
-  legsGroup: any;
-  feetGroup: any;
-  hairGroup: any;
-  leftHandGroup: any;
-  rightHandGroup: any;
-  headFrame: number;
-  bodyFrame: number;
-  legsFrame: number;
-  feetFrame: number;
-  hairFrame: number;
-  leftHandFrame: number;
-  rightHandFrame: number;
-  isMoving: boolean;
 }
 
 export default class Creature {
@@ -64,7 +39,7 @@ export default class Creature {
   // Assume characterElement is provided (e.g., by Creature or assigned later)
   public characterElement: CharacterElement;
   public vitals: Vitals;
-  public renderer: CreatureRenderer;
+  public renderer: CreatureRendererHelper;
   
   // gameClient is injected to replace global references.
 
@@ -80,7 +55,7 @@ export default class Creature {
     this.castingManager = new CastingManager();
 
 
-    this.renderer = new CreatureRenderer(this);
+    this.renderer = new CreatureRendererHelper(this);
 
     this.__movementEvent = null;
     this.__lookDirectionBuffer = null;
@@ -138,10 +113,10 @@ export default class Creature {
   public serverSetOutfit(outfit: Outfit): void {
     this.outfit = outfit;
     // Clear the outfit sprite buffer to make room for the new sprite.
-    this.renderer.spriteBuffer = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObject()));
+    //this.renderer.spriteBuffer = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObject()));
     // If the creature has a mount, create a sprite buffer for it as well.
     if (this.outfit.getDataObjectMount()) {
-      this.renderer.spriteBufferMount = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObjectMount()));
+      //this.renderer.spriteBufferMount = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObjectMount()));
     }
   }
 

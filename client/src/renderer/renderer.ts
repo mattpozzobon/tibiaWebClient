@@ -20,6 +20,7 @@ import Animation from "../utils/animation";
 import FrameGroup from '../utils/frame-group';
 import TileRenderer from './tile-renderer';
 import ItemRenderer from './item-renderer';
+import CreatureRenderer from './creature-renderer';
 
 export default class Renderer {
   __animationLayers = new Array<Set<any>>();
@@ -37,6 +38,7 @@ export default class Renderer {
   public app: Application;
   public tileRenderer: TileRenderer;
   public itemRenderer: ItemRenderer;
+  public creatureRenderer: CreatureRenderer;
   public gameLayer: Container;
 
   public spritePool: Sprite[] = [];
@@ -76,12 +78,9 @@ export default class Renderer {
       this.poolSize
     );
 
-    this.itemRenderer = new ItemRenderer(
-      this.spritePool,
-      () => this.poolIndex,
-      (v) => { this.poolIndex = v; },
-      this.poolSize
-    );
+    this.creatureRenderer = new CreatureRenderer(this.spritePool, () => this.poolIndex, (v) => { this.poolIndex = v; }, this.poolSize);
+
+    this.itemRenderer = new ItemRenderer(this.spritePool, () => this.poolIndex, (v) => { this.poolIndex = v; }, this.poolSize);
 
     this.__createAnimationLayers();
   }
@@ -109,6 +108,9 @@ export default class Renderer {
     this.__renderWorld();
     this.__renderOther();
   }
+
+  public getPoolIndex = (): number => this.poolIndex;
+  public setPoolIndex = (v: number): void => { this.poolIndex = v; };
 
   private __increment(): void {
     // Increments the renderer by a number of milliseconds
@@ -185,14 +187,20 @@ export default class Renderer {
       const tiles = tileCache[floor];
   
       // Draw all tiles for this floor first (will cover everything below)
-      for (const tile of tiles) {
-        const screenPos = this.getStaticScreenPosition(tile.getPosition());
-        this.tileRenderer.renderTile(tile, screenPos);
-      }
+      // for (const tile of tiles) {
+      //   const screenPos = this.getStaticScreenPosition(tile.getPosition());
+      //   this.tileRenderer.renderTile(tile, screenPos);
+      // }
       // Now draw all items for this floor on top of its tiles
       for (const tile of tiles) {
         const screenPos = this.getStaticScreenPosition(tile.getPosition());
+        this.tileRenderer.render(tile, screenPos);
         this.itemRenderer.renderItemsForTile(tile, screenPos);
+
+        tile.monsters.forEach((creature: Creature) => {
+          this.creatureRenderer.render(creature, screenPos);
+        });
+
         this.itemRenderer.renderOnTopItemsForTile(tile, screenPos);
       }
     }

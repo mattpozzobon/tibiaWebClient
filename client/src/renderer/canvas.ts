@@ -232,7 +232,7 @@ export default class Canvas {
   }
   
   drawCharacter(creature: Creature, position: Position, size: number, offset: number): void {
-    creature.renderer.draw(position, size, offset);
+    //creature.renderer.draw(position, size, offset);
   }
   
 }

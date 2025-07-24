@@ -1,3 +1,4 @@
+import Outfit from "../game/outfit";
 import Position from "../game/position";
 import PacketReader from "../network/packetreader";
 import { CanvasSource, Rectangle, SCALE_MODES, Texture, WRAP_MODES } from "pixi.js";
@@ -201,6 +202,125 @@ export default class SpriteBuffer {
     return `${this.idToIndex.size} / ${this.textures.length} (${(100 * this.idToIndex.size / this.textures.length).toFixed(1)}%)`;
   }
 
-  // --- addComposedOutfit & related methods can draw directly into
-  //     atlasCtx then call atlasSource.update(), similarly to add(id) ---
+  // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  static getComposedKey(
+    outfit: Outfit,
+    item: any,
+    frame: number,
+    xPattern: number,
+    yPattern: number,
+    zPattern: number,
+    x: number,
+    y: number
+  ): number {
+    // Deterministic composite key for caching
+    return (
+      ((outfit.id & 0xFFFF) << 16) ^
+      ((item.id & 0xFFFF) << 0) ^
+      ((frame & 0xFF) << 24) ^
+      ((xPattern & 0xF) << 8) ^
+      ((yPattern & 0xF) << 12) ^
+      ((zPattern & 0xF) << 20) ^
+      ((x & 0x3) << 26) ^
+      ((y & 0x3) << 28)
+    );
+  }
+
+  /** Add a composed outfit frame to the atlas, with masking */
+  addComposedOutfit(
+    baseIdentifier: number, // Unique composed frame key
+    outfit: Outfit,
+    item: any,
+    frame: number,
+    xPattern: number,
+    yPattern: number,
+    zPattern: number,
+    x: number,
+    y: number
+  ): void {
+    if (this.has(baseIdentifier)) return;
+    const cell = this.reserveCell(baseIdentifier);
+
+    // Compose and draw to scratch canvas, then draw into atlas
+    const imgData = this.composeOutfitImageData(outfit, item, frame, xPattern, yPattern, zPattern, x, y);
+    const cellSize = 32 + 2;
+    const col = cell % this.size;
+    const row = Math.floor(cell / this.size);
+    const dx = col * cellSize + 1, dy = row * cellSize + 1;
+
+    this.atlasCtx.putImageData(imgData, dx, dy);
+    this.atlasSource.update();
+
+    // Create texture
+    const frameRect = new Rectangle(dx, dy, 32, 32);
+    const tex = new Texture({ source: this.atlasSource, frame: frameRect, orig: frameRect });
+    tex.updateUvs();
+    this.textures[cell] = tex;
+  }
+
+  /** Compose a new ImageData for an outfit frame */
+  composeOutfitImageData(
+    outfit: Outfit,
+    item: any,
+    frame: number,
+    xPattern: number,
+    yPattern: number,
+    zPattern: number,
+    x: number,
+    y: number
+  ): ImageData {
+    // 1. Get base and mask sprite IDs
+    const baseId = item.getSpriteId(frame, xPattern, yPattern, zPattern, 0, x, y);
+    const maskId = item.getSpriteId(frame, xPattern, yPattern, zPattern, 1, x, y);
+
+    // 2. Decode base into new ImageData (copy, don't overwrite scratch)
+    const baseData = new ImageData(new Uint8ClampedArray(this.decodeSprite(baseId).data), 32, 32);
+
+    if (maskId !== 0) {
+      const maskData = this.decodeSprite(maskId);
+      this.applyOutfitMask(baseData, maskData, outfit);
+    }
+    return baseData;
+  }
+
+  /** Colorize outfit ImageData with mask and palette */
+  applyOutfitMask(baseData: ImageData, maskData: ImageData, outfit: Outfit): void {
+    // Map mask colors to outfit palette
+    const HEAD = outfit.getColor(outfit.details.head);
+    const BODY = outfit.getColor(outfit.details.body);
+    const LEGS = outfit.getColor(outfit.details.legs);
+    const FEET = outfit.getColor(outfit.details.feet);
+
+    const mask = new Uint32Array(maskData.data.buffer);
+    const base = baseData.data;
+
+    for (let i = 0; i < mask.length; i++) {
+      const offset = 4 * i;
+      switch (mask[i]) {
+        case 0xFF00FFFF: // Head
+          base[offset + 0] = (base[offset + 0] * ((HEAD >> 0) & 0xFF)) / 0xFF;
+          base[offset + 1] = (base[offset + 1] * ((HEAD >> 8) & 0xFF)) / 0xFF;
+          base[offset + 2] = (base[offset + 2] * ((HEAD >> 16) & 0xFF)) / 0xFF;
+          break;
+        case 0xFF0000FF: // Body
+          base[offset + 0] = (base[offset + 0] * ((BODY >> 0) & 0xFF)) / 0xFF;
+          base[offset + 1] = (base[offset + 1] * ((BODY >> 8) & 0xFF)) / 0xFF;
+          base[offset + 2] = (base[offset + 2] * ((BODY >> 16) & 0xFF)) / 0xFF;
+          break;
+        case 0xFF00FF00: // Legs
+          base[offset + 0] = (base[offset + 0] * ((LEGS >> 0) & 0xFF)) / 0xFF;
+          base[offset + 1] = (base[offset + 1] * ((LEGS >> 8) & 0xFF)) / 0xFF;
+          base[offset + 2] = (base[offset + 2] * ((LEGS >> 16) & 0xFF)) / 0xFF;
+          break;
+        case 0xFFFF0000: // Feet
+          base[offset + 0] = (base[offset + 0] * ((FEET >> 0) & 0xFF)) / 0xFF;
+          base[offset + 1] = (base[offset + 1] * ((FEET >> 8) & 0xFF)) / 0xFF;
+          base[offset + 2] = (base[offset + 2] * ((FEET >> 16) & 0xFF)) / 0xFF;
+          break;
+      }
+    }
+  }
+
+  
 }

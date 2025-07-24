@@ -41,7 +41,7 @@ export default class TileRenderer {
     }
   }
 
-  public renderTile(tile: Tile, screenPos: Position): void {
+  public render(tile: Tile, screenPos: Position): void {
     let poolIndex = this.getPoolIndex();
 
     tile.setElevation(0);

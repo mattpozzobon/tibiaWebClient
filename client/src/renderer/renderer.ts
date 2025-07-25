@@ -18,7 +18,10 @@ import CreatureRenderer from './creature-renderer';
 import AnimationRenderer from './animation-renderer';
 
 export default class Renderer {
+  __animationLayers = new Array<Set<any>>();
   __nMiliseconds: number;
+  private lastTestAnimationTime: number = 0;
+  private readonly TEST_ANIMATION_INTERVAL: number = 1000; // 1 seconds
 
   //public screen: Canvas;
   // public lightscreen: LightCanvas;
@@ -97,6 +100,16 @@ export default class Renderer {
     this.__increment();
     this.__renderWorld();
     this.__renderOther();
+    this.__triggerTestAnimations();
+  }
+
+  private __triggerTestAnimations(): void {
+    const now = performance.now();
+    if (now - this.lastTestAnimationTime >= this.TEST_ANIMATION_INTERVAL) {
+      this.addTestDistanceAnimations();
+      this.addTestTileAnimations();
+      this.lastTestAnimationTime = now;
+    }
   }
 
   private __increment(): void {
@@ -183,9 +196,21 @@ export default class Renderer {
       }
 
       // Render distance animations for this floor
-      if (this.animationRenderer.animationLayers[floor]) {
-        this.animationRenderer.animationLayers[floor].forEach((animation: any) => {
-          this.animationRenderer.renderDistanceAnimation(animation, animation, spriteBatches, this.getStaticScreenPosition.bind(this));
+      const animationLayer = this.animationRenderer.animationLayers[floor];
+      if (animationLayer && animationLayer.size > 0) {
+        const animationsToRemove: any[] = [];
+        
+        animationLayer.forEach((animation: any) => {
+          if (animation.expired()) {
+            animationsToRemove.push(animation);
+          } else {
+            this.animationRenderer.renderDistanceAnimation(animation, animation, spriteBatches, this.getStaticScreenPosition.bind(this));
+          }
+        });
+        
+        // Batch remove expired animations
+        animationsToRemove.forEach(animation => {
+          animationLayer.delete(animation);
         });
       }
     }

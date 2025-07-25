@@ -7,6 +7,7 @@ export default class Animation extends Thing {
   __created: number;
   static DEFAULT_FRAME_LENGTH_MS: number = 100;
   __durations: number[];
+  private _cachedTotalDuration: number = -1;
   
 
   constructor(id: number) {
@@ -32,7 +33,10 @@ export default class Animation extends Thing {
   }
 
   totalDuration(): number {
-    return this.__durations[this.__durations.length - 1];
+    if (this._cachedTotalDuration === -1) {
+      this._cachedTotalDuration = this.__durations[this.__durations.length - 1];
+    }
+    return this._cachedTotalDuration;
   }
 
   expired(): boolean {

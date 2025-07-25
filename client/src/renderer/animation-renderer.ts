@@ -22,26 +22,35 @@ export default class AnimationRenderer {
     thing: any, 
     spriteBatches?: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>
   ): void {
-    if (animation && animation.getSprite) {
-      const sprite = animation.getSprite();
-      if (sprite && sprite.texture && spriteBatches) {
-        // Add to sprite batches for rendering
-        const textureKey = sprite.texture.baseTexture.uid?.toString() || 'animation';
-        if (!spriteBatches.has(textureKey)) {
-          spriteBatches.set(textureKey, []);
-        }
-        
-        const spriteData = {
-          sprite: sprite,
-          x: screenPos.x * 32,
-          y: screenPos.y * 32,
-          width: 32,
-          height: 32
-        };
-        
-        spriteBatches.get(textureKey)!.push(spriteData);
-      }
+    if (!animation || !animation.getSprite || !spriteBatches) {
+      return;
     }
+    
+    const sprite = animation.getSprite();
+    if (!sprite || !sprite.texture) {
+      return;
+    }
+    
+    // Add to sprite batches for rendering
+    const textureKey = sprite.texture.baseTexture.uid?.toString() || 'animation';
+    let batch = spriteBatches.get(textureKey);
+    
+    if (!batch) {
+      batch = [];
+      spriteBatches.set(textureKey, batch);
+    }
+    
+    // Calculate pixel coordinates once
+    const pixelX = screenPos.x * 32;
+    const pixelY = screenPos.y * 32;
+    
+    batch.push({
+      sprite: sprite,
+      x: pixelX,
+      y: pixelY,
+      width: 32,
+      height: 32
+    });
   }
 
   public __createAnimationLayers(): void {
@@ -100,52 +109,56 @@ export default class AnimationRenderer {
    * Test method to manually add distance animations for testing
    */
   public addTestDistanceAnimations(): void {
-    // Test distance animations at specific positions on floor 9
-    const testPositions = [
-      { from: new Position(63, 59, 9), to: new Position(65, 61, 9) },
-      { from: new Position(64, 60, 9), to: new Position(66, 62, 9) },
-      { from: new Position(62, 58, 9), to: new Position(64, 60, 9) }
-    ];
-
-    testPositions.forEach((pos, index) => {
-      // Try different distance animation types (1, 2, 3, 4, 5)
-      const animationType = 1; // 1, 2, 3, 4, or 5
-      try {
+    const minX = 50, maxX = 76;
+    const minY = 53, maxY = 65;
+    const floor = 9;
+  
+    // Calculate center tile
+    const centerX = Math.floor((minX + maxX) / 2);
+    const centerY = Math.floor((minY + maxY) / 2);
+  
+    let animationType = 1;
+    for (let x = minX; x <= maxX; x++) {
+      for (let y = minY; y <= maxY; y++) {
+        // Skip the center tile itself
+        if (x === centerX && y === centerY) continue;
+  
         this.addDistanceAnimation({
           type: animationType,
-          from: pos.from,
-          to: pos.to
+          from: new Position(centerX, centerY, floor),
+          to: new Position(x, y, floor)
         });
-      } catch (error) {
-        console.error(`Failed to add test distance animation ${index + 1} with type ${animationType}:`, error);
+  
+        animationType++;
+        if (animationType > 15) animationType = 1; // cycle types 1-15
       }
-    });
+    }
   }
+  
+  
 
   /**
    * Test method to manually add tile animations for testing
    */
   public addTestTileAnimations(): void {
-    // Test tile animations at specific positions
-    const testPositions = [
-      new Position(63, 59, 9),
-      new Position(64, 60, 9),
-      new Position(65, 61, 9)
-    ];
-
-    testPositions.forEach((position, index) => {
-      // Try different animation types (1, 2, 3, 4, 5)
-      const animationType = 1; // 1, 2, 3, 4, or 5
-      try {
+    const minX = 50, maxX = 76;
+    const minY = 53, maxY = 65;
+    const floor = 9;
+  
+    let animationType = 1;
+    for (let x = minX; x <= maxX; x++) {
+      for (let y = minY; y <= maxY; y++) {
         this.addPositionAnimation({
-          position: position,
+          position: new Position(x, y, floor),
           type: animationType
         });
-      } catch (error) {
-        console.error(`Failed to add test tile animation ${index + 1} with type ${animationType}:`, error);
+  
+        animationType++;
+        if (animationType > 10) animationType = 1; // cycle types 1-10
       }
-    });
+    }
   }
+  
 
   /**
    * Render a general animation
@@ -226,14 +239,17 @@ export default class AnimationRenderer {
     
     // Calculate interpolated position like the old renderer
     const fraction = animation.getFraction();
-    const fromPos = getStaticScreenPosition ? getStaticScreenPosition(animation.fromPosition) : new Position(0, 0, 0);
-    const toPos = getStaticScreenPosition ? getStaticScreenPosition(animation.toPosition) : new Position(0, 0, 0);
     
-    const renderPosition = new Position(
-      fromPos.x + fraction * (toPos.x - fromPos.x),
-      fromPos.y + fraction * (toPos.y - fromPos.y),
-      0
-    );
+    // Cache screen position calculations to avoid repeated calls
+    const fromPos = getStaticScreenPosition ? getStaticScreenPosition(animation.fromPosition) : animation.fromPosition;
+    const toPos = getStaticScreenPosition ? getStaticScreenPosition(animation.toPosition) : animation.toPosition;
+    
+    // Calculate interpolated position without creating new Position object
+    const renderX = fromPos.x + fraction * (toPos.x - fromPos.x);
+    const renderY = fromPos.y + fraction * (toPos.y - fromPos.y);
+    
+    // Create position object only once
+    const renderPosition = new Position(renderX, renderY, 0);
     
     // Collect sprites for the interpolated position
     this.collectAnimationSprites(animation, renderPosition, thing, spriteBatches);

@@ -126,6 +126,7 @@ export default class Debugger {
       `Draw Calls: ${window.gameClient.renderer.drawCalls}`,
       `Batches: ${window.gameClient.renderer.batchCount}`,
       `Texture Switches: ${window.gameClient.renderer.textureSwitches}`,
+
       //`Draw Tiles: ${window.gameClient.renderer.tileRenderer.numberOfTiles}`,
       `Active Entities: ${Object.keys(window.gameClient.world.activeCreatures).length}`,
       `Sprite Buffer Hit: ${window.gameClient.spriteBuffer.hitCount}`,

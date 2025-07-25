@@ -1,8 +1,4 @@
 import { Application, Container, Sprite, Texture } from 'pixi.js';
-import Canvas from "./canvas";
-import LightCanvas from "./light-canvas";
-import WeatherCanvas from "./weather-canvas";
-import OutlineCanvas from "./outline-canvas";
 import Debugger from "../utils/debugger";
 import Interface from "../ui/interface";
 import Item from "../game/item";
@@ -72,9 +68,9 @@ export default class Renderer {
       this.spritePool[i] = spr;
     }
 
-    this.tileRenderer = new TileRenderer(this.spritePool, () => this.poolIndex, (v) => { this.poolIndex = v; }, this.poolSize);
-    this.creatureRenderer = new CreatureRenderer(this.spritePool, () => this.poolIndex, (v) => { this.poolIndex = v; }, this.poolSize);
-    this.itemRenderer = new ItemRenderer(this.spritePool, () => this.poolIndex, (v) => { this.poolIndex = v; }, this.poolSize);
+    this.tileRenderer = new TileRenderer();
+    this.creatureRenderer = new CreatureRenderer();
+    this.itemRenderer = new ItemRenderer();
 
     this.__createAnimationLayers();
   }
@@ -177,69 +173,70 @@ export default class Renderer {
   
     const tileCache = this.tileRenderer.tileCache; // Tile[][], floors from 0 (bottom) up
   
-    // For each floor, draw all tiles, then all items, then next floor (topmost last!)
+    // Collect all sprites by texture for batching
+    const spriteBatches = new Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>();
+    
+    // For each floor, collect sprites instead of rendering immediately
     for (let floor = 0; floor < tileCache.length; floor++) {
       const tiles = tileCache[floor];
   
       for (const tile of tiles) {
         const screenPos = this.getStaticScreenPosition(tile.getPosition());
-        this.tileRenderer.render(tile, screenPos);
-        this.itemRenderer.renderItemsForTile(tile, screenPos);
+        
+        // Collect tile sprites
+        this.tileRenderer.collectSprites(tile, screenPos, spriteBatches);
+        
+        // Collect item sprites
+        this.itemRenderer.collectSpritesForTile(tile, screenPos, spriteBatches);
 
+        // Collect creature sprites
         tile.monsters.forEach((creature: Creature) => {
-          this.creatureRenderer.render(creature, screenPos);
+          this.creatureRenderer.collectSprites(creature, screenPos, spriteBatches);
         });
 
-        this.itemRenderer.renderOnTopItemsForTile(tile, screenPos);
+        // Collect on-top item sprites
+        this.itemRenderer.collectOnTopSpritesForTile(tile, screenPos, spriteBatches);
       }
     }
+    
+    // Render all sprites in texture batches
+    this.renderSpriteBatches(spriteBatches);
   
     const t1 = performance.now();
     this.totalDrawTime += t1 - t0;
   }
   
-  
-  // public __renderFloor(tiles: any[], index: number): void {
-  //   // Render all the tiles on the floor
-  //   tiles.forEach(this.__renderFullTile, this);
-  
-  //   // Render the animations on this layer
-  //   this.__animationLayers[index].forEach((animation: any) => {
-  //     this.__renderDistanceAnimation(animation, this.__animationLayers[index]);
-  //   }, this);
-  // }  
-
-  // public __renderTile(tile: any): void {
-  //   // Rendering function for a particular tile
-  //   if (tile.id === 0) {
-  //     return;
-  //   }
-  //   // Reset the elevation of the tile
-  //   tile.setElevation(0);
-  //   // Get the position of the tile on the game screen
-  //   const position = this.getStaticScreenPosition(tile.getPosition());
-  //   // Render light if enabled and applicable
-  //   if (window.gameClient.interface.settings.isLightingEnabled() && tile.isLight()) {
-  //     this.__renderLight(tile, position, tile, undefined);
-  //   }
-  //   // Draw the sprite to the screen
-  //   this.screen.drawSprite(tile, position, 64);
-  // }
-  
-  public __renderFullTile(tile: any): void {
-    // Renders a full tile in the proper order (tile -> objects -> animations)
-    //this.__renderTile(tile);
-    this.__renderTileObjects(tile);
-    this.__renderTileAnimations(tile);
-  }
-  
-  public __renderDistanceAnimation(animation: any, thing: any): void {
-    // Renders a distance animation on a tile
-    if (animation.expired()) {
-      thing.delete(animation);
+  private renderSpriteBatches(spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>): void {
+    let poolIndex = this.poolIndex;
+    let currentTextureKey = '';
+    
+    // Render each texture batch
+    for (const [textureKey, sprites] of spriteBatches) {
+      if (poolIndex >= this.poolSize) break;
+      
+      // Only increment texture switches when we actually switch textures
+      if (textureKey !== currentTextureKey) {
+        this.textureSwitches++;
+        currentTextureKey = textureKey;
+      }
+      this.batchCount++;
+      
+      // Render all sprites in this batch
+      for (const spriteData of sprites) {
+        if (poolIndex >= this.poolSize) break;
+        
+        const spr = this.spritePool[poolIndex++];
+        spr.texture = spriteData.sprite.texture;
+        spr.x = spriteData.x;
+        spr.y = spriteData.y;
+        spr.width = spriteData.width;
+        spr.height = spriteData.height;
+        spr.visible = true;
+        this.drawCalls++;
+      }
     }
-    const position = this.getStaticScreenPosition(animation.getPosition());
-    //this.screen.drawDistanceAnimation(animation, position);
+    
+    this.poolIndex = poolIndex;
   }
   
   public __renderAnimation(animation: any, thing: any): void {

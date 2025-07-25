@@ -183,14 +183,14 @@ export default class Renderer {
   
       for (const tile of tiles) {
         const screenPos = this.getStaticScreenPosition(tile.getPosition());
-        //this.tileRenderer.render(tile, screenPos);
-        //this.itemRenderer.renderItemsForTile(tile, screenPos);
+        this.tileRenderer.render(tile, screenPos);
+        this.itemRenderer.renderItemsForTile(tile, screenPos);
 
         tile.monsters.forEach((creature: Creature) => {
           this.creatureRenderer.render(creature, screenPos);
         });
 
-        //this.itemRenderer.renderOnTopItemsForTile(tile, screenPos);
+        this.itemRenderer.renderOnTopItemsForTile(tile, screenPos);
       }
     }
   

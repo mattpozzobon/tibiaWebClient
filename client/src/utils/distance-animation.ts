@@ -14,7 +14,7 @@ export default class DistanceAnimation extends Animation {
   }
 
   __generateDurations(): number[] {
-    return [3 * Animation.DEFAULT_FRAME_LENGTH_MS];
+    return [4 * Animation.DEFAULT_FRAME_LENGTH_MS];
   }
 
   public getFraction(): number {

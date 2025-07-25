@@ -4,6 +4,7 @@ import Creature from "../game/creature";
 import BoxAnimation from "../utils/box-animation";
 import Animation from "../utils/animation";
 import DistanceAnimation from "../utils/distance-animation";
+import FrameGroup from "../utils/frame-group";
 
 export default class AnimationRenderer {
   animationLayers = new Array();
@@ -26,31 +27,49 @@ export default class AnimationRenderer {
       return;
     }
     
-    const sprite = animation.getSprite();
-    if (!sprite || !sprite.texture) {
+    // Clip animations outside the visible screen area (same as tile sprites)
+    const xCell = screenPos.x, yCell = screenPos.y;
+    if (xCell < -1 || xCell > 27 || yCell < -1 || yCell > 14) {
       return;
     }
     
-    // Add to sprite batches for rendering
-    const textureKey = sprite.texture.baseTexture.uid?.toString() || 'animation';
-    let batch = spriteBatches.get(textureKey);
+    // Get the frame group to check dimensions
+    const frameGroup = animation.getFrameGroup(FrameGroup.NONE);
+    const frame = animation.getFrame();
+    const pattern = animation.getPattern();
     
-    if (!batch) {
-      batch = [];
-      spriteBatches.set(textureKey, batch);
+    // Handle multi-tile animations like tiles and items
+    for (let x = 0; x < frameGroup.width; x++) {
+      for (let y = 0; y < frameGroup.height; y++) {
+
+          const spriteIndex = frameGroup.getSpriteIndex(frame, pattern.x, pattern.y, pattern.z, 0, x, y);
+          const texture = frameGroup.getSprite(spriteIndex);
+          
+          if (!texture) continue;
+          
+          // Add to sprite batches for rendering
+          const textureKey = texture.baseTexture.uid.toString();
+          let batch = spriteBatches.get(textureKey);
+          
+          if (!batch) {
+            batch = [];
+            spriteBatches.set(textureKey, batch);
+          }
+          
+          // Calculate pixel coordinates for this piece
+          const pixelX = (screenPos.x - x) * 32;
+          const pixelY = (screenPos.y - y) * 32;
+          
+          batch.push({
+            sprite: { texture: texture },
+            x: pixelX,
+            y: pixelY,
+            width: 32,
+            height: 32
+          });
+        
+      }
     }
-    
-    // Calculate pixel coordinates once
-    const pixelX = screenPos.x * 32;
-    const pixelY = screenPos.y * 32;
-    
-    batch.push({
-      sprite: sprite,
-      x: pixelX,
-      y: pixelY,
-      width: 32,
-      height: 32
-    });
   }
 
   public __createAnimationLayers(): void {

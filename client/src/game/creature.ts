@@ -112,12 +112,13 @@ export default class Creature {
 
   public serverSetOutfit(outfit: Outfit): void {
     this.outfit = outfit;
-    // Clear the outfit sprite buffer to make room for the new sprite.
-    //this.renderer.spriteBuffer = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObject()));
-    // If the creature has a mount, create a sprite buffer for it as well.
-    if (this.outfit.getDataObjectMount()) {
-      //this.renderer.spriteBufferMount = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObjectMount()));
+    // Clear the texture cache to force regeneration of sprites with new outfit colors
+    // This ensures that masked sprites will be recomposed with the new outfit colors
+    if (window.gameClient.renderer.creatureRenderer) {
+      window.gameClient.renderer.creatureRenderer.clearTextureCache();
     }
+    // Force refresh of the creature's renderer helper to update hair/head logic
+    this.renderer = new CreatureRendererHelper(this);
   }
 
   public setPosition(position: Position): void {
@@ -326,7 +327,7 @@ export default class Creature {
     return (dx < 8) && (dy < 6);
   }
   
-  protected __setLookDirection(direction: number): void {
+  public __setLookDirection(direction: number): void {
     this.__lookDirection = direction;
   }
   

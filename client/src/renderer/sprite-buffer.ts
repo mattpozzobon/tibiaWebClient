@@ -212,24 +212,19 @@ export default class SpriteBuffer {
     yPattern: number,
     zPattern: number,
     x: number,
-    y: number
-  ): number {
-    // Deterministic composite key for caching
-    return (
-      ((outfit.id & 0xFFFF) << 16) ^
-      ((item.id & 0xFFFF) << 0) ^
-      ((frame & 0xFF) << 24) ^
-      ((xPattern & 0xF) << 8) ^
-      ((yPattern & 0xF) << 12) ^
-      ((zPattern & 0xF) << 20) ^
-      ((x & 0x3) << 26) ^
-      ((y & 0x3) << 28)
-    );
+    y: number,
+    creatureId?: number
+  ): string {
+    // Use string-based key to handle all outfit information including colors
+    // This ensures color changes generate new keys
+    const creatureIdPart = creatureId ? creatureId : 0;
+    
+    return `${outfit.id}_${item.id}_${frame}_${xPattern}_${yPattern}_${zPattern}_${x}_${y}_${creatureIdPart}_${outfit.details.head}_${outfit.details.body}_${outfit.details.legs}_${outfit.details.feet}`;
   }
 
   /** Add a composed outfit frame to the atlas, with masking */
   addComposedOutfit(
-    baseIdentifier: number, // Unique composed frame key
+    baseIdentifier: string, // Unique composed frame key (now a string)
     outfit: Outfit,
     item: any,
     frame: number,
@@ -237,10 +232,14 @@ export default class SpriteBuffer {
     yPattern: number,
     zPattern: number,
     x: number,
-    y: number
+    y: number,
+    creatureId?: number
   ): void {
-    if (this.has(baseIdentifier)) return;
-    const cell = this.reserveCell(baseIdentifier);
+    // Convert string key to a hash for storage
+    const hashKey = this.hashString(baseIdentifier);
+    
+    if (this.has(hashKey)) return;
+    const cell = this.reserveCell(hashKey);
 
     // Compose and draw to scratch canvas, then draw into atlas
     const imgData = this.composeOutfitImageData(outfit, item, frame, xPattern, yPattern, zPattern, x, y);
@@ -257,6 +256,17 @@ export default class SpriteBuffer {
     const tex = new Texture({ source: this.atlasSource, frame: frameRect, orig: frameRect });
     tex.updateUvs();
     this.textures[cell] = tex;
+  }
+
+  /** Simple hash function for string keys */
+  private hashString(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash);
   }
 
   /** Compose a new ImageData for an outfit frame */

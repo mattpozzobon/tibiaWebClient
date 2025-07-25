@@ -127,7 +127,7 @@ export default class OfferModal extends Modal {
     this.__id = properties.id;
     this.__offers = properties.offers;
     this.setOffers();
-    this.setTitle(`${NPC.name} Trade Offers`);
+    this.setTitle(`${NPC?.vitals.name} Trade Offers`);
     const wrapper = document.getElementById("buy-count-wrapper");
     if (wrapper) {
       wrapper.style.display = "none";

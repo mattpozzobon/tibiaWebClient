@@ -134,6 +134,7 @@ export default class Debugger {
       `Sprite Buffer Decode: ${window.gameClient.spriteBuffer.decodeCount}`,
       `Sprite Buffer Evictions: ${window.gameClient.spriteBuffer.nEvictions}`,
       `Sprite Buffer Atlas Fill: ${window.gameClient.spriteBuffer.getAtlasFillInfo()}`,
+      `Sprite Pool Usage: ${window.gameClient.renderer.poolIndex}/${window.gameClient.renderer.poolSize}`,
       '--------------------------------',
       //`Sprite Buffer Size: ${Math.round(1E-6 * window.gameClient.spriteBuffer.size * window.gameClient.spriteBuffer.size * 4 * 32 * 32)}MB`,
       `Sprite Buffer Evictions: ${this.__averageEvictions}`,
@@ -143,7 +144,7 @@ export default class Debugger {
       `Current Position: ${window.gameClient.player!.getPosition().toString()}`,
       `Current Chunk: ${window.gameClient.player!.getChunk().id}`,
       `Opened Containers: ${window.gameClient.player!.__openedContainers.size}`,
-      `Outfit: ${window.gameClient.player!.outfit.toString()}`
+      `Outfit: ${window.gameClient.player!.outfit.toString()}`,
     ].join("<br>");
 
     const debugEl = document.getElementById("debug-statistics");

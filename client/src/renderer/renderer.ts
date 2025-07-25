@@ -40,7 +40,7 @@ export default class Renderer {
   public gameLayer: Container;
 
   public spritePool: Sprite[] = [];
-  public readonly poolSize = 28 * 14 * 4; // (enough for all tiles + items + some headroom)
+  public readonly poolSize = 28 * 14 * 50; // (enough for all tiles + items + some headroom)
   public poolIndex: number = 0;
  
   constructor(app: Application) {

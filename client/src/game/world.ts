@@ -3,6 +3,8 @@ import Clock from "../core/clock";
 import Pathfinder from "../core/pathfinder";
 import { TargetPacket } from "../core/protocol";
 import BattleWindow from "../ui/window/window-battle";
+import Creature from "./creature";
+import Player from "./player/player";
 import Position from "./position";
 import Tile from "./tile";
 
@@ -104,7 +106,7 @@ export default class World {
     return (window.gameClient.interface.windowManager.getWindow("battle-window") as BattleWindow).addCreature(creature);
   }
 
-  public getCreature(id: number | string): any {
+  public getCreature(id: number | string): Creature | Player | null {
     if (!this.activeCreatures.hasOwnProperty(id)) return null;
     return this.activeCreatures[id];
   }

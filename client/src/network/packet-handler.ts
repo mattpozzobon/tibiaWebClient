@@ -46,7 +46,7 @@ class PacketHandler {
         creature.__setLookDirection(packet.value);
         break;
       case CONST.PROPERTIES.CAPACITY:
-        creature.vitals.capacity = packet.value;
+        creature.vitals.state.capacity = packet.value;
         break;
     }
   }
@@ -168,7 +168,7 @@ class PacketHandler {
     let sourceCreature = window.gameClient.world.getCreature(packet.id);
     if (!sourceCreature) return;
 
-    let health = Math.min(packet.amount, sourceCreature.maxHealth - sourceCreature.state.health);
+    let health = Math.min(packet.amount, sourceCreature.vitals.state.maxHealth - sourceCreature.vitals.state.health);
     if (health === 0) return;
 
     sourceCreature.increaseHealth(health);
@@ -321,12 +321,12 @@ class PacketHandler {
 
     if (window.gameClient.player === targetCreature) {
       window.gameClient.interface.channelManager.addConsoleMessage(
-        `You lose ${packet.damage} health to a ${sourceCreature.name}.`,
+        `You lose ${packet.damage} health to a ${sourceCreature.vitals.name}.`,
         Interface.COLORS.WHITE
       );
     } else if (window.gameClient.player === sourceCreature) {
       window.gameClient.interface.channelManager.addConsoleMessage(
-        `You deal ${packet.damage} damage to a ${targetCreature.name}.`,
+        `You deal ${packet.damage} damage to a ${targetCreature.vitals.name}.`,
         Interface.COLORS.WHITE
       );
     }
@@ -617,7 +617,7 @@ class PacketHandler {
       Interface.COLORS.WHITE
     );
 
-    creature.addExperience(packet.experience);
+    //creature.addExperience(packet.experience);
   }
 
   handleItemAdd(packet: { id: number; count: number; position: Position; slot: number }): void {

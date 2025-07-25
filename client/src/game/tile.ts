@@ -78,7 +78,9 @@ export default class Tile extends Thing implements IPathNode {
   }
 
   addAnimation(animation: any): void {
+    console.log('Tile.addAnimation: adding animation', animation, 'to tile at', this.__position);
     this.__animations.add(animation);
+    console.log('Tile.addAnimation: animations count after add', this.__animations.size);
   }
 
   setElevation(elevation: number): void {

@@ -3,6 +3,7 @@ import Creature from "../game/creature";
 import Position from "../game/position";
 import { CharacterFrames } from "./creature-renderer-helper";
 import SpriteBuffer from "./sprite-buffer";
+import AnimationRenderer from "./animation-renderer";
 
 const RENDER_LAYERS = [
   { groupKey: "characterGroup", frameKey: "characterFrame", hasMask: false },
@@ -19,9 +20,11 @@ export default class CreatureRenderer {
   // Performance optimizations
   private textureCache: Map<number, Texture | null> = new Map();
   private positionCache: Map<string, Position> = new Map();
+  private animationRenderer: AnimationRenderer;
 
   constructor() {
     // No longer need sprite pool parameters since we use batching
+    this.animationRenderer = new AnimationRenderer();
   }
 
   /**
@@ -98,11 +101,8 @@ export default class CreatureRenderer {
       // Skip if group doesn't exist or frame is undefined
       if (!group || frame === undefined) continue;
       
-      // Handle conditional layers (like hair when no head)
-      if (layer.condition) {
-        const condition = layer.condition as string;
-        if (condition === "!frames.headGroup" && frames.headGroup) continue;
-      }
+      // Skip hair if head group exists (condition check)
+      if (layer.condition && layer.condition === "!frames.headGroup" && frames.headGroup) continue;
       
       this.collectLayerSprites(
         group, 
@@ -112,10 +112,32 @@ export default class CreatureRenderer {
         drawPosition, 
         size, 
         spriteBatches, 
-        layer.hasMask || false,
+        layer.hasMask, 
         creature
       );
     }
+  }
+
+  /**
+   * Collect creature animation sprites above the creature
+   */
+  public collectAnimationSpritesAbove(
+    creature: Creature, 
+    spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>,
+    getCreatureScreenPosition?: (creature: Creature) => Position
+  ): void {
+    this.animationRenderer.renderCreatureAnimationsAbove(creature, spriteBatches, getCreatureScreenPosition);
+  }
+
+  /**
+   * Collect creature animation sprites below the creature
+   */
+  public collectAnimationSpritesBelow(
+    creature: Creature, 
+    spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>,
+    getCreatureScreenPosition?: (creature: Creature) => Position
+  ): void {
+    this.animationRenderer.renderCreatureAnimationsBelow(creature, spriteBatches, getCreatureScreenPosition);
   }
   
   /**

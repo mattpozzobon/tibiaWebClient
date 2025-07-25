@@ -10,10 +10,14 @@ export default class Animation extends Thing {
   
 
   constructor(id: number) {
-    super( id);
+    super(id);
+    
+    console.log('Animation constructor: created animation with id', id);
     
     this.__created = performance.now();
     this.__durations = this.__generateDurations();
+    
+    console.log('Animation constructor: durations', this.__durations);
   }
 
   getPattern(): Position {
@@ -63,6 +67,42 @@ export default class Animation extends Thing {
       return this.__generateDefaultDurations();
     }
     return this.generateExtendedDurations();
+  }
+
+  public getSprite(): any {
+    /*
+     * Function Animation.getSprite
+     * Returns the current sprite for the animation based on the current frame
+     */
+    console.log('Animation.getSprite: called for animation id', this.id);
+    
+    try {
+      const frameGroup = this.getFrameGroup(FrameGroup.NONE);
+      console.log('Animation.getSprite: got frameGroup', frameGroup);
+      
+      const frame = this.getFrame();
+      console.log('Animation.getSprite: current frame', frame);
+      
+      const pattern = this.getPattern();
+      console.log('Animation.getSprite: pattern', pattern);
+      
+      // Get the sprite index for the current frame
+      const spriteIndex = frameGroup.getSpriteIndex(frame, pattern.x, pattern.y, pattern.z, 0, 0, 0);
+      console.log('Animation.getSprite: spriteIndex', spriteIndex);
+      
+      // Get the sprite texture
+      const sprite = frameGroup.getSprite(spriteIndex);
+      console.log('Animation.getSprite: sprite', sprite);
+      
+      if (sprite) {
+        return { texture: sprite };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Animation.getSprite: error', error);
+      return null;
+    }
   }
 }
 

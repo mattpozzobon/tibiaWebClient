@@ -15,6 +15,7 @@ import Animation from "../utils/animation";
 import TileRenderer from './tile-renderer';
 import ItemRenderer from './item-renderer';
 import CreatureRenderer from './creature-renderer';
+import AnimationRenderer from './animation-renderer';
 
 export default class Renderer {
   __animationLayers = new Array<Set<any>>();
@@ -37,6 +38,7 @@ export default class Renderer {
   public tileRenderer: TileRenderer;
   public itemRenderer: ItemRenderer;
   public creatureRenderer: CreatureRenderer;
+  public animationRenderer: AnimationRenderer;
   public gameLayer: Container;
 
   public spritePool: Sprite[] = [];
@@ -71,6 +73,7 @@ export default class Renderer {
     this.tileRenderer = new TileRenderer();
     this.creatureRenderer = new CreatureRenderer();
     this.itemRenderer = new ItemRenderer();
+    this.animationRenderer = new AnimationRenderer();
 
     this.__createAnimationLayers();
   }
@@ -129,13 +132,32 @@ export default class Renderer {
     // Adds an animation on the given tile position
     const tile = window.gameClient.world.getTileFromWorldPosition(packet.position);
     if (tile === null) {
+      console.log('addPositionAnimation: tile is null for position', packet.position);
       return;
     }
-    const animationId = window.gameClient.dataObjects.getAnimationId(packet.type);
+    
+    console.log('addPositionAnimation: packet type', packet.type);
+    
+    let animationId;
+    try {
+      animationId = window.gameClient.dataObjects.getAnimationId(packet.type);
+      console.log('addPositionAnimation: animationId', animationId);
+    } catch (error) {
+      console.error('addPositionAnimation: getAnimationId failed', error);
+      return;
+    }
+    
     if (animationId === null) {
+      console.log('addPositionAnimation: animationId is null');
       return;
     }
-    return tile.addAnimation(new Animation(animationId));
+    
+    const animation = new Animation(animationId);
+    console.log('addPositionAnimation: created animation', animation);
+    
+    const result = tile.addAnimation(animation);
+    console.log('addPositionAnimation: tile.addAnimation result', result);
+    return result;
   }
   
   public getStaticScreenPosition(position: Position): Position {
@@ -160,7 +182,7 @@ export default class Renderer {
   
   public __renderWorld(): void {
     const t0 = performance.now();
-  
+   
     // Reset pool for this frame
     this.poolIndex = 0;
     this.drawCalls = 0;
@@ -170,38 +192,52 @@ export default class Renderer {
     for (let i = 0; i < this.poolSize; i++) {
       this.spritePool[i].visible = false;
     }
-  
+   
     const tileCache = this.tileRenderer.tileCache; // Tile[][], floors from 0 (bottom) up
-  
+   
     // Collect all sprites by texture for batching
     const spriteBatches = new Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>();
-    
+     
     // For each floor, collect sprites instead of rendering immediately
     for (let floor = 0; floor < tileCache.length; floor++) {
       const tiles = tileCache[floor];
-  
+ 
       for (const tile of tiles) {
         const screenPos = this.getStaticScreenPosition(tile.getPosition());
-        
+         
         // Collect tile sprites
         this.tileRenderer.collectSprites(tile, screenPos, spriteBatches);
-        
+         
         // Collect item sprites
         this.itemRenderer.collectSpritesForTile(tile, screenPos, spriteBatches);
 
         // Collect creature sprites
         tile.monsters.forEach((creature: Creature) => {
           this.creatureRenderer.collectSprites(creature, screenPos, spriteBatches);
+          
+          // Collect creature animations
+          this.creatureRenderer.collectAnimationSpritesBelow(creature, spriteBatches, this.getCreatureScreenPosition.bind(this));
+          this.creatureRenderer.collectAnimationSpritesAbove(creature, spriteBatches, this.getCreatureScreenPosition.bind(this));
         });
 
         // Collect on-top item sprites
         this.itemRenderer.collectOnTopSpritesForTile(tile, screenPos, spriteBatches);
+
+        // Collect tile animations
+        this.tileRenderer.collectAnimationSprites(tile, screenPos, spriteBatches, this.getStaticScreenPosition.bind(this));
+      }
+
+      // Render distance animations for this floor
+      if (this.__animationLayers[floor]) {
+        this.__animationLayers[floor].forEach((animation: any) => {
+          this.animationRenderer.renderDistanceAnimation(animation, animation, spriteBatches, this.getStaticScreenPosition.bind(this));
+        });
       }
     }
-    
+     
     // Render all sprites in texture batches
     this.renderSpriteBatches(spriteBatches);
-  
+ 
     const t1 = performance.now();
     this.totalDrawTime += t1 - t0;
   }
@@ -239,243 +275,14 @@ export default class Renderer {
     this.poolIndex = poolIndex;
   }
   
-  public __renderAnimation(animation: any, thing: any): void {
-    // Renders an animation to the screen
-    if (animation.expired()) {
-      thing.deleteAnimation(animation);
-    }
-  
-    // There is a flag that identifies light coming from the tile
-    if (!(animation instanceof BoxAnimation)) {
-      if (window.gameClient.interface.settings.isLightingEnabled() && animation.isLight()) {
-        const position = this.getStaticScreenPosition(thing.getPosition());
-        this.__renderLight(thing, position, animation, false);
-      }
-    }
-  
-    // Determine the rendering position
-    if (animation instanceof BoxAnimation) {
-        //this.screen.drawInnerCombatRect(animation, this.getCreatureScreenPosition(thing));
-    } else if (thing instanceof Tile) {
-       //this.screen.drawSprite(animation, this.getStaticScreenPosition(thing.getPosition()), 32);
-    } else if (thing instanceof Creature) {
-      //this.screen.drawSprite(animation, this.getCreatureScreenPosition(thing), 32);
-    }
-  
-   // this.screen.context.globalAlpha = 1;
-  }
-  
-  public __renderTileAnimations(tile: any): void {
-    // Renders the animations that are present on the tile
-    tile.__animations.forEach((animation: any) => {
-      this.__renderAnimation(animation, tile);
-    }, this);
-  }
-  
-  public __renderLightThing(position: Position, thing: any, intensity: any): void {
-    // Renders light bubble for a particular tile or item
-    const info = thing.getDataObject().properties.light;
-    const phase = 0;
-    const size =
-      info.level + 0.2 * info.level * Math.sin(phase + window.gameClient.renderer.debugger.__nFrames / (8 * 2 * Math.PI));
-    //this.lightscreen.renderLightBubble(position.x, position.y, size, info.color);
-  }
-  
-  public __renderLight(tile: any, position: Position, thing: any, intensity: any): void {
-    // Renders the light at a position
-    const floor = window.gameClient.world
-      .getChunkFromWorldPosition(tile.getPosition())
-      .getFirstFloorFromBottomProjected(tile.getPosition());
-  
-    // Confirm light is visible and should be rendered
-    if (floor === null || floor >= window.gameClient.player!.getMaxFloor()) {
-      this.__renderLightThing(position, thing, intensity);
-    }
-  }
-  
-  public __renderTileObjects(tile: any): void {
-    // Renders all objects & creatures on a tile
-    const position = this.getStaticScreenPosition(tile.getPosition());
-  
-    // Reference the items to be rendered
-    const items = tile.items;
-  
-    // Render the items on the tile
-    items.forEach((item: Item, i: number) => {
-      // Immediately skip objects with on-top property: these are rendered later
-      if (item.hasFlag(PropBitFlag.DatFlagOnTop)) {
-        return;
-      }
-  
-      // Should render item light?
-      if (window.gameClient.interface.settings.isLightingEnabled() && item.isLight()) {
-        this.__renderLight(tile, position, item, undefined);
-      }
-  
-      // Handle the current elevation of the tile
-      const renderPosition = new Position(
-        position.x - tile.__renderElevation,
-        position.y - tile.__renderElevation,
-        0
-      );
-  
-      // Draw the sprite at the right position
-      //this.screen.drawSprite(item, renderPosition, 32);
-  
-      if (item.isPickupable() && i === items.length - 1 && tile === window.gameClient.mouse.getCurrentTileHover()) {
-        //this.screen.drawSpriteOverlay(item, renderPosition, 32);
-      }
-      
-      // Add the elevation of the item
-      if (item.isElevation()) {
-        tile.addElevation(item.getDataObject().properties.elevation);
-      }
-    }, this);
-  
-    // Render the entities on the tile
-    tile.monsters.forEach((creature: any) => {
-      this.__renderCreature(tile, creature, false);
-    }, this);
-  
-    // Render all the entities on this tile that were deferred
-    this.__renderDeferred(tile);
-  
-    // Render the items that always belong on top (e.g., doors)
-    this.__renderAlwaysOnTopItems(items, position);
-  }
-
-  public __renderAlwaysOnTopItems(items: any[], position: Position): void {
-    // Renders the items that are always on top of the other items
-    items.forEach((item: any) => {
-      if (!item.hasFlag(PropBitFlag.DatFlagOnTop)) {
-        return;
-      }
-      //this.screen.drawSprite(item, position, 32);
-    }, this);
-  }
-  
-  public __renderDeferred(tile: any): void {
-    // Renders the deferred entities on the tile
-    if (tile.__deferredCreatures.size === 0) {
-      return;
-    }
-    tile.__deferredCreatures.forEach((creature: any) => {
-      const tileFromWorld = window.gameClient.world.getTileFromWorldPosition(creature.vitals.position);
-      this.__renderCreature(tileFromWorld, creature, true);
-    }, this);
-    tile.__deferredCreatures.clear();
-  }
-  
-  public __renderCreature(tile: any, creature: any, deferred: boolean): void {
-    // Render the available creatures to the screen
-    if (!window.gameClient.player!.canSee(creature)) {
-      return;
-    }
-    const position = this.getCreatureScreenPosition(creature);
-    const renderPosition = new Position(
-      position.x - tile.__renderElevation,
-      position.y - tile.__renderElevation,
-      position.z
-    );
-    // Should the rendering of the creature be deferred to another tile?
-    if (this.__shouldDefer(tile, creature) && !deferred) {
-      return this.__defer(tile, creature);
-    }
-    // Render animations below the creature
-    this.__renderCreatureAnimationsBelow(creature);
-    // Render the target box around the creature if applicable
-    if (window.gameClient.player!.isCreatureTarget(creature)) {
-      //this.screen.drawOuterCombatRect(this.getCreatureScreenPosition(creature), Interface.COLORS.RED);
-    }
-    if (creature.hasCondition(ConditionManager.INVISIBLE)) {
-      this.__renderAnimation(LoopedAnimation.MAGIC_BLUE, creature);
-    } else {
-      // Otherwise render the character to the screen
-      //this.screen.drawCharacter(creature, renderPosition, 32, 0.25);
-    }
-    creature.__renderElevation = 0;
-    // Render animations above the creature
-    this.__renderCreatureAnimationsAbove(creature);
-  }
-  
-  public __defer(tile: any, creature: any): void {
-    // Defers rendering of a creature to a new tile
-    const deferTile = this.__getDeferTile(tile, creature);
-    if (deferTile !== null) {
-      deferTile.__deferredCreatures.add(creature);
-    }
-  }
-  
-  public __getDeferTile(tile: any, creature: any): any {
-    // Get the tile we need to defer the rendering of the creature to
-    if (creature.__lookDirection === CONST.DIRECTION.NORTHEAST) {
-      return window.gameClient.world.getTileFromWorldPosition(creature.getPosition().south());
-    } else if (creature.__lookDirection === CONST.DIRECTION.SOUTHWEST) {
-      return window.gameClient.world.getTileFromWorldPosition(creature.getPosition().east());
-    } else {
-      return window.gameClient.world.getTileFromWorldPosition(creature.__previousPosition);
-    }
-  }
-  
-  public __shouldDefer(tile: any, creature: any): boolean {
-    // Renders true if the drawing of a creature should be deferred to another tile
-    if (creature.__teleported) {
-      return false;
-    }
-    if (!creature.isMoving()) {
-      return false;
-    }
-    if (creature.getPosition().z !== creature.__previousPosition.z) {
-      return false;
-    }
-    if (
-      (creature.__lookDirection === CONST.DIRECTION.NORTH ||
-        creature.__lookDirection === CONST.DIRECTION.WEST ||
-        creature.__lookDirection === CONST.DIRECTION.NORTHWEST)
-    ) {
-      if (!creature.__previousPosition.equals(tile.getPosition())) {
-        return true;
-      }
-    }
-    if (creature.__lookDirection === CONST.DIRECTION.NORTHEAST) {
-      if (!creature.__previousPosition.equals(tile.getPosition().west())) {
-        return true;
-      }
-    }
-    if (creature.__lookDirection === CONST.DIRECTION.SOUTHWEST) {
-      if (!creature.__previousPosition.equals(tile.getPosition().north())) {
-        return true;
-      }
-    }
-    return false;
-  }
-  
-  public __renderCreatureAnimationsAbove(creature: any): void {
-    // Renders animations above the creature
-    creature.__animations.forEach((animation: any) => {
-      if (animation.constructor.name !== "BoxAnimation") {
-        this.__renderAnimation(animation, creature);
-      }
-    }, this);
-  }
-  
-  public __renderCreatureAnimationsBelow(creature: any): void {
-    // Renders animations below the creature
-    creature.__animations.forEach((animation: any) => {
-      if (animation.constructor.name === "BoxAnimation") {
-        this.__renderAnimation(animation, creature);
-      }
-    }, this);
-  }
-  
   public __renderOther(): void {
     // Renders other information to the screen
-    //window.gameClient.player!.equipment.render();
-    //window.gameClient.interface.modalManager.render();
-    //this.__renderContainers();
-    //window.gameClient.world.clock.updateClockDOM();
-    //window.gameClient.interface.screenElementManager.render();
-    //window.gameClient.interface.hotbarManager.render();
+    window.gameClient.player!.equipment.render();
+    window.gameClient.interface.modalManager.render();
+    this.__renderContainers();
+    window.gameClient.world.clock.updateClockDOM();
+    window.gameClient.interface.screenElementManager.render();
+    window.gameClient.interface.hotbarManager.render();
     this.debugger.renderStatistics();
   }
   

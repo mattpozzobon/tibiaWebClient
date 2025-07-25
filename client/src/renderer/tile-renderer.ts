@@ -1,12 +1,15 @@
 import Tile from "../game/tile";
 import Position from "../game/position";
 import FrameGroup from "../utils/frame-group";
+import AnimationRenderer from "./animation-renderer";
 
 export default class TileRenderer {
   public tileCache: Tile[][] = [];
+  private animationRenderer: AnimationRenderer;
 
   constructor() {
     // No longer need sprite pool parameters since we use batching
+    this.animationRenderer = new AnimationRenderer();
   }
 
   public refreshVisibleTiles(): void {
@@ -92,5 +95,17 @@ export default class TileRenderer {
         }
       }
     }
+  }
+
+  /**
+   * Collect tile animation sprites
+   */
+  public collectAnimationSprites(
+    tile: Tile, 
+    screenPos: Position, 
+    spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>,
+    getStaticScreenPosition?: (pos: Position) => Position
+  ): void {
+    this.animationRenderer.renderTileAnimations(tile, spriteBatches, getStaticScreenPosition);
   }
 }

@@ -86,14 +86,11 @@ export default class AnimationRenderer {
       // Check if the animation ID exists in data objects
       const animationId = window.gameClient.dataObjects.getDistanceAnimationId(packet.type);
       if (animationId === null) {
-        console.error('addDistanceAnimation: animation ID not found for type', packet.type);
         return;
       }
       
       const animation = new DistanceAnimation(animationId, packet.from, packet.to);
-      console.log('animation', animation);
       this.animationLayers[packet.from.z % 8].add(animation);
-
     } catch (error) {
       console.error('addDistanceAnimation: error creating distance animation', error);
     }
@@ -103,8 +100,7 @@ export default class AnimationRenderer {
    * Test method to manually add distance animations for testing
    */
   public addTestDistanceAnimations(): void {
-
-    // Test distance animations at specific positions on floor 0
+    // Test distance animations at specific positions on floor 9
     const testPositions = [
       { from: new Position(63, 59, 9), to: new Position(65, 61, 9) },
       { from: new Position(64, 60, 9), to: new Position(66, 62, 9) },
@@ -141,7 +137,10 @@ export default class AnimationRenderer {
       // Try different animation types (1, 2, 3, 4, 5)
       const animationType = 1; // 1, 2, 3, 4, or 5
       try {
-        this.addPositionAnimation({position: position, type: animationType});
+        this.addPositionAnimation({
+          position: position,
+          type: animationType
+        });
       } catch (error) {
         console.error(`Failed to add test tile animation ${index + 1} with type ${animationType}:`, error);
       }

@@ -152,10 +152,6 @@ export default class Renderer {
       return;
     }
     const animation = new DistanceAnimation(animationId, packet.from, packet.to);
-    console.log('addDistanceAnimation: adding animation to layer', packet.from.z % 8);
-    console.log('addDistanceAnimation: animation layers', this.__animationLayers);
-    console.log('addDistanceAnimation: animation layers length', this.__animationLayers.length);
-    console.log('animation', animation);
     this.__animationLayers[packet.from.z % 8].add(animation);
   }
   

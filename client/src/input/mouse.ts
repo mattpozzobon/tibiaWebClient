@@ -33,7 +33,7 @@ class Mouse {
 
   getWorldObject(event: MouseEvent): any {
     return {
-      which: window.gameClient.renderer.screen.getWorldCoordinates(event),
+      //which: window.gameClient.renderer.screen.getWorldCoordinates(event),
       index: 0xff,
     };
   }
@@ -131,7 +131,7 @@ class Mouse {
 
   private __handleMouseMove(event: MouseEvent): void {
     if (!window.gameClient.isRunning()) return;
-    this.__currentMouseTile = window.gameClient.renderer.screen.getWorldCoordinates(event);
+    //this.__currentMouseTile = window.gameClient.renderer.screen.getWorldCoordinates(event);
     // Call __updateCursorMove to update the cursor based on the target element.
     this.__updateCursorMove(event.target as HTMLElement);
   }
@@ -197,11 +197,11 @@ class Mouse {
   
     // Delegate based on target element
     const target = event.target as HTMLElement;
-    if (target === window.gameClient.renderer.screen.canvas) {
-      this.__handleCanvasMouseUp(event);
-    } else if (target.className.includes("slot") || target.className === "body") {
-      this.__handleSlotMouseUp(event);
-    }
+    // if (target === window.gameClient.renderer.screen.canvas) {
+    //   this.__handleCanvasMouseUp(event);
+    // } else if (target.className.includes("slot") || target.className === "body") {
+    //   this.__handleSlotMouseUp(event);
+    // }
   
     // Reset the selected object (if any)
     this.__mouseDownObject = null;
@@ -263,9 +263,9 @@ class Mouse {
   }
 
   private __setSelectedObject(event: MouseEvent): void {
-    if (event.target === window.gameClient.renderer.screen.canvas) {
-      this.__mouseDownObject = this.getWorldObject(event);
-    }
+    // if (event.target === window.gameClient.renderer.screen.canvas) {
+    //   this.__mouseDownObject = this.getWorldObject(event);
+    // }
   }
 
   __handleMouseClick(event: MouseEvent): any {

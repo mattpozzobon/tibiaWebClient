@@ -106,7 +106,7 @@ export default class GameClient {
     //this.renderer.minimap.save();
     this.interface.settings.saveState();
     this.gameLoop.abort();
-    this.renderer.screen.clear();
+    //this.renderer.screen.clear();
 
     if (this.player) {
       this.player.closeAllContainers();

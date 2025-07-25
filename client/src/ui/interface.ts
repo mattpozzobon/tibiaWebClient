@@ -223,9 +223,9 @@ export default class Interface {
     }
   }
 
-  isRaining(): boolean {
-    return window.gameClient.renderer.weatherCanvas.isRaining();
-  }
+  // isRaining(): boolean {
+  //   //return window.gameClient.renderer.weatherCanvas.isRaining();
+  // }
 
   getSpriteScaling(): number {
     return 32 * this.getResolutionScale();
@@ -288,7 +288,7 @@ export default class Interface {
     const scaleY = screenHeight / (Interface.TILE_HEIGHT * Interface.TILE_SIZE);
   
     const scale = Math.min(scaleX, scaleY); // prevent overflow
-    window.gameClient.renderer.screen.setScale(scale);
+    //window.gameClient.renderer.screen.setScale(scale);
   }
   
   __handleStackResize(): void {

@@ -24,10 +24,10 @@ export default class Renderer {
   __animationLayers = new Array<Set<any>>();
   __nMiliseconds: number;
 
-  public screen: Canvas;
-  public lightscreen: LightCanvas;
-  public weatherCanvas: WeatherCanvas;
-  public outlineCanvas: OutlineCanvas;
+  //public screen: Canvas;
+  // public lightscreen: LightCanvas;
+  // public weatherCanvas: WeatherCanvas;
+  // public outlineCanvas: OutlineCanvas;
   public debugger: Debugger;
 
   private __start: number;
@@ -48,10 +48,10 @@ export default class Renderer {
   public poolIndex: number = 0;
  
   constructor(app: Application) {
-    this.screen = new Canvas("screen", Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
-    this.lightscreen = new LightCanvas(null, Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
-    this.weatherCanvas = new WeatherCanvas(this.screen);
-    this.outlineCanvas = new OutlineCanvas(null, 130, 130);
+    //this.screen = new Canvas("screen", Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
+    //this.lightscreen = new LightCanvas(null, Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
+    //this.weatherCanvas = new WeatherCanvas(this.screen);
+    //this.outlineCanvas = new OutlineCanvas(null, 130, 130);
 
     this.app = app;
 
@@ -72,15 +72,8 @@ export default class Renderer {
       this.spritePool[i] = spr;
     }
 
-    this.tileRenderer = new TileRenderer(
-      this.spritePool,
-      () => this.poolIndex,
-      (v) => { this.poolIndex = v; },
-      this.poolSize
-    );
-
+    this.tileRenderer = new TileRenderer(this.spritePool, () => this.poolIndex, (v) => { this.poolIndex = v; }, this.poolSize);
     this.creatureRenderer = new CreatureRenderer(this.spritePool, () => this.poolIndex, (v) => { this.poolIndex = v; }, this.poolSize);
-
     this.itemRenderer = new ItemRenderer(this.spritePool, () => this.poolIndex, (v) => { this.poolIndex = v; }, this.poolSize);
 
     this.__createAnimationLayers();
@@ -110,9 +103,6 @@ export default class Renderer {
     this.__renderOther();
   }
 
-  public getPoolIndex = (): number => this.poolIndex;
-  public setPoolIndex = (v: number): void => { this.poolIndex = v; };
-
   private __increment(): void {
     // Increments the renderer by a number of milliseconds
     this.debugger.__nFrames++;
@@ -121,12 +111,12 @@ export default class Renderer {
 
   public setAmbientColor(r: number, g: number, b: number, a: number): void {
     // Delegates to the lightscreen and sets the ambient color of the world to rgba
-    this.lightscreen.setAmbientColor(r, g, b, a);
+    //this.lightscreen.setAmbientColor(r, g, b, a);
   }
   
   public setWeather(bool: boolean): void {
     // Sets the weather to either on/off
-    this.weatherCanvas.setWeather(Number(bool));
+    //this.weatherCanvas.setWeather(Number(bool));
   }
   
   public addDistanceAnimation(packet: { type: number; from: Position; to: Position }): void {
@@ -249,7 +239,7 @@ export default class Renderer {
       thing.delete(animation);
     }
     const position = this.getStaticScreenPosition(animation.getPosition());
-    this.screen.drawDistanceAnimation(animation, position);
+    //this.screen.drawDistanceAnimation(animation, position);
   }
   
   public __renderAnimation(animation: any, thing: any): void {
@@ -268,14 +258,14 @@ export default class Renderer {
   
     // Determine the rendering position
     if (animation instanceof BoxAnimation) {
-      this.screen.drawInnerCombatRect(animation, this.getCreatureScreenPosition(thing));
+        //this.screen.drawInnerCombatRect(animation, this.getCreatureScreenPosition(thing));
     } else if (thing instanceof Tile) {
-      this.screen.drawSprite(animation, this.getStaticScreenPosition(thing.getPosition()), 32);
+       //this.screen.drawSprite(animation, this.getStaticScreenPosition(thing.getPosition()), 32);
     } else if (thing instanceof Creature) {
-      this.screen.drawSprite(animation, this.getCreatureScreenPosition(thing), 32);
+      //this.screen.drawSprite(animation, this.getCreatureScreenPosition(thing), 32);
     }
   
-    this.screen.context.globalAlpha = 1;
+   // this.screen.context.globalAlpha = 1;
   }
   
   public __renderTileAnimations(tile: any): void {
@@ -291,7 +281,7 @@ export default class Renderer {
     const phase = 0;
     const size =
       info.level + 0.2 * info.level * Math.sin(phase + window.gameClient.renderer.debugger.__nFrames / (8 * 2 * Math.PI));
-    this.lightscreen.renderLightBubble(position.x, position.y, size, info.color);
+    //this.lightscreen.renderLightBubble(position.x, position.y, size, info.color);
   }
   
   public __renderLight(tile: any, position: Position, thing: any, intensity: any): void {
@@ -333,10 +323,10 @@ export default class Renderer {
       );
   
       // Draw the sprite at the right position
-      this.screen.drawSprite(item, renderPosition, 32);
+      //this.screen.drawSprite(item, renderPosition, 32);
   
       if (item.isPickupable() && i === items.length - 1 && tile === window.gameClient.mouse.getCurrentTileHover()) {
-        this.screen.drawSpriteOverlay(item, renderPosition, 32);
+        //this.screen.drawSpriteOverlay(item, renderPosition, 32);
       }
       
       // Add the elevation of the item
@@ -363,7 +353,7 @@ export default class Renderer {
       if (!item.hasFlag(PropBitFlag.DatFlagOnTop)) {
         return;
       }
-      this.screen.drawSprite(item, position, 32);
+      //this.screen.drawSprite(item, position, 32);
     }, this);
   }
   
@@ -398,13 +388,13 @@ export default class Renderer {
     this.__renderCreatureAnimationsBelow(creature);
     // Render the target box around the creature if applicable
     if (window.gameClient.player!.isCreatureTarget(creature)) {
-      this.screen.drawOuterCombatRect(this.getCreatureScreenPosition(creature), Interface.COLORS.RED);
+      //this.screen.drawOuterCombatRect(this.getCreatureScreenPosition(creature), Interface.COLORS.RED);
     }
     if (creature.hasCondition(ConditionManager.INVISIBLE)) {
       this.__renderAnimation(LoopedAnimation.MAGIC_BLUE, creature);
     } else {
       // Otherwise render the character to the screen
-      this.screen.drawCharacter(creature, renderPosition, 32, 0.25);
+      //this.screen.drawCharacter(creature, renderPosition, 32, 0.25);
     }
     creature.__renderElevation = 0;
     // Render animations above the creature

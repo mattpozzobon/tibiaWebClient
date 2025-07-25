@@ -94,9 +94,9 @@ export default class Player extends Creature {
       window.gameClient.interface.soundManager.setVolume("rain", 0);
     } else {
       window.gameClient.interface.soundManager.setAmbientTrace("forest");
-      if (window.gameClient.renderer.weatherCanvas.isRaining()) {
-        window.gameClient.interface.soundManager.setVolume("rain", 1);
-      }
+      // if (window.gameClient.renderer.weatherCanvas.isRaining()) {
+      //   window.gameClient.interface.soundManager.setVolume("rain", 1);
+      // }
     }
   }
 

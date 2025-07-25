@@ -55,12 +55,12 @@ export default class Settings {
    * Sets the canvas image rendering based on the anti-aliasing checkbox state.
    */
   __setAA(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    if (target.checked) {
-      window.gameClient.renderer.screen.canvas.style.imageRendering = "auto";
-    } else {
-      window.gameClient.renderer.screen.canvas.style.imageRendering = "pixelated";
-    }
+    // const target = event.target as HTMLInputElement;
+    // if (target.checked) {
+    //   window.gameClient.renderer.screen.canvas.style.imageRendering = "auto";
+    // } else {
+    //   window.gameClient.renderer.screen.canvas.style.imageRendering = "pixelated";
+    // }
   }
 
   /**

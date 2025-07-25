@@ -218,14 +218,14 @@ export default class Canvas {
       for (let y = 0; y < frameGroup.height; y++) {
         for (let l = 0; l < frameGroup.layers; l++) {
           let index = frameGroup.getSpriteIndex(frame, pattern.x, pattern.y, pattern.z, l, x, y);
-          window.gameClient.renderer.outlineCanvas.createOutline(frameGroup.sprites[index]);
+          //window.gameClient.renderer.outlineCanvas.createOutline(frameGroup.sprites[index]);
   
-          this.context.drawImage(
-            window.gameClient.renderer.outlineCanvas.canvas,
-            0, 0, 33, 33,
-            position.x * 32 - 1, position.y * 32 - 1,
-            33, 33
-          );
+          // this.context.drawImage(
+          //   //window.gameClient.renderer.outlineCanvas.canvas,
+          //   0, 0, 33, 33,
+          //   position.x * 32 - 1, position.y * 32 - 1,
+          //   33, 33
+          // );
         }
       }
     }

@@ -98,6 +98,7 @@ export default class ItemRenderer {
     spr.width = size;
     spr.height = size;
     spr.visible = true;
+    window.gameClient.renderer.drawCalls++;
     return poolIndex;
   }
 }

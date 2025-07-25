@@ -70,6 +70,7 @@ export default class TileRenderer {
           spr.texture = tex;
           spr.x = px; spr.y = py; spr.visible = true;
         }
+        window.gameClient.renderer.drawCalls++;
       }
       this.setPoolIndex(poolIndex);
       return;
@@ -88,6 +89,7 @@ export default class TileRenderer {
           } else {
             spr.visible = false;
           }
+          window.gameClient.renderer.drawCalls++;
         }
       }
     }

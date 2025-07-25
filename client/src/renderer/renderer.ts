@@ -15,9 +15,7 @@ import LoopedAnimation from "../utils/animationLooped";
 import BoxAnimation from "../utils/box-animation";
 import Tile from "../game/tile";
 import Creature from "../game/creature";
-import Chunk from "../core/chunk";
 import Animation from "../utils/animation";
-import FrameGroup from '../utils/frame-group';
 import TileRenderer from './tile-renderer';
 import ItemRenderer from './item-renderer';
 import CreatureRenderer from './creature-renderer';
@@ -33,7 +31,11 @@ export default class Renderer {
   public debugger: Debugger;
 
   private __start: number;
-  public __totalDrawTime: number;
+  public totalDrawTime: number = 0;
+  public drawCalls: number = 0;
+  public batchCount: number = 0;
+  public textureSwitches: number = 0;
+
 
   public app: Application;
   public tileRenderer: TileRenderer;
@@ -44,7 +46,7 @@ export default class Renderer {
   public spritePool: Sprite[] = [];
   public readonly poolSize = 28 * 14 * 4; // (enough for all tiles + items + some headroom)
   public poolIndex: number = 0;
-
+ 
   constructor(app: Application) {
     this.screen = new Canvas("screen", Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
     this.lightscreen = new LightCanvas(null, Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
@@ -59,7 +61,6 @@ export default class Renderer {
     this.debugger = new Debugger();
     this.__start = performance.now();
     this.__nMiliseconds = 0;
-    this.__totalDrawTime = 0;
     this.spritePool = new Array(this.poolSize);
     
     for (let i = 0; i < this.poolSize; i++) {
@@ -176,6 +177,10 @@ export default class Renderer {
   
     // Reset pool for this frame
     this.poolIndex = 0;
+    this.drawCalls = 0;
+    this.batchCount = 0;
+    this.textureSwitches = 0;
+
     for (let i = 0; i < this.poolSize; i++) {
       this.spritePool[i].visible = false;
     }
@@ -186,27 +191,21 @@ export default class Renderer {
     for (let floor = 0; floor < tileCache.length; floor++) {
       const tiles = tileCache[floor];
   
-      // Draw all tiles for this floor first (will cover everything below)
-      // for (const tile of tiles) {
-      //   const screenPos = this.getStaticScreenPosition(tile.getPosition());
-      //   this.tileRenderer.renderTile(tile, screenPos);
-      // }
-      // Now draw all items for this floor on top of its tiles
       for (const tile of tiles) {
         const screenPos = this.getStaticScreenPosition(tile.getPosition());
-        this.tileRenderer.render(tile, screenPos);
-        this.itemRenderer.renderItemsForTile(tile, screenPos);
+        //this.tileRenderer.render(tile, screenPos);
+        //this.itemRenderer.renderItemsForTile(tile, screenPos);
 
         tile.monsters.forEach((creature: Creature) => {
           this.creatureRenderer.render(creature, screenPos);
         });
 
-        this.itemRenderer.renderOnTopItemsForTile(tile, screenPos);
+        //this.itemRenderer.renderOnTopItemsForTile(tile, screenPos);
       }
     }
   
     const t1 = performance.now();
-    this.__totalDrawTime += t1 - t0;
+    this.totalDrawTime += t1 - t0;
   }
   
   

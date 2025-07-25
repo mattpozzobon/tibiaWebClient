@@ -4,7 +4,6 @@ export default class Debugger {
   __nFrames: number;
   private __averageFPS: number;
   private __averageEvictions: number;
-  private __averageDrawCalls: number;
   private __averageDrawTime: number;
   private __nSeconds: number;
   private __GPU: string;
@@ -19,7 +18,6 @@ export default class Debugger {
     this.__nFrames = 0;
     this.__averageFPS = 0;
     this.__averageEvictions = 0;
-    this.__averageDrawCalls = 0;
     this.__averageDrawTime = 0;
     this.__nSeconds = performance.now();
 
@@ -74,7 +72,7 @@ export default class Debugger {
     this.__averageEvictions = parseFloat(((1E3 * window.gameClient.spriteBuffer.nEvictions) / elapsed).toFixed(0));
     this.__averageFPS = parseFloat(((1E3 * this.UPDATE_INTERVAL) / elapsed).toFixed(0));
     //this.__averageDrawCalls = parseFloat((window.gameClient.renderer.drawCalls / this.UPDATE_INTERVAL).toFixed(0));
-    this.__averageDrawTime = parseFloat(((1E3 * window.gameClient.renderer.__totalDrawTime) / this.UPDATE_INTERVAL).toFixed(0));
+    this.__averageDrawTime = parseFloat(((1E3 * window.gameClient.renderer.totalDrawTime) / this.UPDATE_INTERVAL).toFixed(0));
 
     this.__nSeconds = performance.now();
 
@@ -83,7 +81,7 @@ export default class Debugger {
     // Reset counters.
     //window.gameClient.renderer.drawCalls = 0;
     window.gameClient.spriteBuffer.nEvictions = 0;
-    window.gameClient.renderer.__totalDrawTime = 0;
+    window.gameClient.renderer.totalDrawTime = 0;
   }
 
   private __shouldUpdate(): boolean {
@@ -124,8 +122,10 @@ export default class Debugger {
       '--------------------------------',
       `Current Frame: ${window.gameClient.eventQueue.getFrame()}`,
       `Frame Rate: ${this.__averageFPS}fps`,
-      `Draw Calls: ${this.__averageDrawCalls}`,
       `Draw Time: ${this.__averageDrawTime}µs`,
+      `Draw Calls: ${window.gameClient.renderer.drawCalls}`,
+      `Batches: ${window.gameClient.renderer.batchCount}`,
+      `Texture Switches: ${window.gameClient.renderer.textureSwitches}`,
       //`Draw Tiles: ${window.gameClient.renderer.tileRenderer.numberOfTiles}`,
       `Active Entities: ${Object.keys(window.gameClient.world.activeCreatures).length}`,
       `Sprite Buffer Hit: ${window.gameClient.spriteBuffer.hitCount}`,

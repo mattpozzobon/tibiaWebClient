@@ -121,11 +121,12 @@ class PacketHandler {
   }
 
   handleSendDistanceEffect(packet: any): void {
-    window.gameClient.renderer.addDistanceAnimation(packet);
+    window.gameClient.renderer.animationRenderer.addDistanceAnimation(packet);
   }
 
   handleSendMagicEffect(packet: any): void {
-    window.gameClient.renderer.addPositionAnimation(packet);
+    console.log(`DEBUG: handleSendMagicEffect:`, packet);
+    window.gameClient.renderer.animationRenderer.addPositionAnimation(packet);
   }
 
   handleTransformTile(packet: any): void {

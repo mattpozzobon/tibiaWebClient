@@ -85,7 +85,7 @@ export default class Creature {
   }
 
   public blockHit(): any {
-    return window.gameClient.renderer.addPositionAnimation({position: this.vitals.position, type: 3});
+    return window.gameClient.renderer.animationRenderer.addPositionAnimation({position: this.vitals.position, type: 3});
   }
   
   public getMaxFloor(): number {

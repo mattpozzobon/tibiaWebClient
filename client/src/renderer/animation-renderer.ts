@@ -2,10 +2,15 @@ import Position from "../game/position";
 import Tile from "../game/tile";
 import Creature from "../game/creature";
 import BoxAnimation from "../utils/box-animation";
+import Animation from "../utils/animation";
+import DistanceAnimation from "../utils/distance-animation";
 
 export default class AnimationRenderer {
+  animationLayers = new Array();
+
   constructor() {
     // Animation renderer initialization
+    this.__createAnimationLayers();
   }
 
   /**
@@ -17,15 +22,11 @@ export default class AnimationRenderer {
     thing: any, 
     spriteBatches?: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>
   ): void {
-    console.log('collectAnimationSprites: animation', animation, 'screenPos', screenPos);
     if (animation && animation.getSprite) {
       const sprite = animation.getSprite();
-      console.log('collectAnimationSprites: got sprite', sprite);
       if (sprite && sprite.texture && spriteBatches) {
-        console.log('collectAnimationSprites: sprite has texture', sprite.texture);
         // Add to sprite batches for rendering
         const textureKey = sprite.texture.baseTexture.uid?.toString() || 'animation';
-        console.log('collectAnimationSprites: textureKey', textureKey);
         if (!spriteBatches.has(textureKey)) {
           spriteBatches.set(textureKey, []);
         }
@@ -39,13 +40,112 @@ export default class AnimationRenderer {
         };
         
         spriteBatches.get(textureKey)!.push(spriteData);
-        console.log('collectAnimationSprites: added sprite to batch, batch size now:', spriteBatches.get(textureKey)!.length);
-      } else {
-        console.log('collectAnimationSprites: sprite missing texture or spriteBatches not provided', { sprite, spriteBatches });
       }
-    } else {
-      console.log('collectAnimationSprites: animation missing or no getSprite method', animation);
     }
+  }
+
+  public __createAnimationLayers(): void {
+    // Creates a set for all animations for a particular layer
+    for (let i = 0; i < 8; i++) {
+      this.animationLayers.push(new Set());
+    }
+  } 
+  /**
+   * Add a position animation to a tile
+   */
+  public addPositionAnimation(packet: { position: Position; type: number }): any {
+    // Adds an animation on the given tile position
+    const tile = window.gameClient.world.getTileFromWorldPosition(packet.position);
+    if (tile === null) {
+      return;
+    }
+    
+    let animationId;
+    try {
+      animationId = window.gameClient.dataObjects.getAnimationId(packet.type);
+    } catch (error) {
+      console.error('addPositionAnimation: getAnimationId failed', error);
+      return;
+    }
+    
+    if (animationId === null) {
+      return;
+    }
+    
+    const animation = new Animation(animationId);
+    const result = tile.addAnimation(animation);
+    return result;
+  }
+
+  /**
+   * Add a distance animation
+   */
+  public addDistanceAnimation(packet: { type: number; from: Position; to: Position }): void {
+    // Creates a distance animation between two positions
+    try {
+      // Check if the animation ID exists in data objects
+      const animationId = window.gameClient.dataObjects.getDistanceAnimationId(packet.type);
+      if (animationId === null) {
+        console.error('addDistanceAnimation: animation ID not found for type', packet.type);
+        return;
+      }
+      
+      const animation = new DistanceAnimation(animationId, packet.from, packet.to);
+      console.log('animation', animation);
+      this.animationLayers[packet.from.z % 8].add(animation);
+
+    } catch (error) {
+      console.error('addDistanceAnimation: error creating distance animation', error);
+    }
+  }
+
+  /**
+   * Test method to manually add distance animations for testing
+   */
+  public addTestDistanceAnimations(): void {
+
+    // Test distance animations at specific positions on floor 0
+    const testPositions = [
+      { from: new Position(63, 59, 9), to: new Position(65, 61, 9) },
+      { from: new Position(64, 60, 9), to: new Position(66, 62, 9) },
+      { from: new Position(62, 58, 9), to: new Position(64, 60, 9) }
+    ];
+
+    testPositions.forEach((pos, index) => {
+      // Try different distance animation types (1, 2, 3, 4, 5)
+      const animationType = 1; // 1, 2, 3, 4, or 5
+      try {
+        this.addDistanceAnimation({
+          type: animationType,
+          from: pos.from,
+          to: pos.to
+        });
+      } catch (error) {
+        console.error(`Failed to add test distance animation ${index + 1} with type ${animationType}:`, error);
+      }
+    });
+  }
+
+  /**
+   * Test method to manually add tile animations for testing
+   */
+  public addTestTileAnimations(): void {
+    // Test tile animations at specific positions
+    const testPositions = [
+      new Position(63, 59, 9),
+      new Position(64, 60, 9),
+      new Position(65, 61, 9)
+    ];
+
+    testPositions.forEach((position, index) => {
+      // Try different animation types (1, 2, 3, 4, 5)
+      const animationType = 1; // 1, 2, 3, 4, or 5
+      try {
+        this.addPositionAnimation({position: position, type: animationType});
+      } catch (error) {
+        console.error(`Failed to add test tile animation ${index + 1} with type ${animationType}:`, error);
+      }
+    });
   }
 
   /**
@@ -86,6 +186,11 @@ export default class AnimationRenderer {
       screenPos = getCreatureScreenPosition ? getCreatureScreenPosition(thing) : new Position(0, 0, 0);
       // Collect animation sprites for creatures
       this.collectAnimationSprites(animation, screenPos, thing, spriteBatches);
+    } else if (thing instanceof DistanceAnimation) {
+      // Handle distance animations - use the animation's position
+      screenPos = getStaticScreenPosition ? getStaticScreenPosition(thing.getPosition()) : new Position(0, 0, 0);
+      // Collect animation sprites for distance animations
+      this.collectAnimationSprites(animation, screenPos, thing, spriteBatches);
     }
   }
 
@@ -99,9 +204,7 @@ export default class AnimationRenderer {
   ): void {
     // Renders the animations that are present on the tile
     if (tile.__animations && tile.__animations.size > 0) {
-      console.log('renderTileAnimations: found', tile.__animations.size, 'animations');
       tile.__animations.forEach((animation: any) => {
-        console.log('renderTileAnimations: processing animation', animation);
         this.renderAnimation(animation, tile, spriteBatches, getStaticScreenPosition);
       }, this);
     }
@@ -121,9 +224,20 @@ export default class AnimationRenderer {
       thing.delete(animation);
       return;
     }
-    const position = getStaticScreenPosition ? getStaticScreenPosition(animation.getPosition()) : new Position(0, 0, 0);
-    // Collect distance animation sprites
-    this.collectAnimationSprites(animation, position, thing, spriteBatches);
+    
+    // Calculate interpolated position like the old renderer
+    const fraction = animation.getFraction();
+    const fromPos = getStaticScreenPosition ? getStaticScreenPosition(animation.fromPosition) : new Position(0, 0, 0);
+    const toPos = getStaticScreenPosition ? getStaticScreenPosition(animation.toPosition) : new Position(0, 0, 0);
+    
+    const renderPosition = new Position(
+      fromPos.x + fraction * (toPos.x - fromPos.x),
+      fromPos.y + fraction * (toPos.y - fromPos.y),
+      0
+    );
+    
+    // Collect sprites for the interpolated position
+    this.collectAnimationSprites(animation, renderPosition, thing, spriteBatches);
   }
 
   /**

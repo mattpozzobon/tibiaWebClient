@@ -12,15 +12,14 @@ export default class DistanceAnimation extends Animation {
   }
 
   __generateDurations(): number[] {
-    return [2 * Animation.DEFAULT_FRAME_LENGTH_MS];
+    // Create a single frame with 30 seconds duration
+    const frameDuration = 30 * Animation.DEFAULT_FRAME_LENGTH_MS;
+    return [frameDuration]; // This is cumulative, so just one value
   }
 
   public getFraction(): number {
-    return Math.min(
-      1,
-      (performance.now() - this.__created) /
-        (2 * Animation.DEFAULT_FRAME_LENGTH_MS)
-    );
+    const totalDuration = this.totalDuration();
+    return Math.min(1, (performance.now() - this.__created) / totalDuration);
   }
 
   public getPosition(): Position {

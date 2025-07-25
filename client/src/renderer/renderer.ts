@@ -18,7 +18,6 @@ import CreatureRenderer from './creature-renderer';
 import AnimationRenderer from './animation-renderer';
 
 export default class Renderer {
-  __animationLayers = new Array<Set<any>>();
   __nMiliseconds: number;
 
   //public screen: Canvas;
@@ -74,8 +73,6 @@ export default class Renderer {
     this.creatureRenderer = new CreatureRenderer();
     this.itemRenderer = new ItemRenderer();
     this.animationRenderer = new AnimationRenderer();
-
-    this.__createAnimationLayers();
   }
 
   static async create(): Promise<Renderer> {
@@ -116,48 +113,6 @@ export default class Renderer {
   public setWeather(bool: boolean): void {
     // Sets the weather to either on/off
     //this.weatherCanvas.setWeather(Number(bool));
-  }
-  
-  public addDistanceAnimation(packet: { type: number; from: Position; to: Position }): void {
-    // Adds a distance animation
-    const animationId = window.gameClient.dataObjects.getDistanceAnimationId(packet.type);
-    if (animationId === null) {
-      return;
-    }
-    const animation = new DistanceAnimation(animationId, packet.from, packet.to);
-    this.__animationLayers[packet.from.z % 8].add(animation);
-  }
-  
-  public addPositionAnimation(packet: { position: Position; type: number }): any {
-    // Adds an animation on the given tile position
-    const tile = window.gameClient.world.getTileFromWorldPosition(packet.position);
-    if (tile === null) {
-      console.log('addPositionAnimation: tile is null for position', packet.position);
-      return;
-    }
-    
-    console.log('addPositionAnimation: packet type', packet.type);
-    
-    let animationId;
-    try {
-      animationId = window.gameClient.dataObjects.getAnimationId(packet.type);
-      console.log('addPositionAnimation: animationId', animationId);
-    } catch (error) {
-      console.error('addPositionAnimation: getAnimationId failed', error);
-      return;
-    }
-    
-    if (animationId === null) {
-      console.log('addPositionAnimation: animationId is null');
-      return;
-    }
-    
-    const animation = new Animation(animationId);
-    console.log('addPositionAnimation: created animation', animation);
-    
-    const result = tile.addAnimation(animation);
-    console.log('addPositionAnimation: tile.addAnimation result', result);
-    return result;
   }
   
   public getStaticScreenPosition(position: Position): Position {
@@ -228,8 +183,8 @@ export default class Renderer {
       }
 
       // Render distance animations for this floor
-      if (this.__animationLayers[floor]) {
-        this.__animationLayers[floor].forEach((animation: any) => {
+      if (this.animationRenderer.animationLayers[floor]) {
+        this.animationRenderer.animationLayers[floor].forEach((animation: any) => {
           this.animationRenderer.renderDistanceAnimation(animation, animation, spriteBatches, this.getStaticScreenPosition.bind(this));
         });
       }
@@ -315,12 +270,15 @@ export default class Renderer {
     }
     // TODO: check this
     //this.screen.drawBar(32, 4, position, fraction, color);
+  } 
+
+  public addTestDistanceAnimations(): void {
+    // Public method to trigger test distance animations
+    this.animationRenderer.addTestDistanceAnimations();
   }
-  
-  public __createAnimationLayers(): void {
-    // Creates a set for all animations for a particular layer
-    for (let i = 0; i < 8; i++) {
-      this.__animationLayers.push(new Set());
-    }
-  }  
+
+  public addTestTileAnimations(): void {
+    // Public method to trigger test tile animations
+    this.animationRenderer.addTestTileAnimations();
+  }
 }

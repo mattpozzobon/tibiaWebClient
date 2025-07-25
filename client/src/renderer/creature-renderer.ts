@@ -4,10 +4,11 @@ import Position from "../game/position";
 import { CharacterFrames } from "./creature-renderer-helper";
 import SpriteBuffer from "./sprite-buffer";
 import AnimationRenderer from "./animation-renderer";
+import { CONST } from "../helper/appContext";
 
 const RENDER_LAYERS = [
   { groupKey: "characterGroup", frameKey: "characterFrame", hasMask: false },
-  { groupKey: "bodyGroup", frameKey: "bodyFrame", hasMask: true },
+  { groupKey: "bodyGroup",  frameKey: "bodyFrame", hasMask: true },
   { groupKey: "legsGroup", frameKey: "legsFrame", hasMask: true },
   { groupKey: "feetGroup", frameKey: "feetFrame", hasMask: true },
   { groupKey: "leftHandGroup", frameKey: "leftHandFrame", hasMask: false },
@@ -138,6 +139,91 @@ export default class CreatureRenderer {
     getCreatureScreenPosition?: (creature: Creature) => Position
   ): void {
     this.animationRenderer.renderCreatureAnimationsBelow(creature, spriteBatches, getCreatureScreenPosition);
+  }
+
+  /**
+   * Check if creature rendering should be deferred to another tile
+   */
+  public shouldDefer(tile: any, creature: Creature): boolean {
+    if (creature.__teleported) return false;
+    if (!creature.isMoving()) return false;
+    if (creature.getPosition().z !== creature.__previousPosition.z) return false;
+  
+    const dir = creature.__lookDirection;
+    const prev = creature.__previousPosition;
+    const tilePos = tile.getPosition();
+  
+    switch (dir) {
+      case CONST.DIRECTION.NORTH:
+      case CONST.DIRECTION.WEST:
+      case CONST.DIRECTION.NORTHWEST:
+      case CONST.DIRECTION.NORTHEAST:
+      case CONST.DIRECTION.SOUTHWEST:
+        // For these, defer if the previous position is not the current tile (or appropriate offset)
+        // (handle diagonals carefully if your game needs it)
+        if (!prev.equals(tilePos)) return true;
+        break;
+      // South, East, Southeast: Do NOT defer—draw on current tile
+      default:
+        break;
+    }
+    return false;
+  }
+  
+  /**
+   * Defer rendering of a creature to a new tile
+   */
+  public defer(tile: any, creature: any): void {
+    // Defers rendering of a creature to a new tile
+    const deferTile = this.getDeferTile(tile, creature);
+    if (deferTile !== null) {
+      deferTile.__deferredCreatures.add(creature);
+    }
+  }
+
+  /**
+   * Get the tile we need to defer the rendering of the creature to
+   */
+  public getDeferTile(tile: any, creature: any): any {
+    const dir = creature.__lookDirection;
+    const pos = creature.getPosition();
+    switch (dir) {
+      case CONST.DIRECTION.NORTHEAST:
+        return window.gameClient.world.getTileFromWorldPosition(pos.south());
+      case CONST.DIRECTION.SOUTHWEST:
+        return window.gameClient.world.getTileFromWorldPosition(pos.east());
+      case CONST.DIRECTION.SOUTHEAST:
+        return window.gameClient.world.getTileFromWorldPosition(pos.north().west());
+      case CONST.DIRECTION.SOUTH:
+        return window.gameClient.world.getTileFromWorldPosition(pos.north());
+      case CONST.DIRECTION.EAST:
+        return window.gameClient.world.getTileFromWorldPosition(pos.west());
+      default:
+        return window.gameClient.world.getTileFromWorldPosition(creature.__previousPosition);
+    }
+  }
+  
+  /**
+   * Render the deferred creatures on the tile
+   */
+  public renderDeferred(tile: any, spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>): void {
+    // Renders the deferred entities on the tile
+    if (tile.__deferredCreatures.size === 0) {
+      return;
+    }
+    tile.__deferredCreatures.forEach((creature: any) => {
+      const tileFromWorld = window.gameClient.world.getTileFromWorldPosition(creature.vitals.position);
+      if (tileFromWorld) {
+        // Calculate screen position for the creature
+        const screenPos = window.gameClient.renderer.getCreatureScreenPosition(creature);
+        this.collectSprites(creature, screenPos, spriteBatches, 32, 0.25);
+        
+        // Also collect creature animations for deferred creatures
+        this.collectAnimationSpritesBelow(creature, spriteBatches, window.gameClient.renderer.getCreatureScreenPosition.bind(window.gameClient.renderer));
+        this.collectAnimationSpritesAbove(creature, spriteBatches, window.gameClient.renderer.getCreatureScreenPosition.bind(window.gameClient.renderer));
+      }
+    }, this);
+    tile.__deferredCreatures.clear();
   }
   
   /**

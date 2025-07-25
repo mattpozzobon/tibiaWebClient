@@ -54,7 +54,6 @@ export default class Creature {
     this.outfit = new Outfit(data.outfit);
     this.castingManager = new CastingManager();
 
-
     this.renderer = new CreatureRendererHelper(this);
 
     this.__movementEvent = null;

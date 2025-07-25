@@ -181,12 +181,20 @@ export default class Renderer {
 
         // Collect creature sprites
         tile.monsters.forEach((creature: Creature) => {
-          this.creatureRenderer.collectSprites(creature, screenPos, spriteBatches);
+          if (this.creatureRenderer.shouldDefer(tile, creature)) {
+            this.creatureRenderer.defer(tile, creature);
+            return; // Skip rendering this creature on current tile
+          }
+          
+          this.creatureRenderer.collectSprites(creature, this.getCreatureScreenPosition(creature), spriteBatches);
           
           // Collect creature animations
           this.creatureRenderer.collectAnimationSpritesBelow(creature, spriteBatches, this.getCreatureScreenPosition.bind(this));
           this.creatureRenderer.collectAnimationSpritesAbove(creature, spriteBatches, this.getCreatureScreenPosition.bind(this));
         });
+
+        // Render deferred creatures on this tile
+        this.creatureRenderer.renderDeferred(tile, spriteBatches);
 
         // Collect on-top item sprites
         this.itemRenderer.collectOnTopSpritesForTile(tile, screenPos, spriteBatches);

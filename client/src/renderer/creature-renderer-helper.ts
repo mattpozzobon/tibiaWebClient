@@ -21,16 +21,10 @@ export default class CreatureRendererHelper {
   }
 
   protected __getWalkingFrame(frameGroup: any): number {
-    return Math.round((1 - this.creature.getMovingFraction()) * (frameGroup.animationLength - 1));
-  }
-
-  private getLayerGroupAndFrame(dataObject: any, groupType: number, walking: boolean): { group: any, frame: number } | null {
-    if (!dataObject) return null;
-    const group = dataObject.getFrameGroup(groupType);
-    if (!group) return null;
-    const frame = walking ? this.__getWalkingFrame(group) : 
-      ((dataObject.frameGroups.length === 1 && !dataObject.isAlwaysAnimated()) ? 0 : group.getAlwaysAnimatedFrame());
-    return { group, frame };
+    if (!frameGroup) return 0;
+    // Clamp movingFraction to [0,1] for safety
+    const f = Math.max(0, Math.min(1, this.creature.getMovingFraction()));
+    return Math.round((1 - f) * (frameGroup.animationLength - 1));
   }
 
   public getCharacterFrames(): CharacterFrames | null {
@@ -40,104 +34,98 @@ export default class CreatureRendererHelper {
 
     const isMoving = this.creature.isMoving();
     const groupType = isMoving ? FrameGroup.GROUP_MOVING : FrameGroup.GROUP_IDLE;
-    const walking = isMoving;
 
-    // Base body
-    const { group: characterGroup, frame: characterFrame } =
-      this.getLayerGroupAndFrame(characterObject, groupType, walking) || {};
+    // --- Base Character (body) ---
+    const characterGroup = characterObject.getFrameGroup(groupType);
+    const characterFrame = isMoving
+      ? this.__getWalkingFrame(characterGroup)
+      : ((characterObject.frameGroups.length === 1 && !characterObject.isAlwaysAnimated()) ? 0 : characterGroup.getAlwaysAnimatedFrame());
 
-    // Body equipment
+    // --- Body equipment ---
     let bodyGroup = null, bodyFrame = 0;
     if (outfit.equipment?.body && outfit.equipment.body !== 0) {
       const bodyObject = outfit.getBodyDataObject && outfit.getBodyDataObject();
       if (bodyObject) {
-        const result = this.getLayerGroupAndFrame(bodyObject, groupType, walking);
-        if (result) {
-          bodyGroup = result.group;
-          bodyFrame = result.frame;
-        }
+        bodyGroup = bodyObject.getFrameGroup(groupType);
+        bodyFrame = isMoving
+          ? this.__getWalkingFrame(bodyGroup)
+          : (bodyGroup.getAlwaysAnimatedFrame ? bodyGroup.getAlwaysAnimatedFrame() : 0);
       }
     }
 
-    // Legs equipment
+    // --- Legs ---
     let legsGroup = null, legsFrame = 0;
     if (outfit.equipment?.legs && outfit.equipment.legs !== 0) {
       const legsObject = outfit.getLegsDataObject && outfit.getLegsDataObject();
       if (legsObject) {
-        const result = this.getLayerGroupAndFrame(legsObject, groupType, walking);
-        if (result) {
-          legsGroup = result.group;
-          legsFrame = result.frame;
-        }
+        legsGroup = legsObject.getFrameGroup(groupType);
+        legsFrame = isMoving
+          ? this.__getWalkingFrame(legsGroup)
+          : (legsGroup.getAlwaysAnimatedFrame ? legsGroup.getAlwaysAnimatedFrame() : 0);
       }
     }
 
-    // Feet equipment
+    // --- Feet ---
     let feetGroup = null, feetFrame = 0;
     if (outfit.equipment?.feet && outfit.equipment.feet !== 0) {
       const feetObject = outfit.getFeetDataObject && outfit.getFeetDataObject();
       if (feetObject) {
-        const result = this.getLayerGroupAndFrame(feetObject, groupType, walking);
-        if (result) {
-          feetGroup = result.group;
-          feetFrame = result.frame;
-        }
+        feetGroup = feetObject.getFrameGroup(groupType);
+        feetFrame = isMoving
+          ? this.__getWalkingFrame(feetGroup)
+          : (feetGroup.getAlwaysAnimatedFrame ? feetGroup.getAlwaysAnimatedFrame() : 0);
       }
     }
 
-    // Left hand equipment
+    // --- Left Hand ---
     let leftHandGroup = null, leftHandFrame = 0;
     if (outfit.equipment?.lefthand && outfit.equipment.lefthand !== 0) {
       const leftHandObject = outfit.getLeftHandDataObject && outfit.getLeftHandDataObject();
       if (leftHandObject) {
-        const result = this.getLayerGroupAndFrame(leftHandObject, groupType, walking);
-        if (result) {
-          leftHandGroup = result.group;
-          leftHandFrame = result.frame;
-        }
+        leftHandGroup = leftHandObject.getFrameGroup(groupType);
+        leftHandFrame = isMoving
+          ? this.__getWalkingFrame(leftHandGroup)
+          : (leftHandGroup.getAlwaysAnimatedFrame ? leftHandGroup.getAlwaysAnimatedFrame() : 0);
       }
     }
 
-    // Right hand equipment
+    // --- Right Hand ---
     let rightHandGroup = null, rightHandFrame = 0;
     if (outfit.equipment?.righthand && outfit.equipment.righthand !== 0) {
       const rightHandObject = outfit.getRightHandDataObject && outfit.getRightHandDataObject();
       if (rightHandObject) {
-        const result = this.getLayerGroupAndFrame(rightHandObject, groupType, walking);
-        if (result) {
-          rightHandGroup = result.group;
-          rightHandFrame = result.frame;
-        }
+        rightHandGroup = rightHandObject.getFrameGroup(groupType);
+        rightHandFrame = isMoving
+          ? this.__getWalkingFrame(rightHandGroup)
+          : (rightHandGroup.getAlwaysAnimatedFrame ? rightHandGroup.getAlwaysAnimatedFrame() : 0);
       }
     }
 
-    // Head/helmet or hair logic
+    // --- Head/helmet or hair ---
     let headGroup = null, headFrame = 0, hairGroup = null, hairFrame = 0;
     const hasHelmet = !!(outfit.equipment?.head && outfit.equipment.head !== 0);
 
     if (hasHelmet) {
       const headObject = outfit.getHeadDataObject && outfit.getHeadDataObject();
       if (headObject) {
-        const result = this.getLayerGroupAndFrame(headObject, groupType, walking);
-        if (result) {
-          headGroup = result.group;
-          headFrame = result.frame;
-        }
+        headGroup = headObject.getFrameGroup(groupType);
+        headFrame = isMoving
+          ? this.__getWalkingFrame(headGroup)
+          : (headGroup.getAlwaysAnimatedFrame ? headGroup.getAlwaysAnimatedFrame() : 0);
       }
     } else {
       const hairObject = outfit.getHairDataObject && outfit.getHairDataObject();
       if (hairObject) {
-        const result = this.getLayerGroupAndFrame(hairObject, groupType, walking);
-        if (result) {
-          hairGroup = result.group;
-          hairFrame = result.frame;
-        }
+        hairGroup = hairObject.getFrameGroup(groupType);
+        hairFrame = isMoving
+          ? this.__getWalkingFrame(hairGroup)
+          : (hairGroup.getAlwaysAnimatedFrame ? hairGroup.getAlwaysAnimatedFrame() : 0);
       }
     }
 
     return {
-      characterGroup: characterGroup || null,
-      characterFrame: characterFrame || 0,
+      characterGroup,
+      characterFrame,
       bodyGroup,
       bodyFrame,
       legsGroup,

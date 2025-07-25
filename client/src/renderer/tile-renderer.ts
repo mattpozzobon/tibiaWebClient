@@ -30,8 +30,7 @@ export default class TileRenderer {
       this.tileCache.push(floorTiles);
     }
     
-    const totalTiles = this.tileCache.reduce((sum, floor) => sum + floor.length, 0);
-    console.log(`Tile cache refreshed: ${this.tileCache.length} floors, ${totalTiles} total tiles`);
+    this.tileCache.reduce((sum, floor) => sum + floor.length, 0);
   }
 
   /**

@@ -105,39 +105,21 @@ export default class CreatureRenderer {
       // Skip hair if head group exists (condition check)
       if (layer.condition && layer.condition === "!frames.headGroup" && frames.headGroup) continue;
       
-      this.collectLayerSprites(
-        group, 
-        frame, 
-        xPattern, 
-        zPattern, 
-        drawPosition, 
-        size, 
-        spriteBatches, 
-        layer.hasMask, 
-        creature
-      );
+      this.collectLayerSprites(group, frame, xPattern, zPattern, drawPosition, size, spriteBatches, layer.hasMask, creature);
     }
   }
 
   /**
    * Collect creature animation sprites above the creature
    */
-  public collectAnimationSpritesAbove(
-    creature: Creature, 
-    spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>,
-    getCreatureScreenPosition?: (creature: Creature) => Position
-  ): void {
+  public collectAnimationSpritesAbove(creature: Creature, spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>, getCreatureScreenPosition?: (creature: Creature) => Position): void {
     this.animationRenderer.renderCreatureAnimationsAbove(creature, spriteBatches, getCreatureScreenPosition);
   }
 
   /**
    * Collect creature animation sprites below the creature
    */
-  public collectAnimationSpritesBelow(
-    creature: Creature, 
-    spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>,
-    getCreatureScreenPosition?: (creature: Creature) => Position
-  ): void {
+  public collectAnimationSpritesBelow(creature: Creature, spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>, getCreatureScreenPosition?: (creature: Creature) => Position): void {
     this.animationRenderer.renderCreatureAnimationsBelow(creature, spriteBatches, getCreatureScreenPosition);
   }
 
@@ -229,17 +211,7 @@ export default class CreatureRenderer {
   /**
    * Collect layer sprites for batching with mask support
    */
-  private collectLayerSprites(
-    group: any, 
-    frame: number, 
-    xPattern: number, 
-    zPattern: number, 
-    position: Position, 
-    size: number, 
-    spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>,
-    hasMask: boolean = false,
-    creature?: Creature
-  ): void {
+  private collectLayerSprites(group: any, frame: number, xPattern: number, zPattern: number, position: Position, size: number, spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>, hasMask: boolean = false, creature?: Creature): void {
     for (let x = 0; x < group.width; x++) {
       for (let y = 0; y < group.height; y++) {
         const spriteId = group.getSpriteId(frame, xPattern, 0, zPattern, 0, x, y);
@@ -250,17 +222,7 @@ export default class CreatureRenderer {
         // Handle masked sprites for outfit coloring
         if (hasMask && creature) {
           // Generate the correct composed key that includes all pattern information
-          const composedKey = SpriteBuffer.getComposedKey(
-            creature.outfit,
-            group,
-            frame,
-            xPattern,
-            0, // yPattern
-            zPattern,
-            x,
-            y,
-            creature.id // Pass creature ID for unique masks per player
-          );
+          const composedKey = SpriteBuffer.getComposedKey(creature.outfit, group, frame, xPattern, 0, zPattern, x, y, creature.id);
           
           // Convert string key to hash for texture lookup
           const hashKey = this.hashString(composedKey);
@@ -268,18 +230,7 @@ export default class CreatureRenderer {
           // Check if we need to compose the outfit with mask
           if (!window.gameClient.spriteBuffer.has(hashKey)) {
             // Create composed outfit with mask
-            window.gameClient.spriteBuffer.addComposedOutfit(
-              composedKey, 
-              creature.outfit, 
-              group, 
-              frame, 
-              xPattern, 
-              0, // yPattern 
-              zPattern, 
-              x, 
-              y,
-              creature.id // Pass creature ID for unique masks per player
-            );
+            window.gameClient.spriteBuffer.addComposedOutfit(composedKey, creature.outfit, group, frame, xPattern, 0, zPattern, x, y, creature.id);
           }
           texture = this.getCachedTexture(hashKey);
         } else {
@@ -292,17 +243,11 @@ export default class CreatureRenderer {
         // Use cached position calculation
         const spritePosition = this.getCachedPosition(position, x, y, size);
         
-        const textureKey = texture.baseTexture.uid.toString();
+        const textureKey = texture.source.uid.toString();
         if (!spriteBatches.has(textureKey)) {
           spriteBatches.set(textureKey, []);
         }
-        spriteBatches.get(textureKey)!.push({
-          sprite: { texture: texture as any },
-          x: spritePosition.x,
-          y: spritePosition.y,
-          width: 32,
-          height: 32
-        });
+        spriteBatches.get(textureKey)!.push({ sprite: { texture: texture as any }, x: spritePosition.x, y: spritePosition.y, width: 32, height: 32 });
       }
     }
   }

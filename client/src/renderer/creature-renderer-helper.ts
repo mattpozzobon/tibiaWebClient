@@ -37,9 +37,7 @@ export default class CreatureRendererHelper {
 
     // --- Base Character (body) ---
     const characterGroup = characterObject.getFrameGroup(groupType);
-    const characterFrame = isMoving
-      ? this.__getWalkingFrame(characterGroup)
-      : ((characterObject.frameGroups.length === 1 && !characterObject.isAlwaysAnimated()) ? 0 : characterGroup.getAlwaysAnimatedFrame());
+    const characterFrame = isMoving ? this.__getWalkingFrame(characterGroup) : ((characterObject.frameGroups.length === 1 && !characterObject.isAlwaysAnimated()) ? 0 : characterGroup.getAlwaysAnimatedFrame());
 
     // --- Body equipment ---
     let bodyGroup = null, bodyFrame = 0;
@@ -109,17 +107,13 @@ export default class CreatureRendererHelper {
       const headObject = outfit.getHeadDataObject && outfit.getHeadDataObject();
       if (headObject) {
         headGroup = headObject.getFrameGroup(groupType);
-        headFrame = isMoving
-          ? this.__getWalkingFrame(headGroup)
-          : (headGroup.getAlwaysAnimatedFrame ? headGroup.getAlwaysAnimatedFrame() : 0);
+        headFrame = isMoving ? this.__getWalkingFrame(headGroup) : (headGroup.getAlwaysAnimatedFrame ? headGroup.getAlwaysAnimatedFrame() : 0);
       }
     } else {
       const hairObject = outfit.getHairDataObject && outfit.getHairDataObject();
       if (hairObject) {
         hairGroup = hairObject.getFrameGroup(groupType);
-        hairFrame = isMoving
-          ? this.__getWalkingFrame(hairGroup)
-          : (hairGroup.getAlwaysAnimatedFrame ? hairGroup.getAlwaysAnimatedFrame() : 0);
+        hairFrame = isMoving ? this.__getWalkingFrame(hairGroup) : (hairGroup.getAlwaysAnimatedFrame ? hairGroup.getAlwaysAnimatedFrame() : 0);
       }
     }
 

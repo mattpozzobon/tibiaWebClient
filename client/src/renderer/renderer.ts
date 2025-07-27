@@ -174,10 +174,10 @@ export default class Renderer {
         const screenPos = this.getStaticScreenPosition(tile.getPosition());
          
         // Collect tile sprites
-        this.tileRenderer.collectSprites(tile, screenPos, spriteBatches);
+        //this.tileRenderer.collectSprites(tile, screenPos, spriteBatches);
          
         // Collect item sprites
-        this.itemRenderer.collectSpritesForTile(tile, screenPos, spriteBatches);
+        //this.itemRenderer.collectSpritesForTile(tile, screenPos, spriteBatches);
 
         // Collect creature sprites
         tile.monsters.forEach((creature: Creature) => {
@@ -197,10 +197,10 @@ export default class Renderer {
         this.creatureRenderer.renderDeferred(tile, spriteBatches);
 
         // Collect on-top item sprites
-        this.itemRenderer.collectOnTopSpritesForTile(tile, screenPos, spriteBatches);
+        //this.itemRenderer.collectOnTopSpritesForTile(tile, screenPos, spriteBatches);
 
         // Collect tile animations
-        this.tileRenderer.collectAnimationSprites(tile, screenPos, spriteBatches, this.getStaticScreenPosition.bind(this));
+        //this.tileRenderer.collectAnimationSprites(tile, screenPos, spriteBatches, this.getStaticScreenPosition.bind(this));
       }
 
       // Render distance animations for this floor

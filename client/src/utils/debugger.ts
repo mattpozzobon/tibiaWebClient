@@ -144,7 +144,8 @@ export default class Debugger {
       `Current Position: ${window.gameClient.player!.getPosition().toString()}`,
       `Current Chunk: ${window.gameClient.player!.getChunk().id}`,
       `Opened Containers: ${window.gameClient.player!.__openedContainers.size}`,
-      `Outfit: ${window.gameClient.player!.outfit.toString()}`,
+      `Outfit: ${window.gameClient.player!.outfit.toIdAndDetailsString()}`,
+      `Outfit: ${window.gameClient.player!.outfit.toEquipmentString()}`,
     ].join("<br>");
 
     const debugEl = document.getElementById("debug-statistics");

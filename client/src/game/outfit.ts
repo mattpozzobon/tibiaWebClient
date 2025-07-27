@@ -65,6 +65,12 @@ export default class Outfit {
       this.mounted = outfit.mounted;
       this.addonOne = outfit.addonOne;
       this.addonTwo = outfit.addonTwo;
+
+      this.equipment.hair = 905;
+      //this.equipment.body = 916;
+      this.equipment.legs = 910;
+      //this.equipment.feet = 909;
+      //this.equipment.righthand = 920;
     }
   
     equals(other: Outfit): boolean {
@@ -91,14 +97,16 @@ export default class Outfit {
       };
     }
   
-    toString(): string {
+    toIdAndDetailsString(): string {
       return [
-        this.id,
-        `(${this.details.head}, ${this.details.body}, ${this.details.legs}, ${this.details.feet})`,
-        `(${this.equipment.head}, ${this.equipment.body}, ${this.equipment.legs}, ${this.equipment.feet}, ${this.equipment.lefthand}, ${this.equipment.righthand})`,
-        this.mounted ? this.mount : "None",
-        this.addonOne ? "Yes" : "No",
-        this.addonTwo ? "Yes" : "No",
+        `[ID]: ${this.id}`,
+        `[Colours]: (${this.details.head}, ${this.details.body}, ${this.details.legs}, ${this.details.feet})`
+      ].join(" ");
+    }
+    
+    toEquipmentString(): string {
+      return [
+        `[Equipment]: (${this.equipment.hair}, (${this.equipment.head}, ${this.equipment.body}, ${this.equipment.legs}, ${this.equipment.feet}, ${this.equipment.lefthand}, ${this.equipment.righthand})`
       ].join(" ");
     }
   

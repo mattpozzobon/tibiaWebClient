@@ -8,19 +8,18 @@ import { CONST } from "../helper/appContext";
 
 const RENDER_LAYERS = [
   { groupKey: "characterGroup", frameKey: "characterFrame", hasMask: false },
-  { groupKey: "bodyGroup",  frameKey: "bodyFrame", hasMask: true },
-  { groupKey: "legsGroup", frameKey: "legsFrame", hasMask: true },
-  { groupKey: "feetGroup", frameKey: "feetFrame", hasMask: true },
+  { groupKey: "bodyGroup",  frameKey: "bodyFrame", hasMask: false },
+  { groupKey: "legsGroup", frameKey: "legsFrame", hasMask: false },
+  { groupKey: "feetGroup", frameKey: "feetFrame", hasMask: false },
   { groupKey: "leftHandGroup", frameKey: "leftHandFrame", hasMask: false },
   { groupKey: "rightHandGroup", frameKey: "rightHandFrame", hasMask: false },
-  { groupKey: "headGroup", frameKey: "headFrame", hasMask: true },
+  { groupKey: "headGroup", frameKey: "headFrame", hasMask: false },
   { groupKey: "hairGroup", frameKey: "hairFrame", hasMask: true, condition: "!frames.headGroup" }
 ];
 
 export default class CreatureRenderer {
   // Performance optimizations
   private textureCache: Map<number, Texture | null> = new Map();
-  private positionCache: Map<string, Position> = new Map();
   private animationRenderer: AnimationRenderer;
 
   constructor() {
@@ -42,30 +41,10 @@ export default class CreatureRenderer {
   }
 
   /**
-   * Cached position calculation to reduce object creation
-   */
-  private getCachedPosition(basePosition: Position, x: number, y: number, size: number): Position {
-    const key = `${basePosition.x},${basePosition.y},${x},${y},${size}`;
-    
-    if (this.positionCache.has(key)) {
-      return this.positionCache.get(key)!;
-    }
-    
-    const position = new Position(
-      Math.round((basePosition.x - x) * size),
-      Math.round((basePosition.y - y) * size),
-      0
-    );
-    this.positionCache.set(key, position);
-    return position;
-  }
-
-  /**
    * Clear texture cache to force regeneration of sprites (used when outfit changes)
    */
   public clearTextureCache(): void {
     this.textureCache.clear();
-    this.positionCache.clear();
     // Note: Hair changes require outfit changes to be processed by the server
     // The sprite buffer will naturally regenerate composed outfits on next render
   }
@@ -86,7 +65,7 @@ export default class CreatureRenderer {
   /**
    * Collect sprites for batching instead of rendering immediately
    */
-  public collectSprites(creature: Creature, position: Position, spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>, size: number = 32, offset: number = 0.25): void {
+  public collectSprites(creature: Creature, position: Position, spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>, size: number = 32, offset: number = 0.0): void {
     const frames: CharacterFrames | null = creature.renderer.getCharacterFrames();
     if (!frames) return;
 
@@ -98,6 +77,11 @@ export default class CreatureRenderer {
     for (const layer of RENDER_LAYERS) {
       const group = frames[layer.groupKey as keyof CharacterFrames];
       const frame = frames[layer.frameKey as keyof CharacterFrames];
+      
+
+
+
+
       
       // Skip if group doesn't exist or frame is undefined
       if (!group || frame === undefined) continue;
@@ -198,7 +182,7 @@ export default class CreatureRenderer {
       if (tileFromWorld) {
         // Calculate screen position for the creature
         const screenPos = window.gameClient.renderer.getCreatureScreenPosition(creature);
-        this.collectSprites(creature, screenPos, spriteBatches, 32, 0.25);
+        this.collectSprites(creature, screenPos, spriteBatches, 32, 0.0);
         
         // Also collect creature animations for deferred creatures
         this.collectAnimationSpritesBelow(creature, spriteBatches, window.gameClient.renderer.getCreatureScreenPosition.bind(window.gameClient.renderer));
@@ -217,22 +201,24 @@ export default class CreatureRenderer {
         const spriteId = group.getSpriteId(frame, xPattern, 0, zPattern, 0, x, y);
         if (!spriteId) continue;
         
+      
         let texture: Texture | null = null;
-        
-        // Handle masked sprites for outfit coloring
+        //Handle masked sprites for outfit coloring
         if (hasMask && creature) {
           // Generate the correct composed key that includes all pattern information
-          const composedKey = SpriteBuffer.getComposedKey(creature.outfit, group, frame, xPattern, 0, zPattern, x, y, creature.id);
-          
+          const composedKey = SpriteBuffer.getComposedKey(creature.outfit, spriteId, group, frame, xPattern, 0, zPattern, x, y);
+         
           // Convert string key to hash for texture lookup
           const hashKey = this.hashString(composedKey);
           
           // Check if we need to compose the outfit with mask
           if (!window.gameClient.spriteBuffer.has(hashKey)) {
-            // Create composed outfit with mask
-            window.gameClient.spriteBuffer.addComposedOutfit(composedKey, creature.outfit, group, frame, xPattern, 0, zPattern, x, y, creature.id);
+            const maskId = group.getSpriteId(frame, xPattern, 0, zPattern, 1, x, y);
+            window.gameClient.spriteBuffer.addComposedOutfit(composedKey, creature.outfit, spriteId, maskId);
           }
-          texture = this.getCachedTexture(hashKey);
+          
+          // For composed outfits, get the texture directly from the sprite buffer
+          texture = window.gameClient.spriteBuffer.get(hashKey);
         } else {
           // Regular sprite without mask
           texture = this.getCachedTexture(spriteId);
@@ -240,8 +226,12 @@ export default class CreatureRenderer {
         
         if (!texture) continue;
         
-        // Use cached position calculation
-        const spritePosition = this.getCachedPosition(position, x, y, size);
+        // Calculate sprite position directly
+        const spritePosition = new Position(
+          Math.round((position.x - x) * size),
+          Math.round((position.y - y) * size),
+          0
+        );
         
         const textureKey = texture.source.uid.toString();
         if (!spriteBatches.has(textureKey)) {

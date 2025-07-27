@@ -67,9 +67,9 @@ export default class Outfit {
       this.addonTwo = outfit.addonTwo;
 
       this.equipment.hair = 905;
-      //this.equipment.body = 916;
-      this.equipment.legs = 910;
-      //this.equipment.feet = 909;
+      this.equipment.body = 908;
+      //this.equipment.legs = 910;
+      this.equipment.feet = 909;
       //this.equipment.righthand = 920;
     }
   

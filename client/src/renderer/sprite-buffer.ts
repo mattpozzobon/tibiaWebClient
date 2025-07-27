@@ -206,34 +206,27 @@ export default class SpriteBuffer {
 
   static getComposedKey(
     outfit: Outfit,
-    item: any,
+    spriteId: number,
+    group: any,
     frame: number,
     xPattern: number,
     yPattern: number,
     zPattern: number,
     x: number,
     y: number,
-    creatureId?: number
   ): string {
-    // Use string-based key to handle all outfit information including colors
-    // This ensures color changes generate new keys
-    const creatureIdPart = creatureId ? creatureId : 0;
-    
-    return `${outfit.id}_${item.id}_${frame}_${xPattern}_${yPattern}_${zPattern}_${x}_${y}_${creatureIdPart}_${outfit.details.head}_${outfit.details.body}_${outfit.details.legs}_${outfit.details.feet}`;
+    // Simplified key focusing on essential parameters
+    const hairId = outfit.equipment.hair;
+    const hairColor = outfit.details.head;
+    return `${hairId}_${hairColor}_${spriteId}_${frame}_${xPattern}_${yPattern}_${zPattern}_${x}_${y}}`;
   }
 
   /** Add a composed outfit frame to the atlas, with masking */
   addComposedOutfit(
     baseIdentifier: string, // Unique composed frame key (now a string)
     outfit: Outfit,
-    item: any,
-    frame: number,
-    xPattern: number,
-    yPattern: number,
-    zPattern: number,
-    x: number,
-    y: number,
-    creatureId?: number
+    spriteId: number,
+    maskId: number,
   ): void {
     // Convert string key to a hash for storage
     const hashKey = this.hashString(baseIdentifier);
@@ -242,7 +235,7 @@ export default class SpriteBuffer {
     const cell = this.reserveCell(hashKey);
 
     // Compose and draw to scratch canvas, then draw into atlas
-    const imgData = this.composeOutfitImageData(outfit, item, frame, xPattern, yPattern, zPattern, x, y);
+    const imgData = this.composeOutfitImageData(outfit, spriteId, maskId);
     const cellSize = 32 + 2;
     const col = cell % this.size;
     const row = Math.floor(cell / this.size);
@@ -272,17 +265,12 @@ export default class SpriteBuffer {
   /** Compose a new ImageData for an outfit frame */
   composeOutfitImageData(
     outfit: Outfit,
-    item: any,
-    frame: number,
-    xPattern: number,
-    yPattern: number,
-    zPattern: number,
-    x: number,
-    y: number
+    spriteId: number,
+    maskIdd: number,
   ): ImageData {
     // 1. Get base and mask sprite IDs
-    const baseId = item.getSpriteId(frame, xPattern, yPattern, zPattern, 0, x, y);
-    const maskId = item.getSpriteId(frame, xPattern, yPattern, zPattern, 1, x, y);
+    const baseId = spriteId;
+    const maskId = maskIdd;
 
     // 2. Decode base into new ImageData (copy, don't overwrite scratch)
     const baseData = new ImageData(new Uint8ClampedArray(this.decodeSprite(baseId).data), 32, 32);

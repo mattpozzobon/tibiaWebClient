@@ -48,26 +48,6 @@ export default class Player extends Creature {
     this.characterElement.addEnergyBar((this.vitals.state.energy / this.vitals.state.maxEnergy) * 100 + "%");
   }
 
-  public getSpeed(): number {
-    let base = this.vitals.speed;
-
-    if (this.hasCondition(ConditionManager.HASTE)) {
-      base *= 1.3;
-    }
-
-    return base;
-  }
-
-  public getStepDuration(tile: any): number {
-    const A = 857.36;
-    const B = 261.29;
-    const C = -4795.009;
-
-    let calculatedStepSpeed = Math.max(1, Math.round(A * Math.log(this.getSpeed() + B) + C));
-    let groundSpeed = tile.getFriction();
-
-    return Math.ceil(Math.floor(1000 * groundSpeed / calculatedStepSpeed) / window.gameClient.getTickInterval());
-  }
 
   public getTile(): any {
     return window.gameClient.world.getTileFromWorldPosition(this.vitals.position);

@@ -1,17 +1,8 @@
 import { Application, Container, Sprite, Texture } from 'pixi.js';
 import Debugger from "../utils/debugger";
 import Interface from "../ui/interface";
-import Item from "../game/item";
 import Position from "../game/position";
-import DistanceAnimation from "../utils/distance-animation";
-import ConditionManager from "../game/condition";
-import { PropBitFlag } from "../utils/bitflag";
-import { CONST } from "../helper/appContext";
-import LoopedAnimation from "../utils/animationLooped";
-import BoxAnimation from "../utils/box-animation";
-import Tile from "../game/tile";
 import Creature from "../game/creature";
-import Animation from "../utils/animation";
 import TileRenderer from './tile-renderer';
 import ItemRenderer from './item-renderer';
 import CreatureRenderer from './creature-renderer';
@@ -39,6 +30,7 @@ export default class Renderer {
   public app: Application;
   public tileRenderer: TileRenderer;
   public itemRenderer: ItemRenderer;
+  public scalingContainer: Container;
   public creatureRenderer: CreatureRenderer;
   public animationRenderer: AnimationRenderer;
   public gameLayer: Container;
@@ -55,8 +47,11 @@ export default class Renderer {
 
     this.app = app;
 
+    this.scalingContainer = new Container();
+    this.app.stage.addChild(this.scalingContainer);
+
     this.gameLayer = new Container();
-    this.app.stage.addChild(this.gameLayer);
+    this.scalingContainer.addChild(this.gameLayer);
 
     this.debugger = new Debugger();
     this.__start = performance.now();
@@ -72,6 +67,7 @@ export default class Renderer {
       this.spritePool[i] = spr;
     }
 
+    
     this.tileRenderer = new TileRenderer();
     this.creatureRenderer = new CreatureRenderer();
     this.itemRenderer = new ItemRenderer();
@@ -79,20 +75,61 @@ export default class Renderer {
   }
 
   static async create(): Promise<Renderer> {
+    const viewport = window.visualViewport ?? { width: window.innerWidth, height: window.innerHeight };
+    const tileSize = Interface.TILE_SIZE;
+  
+    // Determine how many tiles fit on screen
+    const cols = Math.ceil(viewport.width / tileSize);
+    const rows = Math.ceil(viewport.height / tileSize);
+  
+    // Width and height of the canvas in pixels
+    const width = cols * tileSize;
+    const height = rows * tileSize;
+  
     const app = new Application();
     await app.init({
-      width: Interface.SCREEN_WIDTH_MIN,
-      height: Interface.SCREEN_HEIGHT_MIN,
+      width,
+      height,
       backgroundColor: 0x1099bb,
       antialias: false,
       resolution: 1,
       backgroundAlpha: 0,
     });
-
+  
     const container = document.getElementById("game-container")!;
+    container.innerHTML = ""; // Clear existing canvas
     container.appendChild(app.canvas);
+  
+    const renderer = new Renderer(app);
+  
+    renderer.resizeAndScale();
+  
 
-    return new Renderer(app);
+    window.addEventListener("resize", () => {
+      app.renderer.resize(window.innerWidth, window.innerHeight);
+      renderer.resizeAndScale();
+    });
+  
+    return renderer;
+  }
+  
+
+  public resizeAndScale(): void {
+    const tileSize = 32;
+    const baseCols = Interface.TILE_WIDTH;
+    const baseRows = Interface.TILE_HEIGHT;
+    const baseWidth = baseCols * tileSize;
+    const baseHeight = baseRows * tileSize;
+  
+    const scaleX = this.app.screen.width / baseWidth;
+    const scaleY = this.app.screen.height / baseHeight;
+    const scale = Math.min(scaleX, scaleY);
+  
+    this.scalingContainer.scale.set(scale);
+  
+    // ✅ Center the container on screen
+    this.scalingContainer.x = (this.app.screen.width - baseWidth * scale) / 2;
+    this.scalingContainer.y = (this.app.screen.height - baseHeight * scale) / 2;
   }
 
   public render(): void {

@@ -96,7 +96,7 @@ export default class Interface {
   ]);
 
   constructor() {
-    this.settings = new Settings( this);
+    this.settings = new Settings(this);
     this.loginFlowManager = new LoginFlowManager();
     this.channelManager = new ChannelManager();
     this.hotbarManager = new HotbarManager();

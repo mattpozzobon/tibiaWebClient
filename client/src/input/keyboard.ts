@@ -160,6 +160,7 @@ class Keyboard {
     if (!window.gameClient.networkManager.packetHandler.handlePlayerMove(position)) return;
     window.gameClient.renderer.tileRenderer.refreshVisibleTiles();
     window.gameClient.interface.modalManager.close();
+    window.gameClient.player!.__serverWalkConfirmation = false;
     window.gameClient.send(new MovementPacket(direction));
   }
 

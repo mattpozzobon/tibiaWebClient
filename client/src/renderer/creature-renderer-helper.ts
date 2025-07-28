@@ -105,15 +105,13 @@ export default class CreatureRendererHelper {
       return window.gameClient.world.pathfinder.handlePathfind();
     }
 
-    // TODO: Implement movement buffer handling.
-    // if (
-    //   window.gameClient.player &&
-    //   this.creature.id === window.gameClient.player.id &&
-    //   this.__movementBuffer !== null
-    // ) {
-    //   window.gameClient.keyboard.handleCharacterMovement(this.__movementBuffer);
-    //   this.__movementBuffer = null;
-    // }
+    if (window.gameClient.player && this.creature.id === window.gameClient.player.id) {
+      if (window.gameClient.player.__movementBuffer !== null) {
+        const buffered = window.gameClient.player.__movementBuffer;
+        window.gameClient.player.__movementBuffer = null;
+        window.gameClient.keyboard.handleCharacterMovement(buffered);
+      }
+    }
   }
 
   public getLookDirection(): number {

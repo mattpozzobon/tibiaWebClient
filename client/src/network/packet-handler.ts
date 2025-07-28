@@ -294,8 +294,8 @@ class PacketHandler {
     }
 
     let tile = this.getTileUppie(position);
-    let duration = window.gameClient.player!.getStepDuration(tile);
-    window.gameClient.world.handleCreatureMove(window.gameClient.player!.id, position, duration);
+    //let duration = window.gameClient.player!.getStepDuration(tile);
+    //window.gameClient.world.handleCreatureMove(window.gameClient.player!.id, position, duration);
     return true;
   }
 

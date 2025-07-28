@@ -23,10 +23,15 @@ export default class CreatureRendererHelper {
   protected __getWalkingFrame(frameGroup: any): number {
     if (!frameGroup || !this.creature.isMoving()) return 0;
   
-    const progress = this.creature.getMovingFraction();
-    const frameIndex = Math.floor(progress * frameGroup.animationLength) % frameGroup.animationLength;
-  
-    return frameIndex;
+    // Get the movement fraction (0 to 1, where 1 = start, 0 = end)
+    const fraction = this.creature.getMovingFraction();
+    
+    // Calculate walking frame based on remaining movement fraction
+    // Walking frames go in reverse order: start with last frame, end with first frame
+    const frameIndex = Math.round((1 - fraction) * (frameGroup.animationLength - 1));
+    
+    // Ensure we don't exceed the frame count and handle edge cases
+    return Math.min(Math.max(0, frameIndex), frameGroup.animationLength - 1);
   }
 
   public getCharacterFrames(): CharacterFrames | null {

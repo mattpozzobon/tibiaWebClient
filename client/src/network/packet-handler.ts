@@ -515,10 +515,11 @@ class PacketHandler {
   }
 
   handleCreatureServerMove(packet: { id: number; position: Position; speed: number }): void {
-    console.log('speed: ', packet.speed);
+    console.log('Server stepDuration: ', packet.speed, 'ticks');
     let entity = window.gameClient.world.getCreature(packet.id);
     if (!entity) return;
 
+    // Pass the speed as stepDuration to the creature movement system
     window.gameClient.world.__handleCreatureMove(packet.id, packet.position, packet.speed);
 
     if (window.gameClient.isSelf(entity)) {

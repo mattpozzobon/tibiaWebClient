@@ -231,7 +231,8 @@ export default class Creature {
   
     this.__chunk = window.gameClient.world.getChunkFromWorldPosition(position);
   
-    if (this.__movementEvent) {
+    // Only cancel existing movement if we're moving to a different position
+    if (this.__movementEvent && !this.getPosition().equals(position)) {
       this.__movementEvent.cancel();
     }
   
@@ -240,19 +241,11 @@ export default class Creature {
   
     // Convert server ticks to milliseconds
     const tickMs = window.gameClient.getTickInterval(); // e.g. 50ms
-    const realDurationMs = Math.max(stepDurationTicks * tickMs, tickMs);
-  
-    // Add optional diagonal slow
-    const modSlowness = this.getPosition().isDiagonal(position) ? 2.0 : 1.0;
-    const adjustedDurationMs = realDurationMs * modSlowness;
-  
-    // ✅ Inflate for remote creature rendering
-    const isSelf = window.gameClient.isSelf(this);
-    const visualDurationMs = isSelf ? realDurationMs : Math.max(adjustedDurationMs, 300); // Give remote creatures time to animate
+    const realDurationMs = stepDurationTicks * tickMs;
   
     this.__movementEvent = window.gameClient.eventQueue.addEventMs(
       this.unlockMovement.bind(this),
-      visualDurationMs
+      realDurationMs
     );
   
     const angle = this.getPosition().getLookDirection(position);
@@ -346,8 +339,17 @@ export default class Creature {
   }
   
   protected __getWalkingFrame(frameGroup: any): number {
-    // Calculate walking frame based on remaining movement fraction.
-    return Math.round((1 - this.getMovingFraction()) * (frameGroup.animationLength - 1));
+    if (!frameGroup || !this.isMoving()) return 0;
+    
+    // Get the movement fraction (0 to 1, where 1 = start, 0 = end)
+    const fraction = this.getMovingFraction();
+    
+    // Calculate walking frame based on remaining movement fraction
+    // Walking frames go in reverse order: start with last frame, end with first frame
+    const frameIndex = Math.round((1 - fraction) * (frameGroup.animationLength - 1));
+    
+    // Ensure we don't exceed the frame count and handle edge cases
+    return Math.min(Math.max(0, frameIndex), frameGroup.animationLength - 1);
   }
   
 } 

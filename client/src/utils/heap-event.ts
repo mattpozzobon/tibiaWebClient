@@ -6,6 +6,8 @@ export default class HeapEvent {
   public cancelled: boolean;
   public __f: number;
  
+  private __startTime: number;
+  private __durationMs: number;
 
   constructor(callback: () => void, when: number) {
     
@@ -13,6 +15,9 @@ export default class HeapEvent {
     this.length = when;
     this.cancelled = false;
     this.__f = window.gameClient.eventQueue.__internalDelta + when;
+
+    this.__startTime = performance.now(); // ms
+    this.__durationMs = when; // ms (same as `length`)
   }
 
   public extendTo(when: number): HeapEvent | void {
@@ -39,6 +44,16 @@ export default class HeapEvent {
   }
 
   public remainingFraction(): number {
-    return this.remainingMillis() / this.length;
+    const remaining = this.remainingMillis();
+    const total = this.length;
+    return total > 0 ? remaining / total : 0;
+  }
+
+  public getElapsedTime(): number {
+    return performance.now() - this.__startTime;
+  }
+
+  public getTotalDuration(): number {
+    return this.__durationMs;
   }
 }

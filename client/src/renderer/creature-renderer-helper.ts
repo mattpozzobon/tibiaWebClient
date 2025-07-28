@@ -21,10 +21,12 @@ export default class CreatureRendererHelper {
   }
 
   protected __getWalkingFrame(frameGroup: any): number {
-    if (!frameGroup) return 0;
-    // Clamp movingFraction to [0,1] for safety
-    const f = Math.max(0, Math.min(1, this.creature.getMovingFraction()));
-    return Math.round((1 - f) * (frameGroup.animationLength - 1));
+    if (!frameGroup || !this.creature.isMoving()) return 0;
+  
+    const progress = this.creature.getMovingFraction();
+    const frameIndex = Math.floor(progress * frameGroup.animationLength) % frameGroup.animationLength;
+  
+    return frameIndex;
   }
 
   public getCharacterFrames(): CharacterFrames | null {

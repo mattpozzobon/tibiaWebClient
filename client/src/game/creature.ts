@@ -42,7 +42,6 @@ export default class Creature {
   public renderer: CreatureRendererHelper;
   
   // gameClient is injected to replace global references.
-
   constructor(data: CreatureData) {
 
     this.vitals = new Vitals(data.vitals);
@@ -202,6 +201,8 @@ export default class Creature {
       return Position.NULL;
     }
     const fraction = this.getMovingFraction();
+    
+    // Calculate offset based on movement direction
     switch (this.getLookDirection()) {
       case CONST.DIRECTION.WEST:
         return new Position(-fraction, 0, 0);
@@ -225,60 +226,56 @@ export default class Creature {
     }
   }
 
-  public moveTo(position: Position, speed: number): any {
-    if (!window.gameClient.world.isValidWorldPosition(position)) {
-      return false;
-    }
+  public moveTo(position: Position, stepDurationTicks: number): any {
+    if (!window.gameClient.world.isValidWorldPosition(position)) return false;
+  
     this.__chunk = window.gameClient.world.getChunkFromWorldPosition(position);
-
+  
     if (this.__movementEvent) {
       this.__movementEvent.cancel();
     }
-
-    const modSlowness = (this.getPosition().isDiagonal(position) ? 2 : 1) * speed;
-    this.__movementEvent = window.gameClient.eventQueue.addEvent(this.unlockMovement.bind(this), modSlowness);
+  
+    // Save old position
+    this.__previousPosition = this.getPosition().copy();
+  
+    // Convert server ticks to milliseconds
+    const tickMs = window.gameClient.getTickInterval(); // e.g. 50ms
+    const realDurationMs = Math.max(stepDurationTicks * tickMs, tickMs);
+  
+    // Add optional diagonal slow
+    const modSlowness = this.getPosition().isDiagonal(position) ? 2.0 : 1.0;
+    const adjustedDurationMs = realDurationMs * modSlowness;
+  
+    // ✅ Inflate for remote creature rendering
+    const isSelf = window.gameClient.isSelf(this);
+    const visualDurationMs = isSelf ? realDurationMs : Math.max(adjustedDurationMs, 300); // Give remote creatures time to animate
+  
+    this.__movementEvent = window.gameClient.eventQueue.addEventMs(
+      this.unlockMovement.bind(this),
+      visualDurationMs
+    );
+  
     const angle = this.getPosition().getLookDirection(position);
-
-    if (angle !== null) {
-      this.__lookDirection = angle;
-    }
-
-    this.__previousPosition = this.getPosition();
+    if (angle !== null) this.__lookDirection = angle;
+  
     this.vitals.position = position;
-
-    if (window.gameClient.player!.canSeeSmall(this) && position.z === window.gameClient.player!.vitals.position.z) {
+  
+    if (window.gameClient.player?.canSeeSmall(this) && position.z === window.gameClient.player.vitals.position.z) {
       window.gameClient.interface.soundManager.playWalkBit(position);
     }
+  }
+  
 
-    if (window.gameClient.player && this.id === window.gameClient.player.id) {
-     // return window.gameClient.renderer.minimap.cache();
-    }
-  }
-  
-  public getLookDirection(): number {
-    return this.__lookDirection;
-  }
-  
-  public setTurnBuffer(direction: number): void {
-    if (this.isMoving()) {
-      this.__lookDirectionBuffer = direction;
-      return;
-    }
-    this.__setLookDirection(direction);
-  }
-  
   public unlockMovement(): any {
     if (this.__lookDirectionBuffer !== null) {
       this.__lookDirection = this.__lookDirectionBuffer;
       this.__lookDirectionBuffer = null;
     }
+    
     this.__movementEvent = null;
     this.__teleported = false;
-    if (
-      window.gameClient.player && 
-      this.id === window.gameClient.player.id && 
-      window.gameClient.world.pathfinder.__pathfindCache.length > 0
-    ) {
+
+    if (window.gameClient.player && this.id === window.gameClient.player.id && window.gameClient.world.pathfinder.__pathfindCache.length > 0) {
       return window.gameClient.world.pathfinder.handlePathfind();
     }
 
@@ -293,11 +290,23 @@ export default class Creature {
     // }
   }
   
+  public getLookDirection(): number {
+    return this.__lookDirection;
+  }
+  
+  public setTurnBuffer(direction: number): void {
+    if (this.isMoving()) {
+      this.__lookDirectionBuffer = direction;
+      return;
+    }
+    this.__setLookDirection(direction);
+  }
 
   public getChunk(): any {
     return this.__chunk;
   }
   
+  // Method: isMoving
   public isMoving(): boolean {
     return this.__movementEvent !== null;
   }

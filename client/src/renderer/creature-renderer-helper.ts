@@ -1,5 +1,7 @@
 import Creature from "../game/creature";
 import FrameGroup from "../utils/frame-group";
+import Position from "../game/position";
+import { CONST } from "../helper/appContext";
 
 export interface CharacterFrames {
   characterGroup: any; characterFrame: number;
@@ -15,31 +17,182 @@ export interface CharacterFrames {
 
 export default class CreatureRendererHelper {
   private creature: Creature;
+  
+  // Movement-related properties
+  private __movementEvent: any;
+  private __lookDirectionBuffer: any;
+  private __lookDirection: number;
+  private __teleported: boolean;
 
   constructor(creature: Creature) {
     this.creature = creature;
+    this.__movementEvent = null;
+    this.__lookDirectionBuffer = null;
+    this.__lookDirection = creature.vitals.direction;
+    this.__teleported = false;
+  }
+
+  // Movement-related methods
+  public getMoveOffset(): Position {
+    // If the creature is not moving or has teleported, return a null offset.
+    if (!this.isMoving() || this.__teleported) {
+      return Position.NULL;
+    }
+    const fraction = this.getMovingFraction();
+    
+    // Calculate offset based on movement direction
+    switch (this.getLookDirection()) {
+      case CONST.DIRECTION.WEST:
+        return new Position(-fraction, 0, 0);
+      case CONST.DIRECTION.NORTH:
+        return new Position(0, -fraction, 0);
+      case CONST.DIRECTION.EAST:
+        return new Position(fraction, 0, 0);
+      case CONST.DIRECTION.SOUTH:
+        return new Position(0, fraction, 0);
+      // TODO: Implement diagonal movement.
+      // case CONST.DIRECTION.NORTH_WEST:
+      //   return new Position(-fraction, -fraction, 0);
+      // case CONST.DIRECTION.NORTH_EAST:
+      //   return new Position(fraction, -fraction, 0);
+      // case CONST.DIRECTION.SOUTH_EAST:
+      //   return new Position(fraction, fraction, 0);
+      // case CONST.DIRECTION.SOUTH_WEST:
+      //   return new Position(-fraction, fraction, 0);
+      default:
+        return new Position(0, 0, 0);
+    }
+  }
+
+  public moveTo(position: Position, stepDurationTicks: number): any {
+    if (!window.gameClient.world.isValidWorldPosition(position)) return false;
+  
+    this.creature.__chunk = window.gameClient.world.getChunkFromWorldPosition(position);
+  
+    // Only cancel existing movement if we're moving to a different position
+    if (this.__movementEvent && !this.creature.getPosition().equals(position)) {
+      this.__movementEvent.cancel();
+    }
+  
+    // Save old position
+    this.creature.__previousPosition = this.creature.getPosition().copy();
+  
+    this.__movementEvent = window.gameClient.eventQueue.addEvent(
+      this.unlockMovement.bind(this),
+      stepDurationTicks
+    );
+  
+    const angle = this.creature.getPosition().getLookDirection(position);
+    if (angle !== null) this.__lookDirection = angle;
+  
+    this.creature.vitals.position = position;
+  
+    if (window.gameClient.player?.canSeeSmall(this.creature) && position.z === window.gameClient.player.vitals.position.z) {
+      window.gameClient.interface.soundManager.playWalkBit(position);
+    }
+  }
+
+  public unlockMovement(): any {
+    if (this.__lookDirectionBuffer !== null) {
+      this.__lookDirection = this.__lookDirectionBuffer;
+      this.__lookDirectionBuffer = null;
+    }
+    
+    this.__movementEvent = null;
+    this.__teleported = false;
+
+    if (window.gameClient.player && this.creature.id === window.gameClient.player.id && window.gameClient.world.pathfinder.__pathfindCache.length > 0) {
+      return window.gameClient.world.pathfinder.handlePathfind();
+    }
+
+    // TODO: Implement movement buffer handling.
+    // if (
+    //   window.gameClient.player &&
+    //   this.creature.id === window.gameClient.player.id &&
+    //   this.__movementBuffer !== null
+    // ) {
+    //   window.gameClient.keyboard.handleCharacterMovement(this.__movementBuffer);
+    //   this.__movementBuffer = null;
+    // }
+  }
+
+  public getLookDirection(): number {
+    return this.__lookDirection;
+  }
+
+  public setTurnBuffer(direction: number): void {
+    if (this.isMoving()) {
+      this.__lookDirectionBuffer = direction;
+      return;
+    }
+    this.__setLookDirection(direction);
+  }
+
+  public isMoving(): boolean {
+    return this.__movementEvent !== null;
+  }
+
+  public getMovingFraction(): number {
+    // If not moving or teleported, fraction is 0.
+    if (!this.isMoving() || this.__teleported) {
+      return 0;
+    }
+    return this.__movementEvent.remainingFraction();
+  }
+
+  public __setLookDirection(direction: number): void {
+    this.__lookDirection = direction;
+  }
+
+  public setTeleported(teleported: boolean): void {
+    this.__teleported = teleported;
+  }
+
+  public getTeleported(): boolean {
+    return this.__teleported;
+  }
+
+  public getMovementEvent(): any {
+    return this.__movementEvent;
+  }
+
+  public setMovementEvent(event: any): void {
+    this.__movementEvent = event;
+  }
+
+  public getElapsedWalkTime(): number {
+    if (!this.isMoving() || !this.__movementEvent?.getElapsedTime) return 0;
+    return this.__movementEvent.getElapsedTime();
+  }
+  
+  public getStepDurationMs(): number {
+    if (!this.isMoving() || !this.__movementEvent?.getTotalDuration) return 0;
+    return this.__movementEvent.getTotalDuration();
   }
 
   protected __getWalkingFrame(frameGroup: any): number {
     if (!frameGroup || !this.creature.isMoving()) return 0;
   
-    // Get the movement fraction (0 to 1, where 1 = start, 0 = end)
-    const fraction = this.creature.getMovingFraction();
-    
-    // Calculate walking frame based on remaining movement fraction
-    // Walking frames go in reverse order: start with last frame, end with first frame
-    const frameIndex = Math.round((1 - fraction) * (frameGroup.animationLength - 1));
-    
-    // Ensure we don't exceed the frame count and handle edge cases
-    return Math.min(Math.max(0, frameIndex), frameGroup.animationLength - 1);
+    const animTime = this.getElapsedWalkTime();     // Real time elapsed since movement started (ms)
+    const totalTime = this.getStepDurationMs();     // Total movement duration (ms)
+  
+    const frameCount = frameGroup.animationLength;
+    if (frameCount <= 1 || totalTime === 0) return 0;
+  
+    // Use normalized progress from 0 to just below 1 (inclusive)
+    const progress = Math.min(animTime / totalTime, 0.9999);
+  
+    const frameIndex = Math.floor(progress * frameCount);
+    return Math.max(0, Math.min(frameIndex, frameCount - 1));
   }
+  
 
   public getCharacterFrames(): CharacterFrames | null {
     const outfit = this.creature.outfit;
     const characterObject = outfit.getDataObject();
     if (!characterObject) return null;
 
-    const isMoving = this.creature.isMoving();
+    const isMoving = this.isMoving();
     const groupType = isMoving ? FrameGroup.GROUP_MOVING : FrameGroup.GROUP_IDLE;
 
     // --- Base Character (body) ---

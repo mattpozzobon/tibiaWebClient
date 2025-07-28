@@ -39,17 +39,17 @@ export default class World {
   }
 
   public handleSelfTeleport(): void {
-    window.gameClient.player!.__teleported = true;
+    window.gameClient.player!.renderer.setTeleported(true);
     window.gameClient.player!.__serverWalkConfirmation = true;
     this.checkEntityReferences();
     this.checkChunks();
     window.gameClient.renderer.tileRenderer.refreshVisibleTiles()
     //window.gameClient.renderer.minimap.setCenter();
-    if (window.gameClient.player!.__movementEvent === null) {
-      window.gameClient.player!.__movementEvent = window.gameClient.eventQueue.addEvent(
+    if (window.gameClient.player!.renderer.getMovementEvent() === null) {
+      window.gameClient.player!.renderer.setMovementEvent(window.gameClient.eventQueue.addEvent(
         window.gameClient.player!.unlockMovement.bind(window.gameClient.player),
         10
-      );
+      ));
     }
   }
 

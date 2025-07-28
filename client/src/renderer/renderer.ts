@@ -285,7 +285,7 @@ export default class Renderer {
       return;
     }
     Object.values(window.gameClient.world.activeCreatures).forEach((creature: any) => {
-      creature.__movementEvent = null;
+      creature.renderer.setMovementEvent(null);
     });
   }
   

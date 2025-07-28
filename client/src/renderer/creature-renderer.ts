@@ -111,11 +111,11 @@ export default class CreatureRenderer {
    * Check if creature rendering should be deferred to another tile
    */
   public shouldDefer(tile: any, creature: Creature): boolean {
-    if (creature.__teleported) return false;
+    if (creature.renderer.getTeleported()) return false;
     if (!creature.isMoving()) return false;
     if (creature.getPosition().z !== creature.__previousPosition.z) return false;
   
-    const dir = creature.__lookDirection;
+    const dir = creature.getLookDirection();
     const prev = creature.__previousPosition;
     const tilePos = tile.getPosition();
   
@@ -151,7 +151,7 @@ export default class CreatureRenderer {
    * Get the tile we need to defer the rendering of the creature to
    */
   public getDeferTile(tile: any, creature: any): any {
-    const dir = creature.__lookDirection;
+    const dir = creature.getLookDirection();
     const pos = creature.getPosition();
     switch (dir) {
       case CONST.DIRECTION.NORTHEAST:

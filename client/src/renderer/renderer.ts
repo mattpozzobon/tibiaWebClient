@@ -9,7 +9,6 @@ import CreatureRenderer from './creature-renderer';
 import AnimationRenderer from './animation-renderer';
 
 export default class Renderer {
-  __animationLayers = new Array<Set<any>>();
   __nMiliseconds: number;
   private lastTestAnimationTime: number = 0;
   private readonly TEST_ANIMATION_INTERVAL: number = 1000; // 1 seconds
@@ -47,13 +46,13 @@ export default class Renderer {
 
     this.app = app;
 
-    this.scalingContainer = new Container();
-    this.app.stage.addChild(this.scalingContainer);
-
-    this.gameLayer = new Container();
-    this.scalingContainer.addChild(this.gameLayer);
-
     this.debugger = new Debugger();
+    this.scalingContainer = new Container();
+    this.gameLayer = new Container();
+
+    this.app.stage.addChild(this.scalingContainer);
+    this.scalingContainer.addChild(this.gameLayer);
+    
     this.__start = performance.now();
     this.__nMiliseconds = 0;
     this.spritePool = new Array(this.poolSize);
@@ -67,7 +66,6 @@ export default class Renderer {
       this.spritePool[i] = spr;
     }
 
-    
     this.tileRenderer = new TileRenderer();
     this.creatureRenderer = new CreatureRenderer();
     this.itemRenderer = new ItemRenderer();
@@ -97,13 +95,12 @@ export default class Renderer {
     });
   
     const container = document.getElementById("game-container")!;
-    container.innerHTML = ""; // Clear existing canvas
+    container.innerHTML = "";
     container.appendChild(app.canvas);
   
     const renderer = new Renderer(app);
   
     renderer.resizeAndScale();
-  
 
     window.addEventListener("resize", () => {
       app.renderer.resize(window.innerWidth, window.innerHeight);
@@ -112,10 +109,9 @@ export default class Renderer {
   
     return renderer;
   }
-  
 
   public resizeAndScale(): void {
-    const tileSize = 32;
+    const tileSize = Interface.TILE_SIZE;
     const baseCols = Interface.TILE_WIDTH;
     const baseRows = Interface.TILE_HEIGHT;
     const baseWidth = baseCols * tileSize;
@@ -124,10 +120,8 @@ export default class Renderer {
     const scaleX = this.app.screen.width / baseWidth;
     const scaleY = this.app.screen.height / baseHeight;
     const scale = Math.min(scaleX, scaleY);
-  
+    
     this.scalingContainer.scale.set(scale);
-  
-    // ✅ Center the container on screen
     this.scalingContainer.x = (this.app.screen.width - baseWidth * scale) / 2;
     this.scalingContainer.y = (this.app.screen.height - baseHeight * scale) / 2;
   }

@@ -38,6 +38,7 @@ export default class CreatureRendererHelper {
     if (!this.isMoving() || this.__teleported) {
       return Position.NULL;
     }
+    
     const fraction = this.getMovingFraction();
     
     // Calculate offset based on movement direction

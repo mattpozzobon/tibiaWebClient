@@ -204,9 +204,13 @@ export default class Renderer {
     // Returns the creature position which is a static position plus the creature move offset
     const staticPosition = this.getStaticScreenPosition(creature.getPosition());
     const creatureMoveOffset = creature.getMoveOffset();
+    
+    // Get the interpolated elevation offset during movement
+    const elevationOffset = creature.renderer.getElevationOffset();
+
     return new Position(
-      staticPosition.x - creatureMoveOffset.x,
-      staticPosition.y - creatureMoveOffset.y,
+      staticPosition.x - creatureMoveOffset.x - elevationOffset,
+      staticPosition.y - creatureMoveOffset.y - elevationOffset,
       0
     );
   }

@@ -15,15 +15,14 @@ export default class ItemRenderer {
    */
   public collectSpritesForTile(tile: Tile, screenPos: Position, spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>): void {
     const items: Item[] = tile.items;
-    let elevation = tile.__renderElevation ?? 0;
-    
     
     for (let i = 0; i < items.length; ++i) {
       const item = items[i];
       if (item.hasFlag(PropBitFlag.DatFlagOnTop)) continue;
-      this.collectSpriteForItem(item, screenPos, elevation, 32, spriteBatches);
+      this.collectSpriteForItem(item, screenPos, tile.__renderElevation, 32, spriteBatches);
       if (item.isElevation && item.isElevation()) {
-        elevation += item.getDataObject().properties.elevation;
+        // Update the tile's elevation for creatures and subsequent items
+        tile.addElevation(item.getDataObject().properties.elevation);
       }
     }
   }

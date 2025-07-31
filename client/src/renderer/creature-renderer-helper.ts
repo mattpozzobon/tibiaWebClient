@@ -64,6 +64,39 @@ export default class CreatureRendererHelper {
     }
   }
 
+  public getElevationOffset(): number {
+    // If the creature is teleported, return 0.
+    if (this.__teleported) {
+      return 0;
+    }
+    
+    // If the creature is moving, interpolate between start and end elevation
+    if (this.isMoving()) {
+      const fraction = this.getMovingFraction();
+      
+      // Get the starting and ending tile elevations
+      const startTile = window.gameClient.world.getTileFromWorldPosition(this.creature.__previousPosition);
+      const endTile = window.gameClient.world.getTileFromWorldPosition(this.creature.getPosition());
+      
+      const startElevation = startTile ? startTile.__renderElevation : 0;
+      const endElevation = endTile ? endTile.__renderElevation : 0;
+      
+      // Apply easing function for smoother elevation transition
+      const easedFraction = this.__easeInOutQuad(fraction);
+      
+      // Interpolate between start and end elevation with easing
+      return startElevation + (endElevation - startElevation) * easedFraction;
+    }
+    
+    // If not moving, return the current tile's elevation
+    const currentTile = window.gameClient.world.getTileFromWorldPosition(this.creature.getPosition());
+    return currentTile ? currentTile.__renderElevation : 0;
+  }
+
+  private __easeInOutQuad(t: number): number {
+    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+  }
+
   public moveTo(position: Position, stepDurationTicks: number): any {
     if (!window.gameClient.world.isValidWorldPosition(position)) return false;
   

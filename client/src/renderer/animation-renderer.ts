@@ -5,6 +5,7 @@ import BoxAnimation from "../utils/box-animation";
 import Animation from "../utils/animation";
 import DistanceAnimation from "../utils/distance-animation";
 import FrameGroup from "../utils/frame-group";
+import Interface from "../ui/interface";
 
 export default class AnimationRenderer {
   animationLayers = new Array();
@@ -29,7 +30,7 @@ export default class AnimationRenderer {
     
     // Clip animations outside the visible screen area (same as tile sprites)
     const xCell = screenPos.x, yCell = screenPos.y;
-    if (xCell < -1 || xCell > 27 || yCell < -1 || yCell > 14) {
+    if (xCell < -1 || xCell > Interface.TILE_WIDTH || yCell < -1 || yCell > Interface.TILE_HEIGHT) {
       return;
     }
     
@@ -315,9 +316,14 @@ export default class AnimationRenderer {
    */
   private renderLight(tile: any, position: Position, thing: any, intensity: any): void {
     // Renders the light at a position
-    const floor = window.gameClient.world
-      .getChunkFromWorldPosition(tile.getPosition())
-      .getFirstFloorFromBottomProjected(tile.getPosition());
+    const chunk = window.gameClient.world.getChunkFromWorldPosition(tile.getPosition());
+    if (!chunk) {
+      // If chunk is null, render light anyway
+      this.renderLightThing(position, thing, intensity);
+      return;
+    }
+    
+    const floor = chunk.getFirstFloorFromBottomProjected(tile.getPosition());
   
     // Confirm light is visible and should be rendered
     if (floor === null || floor >= window.gameClient.player!.getMaxFloor()) {

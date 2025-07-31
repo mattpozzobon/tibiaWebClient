@@ -73,22 +73,24 @@ export default class Renderer {
   }
 
   static async create(): Promise<Renderer> {
-    const viewport = window.visualViewport ?? { width: window.innerWidth, height: window.innerHeight };
     const tileSize = Interface.TILE_SIZE;
+    const baseCols = Interface.TILE_WIDTH;
+    const baseRows = Interface.TILE_HEIGHT;
+    const baseWidth = baseCols * tileSize;
+    const baseHeight = baseRows * tileSize;
   
-    // Determine how many tiles fit on screen
-    const cols = Math.ceil(viewport.width / tileSize);
-    const rows = Math.ceil(viewport.height / tileSize);
+    const viewport = window.visualViewport ?? { width: window.innerWidth, height: window.innerHeight };
+    const scaleX = viewport.width / baseWidth;
+    const scaleY = viewport.height / baseHeight;
+    const scale = Math.floor(Math.min(scaleX, scaleY) * 100) / 100; // Optional: snap to 0.01 step
   
-    // Width and height of the canvas in pixels
-    const width = cols * tileSize;
-    const height = rows * tileSize;
+    const width = Math.floor(baseWidth * scale);
+    const height = Math.floor(baseHeight * scale);
   
     const app = new Application();
     await app.init({
       width,
       height,
-      backgroundColor: 0x1099bb,
       antialias: false,
       resolution: 1,
       backgroundAlpha: 0,
@@ -99,16 +101,15 @@ export default class Renderer {
     container.appendChild(app.canvas);
   
     const renderer = new Renderer(app);
-  
     renderer.resizeAndScale();
-
+  
     window.addEventListener("resize", () => {
-      app.renderer.resize(window.innerWidth, window.innerHeight);
-      renderer.resizeAndScale();
+      renderer.handleResize(); // custom function to recompute
     });
   
     return renderer;
   }
+  
 
   public resizeAndScale(): void {
     const tileSize = Interface.TILE_SIZE;
@@ -125,6 +126,37 @@ export default class Renderer {
     this.scalingContainer.x = (this.app.screen.width - baseWidth * scale) / 2;
     this.scalingContainer.y = (this.app.screen.height - baseHeight * scale) / 2;
   }
+
+  public handleResize(): void {
+    const tileSize = Interface.TILE_SIZE;
+    const baseCols = Interface.TILE_WIDTH;
+    const baseRows = Interface.TILE_HEIGHT;
+    const baseWidth = baseCols * tileSize;
+    const baseHeight = baseRows * tileSize;
+  
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+  
+    const aspectRatio = baseWidth / baseHeight;
+    const viewportRatio = viewportWidth / viewportHeight;
+  
+    let targetWidth: number;
+    let targetHeight: number;
+  
+    if (viewportRatio > aspectRatio) {
+      // Window is wider than game: fit by height
+      targetHeight = viewportHeight;
+      targetWidth = targetHeight * aspectRatio;
+    } else {
+      // Window is taller than game: fit by width
+      targetWidth = viewportWidth;
+      targetHeight = targetWidth / aspectRatio;
+    }
+  
+    this.app.renderer.resize(Math.floor(targetWidth), Math.floor(targetHeight));
+    this.resizeAndScale(); // this uses TILE_WIDTH/HEIGHT to center the scaled layer
+  }
+  
 
   public render(): void {
     // Main entry point called every frame.

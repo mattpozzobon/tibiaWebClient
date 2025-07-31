@@ -3,6 +3,7 @@ import Item from "../game/item";
 import Position from "../game/position";
 import { PropBitFlag } from "../utils/bitflag";
 import FrameGroup from "../utils/frame-group";
+import Interface from "../ui/interface";
 
 export default class ItemRenderer {
   constructor() {
@@ -15,6 +16,7 @@ export default class ItemRenderer {
   public collectSpritesForTile(tile: Tile, screenPos: Position, spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>): void {
     const items: Item[] = tile.items;
     let elevation = tile.__renderElevation ?? 0;
+    
     
     for (let i = 0; i < items.length; ++i) {
       const item = items[i];
@@ -46,7 +48,7 @@ export default class ItemRenderer {
     const frameGroup = thing.getFrameGroup(FrameGroup.NONE);
     const frame = thing.getFrame();
     const pattern = thing.getPattern();
-
+    
     for (let x = 0; x < frameGroup.width; x++) {
       for (let y = 0; y < frameGroup.height; y++) {
         for (let l = 0; l < frameGroup.layers; l++) {
@@ -57,10 +59,17 @@ export default class ItemRenderer {
             if (!spriteBatches.has(textureKey)) {
               spriteBatches.set(textureKey, []);
             }
+            
+            const xCell = position.x - x - elevation;
+            const yCell = position.y - y - elevation;
+            
+            // Boundary check - same as tile-renderer
+            if (xCell < -1 || xCell > Interface.TILE_WIDTH || yCell < -1 || yCell > Interface.TILE_HEIGHT) continue;
+            
             spriteBatches.get(textureKey)!.push({
               sprite: { texture: texture },
-              x: Math.round(size * (position.x - x - elevation)),
-              y: Math.round(size * (position.y - y - elevation)),
+              x: Math.round(size * xCell),
+              y: Math.round(size * yCell),
               width: size,
               height: size
             });

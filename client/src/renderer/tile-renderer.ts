@@ -2,6 +2,7 @@ import Tile from "../game/tile";
 import Position from "../game/position";
 import FrameGroup from "../utils/frame-group";
 import AnimationRenderer from "./animation-renderer";
+import Interface from "../ui/interface";
 
 export default class TileRenderer {
   public tileCache: Tile[][] = [];
@@ -39,7 +40,7 @@ export default class TileRenderer {
   public collectSprites(tile: Tile, screenPos: Position, spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>): void {
     tile.setElevation(0);
     const xCell = screenPos.x, yCell = screenPos.y;
-    if (xCell < -1 || xCell > 27 || yCell < -1 || yCell > 14) return;
+    if (xCell < -1 || xCell > Interface.TILE_WIDTH || yCell < -1 || yCell > Interface.TILE_HEIGHT) return;
 
     const px = xCell * 32;
     const py = yCell * 32;

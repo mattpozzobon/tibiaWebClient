@@ -51,15 +51,14 @@ export default class CreatureRendererHelper {
         return new Position(fraction, 0, 0);
       case CONST.DIRECTION.SOUTH:
         return new Position(0, fraction, 0);
-      // TODO: Implement diagonal movement.
-      // case CONST.DIRECTION.NORTH_WEST:
-      //   return new Position(-fraction, -fraction, 0);
-      // case CONST.DIRECTION.NORTH_EAST:
-      //   return new Position(fraction, -fraction, 0);
-      // case CONST.DIRECTION.SOUTH_EAST:
-      //   return new Position(fraction, fraction, 0);
-      // case CONST.DIRECTION.SOUTH_WEST:
-      //   return new Position(-fraction, fraction, 0);
+      case CONST.DIRECTION.NORTHWEST:
+        return new Position(-fraction, -fraction, 0);
+      case CONST.DIRECTION.NORTHEAST:
+        return new Position(fraction, -fraction, 0);
+      case CONST.DIRECTION.SOUTHEAST:
+        return new Position(fraction, fraction, 0);
+      case CONST.DIRECTION.SOUTHWEST:
+        return new Position(-fraction, fraction, 0);
       default:
         return new Position(0, 0, 0);
     }

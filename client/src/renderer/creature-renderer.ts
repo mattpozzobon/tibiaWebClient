@@ -69,7 +69,25 @@ export default class CreatureRenderer {
     const frames: CharacterFrames | null = creature.renderer.getCharacterFrames();
     if (!frames) return;
 
-    const xPattern = creature.getLookDirection() % 4;
+    // Map diagonal directions to closest cardinal direction for sprite patterns
+    const direction = creature.getLookDirection();
+    let xPattern: number;
+    switch (direction) {
+      case CONST.DIRECTION.NORTHWEST:
+        xPattern = 3; // WEST
+        break;
+      case CONST.DIRECTION.NORTHEAST:
+        xPattern = 1; // EAST
+        break;
+      case CONST.DIRECTION.SOUTHWEST:
+        xPattern = 3; // WEST
+        break;
+      case CONST.DIRECTION.SOUTHEAST:
+        xPattern = 1; // EAST
+        break;
+      default:
+        xPattern = direction % 4; // Cardinal directions work as expected
+    }
     const zPattern = frames.characterGroup.pattern.z > 1 && creature.isMounted() ? 1 : 0;
     const drawPosition = new Position(position.x - offset, position.y - offset, 0);
     
@@ -77,11 +95,6 @@ export default class CreatureRenderer {
     for (const layer of RENDER_LAYERS) {
       const group = frames[layer.groupKey as keyof CharacterFrames];
       const frame = frames[layer.frameKey as keyof CharacterFrames];
-      
-
-
-
-
       
       // Skip if group doesn't exist or frame is undefined
       if (!group || frame === undefined) continue;

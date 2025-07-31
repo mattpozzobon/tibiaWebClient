@@ -103,6 +103,28 @@ class Keyboard {
 
   handleCharacterMovement(key: string): void {
     const position = window.gameClient.player!.getPosition();
+    
+    // Check for diagonal movement with A + D (north-west)
+    if (this.__activeKeys.has(Keyboard.KEYS.KEY_A) && this.__activeKeys.has(Keyboard.KEYS.KEY_W)) {
+      this.__move(CONST.DIRECTION.NORTHWEST, position.northwest());
+      return;
+    }
+
+    if (this.__activeKeys.has(Keyboard.KEYS.KEY_A) && this.__activeKeys.has(Keyboard.KEYS.KEY_S)) {
+      this.__move(CONST.DIRECTION.SOUTHWEST, position.southwest());
+      return;
+    }
+
+    if (this.__activeKeys.has(Keyboard.KEYS.KEY_D) && this.__activeKeys.has(Keyboard.KEYS.KEY_S)) {
+      this.__move(CONST.DIRECTION.SOUTHEAST, position.southeast());
+      return;
+    }
+
+    if (this.__activeKeys.has(Keyboard.KEYS.KEY_D) && this.__activeKeys.has(Keyboard.KEYS.KEY_W)) {
+      this.__move(CONST.DIRECTION.NORTHEAST, position.northeast());
+      return;
+    }
+    
     switch (key) {
       case Keyboard.KEYS.KEYPAD_7:
         this.__move(CONST.DIRECTION.NORTHWEST, position.northwest());

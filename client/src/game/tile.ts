@@ -70,7 +70,7 @@ export default class Tile extends Thing implements IPathNode {
   }
 
   addElevation(elevation: number): void {
-    this.setElevation(Math.min(24 / 32, this.__renderElevation + elevation / 32));
+    this.setElevation(Math.min(1, this.__renderElevation + elevation / 32));
   }
 
   deleteAnimation(animation: any): void {
@@ -86,7 +86,7 @@ export default class Tile extends Thing implements IPathNode {
   }
 
   hasMaximumElevation(): boolean {
-    return this.__renderElevation === 0.75;
+    return this.__renderElevation === 1;
   }
 
   addCreature(creature: any): void {

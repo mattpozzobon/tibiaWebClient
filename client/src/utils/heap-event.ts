@@ -1,5 +1,3 @@
-import GameClient from "../core/gameclient";
-
 export default class HeapEvent {
   public callback: () => void;
   public length: number;
@@ -26,7 +24,6 @@ export default class HeapEvent {
   }
 
   public complete(): void {
-    // Cancel the event, then immediately execute the callback.
     this.cancel();
     this.callback();
   }
@@ -44,9 +41,7 @@ export default class HeapEvent {
   }
 
   public remainingFraction(): number {
-    const remaining = this.remainingMillis();
-    const total = this.length;
-    return total > 0 ? remaining / total : 0;
+    return this.remainingMillis() / this.length;
   }
 
   public getElapsedTime(): number {

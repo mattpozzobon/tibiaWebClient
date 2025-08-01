@@ -21,7 +21,6 @@ export default class ItemRenderer {
       if (item.hasFlag(PropBitFlag.DatFlagOnTop)) continue;
       this.collectSpriteForItem(item, screenPos, tile.__renderElevation, 32, spriteBatches);
       if (item.isElevation && item.isElevation()) {
-        // Update the tile's elevation for creatures and subsequent items
         tile.addElevation(item.getDataObject().properties.elevation);
       }
     }

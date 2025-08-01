@@ -65,36 +65,9 @@ export default class CreatureRendererHelper {
   }
 
   public getElevationOffset(): number {
-    // If the creature is teleported, return 0.
-    if (this.__teleported) {
-      return 0;
-    }
-    
-    // If the creature is moving, interpolate between start and end elevation
-    if (this.isMoving()) {
-      const fraction = this.getMovingFraction();
-      
-      // Get the starting and ending tile elevations
-      const startTile = window.gameClient.world.getTileFromWorldPosition(this.creature.__previousPosition);
-      const endTile = window.gameClient.world.getTileFromWorldPosition(this.creature.getPosition());
-      
-      const startElevation = startTile ? startTile.__renderElevation : 0;
-      const endElevation = endTile ? endTile.__renderElevation : 0;
-      
-      // Apply easing function for smoother elevation transition
-      const easedFraction = this.__easeInOutQuad(fraction);
-      
-      // Interpolate between start and end elevation with easing
-      return startElevation + (endElevation - startElevation) * easedFraction;
-    }
-    
-    // If not moving, return the current tile's elevation
-    const currentTile = window.gameClient.world.getTileFromWorldPosition(this.creature.getPosition());
-    return currentTile ? currentTile.__renderElevation : 0;
-  }
-
-  private __easeInOutQuad(t: number): number {
-    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    const endTile = window.gameClient.world.getTileFromWorldPosition(this.creature.getPosition());
+    const endElevation = endTile ? endTile.__renderElevation : 0;
+    return endElevation;
   }
 
   public moveTo(position: Position, stepDurationTicks: number): any {
@@ -110,10 +83,7 @@ export default class CreatureRendererHelper {
     // Save old position
     this.creature.__previousPosition = this.creature.getPosition().copy();
   
-    this.__movementEvent = window.gameClient.eventQueue.addEvent(
-      this.unlockMovement.bind(this),
-      stepDurationTicks
-    );
+    this.__movementEvent = window.gameClient.eventQueue.addEvent(this.unlockMovement.bind(this), stepDurationTicks + 1);
   
     const angle = this.creature.getPosition().getLookDirection(position);
     if (angle !== null) this.__lookDirection = angle;
@@ -138,17 +108,23 @@ export default class CreatureRendererHelper {
       return window.gameClient.world.pathfinder.handlePathfind();
     }
 
-    if (window.gameClient.player && this.creature.id === window.gameClient.player.id) {
-      if (window.gameClient.player.__movementBuffer !== null) {
-        const buffered = window.gameClient.player.__movementBuffer;
-        window.gameClient.player.__movementBuffer = null;
-        window.gameClient.keyboard.handleCharacterMovement(buffered);
-      }
-    }
+    // if (window.gameClient.player && this.creature.id === window.gameClient.player.id) {
+    //   if (window.gameClient.player.__movementBuffer !== null) {
+    //     const buffered = window.gameClient.player.__movementBuffer;
+    //     window.gameClient.player.__movementBuffer = null;
+    //     window.gameClient.keyboard.handleCharacterMovement(buffered);
+    //   }
+    // }
   }
 
   public getLookDirection(): number {
     return this.__lookDirection;
+  }
+
+  public getElevation(): number {
+    const tile = window.gameClient.world.getTileFromWorldPosition(this.creature.getPosition());
+    const elevation = tile ? tile.__renderElevation : 0;
+    return elevation;
   }
 
   public setTurnBuffer(direction: number): void {
@@ -164,10 +140,10 @@ export default class CreatureRendererHelper {
   }
 
   public getMovingFraction(): number {
-    // If not moving or teleported, fraction is 0.
-    if (!this.isMoving() || this.__teleported) {
+    if (!this.__movementEvent || this.__teleported) {
       return 0;
     }
+  
     return this.__movementEvent.remainingFraction();
   }
 
@@ -202,19 +178,20 @@ export default class CreatureRendererHelper {
   }
 
   protected __getWalkingFrame(frameGroup: any): number {
-    if (!frameGroup || !this.creature.isMoving()) return 0;
+    // if (!frameGroup || !this.creature.isMoving()) return 0;
   
-    const animTime = this.getElapsedWalkTime();     // Real time elapsed since movement started (ms)
-    const totalTime = this.getStepDurationMs();     // Total movement duration (ms)
-  
-    const frameCount = frameGroup.animationLength;
-    if (frameCount <= 1 || totalTime === 0) return 0;
-  
-    // Use normalized progress from 0 to just below 1 (inclusive)
-    const progress = Math.min(animTime / totalTime, 0.9999);
-  
-    const frameIndex = Math.floor(progress * frameCount);
-    return Math.max(0, Math.min(frameIndex, frameCount - 1));
+    // const animTime = this.getElapsedWalkTime();     // Real time elapsed since movement started (ms)
+    // const totalTime = this.getStepDurationMs();     // Total movement duration (ms)
+    // const frameCount = frameGroup.animationLength;
+    // if (frameCount <= 1 || totalTime === 0) return 0;
+
+    // const progress = Math.min(animTime / totalTime, frameCount);
+    // const frameIndex = Math.floor(progress * frameCount);
+    // return Math.max(0, Math.min(frameIndex, frameCount));
+
+    const frame = Math.round((1 - this.getMovingFraction()) * (frameGroup.animationLength - 1))
+    console.log('frame', frame, 'movingFraction', this.getMovingFraction(), 'animationLength', frameGroup.animationLength);
+    return frame;
   }
   
 

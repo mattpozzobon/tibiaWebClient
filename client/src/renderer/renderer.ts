@@ -248,13 +248,13 @@ export default class Renderer {
 
         // Collect creature sprites
         tile.monsters.forEach((creature: Creature) => {
+
           if (this.creatureRenderer.shouldDefer(tile, creature)) {
             this.creatureRenderer.defer(tile, creature);
-            return; // Skip rendering this creature on current tile
+            return;
           }
-          
+
           this.creatureRenderer.collectSprites(creature, this.getCreatureScreenPosition(creature), spriteBatches);
-          
           // Collect creature animations
           this.creatureRenderer.collectAnimationSpritesBelow(creature, spriteBatches, this.getCreatureScreenPosition.bind(this));
           this.creatureRenderer.collectAnimationSpritesAbove(creature, spriteBatches, this.getCreatureScreenPosition.bind(this));

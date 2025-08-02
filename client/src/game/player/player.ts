@@ -44,8 +44,8 @@ export default class Player extends Creature {
     this.outfits = data.outfits;
 
     // Initialize character bars
-    this.characterElement.addManaBar((this.vitals.state.mana / this.vitals.state.maxMana) * 100 + "%");
-    this.characterElement.addEnergyBar((this.vitals.state.energy / this.vitals.state.maxEnergy) * 100 + "%");
+    //this.characterElement.addManaBar((this.vitals.state.mana / this.vitals.state.maxMana) * 100 + "%");
+    //this.characterElement.addEnergyBar((this.vitals.state.energy / this.vitals.state.maxEnergy) * 100 + "%");
   }
 
 

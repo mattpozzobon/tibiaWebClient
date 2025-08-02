@@ -1,4 +1,4 @@
-import { Application, Container, Sprite, Texture } from 'pixi.js';
+import { Application, Assets, Container, Sprite, Texture, BitmapFont } from 'pixi.js';
 import Debugger from "../utils/debugger";
 import Interface from "../ui/interface";
 import Position from "../game/position";
@@ -7,6 +7,8 @@ import TileRenderer from './tile-renderer';
 import ItemRenderer from './item-renderer';
 import CreatureRenderer from './creature-renderer';
 import AnimationRenderer from './animation-renderer';
+import BitmapFontGenerator from './font';
+import BMFontLoader from './font';
 
 export default class Renderer {
   __nMiliseconds: number;
@@ -32,6 +34,7 @@ export default class Renderer {
   public scalingContainer: Container;
   public creatureRenderer: CreatureRenderer;
   public animationRenderer: AnimationRenderer;
+  public overlayLayer: Container;
   public gameLayer: Container;
 
   public spritePool: Sprite[] = [];
@@ -51,7 +54,10 @@ export default class Renderer {
     this.gameLayer = new Container();
 
     this.app.stage.addChild(this.scalingContainer);
+    
+    this.overlayLayer = new Container();
     this.scalingContainer.addChild(this.gameLayer);
+    this.scalingContainer.addChild(this.overlayLayer);
     
     this.__start = performance.now();
     this.__nMiliseconds = 0;
@@ -88,14 +94,20 @@ export default class Renderer {
     const height = Math.floor(baseHeight * scale);
   
     const app = new Application();
+    
     await app.init({
       width,
       height,
       antialias: false,
       resolution: 1,
+      
       backgroundAlpha: 0,
+      roundPixels: true,
+      preference: 'webgl',
     });
-  
+
+    await BMFontLoader.load('/png/fonts/Tibia-Border-16px-Subtle.xml');
+    
     const container = document.getElementById("game-container")!;
     container.innerHTML = "";
     container.appendChild(app.canvas);
@@ -109,7 +121,6 @@ export default class Renderer {
   
     return renderer;
   }
-  
 
   public resizeAndScale(): void {
     const tileSize = Interface.TILE_SIZE;
@@ -254,6 +265,7 @@ export default class Renderer {
             return;
           }
 
+          // Collect creature sprites for pixi
           this.creatureRenderer.collectSprites(creature, this.getCreatureScreenPosition(creature), spriteBatches);
           // Collect creature animations
           this.creatureRenderer.collectAnimationSpritesBelow(creature, spriteBatches, this.getCreatureScreenPosition.bind(this));
@@ -296,7 +308,7 @@ export default class Renderer {
     const t1 = performance.now();
     this.totalDrawTime += t1 - t0;
   }
-  
+
   private renderSpriteBatches(spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>): void {
     let poolIndex = this.poolIndex;
     let currentTextureKey = '';

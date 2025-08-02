@@ -5,9 +5,9 @@ import ConditionManager from "./condition";
 import { Vitals, VitalsData } from "./player/vitals/vitals";
 import Interface from "../ui/interface";
 import CastingManager from "../ui/managers/casting-manager";
-import CharacterElement from "../ui/screen-elements/screen-element-character";
 import BoxAnimation from "../utils/box-animation";
 import CreatureRendererHelper from "../renderer/creature-renderer-helper";
+import CharacterPixiElement from "../ui/screen-elements/screen-element-characther-pixi";
 
 
 export interface CreatureData {
@@ -32,7 +32,8 @@ export default class Creature {
   public __target: any;
   public __animations: Set<any>;
   // Assume characterElement is provided (e.g., by Creature or assigned later)
-  public characterElement: CharacterElement;
+  //public characterElement: CharacterElement;
+  public characterElementPixi: CharacterPixiElement;
   public vitals: Vitals;
   public renderer: CreatureRendererHelper;
   
@@ -46,12 +47,15 @@ export default class Creature {
     this.outfit = new Outfit(data.outfit);
     this.castingManager = new CastingManager();
     this.renderer = new CreatureRendererHelper(this);
+    this.characterElementPixi = new CharacterPixiElement(this);
+ 
     this.__chunk = window.gameClient.world.getChunkFromWorldPosition(this.vitals.position);
 
     // Create the character element (method implementation assumed).
-    this.characterElement = new CharacterElement(this);
-    window.gameClient.interface.screenElementManager.add(this.characterElement.element);
-    this.characterElement.setHealthFraction(this.getHealthFraction());
+    //this.characterElement = new CharacterElement(this);
+    //window.gameClient.interface.screenElementManager.add(this.characterElement.element);
+    //this.characterElement.setHealthFraction(this.getHealthFraction());
+    
 
     this.__previousPosition = data.vitals.position.copy();
     this.__activeTextElement = null;
@@ -130,6 +134,14 @@ export default class Creature {
     return this.clamp(this.vitals.state.health / this.vitals.state.maxHealth, 0, 1);
   }
 
+  public getManaFraction(): number {
+    return this.clamp(this.vitals.state.mana / this.vitals.state.maxMana, 0, 1);
+  }
+
+  public getEnergyFraction(): number {
+    return this.clamp(this.vitals.state.energy / this.vitals.state.maxEnergy, 0, 1);
+  }
+
   clamp(value: number, min: number, max: number): number {
     return Math.max(min, Math.min(max, value));
   }
@@ -180,7 +192,7 @@ export default class Creature {
 
   // Method: remove (removes creature's DOM element)
   public remove(): void {
-    this.characterElement.remove();
+    this.characterElementPixi.remove();
   }
 
   // Method: getMoveOffset

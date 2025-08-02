@@ -7,7 +7,7 @@ export default class CharacterElement extends ScreenElement {
   private __creature: Creature;
   public manaBar?: HTMLElement;
   public energyBar?: HTMLElement;
-
+  
   constructor(creature: Creature) {
     super("character-element-prototype");
     

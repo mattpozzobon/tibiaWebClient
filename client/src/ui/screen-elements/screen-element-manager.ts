@@ -1,3 +1,4 @@
+import Creature from "../../game/creature";
 import FloatingElement from "./screen-element-floating";
 import MessageElement from "./screen-element-message";
 
@@ -18,7 +19,8 @@ export default class ScreenElementManager {
   public clear(): void {
     // Remove all character elements from the DOM
     Object.values(window.gameClient.world.activeCreatures).forEach((creature: any) => {
-      creature.characterElement.remove();
+      //creature.characterElement.remove();
+      window.gameClient.renderer.overlayLayer.removeChild(creature.characterElementPixi);
     });
   }
 
@@ -36,26 +38,27 @@ export default class ScreenElementManager {
   }
 
   private __renderCharacterElements(): void {
-    // Render floating name elements above the active creatures
-    Object.values(window.gameClient.world.activeCreatures).forEach((creature: any) => {
-      // Do not show the name element when on another floor
+    Object.values(window.gameClient.world.activeCreatures).forEach((creature: Creature) => {
       if (window.gameClient.player!.getPosition().z !== creature.getPosition().z) {
-        return creature.characterElement.hide();
+        creature.characterElementPixi.visible = false;
+        return;
       }
-      // Do not waste time rendering creatures that are not visible
+  
       if (!window.gameClient.player!.canSeeSmall(creature)) {
-        return creature.characterElement.hide();
+        creature.characterElementPixi.visible = false;
+        return;
       }
-      // Set color of nameplate for creatures other than the player
+  
       if (creature !== window.gameClient.player) {
         if (window.gameClient.player!.getMaxFloor() > creature.getMaxFloor()) {
-          creature.characterElement.setGrey();
+          //creature.characterElementPixi.setHealthFraction(0);
         } else {
-          creature.characterElement.setDefault();
+          //creature.characterElementPixi.setHealthFraction(creature.getHealthFraction());
         }
       }
-      // Update the position of the name tag
-      creature.characterElement.setTextPosition();
+  
+      creature.characterElementPixi.render();
+      creature.characterElementPixi.visible = true;
     });
   }
 

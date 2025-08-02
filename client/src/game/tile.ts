@@ -9,6 +9,7 @@ import Thing from "./thing";
 
 
 export default class Tile extends Thing implements IPathNode {
+  static readonly MAX_ELEVATION = 0.75;
   __position: Position;
   public __renderElevation: number = 0;
   private __animations: Set<any> = new Set();
@@ -70,7 +71,7 @@ export default class Tile extends Thing implements IPathNode {
   }
 
   addElevation(elevation: number): void {
-    this.setElevation(Math.min(1, this.__renderElevation + elevation / 32));
+    this.setElevation(Math.min(Tile.MAX_ELEVATION, this.__renderElevation + elevation / 32));
   }
 
   deleteAnimation(animation: any): void {
@@ -86,7 +87,7 @@ export default class Tile extends Thing implements IPathNode {
   }
 
   hasMaximumElevation(): boolean {
-    return this.__renderElevation === 1;
+    return this.__renderElevation === Tile.MAX_ELEVATION
   }
 
   addCreature(creature: any): void {

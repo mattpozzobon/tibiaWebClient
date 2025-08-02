@@ -1,6 +1,5 @@
 
 import Position from "./position";
-import { CONST } from "../helper/appContext";
 import Outfit from "./outfit";
 import ConditionManager from "./condition";
 import { Vitals, VitalsData } from "./player/vitals/vitals";

@@ -21,8 +21,8 @@ export enum COLOR {
 
 export default class CharacterPixiElement extends Container {
   private __creature: Creature;
-  private readonly BAR_WIDTH = 18;
-  private readonly BAR_HEIGHT = 2;
+  private readonly BAR_WIDTH = 32;
+  private readonly BAR_HEIGHT = 4;
   private readonly BAR_SPACING = 0;
   private nameText!: BitmapText;
   private bars: Record<BarType, { fill: Graphics }> = {} as any;
@@ -31,9 +31,9 @@ export default class CharacterPixiElement extends Container {
     super();
     this.__creature = creature;
     this.createNameText();
-    this.createBar(BarType.Health, this.getHealthColor(this.__creature.getHealthFraction()));
-    this.createBar(BarType.Mana, COLOR.BLUE);
-    this.createBar(BarType.Energy, COLOR.YELLOW);
+    this.createBar(BarType.Health);
+    this.createBar(BarType.Mana);
+    this.createBar(BarType.Energy);
 
     window.gameClient.renderer.overlayLayer.addChild(this);
   }
@@ -45,7 +45,7 @@ export default class CharacterPixiElement extends Container {
       text: this.__creature.getName(),
       style: {
         fontFamily: "Tibia-Border-16px-Subtle",
-        fontSize: 10,
+        fontSize: 18,
       }
     } as TextOptions);
 
@@ -55,15 +55,14 @@ export default class CharacterPixiElement extends Container {
     this.addChild(this.nameText);
   }
 
-  private createBar(barType: BarType, fillColor: number): void {
-    const scale = window.gameClient.renderer.scalingContainer.scale.y;
+  private createBar(barType: BarType): void {
     const y = barType * (this.BAR_HEIGHT);
 
     const bar = new Container();
     const border = new Graphics();
     const fill = new Graphics();
 
-    border.rect(0, 0, this.BAR_WIDTH, (this.BAR_HEIGHT/scale)*1.5).fill(0x000000);
+    border.rect(0, 0, this.BAR_WIDTH, this.BAR_HEIGHT).fill(0x000000);
 
     bar.addChild(border);
     border.addChild(fill);
@@ -75,8 +74,8 @@ export default class CharacterPixiElement extends Container {
   
   
   public render(): void {
-    const screenPos: Position = window.gameClient.renderer.getCreatureScreenPosition(this.__creature);
-    this.position.set(screenPos.x * 32 + 4, screenPos.y * 32 - 16);
+    const pos = window.gameClient.renderer.getOverlayScreenPosition(this.__creature);
+    this.position.set(Math.round(pos.x), Math.round(pos.y));
     this.visible = true;
 
     // Health
@@ -97,13 +96,12 @@ export default class CharacterPixiElement extends Container {
   private updateBar(barType: BarType, fraction: number, color: number): void {
       const bar = this.bars[barType];
       const fill = bar.fill;
-      const scale = window.gameClient.renderer.scalingContainer.scale.y;
 
       fill.clear();
 
-      const fillWidth = Math.max(1, Math.round((this.BAR_WIDTH - 2) * Math.max(0, Math.min(fraction, 1))));
+      const fillWidth = Math.max(1, Math.round((this.BAR_WIDTH) * Math.max(0, Math.min(fraction, 1))))-1;
 
-      fill.rect(0.2, 0.2, fillWidth+1, this.BAR_HEIGHT/scale).fill(color);
+      fill.rect(1, 1, fillWidth, this.BAR_HEIGHT-2).fill(color);
   }
 
   public remove(): void {

@@ -51,13 +51,15 @@ export default class Renderer {
 
     this.debugger = new Debugger();
     this.scalingContainer = new Container();
+    this.overlayLayer = new Container();
     this.gameLayer = new Container();
 
     this.app.stage.addChild(this.scalingContainer);
+    this.app.stage.addChild(this.overlayLayer);
     
-    this.overlayLayer = new Container();
+
     this.scalingContainer.addChild(this.gameLayer);
-    this.scalingContainer.addChild(this.overlayLayer);
+    //this.scalingContainer.addChild(this.overlayLayer);
     
     this.__start = performance.now();
     this.__nMiliseconds = 0;
@@ -225,6 +227,34 @@ export default class Renderer {
       0
     );
   }
+
+  public getOverlayScreenPosition(creature: Creature): { x: number, y: number } {
+    const renderer = window.gameClient.renderer;
+
+    // 1. Get world-space position (usually tile-based, e.g., (x, y, z))
+    const screenPos: Position = renderer.getCreatureScreenPosition(creature);
+
+    // 2. World-to-screen conversion:
+    //    - Multiply by tile size (e.g. 32)
+    //    - Apply scaling
+    //    - Add the scalingContainer's offset (if any centering logic)
+    const scale = renderer.scalingContainer.scale.x; // assume uniform scaling for most Tibia-like games
+    const tileSize = 32; // Change if your tiles are a different size
+
+    // Project to scaled screen space
+    let x = (screenPos.x * tileSize) * scale + renderer.scalingContainer.x;
+    let y = (screenPos.y * tileSize) * scale + renderer.scalingContainer.y;
+
+    // 3. Apply overlay offset: move bar/name above the sprite's head (use scale!)
+    // Example: offset by 16px up (half a tile), scaled
+    y -= 16 * scale;
+
+    // 4. (Optional) Adjust x/y for bar centering, pixel correction, etc.
+    // For health bars: nudge x/y so the bar is centered above the sprite
+    x += 4 * scale; // center for 18px bar if sprite is 32px wide
+
+    return { x, y };
+}
   
   public __renderWorld(): void {
     const t0 = performance.now();

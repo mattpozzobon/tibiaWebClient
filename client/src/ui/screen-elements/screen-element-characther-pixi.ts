@@ -23,7 +23,8 @@ export default class CharacterPixiElement extends Container {
   private __creature: Creature;
   private readonly BAR_WIDTH = 32;
   private readonly BAR_HEIGHT = 4;
-  private readonly BAR_SPACING = 0;
+
+  private barCount = 1;
   private nameText!: BitmapText;
   private bars: Record<BarType, { fill: Graphics }> = {} as any;
 
@@ -32,10 +33,14 @@ export default class CharacterPixiElement extends Container {
     this.__creature = creature;
     this.createNameText();
     this.createBar(BarType.Health);
+    window.gameClient.renderer.overlayLayer.addChild(this);
+  }
+
+  public enablePlayerBars() {
+    this.barCount = 3;
     this.createBar(BarType.Mana);
     this.createBar(BarType.Energy);
-
-    window.gameClient.renderer.overlayLayer.addChild(this);
+    this.createBar(BarType.Health);
   }
 
   private createNameText(): void {
@@ -72,10 +77,13 @@ export default class CharacterPixiElement extends Container {
     this.bars[barType] = { fill };
   }
   
-  
+  private getBarYOffset(): number {
+    return this.barCount * this.BAR_HEIGHT;
+  }
+
   public render(): void {
     const pos = window.gameClient.renderer.getOverlayScreenPosition(this.__creature);
-    this.position.set(Math.round(pos.x), Math.round(pos.y));
+    this.position.set(Math.round(pos.x), Math.round(pos.y + 12 - this.getBarYOffset()));
     this.visible = true;
 
     // Health
@@ -85,12 +93,16 @@ export default class CharacterPixiElement extends Container {
     this.nameText.tint = healthColor;
 
     // Mana
-    const manaFraction = this.__creature.getManaFraction?.() ?? 1;
-    this.updateBar(BarType.Mana, manaFraction, COLOR.BLUE);
+    if (this.bars[BarType.Mana]) {
+        const manaFraction = this.__creature.getManaFraction?.() ?? 1;
+        this.updateBar(BarType.Mana, manaFraction, COLOR.BLUE);
+    }
 
     // Energy
-    const energyFraction = this.__creature.getEnergyFraction?.() ?? 1;
-    this.updateBar(BarType.Energy, energyFraction, COLOR.YELLOW);
+    if (this.bars[BarType.Energy]) {
+        const energyFraction = this.__creature.getEnergyFraction?.() ?? 1;
+        this.updateBar(BarType.Energy, energyFraction, COLOR.YELLOW);
+    }
   }
 
   private updateBar(barType: BarType, fraction: number, color: number): void {

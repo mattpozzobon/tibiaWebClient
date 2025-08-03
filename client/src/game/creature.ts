@@ -33,7 +33,7 @@ export default class Creature {
   public __animations: Set<any>;
   // Assume characterElement is provided (e.g., by Creature or assigned later)
   //public characterElement: CharacterElement;
-  public characterElementPixi: CharacterPixiElement;
+  public characterElementPixi!: CharacterPixiElement;
   public vitals: Vitals;
   public renderer: CreatureRendererHelper;
   
@@ -47,7 +47,6 @@ export default class Creature {
     this.outfit = new Outfit(data.outfit);
     this.castingManager = new CastingManager();
     this.renderer = new CreatureRendererHelper(this);
-    this.characterElementPixi = new CharacterPixiElement(this);
  
     this.__chunk = window.gameClient.world.getChunkFromWorldPosition(this.vitals.position);
 
@@ -61,6 +60,12 @@ export default class Creature {
     this.__activeTextElement = null;
     this.__target = null;
     this.__animations = new Set();
+  }
+
+  static create(data: CreatureData): Creature {
+    const creature = new Creature(data);
+    creature.characterElementPixi = new CharacterPixiElement(creature);
+    return creature;
   }
 
   public removeCondition(cid: number): void {

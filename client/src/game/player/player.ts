@@ -7,6 +7,7 @@ import Creature, { CreatureData } from "../creature";
 import ConditionManager from "../condition";
 import SkillModal from "../../ui/modals/modal-skills";
 import BattleWindow from "../../ui/window/window-battle";
+import CharacterPixiElement from "../../ui/screen-elements/screen-element-characther-pixi";
 
 export interface PlayerData extends CreatureData {
   equipment: any;
@@ -48,6 +49,12 @@ export default class Player extends Creature {
     //this.characterElement.addEnergyBar((this.vitals.state.energy / this.vitals.state.maxEnergy) * 100 + "%");
   }
 
+  static create(data: PlayerData): Player {
+    const player = new Player(data);
+    player.characterElementPixi = new CharacterPixiElement(player);
+    player.characterElementPixi.enablePlayerBars();
+    return player;
+  }
 
   public getTile(): any {
     return window.gameClient.world.getTileFromWorldPosition(this.vitals.position);

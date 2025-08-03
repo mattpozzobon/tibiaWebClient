@@ -584,7 +584,7 @@ class PacketHandler {
       }
     };
   
-    window.gameClient.world.createCreature(packet.id, new Creature(creatureData));
+    window.gameClient.world.createCreature(packet.id, Creature.create(creatureData));
   }
 
   handleCreatureTurn(packet: { id: number; direction: number }): void {

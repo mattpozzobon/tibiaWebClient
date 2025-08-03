@@ -143,7 +143,7 @@ export default class GameClient {
     this.interface.showGameInterface();
     this.interface.modalManager.close();
 
-    this.player = new Player(packet);
+    this.player = Player.create(packet);
     this.world.createCreature(packet.id, this.player);
     console.log(this.player);
     window.gameClient.renderer.tileRenderer.refreshVisibleTiles()

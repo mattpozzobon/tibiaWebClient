@@ -15,7 +15,6 @@ export default class OutlineCanvasPixi extends Container {
    * screenPosition: {x, y} in screen pixel coordinates (center of tile/item)
    */
   createOutline(spriteIdentifier: number, screenPosition: { x: number, y: number }): void {
-    console.log("OutlineCanvasPixi.createOutline", { spriteIdentifier, screenPosition });
     if (spriteIdentifier === 0 || spriteIdentifier === this.__currentIdentifier) return;
 
     this.__currentIdentifier = spriteIdentifier;

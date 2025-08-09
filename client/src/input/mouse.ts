@@ -41,7 +41,7 @@ class Mouse {
     document.body.style.cursor = which;
   }
 
-  getWorldObject(event: MouseEvent): any {
+  public getWorldObject(event: MouseEvent): any {
     return {
       which: window.gameClient.renderer.getWorldCoordinates(event),
       index: 0xff,
@@ -141,7 +141,7 @@ class Mouse {
 
   private __handleMouseMove(event: MouseEvent): void {
     if (!window.gameClient.isRunning()) return;
-    this.x = event.clientX; // Update
+    this.x = event.clientX; 
     this.y = event.clientY;
     this.__currentMouseTile = window.gameClient.renderer.getWorldCoordinates(event);
     // Call __updateCursorMove to update the cursor based on the target element.

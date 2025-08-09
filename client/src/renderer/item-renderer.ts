@@ -108,12 +108,17 @@ export default class ItemRenderer {
     for (let x = 0; x < frameGroup.width; x++) {
       for (let y = 0; y < frameGroup.height; y++) {
         for (let l = 0; l < frameGroup.layers; l++) {
-          let index = frameGroup.getSpriteIndex(frame, pattern.x, pattern.y, pattern.z, l, x, y);
-          const sprite = frameGroup.getSprite(index);
-          if (sprite) {
-            const px = (screenPos.x * 32) ;
-            const py = (screenPos.y * 32) ;
-            window.gameClient.renderer.outlineCanvas.createOutline(index, { x: px, y: py });
+          // Use sprite ID, not array index
+          const spriteId = frameGroup.getSpriteId(frame, pattern.x, pattern.y, pattern.z, l, x, y);
+          if (spriteId) {
+            // Convert tile-based screenPos to pixel coordinates (center of tile), accounting for scaling and centering offsets
+            const renderer = window.gameClient.renderer;
+            const scale = renderer.scalingContainer.scale.x; // uniform scaling
+            const tileSize = Interface.TILE_SIZE;
+            const px = (screenPos.x * tileSize) * scale + renderer.scalingContainer.x + (tileSize / 2) * scale;
+            const py = (screenPos.y * tileSize) * scale + renderer.scalingContainer.y + (tileSize / 2) * scale;
+
+            renderer.outlineCanvas.createOutline(spriteId, { x: px, y: py });
             return;
           }
         }

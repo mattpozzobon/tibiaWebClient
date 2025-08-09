@@ -141,8 +141,8 @@ export default class Renderer {
     const scale = Math.min(scaleX, scaleY);
     
     this.scalingContainer.scale.set(scale);
-    this.scalingContainer.x = (this.app.screen.width - baseWidth * scale) / 2;
-    this.scalingContainer.y = (this.app.screen.height - baseHeight * scale) / 2;
+    this.scalingContainer.x = Math.round((this.app.screen.width  - baseWidth  * scale) / 2);
+    this.scalingContainer.y = Math.round((this.app.screen.height - baseHeight * scale) / 2);
   }
 
   public handleResize(): void {
@@ -233,40 +233,43 @@ export default class Renderer {
   }
 
   getWorldCoordinates(event: MouseEvent): Tile | null {
-    // 1. Get mouse position relative to the canvas
     const { x: canvasX, y: canvasY } = this.getCanvasCoordinates(event);
   
-    // 2. Remove centering offsets
-    const x = canvasX - this.scalingContainer.x;
-    const y = canvasY - this.scalingContainer.y;
+    // Use the SAME transform as the renderer
+    const scale   = this.scalingContainer.scale.x;  // uniform scale used to draw
+    const offsetX = Math.round(this.scalingContainer.x); // letterbox offset
+    const offsetY = Math.round(this.scalingContainer.y);
   
-    // 3. Divide by scale
-    const scale = this.scalingContainer.scale.x; // assume uniform scaling
-    const invScale = 1 / scale;
+    const tileSize = Interface.TILE_SIZE; // 32
   
-    const unscaledX = x * invScale;
-    const unscaledY = y * invScale;
+    // Undo centering + scaling to get tile-space coords
+    const sX = (canvasX - offsetX) / (scale * tileSize);
+    const sY = (canvasY - offsetY) / (scale * tileSize);
+    console.log('sX', sX, 'sY', sY);
   
-    // 4. Tile size in unscaled units
-    const tileSize = Interface.TILE_SIZE;
-  
-    // 5. Get which tile is clicked in screen coordinates
-    const screenTileX = Math.floor(unscaledX / tileSize);
-    const screenTileY = Math.floor(unscaledY / tileSize);
-  
-    // 6. Convert screen tile to world tile
-    const player = window.gameClient.player!;
+    // Mirror getStaticScreenPosition()
+    const player    = window.gameClient.player!;
     const playerPos = player.getPosition();
+    const centerX = (Interface.TILE_WIDTH  - 1) / 2;  // 27 -> 13
+    const centerY = (Interface.TILE_HEIGHT - 1) / 2;  // 13 -> 6
+    console.log('centerX', centerX, 'centerY', centerY);
   
-    const worldX = screenTileX + playerPos.x - Math.floor(Interface.TILE_WIDTH / 2);
-    const worldY = screenTileY + playerPos.y - Math.floor(Interface.TILE_HEIGHT / 2);
-    const worldZ = playerPos.z;
+    // If you want hover to account for sub-tile walk interpolation, subtract moveOff.* (tile units)
+    // const moveOff = player.getMoveOffset(); // must be in TILE units (0..1), not pixels
+    // const worldX = Math.floor(sX - centerX - moveOff.x + 1e-5) + playerPos.x;
+    // const worldY = Math.floor(sY - centerY - moveOff.y + 1e-5) + playerPos.y;
   
-    const projectedViewPosition = new Position(worldX, worldY, worldZ);
-    // 7. Get tile (chunk may be null)
-    const chunk = window.gameClient.world.getChunkFromWorldPosition(projectedViewPosition);
-    return chunk ? chunk.getFirstTileFromTop(projectedViewPosition.projected()) : null;
+    const worldX = Math.floor(sX - centerX + 1e-5) + playerPos.x;
+    const worldY = Math.floor(sY - centerY + 1e-5) + playerPos.y;
+    const p = new Position(worldX, worldY, playerPos.z);
+
+    console.log('p', p);
+  
+    const chunk = window.gameClient.world.getChunkFromWorldPosition(p);
+    return chunk ? chunk.getFirstTileFromTop(p.projected()) : null;
   }
+  
+  
 
   public getCanvasCoordinates(event: MouseEvent): { x: number; y: number } {
     const rect = this.app.canvas.getBoundingClientRect();

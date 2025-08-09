@@ -26,7 +26,7 @@ export default class ScreenElementManager {
 
   public render(): void {
     // Render the character elements
-    this.__renderCharacterElements();
+    this.__renderCreatureNameAndBars();
 
     // Render other text bubbles on the screen
     this.activeTextElements.forEach((screenElement) => {
@@ -37,7 +37,7 @@ export default class ScreenElementManager {
     });
   }
 
-  private __renderCharacterElements(): void {
+  private __renderCreatureNameAndBars(): void {
     Object.values(window.gameClient.world.activeCreatures).forEach((creature: Creature) => {
       if (window.gameClient.player!.getPosition().z !== creature.getPosition().z) {
         creature.characterElementPixi.visible = false;
@@ -47,14 +47,6 @@ export default class ScreenElementManager {
       if (!window.gameClient.player!.canSeeSmall(creature)) {
         creature.characterElementPixi.visible = false;
         return;
-      }
-  
-      if (creature !== window.gameClient.player) {
-        if (window.gameClient.player!.getMaxFloor() > creature.getMaxFloor()) {
-          //creature.characterElementPixi.setHealthFraction(0);
-        } else {
-          //creature.characterElementPixi.setHealthFraction(creature.getHealthFraction());
-        }
       }
   
       creature.characterElementPixi.render();
@@ -97,10 +89,7 @@ export default class ScreenElementManager {
     // Must update the position after appending to the parent
     messageElement.setTextPosition();
     // Schedule deletion after the element's duration expires
-    const event = window.gameClient.eventQueue.addEvent(
-      this.deleteTextElement.bind(this, messageElement),
-      messageElement.getDuration()
-    );
+    const event = window.gameClient.eventQueue.addEvent(this.deleteTextElement.bind(this, messageElement),messageElement.getDuration());
     return event;
   }
 

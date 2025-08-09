@@ -9,6 +9,8 @@ import CreatureRenderer from './creature-renderer';
 import AnimationRenderer from './animation-renderer';
 import BitmapFontGenerator from './font';
 import BMFontLoader from './font';
+import OutlineCanvasPixi from './outline-canvas-pixi';
+import Tile from '../game/tile';
 
 export default class Renderer {
   __nMiliseconds: number;
@@ -36,6 +38,7 @@ export default class Renderer {
   public animationRenderer: AnimationRenderer;
   public overlayLayer: Container;
   public gameLayer: Container;
+  public outlineCanvas!: OutlineCanvasPixi;
 
   public spritePool: Sprite[] = [];
   public readonly poolSize = 28 * 14 * 50; // (enough for all tiles + items + some headroom)
@@ -57,9 +60,7 @@ export default class Renderer {
     this.app.stage.addChild(this.scalingContainer);
     this.app.stage.addChild(this.overlayLayer);
     
-
     this.scalingContainer.addChild(this.gameLayer);
-    //this.scalingContainer.addChild(this.overlayLayer);
     
     this.__start = performance.now();
     this.__nMiliseconds = 0;
@@ -78,6 +79,10 @@ export default class Renderer {
     this.creatureRenderer = new CreatureRenderer();
     this.itemRenderer = new ItemRenderer();
     this.animationRenderer = new AnimationRenderer();
+    this.outlineCanvas = new OutlineCanvasPixi();
+    
+    // Add outline canvas to the overlay layer after all renderers are initialized
+    this.overlayLayer.addChild(this.outlineCanvas);
   }
 
   static async create(): Promise<Renderer> {
@@ -169,7 +174,6 @@ export default class Renderer {
     this.app.renderer.resize(Math.floor(targetWidth), Math.floor(targetHeight));
     this.resizeAndScale(); // this uses TILE_WIDTH/HEIGHT to center the scaled layer
   }
-  
 
   public render(): void {
     // Main entry point called every frame.
@@ -226,6 +230,50 @@ export default class Renderer {
       staticPosition.y - creatureMoveOffset.y - elevationOffset,
       0
     );
+  }
+
+  getWorldCoordinates(event: MouseEvent): Tile | null {
+    // 1. Get mouse position relative to the canvas
+    const { x: canvasX, y: canvasY } = this.getCanvasCoordinates(event);
+  
+    // 2. Remove centering offsets
+    const x = canvasX - this.scalingContainer.x;
+    const y = canvasY - this.scalingContainer.y;
+  
+    // 3. Divide by scale
+    const scale = this.scalingContainer.scale.x; // assume uniform scaling
+    const invScale = 1 / scale;
+  
+    const unscaledX = x * invScale;
+    const unscaledY = y * invScale;
+  
+    // 4. Tile size in unscaled units
+    const tileSize = Interface.TILE_SIZE;
+  
+    // 5. Get which tile is clicked in screen coordinates
+    const screenTileX = Math.floor(unscaledX / tileSize);
+    const screenTileY = Math.floor(unscaledY / tileSize);
+  
+    // 6. Convert screen tile to world tile
+    const player = window.gameClient.player!;
+    const playerPos = player.getPosition();
+  
+    const worldX = screenTileX + playerPos.x - Math.floor(Interface.TILE_WIDTH / 2);
+    const worldY = screenTileY + playerPos.y - Math.floor(Interface.TILE_HEIGHT / 2);
+    const worldZ = playerPos.z;
+  
+    const projectedViewPosition = new Position(worldX, worldY, worldZ);
+    // 7. Get tile (chunk may be null)
+    const chunk = window.gameClient.world.getChunkFromWorldPosition(projectedViewPosition);
+    return chunk ? chunk.getFirstTileFromTop(projectedViewPosition.projected()) : null;
+  }
+
+  public getCanvasCoordinates(event: MouseEvent): { x: number; y: number } {
+    const rect = this.app.canvas.getBoundingClientRect();
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
   }
 
   public getOverlayScreenPosition(creature: Creature): { x: number, y: number } {
@@ -423,4 +471,5 @@ export default class Renderer {
     // Public method to trigger test tile animations
     this.animationRenderer.addTestTileAnimations();
   }
+
 }

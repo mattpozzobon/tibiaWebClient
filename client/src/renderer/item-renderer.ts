@@ -6,6 +6,8 @@ import FrameGroup from "../utils/frame-group";
 import Interface from "../ui/interface";
 
 export default class ItemRenderer {
+  private lastHoveredTile: any = null;
+  
   constructor() {
     // No longer need sprite pool parameters since we use batching
   }
@@ -15,11 +17,24 @@ export default class ItemRenderer {
    */
   public collectSpritesForTile(tile: Tile, screenPos: Position, spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>): void {
     const items: Item[] = tile.items;
+    const currentHoverTile = window.gameClient.mouse.getCurrentTileHover();
+    
+    // Clear outline if we're no longer hovering over the same tile
+    if (this.lastHoveredTile && this.lastHoveredTile !== currentHoverTile) {
+      window.gameClient.renderer.outlineCanvas.clearOutline();
+    }
     
     for (let i = 0; i < items.length; ++i) {
       const item = items[i];
       if (item.hasFlag(PropBitFlag.DatFlagOnTop)) continue;
       this.collectSpriteForItem(item, screenPos, tile.__renderElevation, 32, spriteBatches);
+      
+      // Check if this is a pickupable item and we're hovering over it
+      if (item.isPickupable() && i === items.length - 1 && tile === currentHoverTile) {
+        this.createItemOutline(item, screenPos);
+        this.lastHoveredTile = currentHoverTile;
+      }
+      
       if (item.isElevation && item.isElevation()) {
         tile.addElevation(item.getDataObject().properties.elevation);
       }
@@ -33,6 +48,11 @@ export default class ItemRenderer {
       const item = items[i];
       if (!item.hasFlag(PropBitFlag.DatFlagOnTop)) continue;
       this.collectSpriteForItem(item, screenPos, 0, 32, spriteBatches);
+      
+      // // Check if this is a pickupable item and we're hovering over it
+      // if (item.isPickupable() && i === items.length - 1 && tile === window.gameClient.mouse.getCurrentTileHover()) {
+      //   this.createItemOutline(item, screenPos);
+      // }
     }
   }
   
@@ -76,4 +96,29 @@ export default class ItemRenderer {
       }
     }
   }
+
+  /**
+   * Creates an outline for pickupable items when hovering over them
+   */
+  private createItemOutline(item: Item, screenPos: Position): void {
+    const frameGroup = item.getFrameGroup(FrameGroup.NONE);
+    const frame = item.getFrame();
+    const pattern = item.getPattern();
+  
+    for (let x = 0; x < frameGroup.width; x++) {
+      for (let y = 0; y < frameGroup.height; y++) {
+        for (let l = 0; l < frameGroup.layers; l++) {
+          let index = frameGroup.getSpriteIndex(frame, pattern.x, pattern.y, pattern.z, l, x, y);
+          const sprite = frameGroup.getSprite(index);
+          if (sprite) {
+            const px = (screenPos.x * 32) ;
+            const py = (screenPos.y * 32) ;
+            window.gameClient.renderer.outlineCanvas.createOutline(index, { x: px, y: py });
+            return;
+          }
+        }
+      }
+    }
+  }
 }
+  

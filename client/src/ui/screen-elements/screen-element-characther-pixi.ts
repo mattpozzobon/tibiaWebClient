@@ -83,7 +83,7 @@ export default class CharacterPixiElement extends Container {
 
   public render(): void {
     const pos = window.gameClient.renderer.getOverlayScreenPosition(this.__creature);
-    this.position.set(Math.round(pos.x), Math.round(pos.y + 12 - this.getBarYOffset()));
+    this.position.set(Math.round(pos.x-20), Math.round(pos.y + 12 - this.getBarYOffset()));
     this.visible = true;
 
     // Health

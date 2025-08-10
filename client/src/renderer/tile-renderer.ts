@@ -10,7 +10,6 @@ export default class TileRenderer {
   private animationRenderer: AnimationRenderer;
 
   constructor() {
-    // No longer need sprite pool parameters since we use batching
     this.animationRenderer = new AnimationRenderer();
   }
 
@@ -19,7 +18,7 @@ export default class TileRenderer {
     const player = window.gameClient.player!;
     const world = window.gameClient.world!;
     const maxFloor = player.getMaxFloor();
-  
+
     for (let floor = 0; floor < maxFloor; floor++) {
       const floorTiles: Tile[] = [];
       for (const chunk of world.chunks) {
@@ -31,20 +30,12 @@ export default class TileRenderer {
       }
       this.tileCache.push(floorTiles);
     }
-    
-    this.tileCache.reduce((sum, floor) => sum + floor.length, 0);
   }
 
-  /**
-   * Collect sprites for batching instead of rendering immediately
-   */
-  public collectSprites(tile: Tile, screenPos: Position, spriteBatches: Map<string, BatchSprite[]>): void {
+  public collectSprites(tile: Tile, screenPos: Position, spriteBatches: Map<number, BatchSprite[]>): void {
     tile.setElevation(0);
     const xCell = screenPos.x, yCell = screenPos.y;
     if (xCell < -1 || xCell > Interface.TILE_WIDTH || yCell < -1 || yCell > Interface.TILE_HEIGHT) return;
-
-    const px = xCell * 32;
-    const py = yCell * 32;
 
     let fg: FrameGroup;
     try {
@@ -55,53 +46,54 @@ export default class TileRenderer {
 
     const f = tile.getFrame();
     const p = tile.getPattern();
-    
+
+    // simple 1x1 fast path
     if (fg.width === 1 && fg.height === 1 && fg.layers === 1) {
       const sid = fg.getSpriteIndex(f, p.x, p.y, p.z, 0, 0, 0);
       const tex = fg.getSprite(sid);
       if (tex) {
-        const textureKey = tex.baseTexture.uid.toString();
-        if (!spriteBatches.has(textureKey)) {
-          spriteBatches.set(textureKey, []);
-        }
-        spriteBatches.get(textureKey)!.push({
+        const key = tex.source.uid as number;
+        if (!spriteBatches.has(key)) spriteBatches.set(key, []);
+        spriteBatches.get(key)!.push({
           sprite: { texture: tex },
-          x: px,
-          y: py,
-          width: 32,
-          height: 32
+          x: xCell * Interface.TILE_SIZE,
+          y: yCell * Interface.TILE_SIZE,
+          width: Interface.TILE_SIZE,
+          height: Interface.TILE_SIZE
         });
       }
       return;
     }
 
+    // multi-tile: each piece must shift by (cx, cy)
     for (let l = 0; l < fg.layers; l++) {
       for (let cx = 0; cx < fg.width; cx++) {
         for (let cy = 0; cy < fg.height; cy++) {
           const sid = fg.getSpriteIndex(f, p.x, p.y, p.z, l, cx, cy);
           const tex = fg.getSprite(sid);
-          if (tex) {
-            const textureKey = tex.baseTexture.uid.toString();
-            if (!spriteBatches.has(textureKey)) {
-              spriteBatches.set(textureKey, []);
-            }
-            spriteBatches.get(textureKey)!.push({
-              sprite: { texture: tex },
-              x: px,
-              y: py,
-              width: 32,
-              height: 32
-            });
-          }
+          if (!tex) continue;
+
+          const key = tex.source.uid as number;
+          if (!spriteBatches.has(key)) spriteBatches.set(key, []);
+
+          spriteBatches.get(key)!.push({
+            sprite: { texture: tex },
+            x: (xCell - cx) * Interface.TILE_SIZE,
+            y: (yCell - cy) * Interface.TILE_SIZE,
+            width: Interface.TILE_SIZE,
+            height: Interface.TILE_SIZE
+          });
         }
       }
     }
   }
 
-  /**
-   * Collect tile animation sprites
-   */
-  public collectAnimationSprites(tile: Tile, screenPos: Position, spriteBatches: Map<string, BatchSprite[]>, getStaticScreenPosition?: (pos: Position) => Position): void {
+  public collectAnimationSprites(
+    tile: Tile,
+    _screenPos: Position,
+    spriteBatches: Map<number, BatchSprite[]>,
+    getStaticScreenPosition?: (pos: Position) => Position
+  ): void {
     this.animationRenderer.renderTileAnimations(tile, spriteBatches, getStaticScreenPosition);
   }
 }

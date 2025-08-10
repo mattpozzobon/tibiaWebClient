@@ -14,22 +14,20 @@ import { BatchSprite } from '../types/types';
 
 export default class Renderer {
   __nMiliseconds: number;
-  private lastTestAnimationTime: number = 0;
-  private readonly TEST_ANIMATION_INTERVAL: number = 1000; // 1 seconds
+  private lastTestAnimationTime = 0;
+  private readonly TEST_ANIMATION_INTERVAL = 1000;
 
-  //public screen: Canvas;
-  // public lightscreen: LightCanvas;
-  // public weatherCanvas: WeatherCanvas;
-  // public outlineCanvas: OutlineCanvas;
   public debugger: Debugger;
 
   private __start: number;
-  public totalDrawTime: number = 0;
-  public drawCalls: number = 0;
-  public batchCount: number = 0;
-  public textureSwitches: number = 0;
+  public totalDrawTime = 0;
+  public drawCalls = 0;
+  public batchCount = 0;
+  public textureSwitches = 0;
 
   public hoverOutline: Filter;
+  private readonly outlineFilters: Filter[]; // reuse array
+
   public app: Application;
   public tileRenderer: TileRenderer;
   public itemRenderer: ItemRenderer;
@@ -40,37 +38,35 @@ export default class Renderer {
   public gameLayer: Container;
 
   public spritePool: Sprite[] = [];
-  public readonly poolSize = 28 * 14 * 50; // (enough for all tiles + items + some headroom)
-  public poolIndex: number = 0;
-  private batches = new Map<string, BatchSprite[]>();
+  public readonly poolSize = 28 * 14 * 50;
+  public poolIndex = 0;
+
+  private batches = new Map<number, BatchSprite[]>(); // number uid -> entries
+  private lastUsed = 0;
+  private __pt = new Point(); // reused Point for hit conversion
 
   constructor(app: Application) {
-    //this.screen = new Canvas("screen", Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
-    //this.lightscreen = new LightCanvas(null, Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
-    //this.weatherCanvas = new WeatherCanvas(this.screen);
-    //this.outlineCanvas = new OutlineCanvas(null, 130, 130);
-
     this.app = app;
 
     this.debugger = new Debugger();
     this.scalingContainer = new Container();
     this.overlayLayer = new Container();
     this.gameLayer = new Container();
-    this.hoverOutline = new OutlineFilter(2, 0xFFFFFF);
+    this.hoverOutline = new OutlineFilter(1, 0xFFFFFF);
+    this.outlineFilters = [this.hoverOutline];
 
     this.app.stage.addChild(this.scalingContainer);
     this.app.stage.addChild(this.overlayLayer);
-    
     this.scalingContainer.addChild(this.gameLayer);
-    
+
     this.__start = performance.now();
     this.__nMiliseconds = 0;
+
     this.spritePool = new Array(this.poolSize);
-    
     for (let i = 0; i < this.poolSize; i++) {
       const spr = new Sprite(Texture.EMPTY);
-      spr.width = 32;
-      spr.height = 32;
+      spr.width = Interface.TILE_SIZE;
+      spr.height = Interface.TILE_SIZE;
       spr.visible = false;
       this.gameLayer.addChild(spr);
       this.spritePool[i] = spr;
@@ -88,41 +84,35 @@ export default class Renderer {
     const baseRows = Interface.TILE_HEIGHT;
     const baseWidth = baseCols * tileSize;
     const baseHeight = baseRows * tileSize;
-  
-    const viewport = window.visualViewport ?? { width: window.innerWidth, height: window.innerHeight };
+
+    const viewport = (window.visualViewport ?? { width: window.innerWidth, height: window.innerHeight }) as { width: number; height: number };
     const scaleX = viewport.width / baseWidth;
     const scaleY = viewport.height / baseHeight;
-    const scale = Math.floor(Math.min(scaleX, scaleY) * 100) / 100; // Optional: snap to 0.01 step
-  
+    const scale = Math.floor(Math.min(scaleX, scaleY) * 100) / 100;
+
     const width = Math.floor(baseWidth * scale);
     const height = Math.floor(baseHeight * scale);
-  
+
     const app = new Application();
-    
     await app.init({
       width,
       height,
       antialias: false,
       resolution: 1,
-      
       backgroundAlpha: 0,
       roundPixels: false,
       preference: 'webgl',
     });
 
     await BMFontLoader.load('/png/fonts/Tibia-Border-16px-Subtle.xml');
-    
+
     const container = document.getElementById("game-container")!;
     container.innerHTML = "";
     container.appendChild(app.canvas);
-  
+
     const renderer = new Renderer(app);
     renderer.resizeAndScale();
-  
-    window.addEventListener("resize", () => {
-      renderer.handleResize(); // custom function to recompute
-    });
-  
+    window.addEventListener("resize", () => renderer.handleResize());
     return renderer;
   }
 
@@ -132,14 +122,18 @@ export default class Renderer {
     const baseRows = Interface.TILE_HEIGHT;
     const baseWidth = baseCols * tileSize;
     const baseHeight = baseRows * tileSize;
-  
+
     const scaleX = this.app.screen.width / baseWidth;
     const scaleY = this.app.screen.height / baseHeight;
     const scale = Math.min(scaleX, scaleY);
-    
+
     this.scalingContainer.scale.set(scale);
     this.scalingContainer.x = Math.round((this.app.screen.width  - baseWidth  * scale) / 2);
     this.scalingContainer.y = Math.round((this.app.screen.height - baseHeight * scale) / 2);
+
+    // keep outline thickness visually consistent across resolutions
+    const s = this.scalingContainer.scale.x;
+    (this.hoverOutline as any).thickness = Math.max(1, Math.round(2 * s));
   }
 
   public handleResize(): void {
@@ -148,42 +142,34 @@ export default class Renderer {
     const baseRows = Interface.TILE_HEIGHT;
     const baseWidth = baseCols * tileSize;
     const baseHeight = baseRows * tileSize;
-  
+
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-  
+
     const aspectRatio = baseWidth / baseHeight;
     const viewportRatio = viewportWidth / viewportHeight;
-  
+
     let targetWidth: number;
     let targetHeight: number;
-  
+
     if (viewportRatio > aspectRatio) {
-      // Window is wider than game: fit by height
       targetHeight = viewportHeight;
       targetWidth = targetHeight * aspectRatio;
     } else {
-      // Window is taller than game: fit by width
       targetWidth = viewportWidth;
       targetHeight = targetWidth / aspectRatio;
     }
-  
+
     this.app.renderer.resize(Math.floor(targetWidth), Math.floor(targetHeight));
-    this.resizeAndScale(); // this uses TILE_WIDTH/HEIGHT to center the scaled layer
+    this.resizeAndScale();
   }
 
   private resetBatches(): void {
+    // reuse arrays to avoid GC
     for (const arr of this.batches.values()) arr.length = 0;
   }
 
-  private pushBatch(key: string, entry: BatchSprite): void {
-    let arr = this.batches.get(key);
-    if (!arr) { arr = []; this.batches.set(key, arr); }
-    arr.push(entry);
-  }
-
   public render(): void {
-    // Main entry point called every frame.
     this.__increment();
     this.__renderWorld();
     this.__renderOther();
@@ -200,36 +186,24 @@ export default class Renderer {
   }
 
   private __increment(): void {
-    // Increments the renderer by a number of milliseconds
     this.debugger.__nFrames++;
     this.__nMiliseconds = performance.now() - this.__start;
   }
 
-  public setAmbientColor(r: number, g: number, b: number, a: number): void {
-    // Delegates to the lightscreen and sets the ambient color of the world to rgba
-    //this.lightscreen.setAmbientColor(r, g, b, a);
-  }
-  
-  public setWeather(bool: boolean): void {
-    // Sets the weather to either on/off
-    //this.weatherCanvas.setWeather(Number(bool));
-  }
-  
+  public setAmbientColor(_r: number, _g: number, _b: number, _a: number): void {}
+  public setWeather(_bool: boolean): void {}
+
   public getStaticScreenPosition(position: Position): Position {
-    // Return the static position of a particular world position
     const projectedPlayer = window.gameClient.player!.getPosition().projected();
     const projectedThing = position.projected();
     const x = ((Interface.TILE_WIDTH-1)/2) + window.gameClient.player!.getMoveOffset().x + projectedThing.x - projectedPlayer.x;
     const y = ((Interface.TILE_HEIGHT-1)/2) + window.gameClient.player!.getMoveOffset().y + projectedThing.y - projectedPlayer.y;
     return new Position(x, y, 0);
   }
-  
+
   public getCreatureScreenPosition(creature: Creature): Position {
-    // Returns the creature position which is a static position plus the creature move offset
     const staticPosition = this.getStaticScreenPosition(creature.getPosition());
     const creatureMoveOffset = creature.getMoveOffset();
-    
-    // Get the interpolated elevation offset during movement
     const elevationOffset = creature.renderer.getElevationOffset();
 
     return new Position(
@@ -239,28 +213,23 @@ export default class Renderer {
     );
   }
 
-
   getWorldCoordinates(event: MouseEvent): Tile | null {
-    // 1) DOM → Pixi global (handles CSS scaling, DPR, etc)
-    const global = new Point();
+    // DOM -> global (handles CSS + DPR)
+    const global = this.__pt;
     this.app.renderer.events.mapPositionToPoint(global, event.clientX, event.clientY);
-
-    // 2) Global → scalingContainer local (undo scale + letterboxing)
+    // global -> local (undo scale + letterbox)
     const local = this.scalingContainer.toLocal(global);
 
-    // 3) Local pixels → tile coords on screen
-    const sX = local.x / Interface.TILE_SIZE; // 32
+    // pixels -> tile coords (screen-space)
+    const sX = local.x / Interface.TILE_SIZE;
     const sY = local.y / Interface.TILE_SIZE;
 
-    // 4) Invert your getStaticScreenPosition (it ADDS move offset, so we SUBTRACT here)
+    // invert getStaticScreenPosition math
     const player = window.gameClient.player!;
     const pos = player.getPosition();
-    let move = player.getMoveOffset(); // must be in TILE units (0..1)
-    // If your move offset is in pixels, convert:
-    // move = { x: move.x / Interface.TILE_SIZE, y: move.y / Interface.TILE_SIZE };
-
-    const centerX = (Interface.TILE_WIDTH  - 1) / 2; // 27 -> 13
-    const centerY = (Interface.TILE_HEIGHT - 1) / 2; // 13 -> 6
+    const move = player.getMoveOffset();
+    const centerX = (Interface.TILE_WIDTH  - 1) / 2;
+    const centerY = (Interface.TILE_HEIGHT - 1) / 2;
 
     const worldX = Math.floor((sX - centerX - move.x) + 1e-7) + pos.x;
     const worldY = Math.floor((sY - centerY - move.y) + 1e-7) + pos.y;
@@ -272,134 +241,95 @@ export default class Renderer {
 
   public getOverlayScreenPosition(creature: Creature): { x: number, y: number } {
     const renderer = window.gameClient.renderer;
-
-    // 1. Get world-space position (usually tile-based, e.g., (x, y, z))
     const screenPos: Position = renderer.getCreatureScreenPosition(creature);
+    const scale = renderer.scalingContainer.scale.x;
+    const tileSize = Interface.TILE_SIZE;
 
-    // 2. World-to-screen conversion:
-    //    - Multiply by tile size (e.g. 32)
-    //    - Apply scaling
-    //    - Add the scalingContainer's offset (if any centering logic)
-    const scale = renderer.scalingContainer.scale.x; // assume uniform scaling for most Tibia-like games
-    const tileSize = 32; // Change if your tiles are a different size
-
-    // Project to scaled screen space
     let x = (screenPos.x * tileSize) * scale + renderer.scalingContainer.x;
     let y = (screenPos.y * tileSize) * scale + renderer.scalingContainer.y;
 
-    // 3. Apply overlay offset: move bar/name above the sprite's head (use scale!)
-    // Example: offset by 16px up (half a tile), scaled
     y -= 16 * scale;
-
-    // 4. (Optional) Adjust x/y for bar centering, pixel correction, etc.
-    // For health bars: nudge x/y so the bar is centered above the sprite
-    x += 4 * scale; // center for 18px bar if sprite is 32px wide
+    x += 4 * scale;
 
     return { x, y };
-}
-  
+  }
+
   public __renderWorld(): void {
     const t0 = performance.now();
-   
-    // Reset pool for this frame
+
+    // cheap pool reset
+    for (let i = 0; i < this.lastUsed; i++) {
+      const spr = this.spritePool[i];
+      spr.visible = false;
+      spr.filters = null;
+    }
     this.poolIndex = 0;
     this.drawCalls = 0;
     this.batchCount = 0;
     this.textureSwitches = 0;
 
-    for (let i = 0; i < this.poolSize; i++) {
-      this.spritePool[i].visible = false;
-    }
-   
-    const tileCache = this.tileRenderer.tileCache; // Tile[][], floors from 0 (bottom) up
-   
-    // Collect all sprites by texture for batching
-    const spriteBatches = new Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number, __outline: boolean}>>();
-     
-    // For each floor, collect sprites instead of rendering immediately
+    const tileCache = this.tileRenderer.tileCache;
+    this.resetBatches();
+
     for (let floor = 0; floor < tileCache.length; floor++) {
       const tiles = tileCache[floor];
- 
+
       for (const tile of tiles) {
         const screenPos = this.getStaticScreenPosition(tile.getPosition());
-         
-        // Collect tile sprites
-        this.tileRenderer.collectSprites(tile, screenPos, spriteBatches);
-         
-        // Collect item sprites
-        this.itemRenderer.collectSpritesForTile(tile, screenPos, spriteBatches);
 
-        // Collect creature sprites
+        this.tileRenderer.collectSprites(tile, screenPos, this.batches);
+        this.itemRenderer.collectSpritesForTile(tile, screenPos, this.batches);
+
         tile.monsters.forEach((creature: Creature) => {
-
           if (this.creatureRenderer.shouldDefer(tile, creature)) {
             this.creatureRenderer.defer(tile, creature);
             return;
           }
-
-          // Collect creature sprites for pixi
-          this.creatureRenderer.collectSprites(creature, this.getCreatureScreenPosition(creature), spriteBatches);
-          // Collect creature animations
-          this.creatureRenderer.collectAnimationSpritesBelow(creature, spriteBatches, this.getCreatureScreenPosition.bind(this));
-          this.creatureRenderer.collectAnimationSpritesAbove(creature, spriteBatches, this.getCreatureScreenPosition.bind(this));
+          this.creatureRenderer.collectSprites(creature, this.getCreatureScreenPosition(creature), this.batches);
+          this.creatureRenderer.collectAnimationSpritesBelow(creature, this.batches, this.getCreatureScreenPosition.bind(this));
+          this.creatureRenderer.collectAnimationSpritesAbove(creature, this.batches, this.getCreatureScreenPosition.bind(this));
         });
 
-        // Render deferred creatures on this tile
-        this.creatureRenderer.renderDeferred(tile, spriteBatches);
-
-        // Collect on-top item sprites
-        this.itemRenderer.collectOnTopSpritesForTile(tile, screenPos, spriteBatches);
-
-        // Collect tile animations
-        this.tileRenderer.collectAnimationSprites(tile, screenPos, spriteBatches, this.getStaticScreenPosition.bind(this));
+        this.creatureRenderer.renderDeferred(tile, this.batches);
+        this.itemRenderer.collectOnTopSpritesForTile(tile, screenPos, this.batches);
+        this.tileRenderer.collectAnimationSprites(tile, screenPos, this.batches, this.getStaticScreenPosition.bind(this));
       }
 
-      // Render distance animations for this floor
+      // distance animations (by floor)
       const animationLayer = this.animationRenderer.animationLayers[floor];
       if (animationLayer && animationLayer.size > 0) {
-        const animationsToRemove: any[] = [];
-        
+        const toRemove: any[] = [];
         animationLayer.forEach((animation: any) => {
-          if (animation.expired()) {
-            animationsToRemove.push(animation);
-          } else {
-            this.animationRenderer.renderDistanceAnimation(animation, animation, spriteBatches, this.getStaticScreenPosition.bind(this));
-          }
+          if (animation.expired()) toRemove.push(animation);
+          else this.animationRenderer.renderDistanceAnimation(animation, animation, this.batches, this.getStaticScreenPosition.bind(this));
         });
-        
-        // Batch remove expired animations
-        animationsToRemove.forEach(animation => {
-          animationLayer.delete(animation);
-        });
+        toRemove.forEach(a => animationLayer.delete(a));
       }
     }
-     
-    // Render all sprites in texture batches
-    this.renderSpriteBatches(spriteBatches);
- 
+
+    this.renderSpriteBatches(this.batches);
+
     const t1 = performance.now();
     this.totalDrawTime += t1 - t0;
+    this.lastUsed = this.poolIndex;
   }
 
-  private renderSpriteBatches(spriteBatches: Map<string, BatchSprite[]>): void {
+  private renderSpriteBatches(spriteBatches: Map<number, BatchSprite[]>): void {
     let poolIndex = this.poolIndex;
-    let currentTextureKey = '';
-    
-    // Render each texture batch
+    let currentTextureKey = -1;
+
     for (const [textureKey, sprites] of spriteBatches) {
       if (poolIndex >= this.poolSize) break;
-      
-      // Only increment texture switches when we actually switch textures
+
       if (textureKey !== currentTextureKey) {
         this.textureSwitches++;
         currentTextureKey = textureKey;
       }
       this.batchCount++;
-      
-      // Render all sprites in this batch
+
       for (const spriteData of sprites) {
         if (poolIndex >= this.poolSize) break;
-        
+
         const spr = this.spritePool[poolIndex++];
         spr.texture = spriteData.sprite.texture;
         spr.x = spriteData.x;
@@ -407,16 +337,15 @@ export default class Renderer {
         spr.width = spriteData.width;
         spr.height = spriteData.height;
         spr.visible = true;
-        spr.filters = spriteData.outline ? [this.hoverOutline] : null;
+        spr.filters = spriteData.outline ? this.outlineFilters : null;
         this.drawCalls++;
       }
     }
-    
+
     this.poolIndex = poolIndex;
   }
-  
+
   public __renderOther(): void {
-    // Renders other information to the screen
     window.gameClient.player!.equipment.render();
     window.gameClient.interface.modalManager.render();
     this.__renderContainers();
@@ -425,46 +354,31 @@ export default class Renderer {
     window.gameClient.interface.hotbarManager.render();
     this.debugger.renderStatistics();
   }
-  
+
   public __renderContainers(): void {
-    // Handles a tab-out event of the game window
     window.gameClient.player!.__openedContainers.forEach((container: any) => container.__renderAnimated());
   }
-  
-  public __handleVisibiliyChange(event: Event): void {
-    // Handles a tab-out event of the game window
-    if (!document.hidden) {
-      return;
-    }
+
+  public __handleVisibiliyChange(_event: Event): void {
+    if (!document.hidden) return;
     Object.values(window.gameClient.world.activeCreatures).forEach((creature: any) => {
       creature.renderer.setMovementEvent(null);
     });
   }
-  
+
   public __drawCastbar(creature: any): void {
-    // Draws a castbar on top of the creature
     let position = this.getCreatureScreenPosition(creature);
-    position.y += 6 / 32;
+    position.y += 6 / Interface.TILE_SIZE;
     let fraction = creature.getCastFraction();
-    let color = "white";
-    if (fraction === 1) {
-      creature.endCast();
-    }
-    if (creature.__spell.channel !== null) {
-      fraction = 1 - fraction;
-    }
-    // TODO: check this
-    //this.screen.drawBar(32, 4, position, fraction, color);
-  } 
+    if (fraction === 1) creature.endCast();
+    if (creature.__spell.channel !== null) fraction = 1 - fraction;
+  }
 
   public addTestDistanceAnimations(): void {
-    // Public method to trigger test distance animations
     this.animationRenderer.addTestDistanceAnimations();
   }
 
   public addTestTileAnimations(): void {
-    // Public method to trigger test tile animations
     this.animationRenderer.addTestTileAnimations();
   }
-
 }

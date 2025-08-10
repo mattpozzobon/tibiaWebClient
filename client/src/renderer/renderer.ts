@@ -1,4 +1,4 @@
-import { Application, Assets, Container, Sprite, Texture, BitmapFont } from 'pixi.js';
+import { Application, Container, Sprite, Texture, Point, Filter } from 'pixi.js';
 import Debugger from "../utils/debugger";
 import Interface from "../ui/interface";
 import Position from "../game/position";
@@ -7,10 +7,10 @@ import TileRenderer from './tile-renderer';
 import ItemRenderer from './item-renderer';
 import CreatureRenderer from './creature-renderer';
 import AnimationRenderer from './animation-renderer';
-import BitmapFontGenerator from './font';
 import BMFontLoader from './font';
-import OutlineCanvasPixi from './outline-canvas-pixi';
 import Tile from '../game/tile';
+import { OutlineFilter } from 'pixi-filters';
+import { BatchSprite } from '../types/types';
 
 export default class Renderer {
   __nMiliseconds: number;
@@ -29,7 +29,7 @@ export default class Renderer {
   public batchCount: number = 0;
   public textureSwitches: number = 0;
 
-
+  public hoverOutline: Filter;
   public app: Application;
   public tileRenderer: TileRenderer;
   public itemRenderer: ItemRenderer;
@@ -38,12 +38,12 @@ export default class Renderer {
   public animationRenderer: AnimationRenderer;
   public overlayLayer: Container;
   public gameLayer: Container;
-  public outlineCanvas!: OutlineCanvasPixi;
 
   public spritePool: Sprite[] = [];
   public readonly poolSize = 28 * 14 * 50; // (enough for all tiles + items + some headroom)
   public poolIndex: number = 0;
- 
+  private batches = new Map<string, BatchSprite[]>();
+
   constructor(app: Application) {
     //this.screen = new Canvas("screen", Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
     //this.lightscreen = new LightCanvas(null, Interface.SCREEN_WIDTH_MIN, Interface.SCREEN_HEIGHT_MIN);
@@ -56,6 +56,7 @@ export default class Renderer {
     this.scalingContainer = new Container();
     this.overlayLayer = new Container();
     this.gameLayer = new Container();
+    this.hoverOutline = new OutlineFilter(2, 0xFFFFFF);
 
     this.app.stage.addChild(this.scalingContainer);
     this.app.stage.addChild(this.overlayLayer);
@@ -79,10 +80,6 @@ export default class Renderer {
     this.creatureRenderer = new CreatureRenderer();
     this.itemRenderer = new ItemRenderer();
     this.animationRenderer = new AnimationRenderer();
-    this.outlineCanvas = new OutlineCanvasPixi();
-    
-    // Add outline canvas to the overlay layer after all renderers are initialized
-    this.overlayLayer.addChild(this.outlineCanvas);
   }
 
   static async create(): Promise<Renderer> {
@@ -109,7 +106,7 @@ export default class Renderer {
       resolution: 1,
       
       backgroundAlpha: 0,
-      roundPixels: true,
+      roundPixels: false,
       preference: 'webgl',
     });
 
@@ -175,6 +172,16 @@ export default class Renderer {
     this.resizeAndScale(); // this uses TILE_WIDTH/HEIGHT to center the scaled layer
   }
 
+  private resetBatches(): void {
+    for (const arr of this.batches.values()) arr.length = 0;
+  }
+
+  private pushBatch(key: string, entry: BatchSprite): void {
+    let arr = this.batches.get(key);
+    if (!arr) { arr = []; this.batches.set(key, arr); }
+    arr.push(entry);
+  }
+
   public render(): void {
     // Main entry point called every frame.
     this.__increment();
@@ -232,51 +239,35 @@ export default class Renderer {
     );
   }
 
-  getWorldCoordinates(event: MouseEvent): Tile | null {
-    const { x: canvasX, y: canvasY } = this.getCanvasCoordinates(event);
-  
-    // Use the SAME transform as the renderer
-    const scale   = this.scalingContainer.scale.x;  // uniform scale used to draw
-    const offsetX = Math.round(this.scalingContainer.x); // letterbox offset
-    const offsetY = Math.round(this.scalingContainer.y);
-  
-    const tileSize = Interface.TILE_SIZE; // 32
-  
-    // Undo centering + scaling to get tile-space coords
-    const sX = (canvasX - offsetX) / (scale * tileSize);
-    const sY = (canvasY - offsetY) / (scale * tileSize);
-    console.log('sX', sX, 'sY', sY);
-  
-    // Mirror getStaticScreenPosition()
-    const player    = window.gameClient.player!;
-    const playerPos = player.getPosition();
-    const centerX = (Interface.TILE_WIDTH  - 1) / 2;  // 27 -> 13
-    const centerY = (Interface.TILE_HEIGHT - 1) / 2;  // 13 -> 6
-    console.log('centerX', centerX, 'centerY', centerY);
-  
-    // If you want hover to account for sub-tile walk interpolation, subtract moveOff.* (tile units)
-    // const moveOff = player.getMoveOffset(); // must be in TILE units (0..1), not pixels
-    // const worldX = Math.floor(sX - centerX - moveOff.x + 1e-5) + playerPos.x;
-    // const worldY = Math.floor(sY - centerY - moveOff.y + 1e-5) + playerPos.y;
-  
-    const worldX = Math.floor(sX - centerX + 1e-5) + playerPos.x;
-    const worldY = Math.floor(sY - centerY + 1e-5) + playerPos.y;
-    const p = new Position(worldX, worldY, playerPos.z);
 
-    console.log('p', p);
-  
+  getWorldCoordinates(event: MouseEvent): Tile | null {
+    // 1) DOM → Pixi global (handles CSS scaling, DPR, etc)
+    const global = new Point();
+    this.app.renderer.events.mapPositionToPoint(global, event.clientX, event.clientY);
+
+    // 2) Global → scalingContainer local (undo scale + letterboxing)
+    const local = this.scalingContainer.toLocal(global);
+
+    // 3) Local pixels → tile coords on screen
+    const sX = local.x / Interface.TILE_SIZE; // 32
+    const sY = local.y / Interface.TILE_SIZE;
+
+    // 4) Invert your getStaticScreenPosition (it ADDS move offset, so we SUBTRACT here)
+    const player = window.gameClient.player!;
+    const pos = player.getPosition();
+    let move = player.getMoveOffset(); // must be in TILE units (0..1)
+    // If your move offset is in pixels, convert:
+    // move = { x: move.x / Interface.TILE_SIZE, y: move.y / Interface.TILE_SIZE };
+
+    const centerX = (Interface.TILE_WIDTH  - 1) / 2; // 27 -> 13
+    const centerY = (Interface.TILE_HEIGHT - 1) / 2; // 13 -> 6
+
+    const worldX = Math.floor((sX - centerX - move.x) + 1e-7) + pos.x;
+    const worldY = Math.floor((sY - centerY - move.y) + 1e-7) + pos.y;
+
+    const p = new Position(worldX, worldY, pos.z);
     const chunk = window.gameClient.world.getChunkFromWorldPosition(p);
     return chunk ? chunk.getFirstTileFromTop(p.projected()) : null;
-  }
-  
-  
-
-  public getCanvasCoordinates(event: MouseEvent): { x: number; y: number } {
-    const rect = this.app.canvas.getBoundingClientRect();
-    return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
-    };
   }
 
   public getOverlayScreenPosition(creature: Creature): { x: number, y: number } {
@@ -323,7 +314,7 @@ export default class Renderer {
     const tileCache = this.tileRenderer.tileCache; // Tile[][], floors from 0 (bottom) up
    
     // Collect all sprites by texture for batching
-    const spriteBatches = new Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>();
+    const spriteBatches = new Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number, __outline: boolean}>>();
      
     // For each floor, collect sprites instead of rendering immediately
     for (let floor = 0; floor < tileCache.length; floor++) {
@@ -390,7 +381,7 @@ export default class Renderer {
     this.totalDrawTime += t1 - t0;
   }
 
-  private renderSpriteBatches(spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>): void {
+  private renderSpriteBatches(spriteBatches: Map<string, BatchSprite[]>): void {
     let poolIndex = this.poolIndex;
     let currentTextureKey = '';
     
@@ -416,6 +407,7 @@ export default class Renderer {
         spr.width = spriteData.width;
         spr.height = spriteData.height;
         spr.visible = true;
+        spr.filters = spriteData.outline ? [this.hoverOutline] : null;
         this.drawCalls++;
       }
     }

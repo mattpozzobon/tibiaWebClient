@@ -6,6 +6,7 @@ import Animation from "../utils/animation";
 import DistanceAnimation from "../utils/distance-animation";
 import FrameGroup from "../utils/frame-group";
 import Interface from "../ui/interface";
+import { BatchSprite } from "../types/types";
 
 export default class AnimationRenderer {
   animationLayers = new Array();
@@ -22,7 +23,7 @@ export default class AnimationRenderer {
     animation: any, 
     screenPos: Position, 
     thing: any, 
-    spriteBatches?: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>
+    spriteBatches: Map<string, BatchSprite[]>
   ): void {
     if (!animation || !animation.getSprite || !spriteBatches) {
       return;
@@ -186,7 +187,7 @@ export default class AnimationRenderer {
   public renderAnimation(
     animation: any, 
     thing: any, 
-    spriteBatches?: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>,
+    spriteBatches: Map<string, BatchSprite[]>,
     getStaticScreenPosition?: (pos: Position) => Position,
     getCreatureScreenPosition?: (creature: Creature) => Position
   ): void {
@@ -231,7 +232,7 @@ export default class AnimationRenderer {
    */
   public renderTileAnimations(
     tile: any, 
-    spriteBatches?: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>,
+    spriteBatches: Map<string, BatchSprite[]>,
     getStaticScreenPosition?: (pos: Position) => Position
   ): void {
     // Renders the animations that are present on the tile
@@ -248,7 +249,7 @@ export default class AnimationRenderer {
   public renderDistanceAnimation(
     animation: any, 
     thing: any, 
-    spriteBatches?: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>,
+    spriteBatches: Map<string, BatchSprite[]>,
     getStaticScreenPosition?: (pos: Position) => Position
   ): void {
     // Renders a distance animation on a tile
@@ -280,7 +281,7 @@ export default class AnimationRenderer {
    */
   public renderCreatureAnimationsAbove(
     creature: any, 
-    spriteBatches?: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>,
+    spriteBatches: Map<string, BatchSprite[]>,
     getCreatureScreenPosition?: (creature: Creature) => Position
   ): void {
     // Renders animations above the creature
@@ -298,7 +299,7 @@ export default class AnimationRenderer {
    */
   public renderCreatureAnimationsBelow(
     creature: any, 
-    spriteBatches?: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>,
+    spriteBatches: Map<string, BatchSprite[]>,
     getCreatureScreenPosition?: (creature: Creature) => Position
   ): void {
     // Renders animations below the creature

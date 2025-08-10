@@ -21,6 +21,7 @@
   "dependencies": {
     "events": "^3.3.0",
     "firebase": "^11.9.1",
+    "pixi-filters": "^6.1.4",
     "pixi.js": "^8.11.0"
   }
 }

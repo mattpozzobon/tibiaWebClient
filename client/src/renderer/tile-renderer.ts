@@ -3,6 +3,7 @@ import Position from "../game/position";
 import FrameGroup from "../utils/frame-group";
 import AnimationRenderer from "./animation-renderer";
 import Interface from "../ui/interface";
+import { BatchSprite } from "../types/types";
 
 export default class TileRenderer {
   public tileCache: Tile[][] = [];
@@ -37,7 +38,7 @@ export default class TileRenderer {
   /**
    * Collect sprites for batching instead of rendering immediately
    */
-  public collectSprites(tile: Tile, screenPos: Position, spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>): void {
+  public collectSprites(tile: Tile, screenPos: Position, spriteBatches: Map<string, BatchSprite[]>): void {
     tile.setElevation(0);
     const xCell = screenPos.x, yCell = screenPos.y;
     if (xCell < -1 || xCell > Interface.TILE_WIDTH || yCell < -1 || yCell > Interface.TILE_HEIGHT) return;
@@ -100,12 +101,7 @@ export default class TileRenderer {
   /**
    * Collect tile animation sprites
    */
-  public collectAnimationSprites(
-    tile: Tile, 
-    screenPos: Position, 
-    spriteBatches: Map<string, Array<{sprite: any, x: number, y: number, width: number, height: number}>>,
-    getStaticScreenPosition?: (pos: Position) => Position
-  ): void {
+  public collectAnimationSprites(tile: Tile, screenPos: Position, spriteBatches: Map<string, BatchSprite[]>, getStaticScreenPosition?: (pos: Position) => Position): void {
     this.animationRenderer.renderTileAnimations(tile, spriteBatches, getStaticScreenPosition);
   }
 }

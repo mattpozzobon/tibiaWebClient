@@ -241,8 +241,8 @@ export default class CreatureRenderer {
         
         // Calculate sprite position directly
         const spritePosition = new Position(
-          Math.round((position.x - x) * size),
-          Math.round((position.y - y) * size),
+          (position.x - x) * size,
+          (position.y - y) * size,
           0
         );
         

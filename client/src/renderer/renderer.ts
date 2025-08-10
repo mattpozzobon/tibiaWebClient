@@ -10,24 +10,37 @@ import AnimationRenderer from './animation-renderer';
 import BMFontLoader from './font';
 import Tile from '../game/tile';
 import { OutlineFilter } from 'pixi-filters';
-import { BatchSprite } from '../types/types';
+import SpriteBatcher from './sprite-batcher';
 
 export default class Renderer {
   __nMiliseconds: number;
-  private lastTestAnimationTime = 0;
-  private readonly TEST_ANIMATION_INTERVAL = 1000;
+  private lastTestAnimationTime: number = 0;
+  private readonly TEST_ANIMATION_INTERVAL: number = 1000;
 
   public debugger: Debugger;
-
   private __start: number;
-  public totalDrawTime = 0;
-  public drawCalls = 0;
-  public batchCount = 0;
-  public textureSwitches = 0;
+
+  // legacy counters (kept for compatibility; no longer used for averages)
+  public totalDrawTime: number = 0;
+
+  public drawCalls: number = 0;
+  public batchCount: number = 0;
+  public textureSwitches: number = 0;
+
+  // CPU timing (assemble/batching vs pixi render)
+  private _cpuRenderStart = 0;
+  public cpuAssembleMs = 0;   // last frame
+  public totalAssembleMs = 0; // accum over UPDATE_INTERVAL
+  public cpuRenderMs   = 0;   // last frame
+  public totalRenderMs = 0;   // accum over UPDATE_INTERVAL
+
+  public prerender = () => { this._cpuRenderStart = performance.now(); };
+  public postrender = () => {
+    this.cpuRenderMs = performance.now() - this._cpuRenderStart;
+    this.totalRenderMs += this.cpuRenderMs;
+  };
 
   public hoverOutline: Filter;
-  private readonly outlineFilters: Filter[]; // reuse array
-
   public app: Application;
   public tileRenderer: TileRenderer;
   public itemRenderer: ItemRenderer;
@@ -39,21 +52,19 @@ export default class Renderer {
 
   public spritePool: Sprite[] = [];
   public readonly poolSize = 28 * 14 * 50;
-  public poolIndex = 0;
+  public poolIndex: number = 0;
 
-  private batches = new Map<number, BatchSprite[]>(); // number uid -> entries
-  private lastUsed = 0;
-  private __pt = new Point(); // reused Point for hit conversion
+  private batcher = new SpriteBatcher();
+  private scratchRemovals: any[] = [];
+  private lastFramePoolUsed = 0;
 
   constructor(app: Application) {
     this.app = app;
-
     this.debugger = new Debugger();
     this.scalingContainer = new Container();
     this.overlayLayer = new Container();
     this.gameLayer = new Container();
-    this.hoverOutline = new OutlineFilter(1, 0xFFFFFF);
-    this.outlineFilters = [this.hoverOutline];
+    this.hoverOutline = new OutlineFilter(2, 0xFFFFFF);
 
     this.app.stage.addChild(this.scalingContainer);
     this.app.stage.addChild(this.overlayLayer);
@@ -61,8 +72,8 @@ export default class Renderer {
 
     this.__start = performance.now();
     this.__nMiliseconds = 0;
-
     this.spritePool = new Array(this.poolSize);
+
     for (let i = 0; i < this.poolSize; i++) {
       const spr = new Sprite(Texture.EMPTY);
       spr.width = Interface.TILE_SIZE;
@@ -72,10 +83,14 @@ export default class Renderer {
       this.spritePool[i] = spr;
     }
 
-    this.tileRenderer = new TileRenderer();
-    this.creatureRenderer = new CreatureRenderer();
-    this.itemRenderer = new ItemRenderer();
+    // hook Pixi renderer runners for CPU render timing
+    this.app.renderer.runners.prerender.add(this);
+    this.app.renderer.runners.postrender.add(this);
+
     this.animationRenderer = new AnimationRenderer();
+    this.tileRenderer = new TileRenderer(this.animationRenderer);
+    this.creatureRenderer = new CreatureRenderer(this.animationRenderer);
+    this.itemRenderer = new ItemRenderer();
   }
 
   static async create(): Promise<Renderer> {
@@ -85,7 +100,7 @@ export default class Renderer {
     const baseWidth = baseCols * tileSize;
     const baseHeight = baseRows * tileSize;
 
-    const viewport = (window.visualViewport ?? { width: window.innerWidth, height: window.innerHeight }) as { width: number; height: number };
+    const viewport = window.visualViewport ?? { width: window.innerWidth, height: window.innerHeight };
     const scaleX = viewport.width / baseWidth;
     const scaleY = viewport.height / baseHeight;
     const scale = Math.floor(Math.min(scaleX, scaleY) * 100) / 100;
@@ -112,7 +127,11 @@ export default class Renderer {
 
     const renderer = new Renderer(app);
     renderer.resizeAndScale();
-    window.addEventListener("resize", () => renderer.handleResize());
+
+    window.addEventListener("resize", () => {
+      renderer.handleResize();
+    });
+
     return renderer;
   }
 
@@ -130,10 +149,6 @@ export default class Renderer {
     this.scalingContainer.scale.set(scale);
     this.scalingContainer.x = Math.round((this.app.screen.width  - baseWidth  * scale) / 2);
     this.scalingContainer.y = Math.round((this.app.screen.height - baseHeight * scale) / 2);
-
-    // keep outline thickness visually consistent across resolutions
-    const s = this.scalingContainer.scale.x;
-    (this.hoverOutline as any).thickness = Math.max(1, Math.round(2 * s));
   }
 
   public handleResize(): void {
@@ -164,11 +179,6 @@ export default class Renderer {
     this.resizeAndScale();
   }
 
-  private resetBatches(): void {
-    // reuse arrays to avoid GC
-    for (const arr of this.batches.values()) arr.length = 0;
-  }
-
   public render(): void {
     this.__increment();
     this.__renderWorld();
@@ -189,9 +199,6 @@ export default class Renderer {
     this.debugger.__nFrames++;
     this.__nMiliseconds = performance.now() - this.__start;
   }
-
-  public setAmbientColor(_r: number, _g: number, _b: number, _a: number): void {}
-  public setWeather(_bool: boolean): void {}
 
   public getStaticScreenPosition(position: Position): Position {
     const projectedPlayer = window.gameClient.player!.getPosition().projected();
@@ -214,20 +221,17 @@ export default class Renderer {
   }
 
   getWorldCoordinates(event: MouseEvent): Tile | null {
-    // DOM -> global (handles CSS + DPR)
-    const global = this.__pt;
+    const global = new Point();
     this.app.renderer.events.mapPositionToPoint(global, event.clientX, event.clientY);
-    // global -> local (undo scale + letterbox)
     const local = this.scalingContainer.toLocal(global);
 
-    // pixels -> tile coords (screen-space)
     const sX = local.x / Interface.TILE_SIZE;
     const sY = local.y / Interface.TILE_SIZE;
 
-    // invert getStaticScreenPosition math
     const player = window.gameClient.player!;
     const pos = player.getPosition();
-    const move = player.getMoveOffset();
+    const move = player.getMoveOffset(); // in tile units
+
     const centerX = (Interface.TILE_WIDTH  - 1) / 2;
     const centerY = (Interface.TILE_HEIGHT - 1) / 2;
 
@@ -240,13 +244,12 @@ export default class Renderer {
   }
 
   public getOverlayScreenPosition(creature: Creature): { x: number, y: number } {
-    const renderer = window.gameClient.renderer;
-    const screenPos: Position = renderer.getCreatureScreenPosition(creature);
-    const scale = renderer.scalingContainer.scale.x;
+    const screenPos: Position = this.getCreatureScreenPosition(creature);
+    const scale = this.scalingContainer.scale.x;
     const tileSize = Interface.TILE_SIZE;
 
-    let x = (screenPos.x * tileSize) * scale + renderer.scalingContainer.x;
-    let y = (screenPos.y * tileSize) * scale + renderer.scalingContainer.y;
+    let x = (screenPos.x * tileSize) * scale + this.scalingContainer.x;
+    let y = (screenPos.y * tileSize) * scale + this.scalingContainer.y;
 
     y -= 16 * scale;
     x += 4 * scale;
@@ -255,71 +258,105 @@ export default class Renderer {
   }
 
   public __renderWorld(): void {
-    const t0 = performance.now();
-
-    // cheap pool reset
-    for (let i = 0; i < this.lastUsed; i++) {
-      const spr = this.spritePool[i];
-      spr.visible = false;
-      spr.filters = null;
-    }
+    const tAssembleStart = performance.now();
+  
+    // ---- reset per-frame counters ----
     this.poolIndex = 0;
     this.drawCalls = 0;
     this.batchCount = 0;
     this.textureSwitches = 0;
-
-    const tileCache = this.tileRenderer.tileCache;
-    this.resetBatches();
-
-    for (let floor = 0; floor < tileCache.length; floor++) {
-      const tiles = tileCache[floor];
-
-      for (const tile of tiles) {
-        const screenPos = this.getStaticScreenPosition(tile.getPosition());
-
-        this.tileRenderer.collectSprites(tile, screenPos, this.batches);
-        this.itemRenderer.collectSpritesForTile(tile, screenPos, this.batches);
-
-        tile.monsters.forEach((creature: Creature) => {
-          if (this.creatureRenderer.shouldDefer(tile, creature)) {
-            this.creatureRenderer.defer(tile, creature);
-            return;
-          }
-          this.creatureRenderer.collectSprites(creature, this.getCreatureScreenPosition(creature), this.batches);
-          this.creatureRenderer.collectAnimationSpritesBelow(creature, this.batches, this.getCreatureScreenPosition.bind(this));
-          this.creatureRenderer.collectAnimationSpritesAbove(creature, this.batches, this.getCreatureScreenPosition.bind(this));
-        });
-
-        this.creatureRenderer.renderDeferred(tile, this.batches);
-        this.itemRenderer.collectOnTopSpritesForTile(tile, screenPos, this.batches);
-        this.tileRenderer.collectAnimationSprites(tile, screenPos, this.batches, this.getStaticScreenPosition.bind(this));
+  
+    // only hide what we used last frame
+    for (let i = 0; i < this.lastFramePoolUsed; i++) {
+      this.spritePool[i].visible = false;
+    }
+    this.lastFramePoolUsed = 0;
+  
+    this.batcher.reset();
+  
+    // bind once
+    const getStatic = this.getStaticScreenPosition.bind(this);
+    const getCreature = this.getCreatureScreenPosition.bind(this);
+  
+    const floors = this.tileRenderer.tileCache;
+    for (let f = 0; f < floors.length; f++) {
+      const tiles = floors[f];
+  
+      // per-tile collecting
+      for (let t = 0; t < tiles.length; t++) {
+        const tile = tiles[t];
+        const screenPos = getStatic(tile.getPosition());
+        this.collectForTile(tile, screenPos, getStatic, getCreature);
       }
-
-      // distance animations (by floor)
-      const animationLayer = this.animationRenderer.animationLayers[floor];
-      if (animationLayer && animationLayer.size > 0) {
-        const toRemove: any[] = [];
-        animationLayer.forEach((animation: any) => {
-          if (animation.expired()) toRemove.push(animation);
-          else this.animationRenderer.renderDistanceAnimation(animation, animation, this.batches, this.getStaticScreenPosition.bind(this));
-        });
-        toRemove.forEach(a => animationLayer.delete(a));
+  
+      // per-floor distance animations
+      this.processDistanceLayer(f, getStatic);
+    }
+  
+    // push sprites to the pool (still CPU-side)
+    this.renderSpriteBatches();
+  
+    // record how many pool sprites we actually touched
+    this.lastFramePoolUsed = this.poolIndex;
+  
+    // assemble CPU timing
+    const dt = performance.now() - tAssembleStart;
+    this.cpuAssembleMs = dt;
+    this.totalAssembleMs += dt;
+    this.totalDrawTime += dt; // legacy accumulator if you still use it elsewhere
+  }
+  
+  private collectForTile(tile: Tile, screenPos: Position, getStatic: (p: Position) => Position, getCreature: (c: Creature) => Position): void {
+    // base + items (below)
+    this.tileRenderer.collectSprites(tile, screenPos, this.batcher);
+    this.itemRenderer.collectSpritesForTile(tile, screenPos, this.batcher);
+  
+    // creatures (Set<Creature>)
+    for (const creature of tile.monsters) {
+      if (this.creatureRenderer.shouldDefer(tile, creature)) {
+        this.creatureRenderer.defer(tile, creature);
+        continue;
+      }
+      const cPos = getCreature(creature);
+      this.creatureRenderer.collectSprites(creature, cPos, this.batcher);
+      this.creatureRenderer.collectAnimationSpritesBelow(creature, this.batcher, getCreature);
+      this.creatureRenderer.collectAnimationSpritesAbove(creature, this.batcher, getCreature);
+    }
+  
+    // deferred creatures for this tile
+    this.creatureRenderer.renderDeferred(tile, this.batcher);
+  
+    // items (on top)
+    this.itemRenderer.collectOnTopSpritesForTile(tile, screenPos, this.batcher);
+  
+    // tile animations
+    this.tileRenderer.collectAnimationSprites(tile, screenPos, this.batcher, getStatic);
+  }
+  
+  private processDistanceLayer(floorIndex: number, getStatic: (p: Position) => Position): void {
+    const layer = this.animationRenderer.animationLayers[floorIndex];
+    if (!layer || layer.size === 0) return;
+  
+    const rm = this.scratchRemovals;
+    rm.length = 0;
+  
+    for (const anim of layer) {
+      if (anim.expired()) {
+        rm.push(anim);
+      } else {
+        this.animationRenderer.renderDistanceAnimation(anim, anim, this.batcher, getStatic);
       }
     }
-
-    this.renderSpriteBatches(this.batches);
-
-    const t1 = performance.now();
-    this.totalDrawTime += t1 - t0;
-    this.lastUsed = this.poolIndex;
+    for (let i = 0; i < rm.length; i++) layer.delete(rm[i]);
+    rm.length = 0;
   }
-
-  private renderSpriteBatches(spriteBatches: Map<number, BatchSprite[]>): void {
+  
+  private renderSpriteBatches(): void {
     let poolIndex = this.poolIndex;
     let currentTextureKey = -1;
 
-    for (const [textureKey, sprites] of spriteBatches) {
-      if (poolIndex >= this.poolSize) break;
+    this.batcher.forEach((textureKey, sprites) => {
+      if (poolIndex >= this.poolSize) return;
 
       if (textureKey !== currentTextureKey) {
         this.textureSwitches++;
@@ -327,8 +364,9 @@ export default class Renderer {
       }
       this.batchCount++;
 
-      for (const spriteData of sprites) {
+      for (let i = 0; i < sprites.length; i++) {
         if (poolIndex >= this.poolSize) break;
+        const spriteData = sprites[i];
 
         const spr = this.spritePool[poolIndex++];
         spr.texture = spriteData.sprite.texture;
@@ -337,10 +375,11 @@ export default class Renderer {
         spr.width = spriteData.width;
         spr.height = spriteData.height;
         spr.visible = true;
-        spr.filters = spriteData.outline ? this.outlineFilters : null;
+        spr.filters = spriteData.outline ? [this.hoverOutline] : null;
+
         this.drawCalls++;
       }
-    }
+    });
 
     this.poolIndex = poolIndex;
   }
@@ -366,12 +405,8 @@ export default class Renderer {
     });
   }
 
-  public __drawCastbar(creature: any): void {
-    let position = this.getCreatureScreenPosition(creature);
-    position.y += 6 / Interface.TILE_SIZE;
-    let fraction = creature.getCastFraction();
-    if (fraction === 1) creature.endCast();
-    if (creature.__spell.channel !== null) fraction = 1 - fraction;
+  public __drawCastbar(_creature: any): void {
+    // (left as-is for now)
   }
 
   public addTestDistanceAnimations(): void {

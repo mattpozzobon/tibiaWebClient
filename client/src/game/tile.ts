@@ -12,7 +12,7 @@ export default class Tile extends Thing implements IPathNode {
   static readonly MAX_ELEVATION = 0.75;
   __position: Position;
   public __renderElevation: number = 0;
-  private __animations: Set<any> = new Set();
+  public __animations: Set<any> = new Set();
   private __deferredCreatures: Set<any> = new Set();
   flags: number;
   zone: number;

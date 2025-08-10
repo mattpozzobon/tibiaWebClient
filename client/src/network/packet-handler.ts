@@ -197,7 +197,7 @@ class PacketHandler {
   }): void {
     window.gameClient.interface.notificationManager.setZoneMessage(packet.name, packet.title);
     //window.gameClient.renderer.weatherCanvas.setWeather(packet.weather);
-    window.gameClient.renderer.setAmbientColor(packet.ambient.r, packet.ambient.g, packet.ambient.b, packet.ambient.a);
+    //window.gameClient.renderer.setAmbientColor(packet.ambient.r, packet.ambient.g, packet.ambient.b, packet.ambient.a);
     window.gameClient.interface.soundManager.setAmbientTrace(packet.music);
   }
 

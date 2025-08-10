@@ -4,6 +4,8 @@ import FrameGroup from "../utils/frame-group";
 import AnimationRenderer from "./animation-renderer";
 import Interface from "../ui/interface";
 import SpriteBatcher from "./sprite-batcher";
+import { BatchSpriteStyle } from "../types/types";
+import { DimStyle } from "./renderer";
 
 export default class TileRenderer {
   public tileCache: Tile[][] = [];
@@ -34,7 +36,8 @@ export default class TileRenderer {
     this.tileCache.reduce((sum, floor) => sum + floor.length, 0);
   }
 
-  public collectSprites(tile: Tile, screenPos: Position, batcher: SpriteBatcher): void {
+  // tile-renderer.ts
+  public collectSprites(tile: Tile, screenPos: Position, batcher: SpriteBatcher, style?: DimStyle): void {
     tile.setElevation(0);
     const xCell = screenPos.x, yCell = screenPos.y;
     if (xCell < -1 || xCell > Interface.TILE_WIDTH || yCell < -1 || yCell > Interface.TILE_HEIGHT) return;
@@ -55,7 +58,7 @@ export default class TileRenderer {
     if (fg.width === 1 && fg.height === 1 && fg.layers === 1) {
       const sid = fg.getSpriteIndex(f, p.x, p.y, p.z, 0, 0, 0);
       const tex = fg.getSprite(sid);
-      if (tex) batcher.push(tex, px, py, Interface.TILE_SIZE, Interface.TILE_SIZE, false);
+      if (tex) batcher.push(tex, px, py, Interface.TILE_SIZE, Interface.TILE_SIZE, false, style);
       return;
     }
 
@@ -65,12 +68,13 @@ export default class TileRenderer {
           const sid = fg.getSpriteIndex(f, p.x, p.y, p.z, l, cx, cy);
           const tex = fg.getSprite(sid);
           if (tex) {
-            batcher.push(tex, px, py, Interface.TILE_SIZE, Interface.TILE_SIZE, false);
+            batcher.push(tex, px, py, Interface.TILE_SIZE, Interface.TILE_SIZE, false, style);
           }
         }
       }
     }
   }
+
 
   public collectAnimationSprites(
     tile: Tile,

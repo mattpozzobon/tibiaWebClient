@@ -5,11 +5,12 @@ import { PropBitFlag } from "../utils/bitflag";
 import FrameGroup from "../utils/frame-group";
 import Interface from "../ui/interface";
 import SpriteBatcher from "./sprite-batcher";
+import { DimStyle } from "./renderer";
 
 export default class ItemRenderer {
   constructor() {}
 
-  public collectSpritesForTile(tile: Tile, screenPos: Position, batcher: SpriteBatcher): void {
+  public collectSpritesForTile(tile: Tile, screenPos: Position, batcher: SpriteBatcher, style?: DimStyle): void {
     const items: Item[] = tile.items;
     const currentHoverTile = window.gameClient.mouse.getCurrentTileHover();
 
@@ -21,7 +22,7 @@ export default class ItemRenderer {
       if (item.hasFlag(PropBitFlag.DatFlagOnTop)) continue;
 
       const outlineThis = shouldOutlineBase && i === items.length - 1 && item.isPickupable();
-      this.collectSpriteForItem(item, screenPos, tile.__renderElevation, Interface.TILE_SIZE, batcher, outlineThis);
+      this.collectSpriteForItem(item, screenPos, tile.__renderElevation, Interface.TILE_SIZE, batcher, outlineThis, style);
 
       if (item.isElevation && item.isElevation()) {
         tile.addElevation(item.getDataObject().properties.elevation);
@@ -29,7 +30,7 @@ export default class ItemRenderer {
     }
   }
 
-  public collectOnTopSpritesForTile(tile: Tile, screenPos: Position, batcher: SpriteBatcher): void {
+  public collectOnTopSpritesForTile(tile: Tile, screenPos: Position, batcher: SpriteBatcher, style?: DimStyle): void {
     const items: Item[] = tile.items;
     const currentHoverTile = window.gameClient.mouse.getCurrentTileHover();
 
@@ -40,12 +41,9 @@ export default class ItemRenderer {
       const item = items[i];
       if (!item.hasFlag(PropBitFlag.DatFlagOnTop)) continue;
 
-      const outlineThis =
-        currentHoverTile === tile &&
-        i === lastOnTop &&
-        item.isPickupable();
+      const outlineThis = currentHoverTile === tile && i === lastOnTop && item.isPickupable();
 
-      this.collectSpriteForItem(item, screenPos, 0, Interface.TILE_SIZE, batcher, outlineThis);
+      this.collectSpriteForItem(item, screenPos, tile.__renderElevation, 32, batcher, outlineThis, style);
     }
   }
 
@@ -55,7 +53,8 @@ export default class ItemRenderer {
     elevation: number,
     size: number,
     batcher: SpriteBatcher,
-    outline: boolean = false
+    outline: boolean = false,
+    style?: DimStyle
   ): void {
     const frameGroup = thing.getFrameGroup(FrameGroup.NONE);
     const frame = thing.getFrame();
@@ -78,7 +77,8 @@ export default class ItemRenderer {
             size * yCell,
             size,
             size,
-            outline
+            outline,
+            style
           );
         }
       }

@@ -1,4 +1,4 @@
-import { Application, Container, Sprite, Texture, Point, Filter } from 'pixi.js';
+import { Application, Container, Sprite, Texture, Point, Filter, BLEND_MODES } from 'pixi.js';
 import Debugger from "../utils/debugger";
 import Interface from "../ui/interface";
 import Position from "../game/position";
@@ -11,6 +11,8 @@ import BMFontLoader from './font';
 import Tile from '../game/tile';
 import { OutlineFilter } from 'pixi-filters';
 import SpriteBatcher from './sprite-batcher';
+
+export type DimStyle = { tint?: number; alpha?: number; blendMode?: string };
 
 export default class Renderer {
   __nMiliseconds: number;
@@ -259,59 +261,78 @@ export default class Renderer {
 
   public __renderWorld(): void {
     const tAssembleStart = performance.now();
-  
+
     // ---- reset per-frame counters ----
     this.poolIndex = 0;
     this.drawCalls = 0;
     this.batchCount = 0;
     this.textureSwitches = 0;
-  
+
     // only hide what we used last frame
     for (let i = 0; i < this.lastFramePoolUsed; i++) {
       this.spritePool[i].visible = false;
     }
     this.lastFramePoolUsed = 0;
-  
+
     this.batcher.reset();
-  
+
     // bind once
     const getStatic = this.getStaticScreenPosition.bind(this);
     const getCreature = this.getCreatureScreenPosition.bind(this);
-  
+    const playerZ = window.gameClient.player!.getPosition().z;
     const floors = this.tileRenderer.tileCache;
+
     for (let f = 0; f < floors.length; f++) {
       const tiles = floors[f];
-  
-      // per-tile collecting
+      if (!tiles || tiles.length === 0) continue;
+
       for (let t = 0; t < tiles.length; t++) {
         const tile = tiles[t];
+
+        // per-tile style (don’t assume all entries in a “floor” share the same z)
+        const worldZ = tile.getPosition().z;
+
+        // OPTION A: dim all lower floors
+        const isBelow = worldZ < playerZ;
+
+        // OPTION B (exactly 1 floor below):
+        // const isBelow = worldZ === playerZ + 1; // flip +/− if your z increases downward
+
+        const dimStyle = isBelow? { tint: 0xA0A0A0, alpha: 0.85}: undefined;
+
         const screenPos = getStatic(tile.getPosition());
-        this.collectForTile(tile, screenPos, getStatic, getCreature);
+        this.collectForTile(tile, screenPos, getStatic, getCreature, dimStyle);
       }
-  
+
       // per-floor distance animations
       this.processDistanceLayer(f, getStatic);
     }
-  
+
     // push sprites to the pool (still CPU-side)
     this.renderSpriteBatches();
-  
+
     // record how many pool sprites we actually touched
     this.lastFramePoolUsed = this.poolIndex;
-  
+
     // assemble CPU timing
     const dt = performance.now() - tAssembleStart;
     this.cpuAssembleMs = dt;
     this.totalAssembleMs += dt;
     this.totalDrawTime += dt; // legacy accumulator if you still use it elsewhere
   }
-  
-  private collectForTile(tile: Tile, screenPos: Position, getStatic: (p: Position) => Position, getCreature: (c: Creature) => Position): void {
+
+  private collectForTile(
+    tile: Tile,
+    screenPos: Position,
+    getStatic: (p: Position) => Position,
+    getCreature: (c: Creature) => Position,
+    dimStyle?: DimStyle
+  ): void {
     // base + items (below)
-    this.tileRenderer.collectSprites(tile, screenPos, this.batcher);
-    this.itemRenderer.collectSpritesForTile(tile, screenPos, this.batcher);
-  
-    // creatures (Set<Creature>)
+    this.tileRenderer.collectSprites(tile, screenPos, this.batcher, dimStyle);
+    this.itemRenderer.collectSpritesForTile(tile, screenPos, this.batcher, dimStyle);
+
+    // creatures (Set<Creature>) — usually only on the current floor
     for (const creature of tile.monsters) {
       if (this.creatureRenderer.shouldDefer(tile, creature)) {
         this.creatureRenderer.defer(tile, creature);
@@ -322,24 +343,24 @@ export default class Renderer {
       this.creatureRenderer.collectAnimationSpritesBelow(creature, this.batcher, getCreature);
       this.creatureRenderer.collectAnimationSpritesAbove(creature, this.batcher, getCreature);
     }
-  
+
     // deferred creatures for this tile
     this.creatureRenderer.renderDeferred(tile, this.batcher);
-  
+
     // items (on top)
-    this.itemRenderer.collectOnTopSpritesForTile(tile, screenPos, this.batcher);
-  
+    this.itemRenderer.collectOnTopSpritesForTile(tile, screenPos, this.batcher, dimStyle);
+
     // tile animations
     this.tileRenderer.collectAnimationSprites(tile, screenPos, this.batcher, getStatic);
   }
-  
+
   private processDistanceLayer(floorIndex: number, getStatic: (p: Position) => Position): void {
     const layer = this.animationRenderer.animationLayers[floorIndex];
     if (!layer || layer.size === 0) return;
-  
+
     const rm = this.scratchRemovals;
     rm.length = 0;
-  
+
     for (const anim of layer) {
       if (anim.expired()) {
         rm.push(anim);
@@ -350,7 +371,7 @@ export default class Renderer {
     for (let i = 0; i < rm.length; i++) layer.delete(rm[i]);
     rm.length = 0;
   }
-  
+
   private renderSpriteBatches(): void {
     let poolIndex = this.poolIndex;
     let currentTextureKey = -1;
@@ -376,6 +397,9 @@ export default class Renderer {
         spr.height = spriteData.height;
         spr.visible = true;
         spr.filters = spriteData.outline ? [this.hoverOutline] : null;
+        spr.tint = spriteData.tint ?? 0xFFFFFF;
+        spr.alpha = spriteData.alpha ?? 1;
+        spr.blendMode = spriteData.blendMode ?? 'normal';
 
         this.drawCalls++;
       }

@@ -5,12 +5,18 @@ import { PropBitFlag } from "../utils/bitflag";
 import FrameGroup from "../utils/frame-group";
 import Interface from "../ui/interface";
 import SpriteBatcher from "./sprite-batcher";
-import { DimStyle } from "./renderer";
+
+import type { DimStyle } from "./renderer";
+import TileLighting from "./tile-lighting";
 
 export default class ItemRenderer {
-  constructor() {}
+  private lighting: TileLighting;
 
-  public collectSpritesForTile(tile: Tile, screenPos: Position, batcher: SpriteBatcher, style?: DimStyle): void {
+  constructor(lighting = new TileLighting()) {
+    this.lighting = lighting;
+  }
+
+  public collectSpritesForTile(tile: Tile, screenPos: Position, batcher: SpriteBatcher): void {
     const items: Item[] = tile.items;
     const currentHoverTile = window.gameClient.mouse.getCurrentTileHover();
 
@@ -22,7 +28,19 @@ export default class ItemRenderer {
       if (item.hasFlag(PropBitFlag.DatFlagOnTop)) continue;
 
       const outlineThis = shouldOutlineBase && i === items.length - 1 && item.isPickupable();
-      this.collectSpriteForItem(item, screenPos, tile.__renderElevation, Interface.TILE_SIZE, batcher, outlineThis, style);
+
+      // per-item style (deferred to lighting class)
+      const style = this.lighting?.styleFor(tile) as DimStyle | undefined;
+
+      this.collectSpriteForItem(
+        item,
+        screenPos,
+        tile.__renderElevation,
+        Interface.TILE_SIZE,
+        batcher,
+        outlineThis,
+        style
+      );
 
       if (item.isElevation && item.isElevation()) {
         tile.addElevation(item.getDataObject().properties.elevation);
@@ -30,7 +48,7 @@ export default class ItemRenderer {
     }
   }
 
-  public collectOnTopSpritesForTile(tile: Tile, screenPos: Position, batcher: SpriteBatcher, style?: DimStyle): void {
+  public collectOnTopSpritesForTile(tile: Tile, screenPos: Position, batcher: SpriteBatcher): void {
     const items: Item[] = tile.items;
     const currentHoverTile = window.gameClient.mouse.getCurrentTileHover();
 
@@ -43,7 +61,18 @@ export default class ItemRenderer {
 
       const outlineThis = currentHoverTile === tile && i === lastOnTop && item.isPickupable();
 
-      this.collectSpriteForItem(item, screenPos, tile.__renderElevation, 32, batcher, outlineThis, style);
+      // per-item style (deferred to lighting class)
+      const style = this.lighting?.styleFor(tile) as DimStyle | undefined;
+
+      this.collectSpriteForItem(
+        item,
+        screenPos,
+        tile.__renderElevation, // keep as-is; use 0 here if you want strict "onTop" elevation
+        Interface.TILE_SIZE,
+        batcher,
+        outlineThis,
+        style
+      );
     }
   }
 

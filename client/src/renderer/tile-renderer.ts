@@ -4,15 +4,17 @@ import FrameGroup from "../utils/frame-group";
 import AnimationRenderer from "./animation-renderer";
 import Interface from "../ui/interface";
 import SpriteBatcher from "./sprite-batcher";
-import { BatchSpriteStyle } from "../types/types";
-import { DimStyle } from "./renderer";
+import TileLighting from "./tile-lighting";
+
 
 export default class TileRenderer {
   public tileCache: Tile[][] = [];
   private animationRenderer: AnimationRenderer;
+  private lighting: TileLighting;
 
-  constructor(animationRenderer: AnimationRenderer) {
+  constructor(animationRenderer: AnimationRenderer, lighting = new TileLighting()) {
     this.animationRenderer = animationRenderer;
+    this.lighting = lighting;
   }
 
   public refreshVisibleTiles(): void {
@@ -36,8 +38,7 @@ export default class TileRenderer {
     this.tileCache.reduce((sum, floor) => sum + floor.length, 0);
   }
 
-  // tile-renderer.ts
-  public collectSprites(tile: Tile, screenPos: Position, batcher: SpriteBatcher, style?: DimStyle): void {
+  public collectSprites(tile: Tile, screenPos: Position, batcher: SpriteBatcher): void {
     tile.setElevation(0);
     const xCell = screenPos.x, yCell = screenPos.y;
     if (xCell < -1 || xCell > Interface.TILE_WIDTH || yCell < -1 || yCell > Interface.TILE_HEIGHT) return;
@@ -46,14 +47,13 @@ export default class TileRenderer {
     const py = yCell * Interface.TILE_SIZE;
 
     let fg: FrameGroup;
-    try {
-      fg = tile.getFrameGroup(FrameGroup.NONE);
-    } catch {
-      return;
-    }
+    try { fg = tile.getFrameGroup(FrameGroup.NONE); } catch { return; }
 
     const f = tile.getFrame();
     const p = tile.getPattern();
+
+    // ask the lighting system for a per-tile style
+    const style = this.lighting?.styleFor(tile);
 
     if (fg.width === 1 && fg.height === 1 && fg.layers === 1) {
       const sid = fg.getSpriteIndex(f, p.x, p.y, p.z, 0, 0, 0);
@@ -75,10 +75,9 @@ export default class TileRenderer {
     }
   }
 
-
   public collectAnimationSprites(
     tile: Tile,
-    screenPos: Position,
+    _screenPos: Position,
     batcher: SpriteBatcher,
     getStaticScreenPosition?: (pos: Position) => Position
   ): void {

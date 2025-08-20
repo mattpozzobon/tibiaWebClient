@@ -1,4 +1,4 @@
-import { Application, Container, Sprite, Texture, Point, Filter, BLEND_MODES } from 'pixi.js';
+import { Application, Container, Sprite, Texture, Point, Filter } from 'pixi.js';
 import Debugger from "../utils/debugger";
 import Interface from "../ui/interface";
 import Position from "../game/position";
@@ -289,19 +289,8 @@ export default class Renderer {
       for (let t = 0; t < tiles.length; t++) {
         const tile = tiles[t];
 
-        // per-tile style (don’t assume all entries in a “floor” share the same z)
-        const worldZ = tile.getPosition().z;
-
-        // OPTION A: dim all lower floors
-        const isBelow = worldZ < playerZ;
-
-        // OPTION B (exactly 1 floor below):
-        // const isBelow = worldZ === playerZ + 1; // flip +/− if your z increases downward
-
-        const dimStyle = isBelow? { tint: 0xA0A0A0, alpha: 0.85}: undefined;
-
         const screenPos = getStatic(tile.getPosition());
-        this.collectForTile(tile, screenPos, getStatic, getCreature, dimStyle);
+        this.collectForTile(tile, screenPos, getStatic, getCreature);
       }
 
       // per-floor distance animations
@@ -325,12 +314,11 @@ export default class Renderer {
     tile: Tile,
     screenPos: Position,
     getStatic: (p: Position) => Position,
-    getCreature: (c: Creature) => Position,
-    dimStyle?: DimStyle
+    getCreature: (c: Creature) => Position
   ): void {
     // base + items (below)
-    this.tileRenderer.collectSprites(tile, screenPos, this.batcher, dimStyle);
-    this.itemRenderer.collectSpritesForTile(tile, screenPos, this.batcher, dimStyle);
+    this.tileRenderer.collectSprites(tile, screenPos, this.batcher);
+    this.itemRenderer.collectSpritesForTile(tile, screenPos, this.batcher);
 
     // creatures (Set<Creature>) — usually only on the current floor
     for (const creature of tile.monsters) {
@@ -348,7 +336,7 @@ export default class Renderer {
     this.creatureRenderer.renderDeferred(tile, this.batcher);
 
     // items (on top)
-    this.itemRenderer.collectOnTopSpritesForTile(tile, screenPos, this.batcher, dimStyle);
+    this.itemRenderer.collectOnTopSpritesForTile(tile, screenPos, this.batcher);
 
     // tile animations
     this.tileRenderer.collectAnimationSprites(tile, screenPos, this.batcher, getStatic);

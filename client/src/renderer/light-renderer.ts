@@ -9,7 +9,7 @@ function lerpRGBA(from: RGBA, to: RGBA, t: number): RGBA {
   return { r: lerp(from.r, to.r, t), g: lerp(from.g, to.g, t), b: lerp(from.b, to.b, t), a: lerp(from.a, to.a, t) };
 }
 
-// Tibia palette mapping (same as your old canvas code)
+// Tibia palette → RGB (same mapping as your canvas version)
 function tibiaColorToRGB(color: number) {
   const r = 51 * (Math.floor(color / 36) % 6);
   const g = 51 * (Math.floor(color / 6)  % 6);
@@ -32,13 +32,13 @@ export default class LightRenderer {
 
   private readonly DARKNESS: RGBA = { r: 0, g: 0, b: 0, a: 255 };
 
-  // alpha-only radial texture cache
+  // alpha-only radial texture cache (reused for both mask + glow)
   private alphaGradientCache = new Map<number, Texture>();
 
   constructor() {
     this.layer = new Container();
     this.darkness = new Graphics();
-    this.darkness.blendMode = 'multiply';          // << key: dim scene, not overlay it
+    this.darkness.blendMode = 'normal';      // overlay black normally; we’ll punch holes with 'erase'
     this.layer.addChild(this.darkness);
   }
 
@@ -73,16 +73,17 @@ export default class LightRenderer {
       this.counter--;
     }
 
-    // Blend ambient toward full darkness by day/night fraction.
+    // ambient → night blend
     const night = this.getDarknessFraction();
     const ambientNight = lerpRGBA(this.ambient, this.DARKNESS, night);
 
-    // Slight overdraw to avoid 1–2px edge gaps with scaling.
+    // cover whole game area (slightly oversized for scaling edge)
     this.darkness.clear();
     this.darkness.beginFill(0x000000, ambientNight.a / 255);
     this.darkness.drawRect(-2, -2, width + 4, height + 4);
     this.darkness.endFill();
 
+    // keep darkness as first child so bubbles drawn after can 'erase'
     if (this.layer.children[0] !== this.darkness) {
       this.layer.removeChild(this.darkness);
       this.layer.addChildAt(this.darkness, 0);
@@ -91,26 +92,37 @@ export default class LightRenderer {
 
   /**
    * Add a light bubble centered on a tile.
-   * Uses ADD blending so it actually brightens what’s underneath.
+   * 1) an 'erase' sprite punches a hole in darkness (reveals scene)
+   * 2) an 'add' sprite adds a faint colored glow
    */
   public addLightBubble(tileX: number, tileY: number, sizeTiles: number, colorByte: number) {
     if (colorByte < 0 || colorByte >= 216) return;
 
-    const px = tileX * Interface.TILE_SIZE + Interface.TILE_SIZE;
-    const py = tileY * Interface.TILE_SIZE + Interface.TILE_SIZE;
+    // FIX: center on the tile (top-left cell is tileX, tileY) -> +0.5
+    const cx = (tileX + 0.5) * Interface.TILE_SIZE;
+    const cy = (tileY + 0.5) * Interface.TILE_SIZE;
     const radiusPx = Math.max(1, sizeTiles * Interface.TILE_SIZE);
 
-    const intensity = 0.5 * this.getDarknessFraction(); // same scale as old canvas
+    // old canvas scaled by 0.5 * night
+    const intensity = 0.5 * this.getDarknessFraction();
 
-    // alpha-only gradient, then tint+add
     const tex = this.getAlphaGradientTexture(radiusPx);
+
+    // (1) punch a hole using alpha-only gradient
+    const hole = new Sprite(tex);
+    hole.anchor.set(0.5);
+    hole.position.set(cx, cy);
+    hole.blendMode = 'erase';
+    hole.alpha = 1.0;
+    this.layer.addChild(hole);
+
+    // (2) add a colored glow on top (optional, looks like your old pink glow)
     const glow = new Sprite(tex);
     glow.anchor.set(0.5);
-    glow.x = px;
-    glow.y = py;
-    glow.blendMode = 'add';                              // << key: brighten instead of cover
-    glow.tint = rgbToTint(tibiaColorToRGB(colorByte));   // Tibia color
-    glow.alpha = intensity;                               // scale whole gradient by night intensity
+    glow.position.set(cx, cy);
+    glow.blendMode = 'add';
+    glow.tint = rgbToTint(tibiaColorToRGB(colorByte));
+    glow.alpha = intensity; // matches old canvas intensity behavior
     this.layer.addChild(glow);
   }
 
@@ -135,7 +147,7 @@ export default class LightRenderer {
     const cx = radiusPx, cy = radiusPx;
     const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, radiusPx);
 
-    // Base alpha steps (like old a1..a4); overall strength controlled by sprite.alpha
+    // alpha falloff (like a1..a4). Color comes from sprite.tint.
     grd.addColorStop(0.00, 'rgba(255,255,255,1.0)');
     grd.addColorStop(0.25, 'rgba(255,255,255,0.5)');
     grd.addColorStop(0.50, 'rgba(255,255,255,0.25)');

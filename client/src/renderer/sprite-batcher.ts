@@ -1,6 +1,7 @@
 import { Texture } from 'pixi.js';
 import type { BatchSprite } from '../types/types';
-import { DimStyle } from './renderer';
+import { TileLightStyle } from './tile-lighting';
+
 
 export default class SpriteBatcher {
   private batches = new Map<number, BatchSprite[]>();
@@ -9,7 +10,7 @@ export default class SpriteBatcher {
     for (const arr of this.batches.values()) arr.length = 0;
   }
 
-  push(texture: Texture, x: number, y: number, w: number, h: number, outline = false, style?: DimStyle): void {
+  push(texture: Texture, x: number, y: number, w: number, h: number, outline = false, style?: TileLightStyle): void {
     const key = texture.baseTexture.uid; // number, stable per base texture
     let arr = this.batches.get(key);
     if (!arr) {

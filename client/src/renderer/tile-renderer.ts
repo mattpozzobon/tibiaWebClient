@@ -1,3 +1,4 @@
+// tile-renderer.ts
 import Tile from "../game/tile";
 import Position from "../game/position";
 import FrameGroup from "../utils/frame-group";
@@ -5,16 +6,18 @@ import AnimationRenderer from "./animation-renderer";
 import Interface from "../ui/interface";
 import SpriteBatcher from "./sprite-batcher";
 import TileLighting from "./tile-lighting";
-
+import LightRenderer from "./light-renderer";
 
 export default class TileRenderer {
   public tileCache: Tile[][] = [];
   private animationRenderer: AnimationRenderer;
   private lighting: TileLighting;
+  private light: LightRenderer;
 
-  constructor(animationRenderer: AnimationRenderer, lighting = new TileLighting()) {
+  constructor(animationRenderer: AnimationRenderer, light: LightRenderer, lighting = new TileLighting()) {
     this.animationRenderer = animationRenderer;
     this.lighting = lighting;
+    this.light = light;
   }
 
   public refreshVisibleTiles(): void {
@@ -52,8 +55,20 @@ export default class TileRenderer {
     const f = tile.getFrame();
     const p = tile.getPattern();
 
-    // ask the lighting system for a per-tile style
     const style = this.lighting?.styleFor(tile);
+
+    // bubble lighting for tiles on the current floor
+    if (tile.isLight()) {
+      const playerZ = window.gameClient.player!.getPosition().z;
+      if (tile.getPosition().z === playerZ) {
+        const info = tile.getDataObject().properties.light;
+        if (info) {
+          const size = info.level; //+ 0.2 * info.level * Math.sin(frames / (8 * 2 * Math.PI));
+          // screenPos is in tile units
+          this.light.addLightBubble(screenPos.x, screenPos.y, size, info.color);
+        }
+      }
+    }
 
     if (fg.width === 1 && fg.height === 1 && fg.layers === 1) {
       const sid = fg.getSpriteIndex(f, p.x, p.y, p.z, 0, 0, 0);

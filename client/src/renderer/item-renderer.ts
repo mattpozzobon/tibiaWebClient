@@ -6,14 +6,16 @@ import FrameGroup from "../utils/frame-group";
 import Interface from "../ui/interface";
 import SpriteBatcher from "./sprite-batcher";
 
-import type { DimStyle } from "./renderer";
-import TileLighting from "./tile-lighting";
+import TileLighting, { TileLightStyle } from "./tile-lighting";
+import LightRenderer from "./light-renderer";
 
 export default class ItemRenderer {
   private lighting: TileLighting;
+  private light: LightRenderer;
 
-  constructor(lighting = new TileLighting()) {
+  constructor(light: LightRenderer, lighting = new TileLighting()) {
     this.lighting = lighting;
+    this.light = light;
   }
 
   public collectSpritesForTile(tile: Tile, screenPos: Position, batcher: SpriteBatcher): void {
@@ -30,7 +32,20 @@ export default class ItemRenderer {
       const outlineThis = shouldOutlineBase && i === items.length - 1 && item.isPickupable();
 
       // per-item style (deferred to lighting class)
-      const style = this.lighting?.styleFor(tile) as DimStyle | undefined;
+      const style = this.lighting?.styleFor(tile) as TileLightStyle | undefined;
+
+      // --- bubble lighting for light-emitting items (current floor only) ---
+      if (item.isLight()) {
+        const playerZ = window.gameClient.player!.getPosition().z;
+        if (tile.getPosition().z === playerZ) {
+          const info = item.getDataObject().properties.light;
+          if (info) {
+            const frames = window.gameClient.renderer.debugger.__nFrames;
+            const size = info.level + 0.2 * info.level * Math.sin(frames / (8 * 2 * Math.PI));
+            this.light.addLightBubble(screenPos.x, screenPos.y, size, info.color);
+          }
+        }
+      }
 
       this.collectSpriteForItem(
         item,
@@ -62,12 +77,25 @@ export default class ItemRenderer {
       const outlineThis = currentHoverTile === tile && i === lastOnTop && item.isPickupable();
 
       // per-item style (deferred to lighting class)
-      const style = this.lighting?.styleFor(tile) as DimStyle | undefined;
+      const style = this.lighting?.styleFor(tile) as TileLightStyle | undefined;
+
+      // bubble lighting for on-top items too
+      if (item.isLight()) {
+        const playerZ = window.gameClient.player!.getPosition().z;
+        if (tile.getPosition().z === playerZ) {
+          const info = item.getDataObject().properties.light;
+          if (info) {
+            const frames = window.gameClient.renderer.debugger.__nFrames;
+            const size = info.level + 0.2 * info.level * Math.sin(frames / (8 * 2 * Math.PI));
+            this.light.addLightBubble(screenPos.x, screenPos.y, size, info.color);
+          }
+        }
+      }
 
       this.collectSpriteForItem(
         item,
         screenPos,
-        tile.__renderElevation, // keep as-is; use 0 here if you want strict "onTop" elevation
+        tile.__renderElevation,
         Interface.TILE_SIZE,
         batcher,
         outlineThis,
@@ -83,7 +111,7 @@ export default class ItemRenderer {
     size: number,
     batcher: SpriteBatcher,
     outline: boolean = false,
-    style?: DimStyle
+    style?: TileLightStyle
   ): void {
     const frameGroup = thing.getFrameGroup(FrameGroup.NONE);
     const frame = thing.getFrame();

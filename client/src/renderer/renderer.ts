@@ -1,5 +1,5 @@
-// renderer.ts
-import { Application, Container, Sprite, Texture, Point, Filter } from 'pixi.js';
+// src/renderer/renderer.ts
+import { Application, Container, Sprite, Texture, Filter } from 'pixi.js';
 import Debugger from "../utils/debugger";
 import Interface from "../ui/interface";
 import Position from "../game/position";
@@ -35,17 +35,10 @@ export default class Renderer {
   public cpuRenderMs   = 0;
   public totalRenderMs = 0;
 
-  private _lightingBegun = false;
-
   public prerender = () => { this._cpuRenderStart = performance.now(); };
   public postrender = () => {
     this.cpuRenderMs = performance.now() - this._cpuRenderStart;
     this.totalRenderMs += this.cpuRenderMs;
-    // cleanup bubbles after the frame is drawn
-    if (this._lightingBegun) {
-      this.light.end();
-      this._lightingBegun = false;
-    }
   };
 
   public hoverOutline: Filter;
@@ -80,7 +73,6 @@ export default class Renderer {
 
     this.app.stage.addChild(this.scalingContainer);
     this.app.stage.addChild(this.overlayLayer);
-    // draw game first, lights on top
     this.scalingContainer.addChild(this.gameLayer);
     this.scalingContainer.addChild(this.light.layer);
 
@@ -131,7 +123,7 @@ export default class Renderer {
       backgroundAlpha: 0,
       roundPixels: false,
       preference: 'webgl',
-      useBackBuffer: true,
+      useBackBuffer: true
     });
 
     await BMFontLoader.load('/png/fonts/Tibia-Border-16px-Subtle.xml');
@@ -233,21 +225,17 @@ export default class Renderer {
 
   public __renderWorld(): void {
     const tAssembleStart = performance.now();
-
+    
     const baseWidth  = Interface.TILE_WIDTH  * Interface.TILE_SIZE;
     const baseHeight = Interface.TILE_HEIGHT * Interface.TILE_SIZE;
 
-    // ambient can be set once or animated; doing it here keeps night/day compatible
     this.light.begin(baseWidth, baseHeight);
-    this._lightingBegun = true;
 
-    // ---- reset per-frame counters ----
     this.poolIndex = 0;
     this.drawCalls = 0;
     this.batchCount = 0;
     this.textureSwitches = 0;
 
-    // only hide what we used last frame
     for (let i = 0; i < this.lastFramePoolUsed; i++) {
       this.spritePool[i].visible = false;
     }
@@ -255,7 +243,6 @@ export default class Renderer {
 
     this.batcher.reset();
 
-    // bind once
     const getStatic = this.getStaticScreenPosition.bind(this);
     const getCreature = this.getCreatureScreenPosition.bind(this);
     const floors = this.tileRenderer.tileCache;
@@ -274,13 +261,10 @@ export default class Renderer {
       this.processDistanceLayer(f, getStatic);
     }
 
-    // push sprites to the pool (still CPU-side)
     this.renderSpriteBatches();
-
-    // record how many pool sprites we actually touched
+    this.light.end();
     this.lastFramePoolUsed = this.poolIndex;
 
-    // assemble CPU timing
     const dt = performance.now() - tAssembleStart;
     this.cpuAssembleMs = dt;
     this.totalAssembleMs += dt;

@@ -11,8 +11,9 @@ export default class LightRenderer {
   constructor() {
     this.layer = new Container();
     this.darkness = new Graphics();
-    this.layer.addChild(this.darkness);
     this.lightContainer = new Container();
+    
+    this.layer.addChild(this.darkness);
     this.layer.addChild(this.lightContainer);
   }
 

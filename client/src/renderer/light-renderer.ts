@@ -1,113 +1,87 @@
 // src/renderer/light-renderer.ts
-import { Container, Graphics, Sprite, Texture, Renderer } from 'pixi.js';
+import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import Interface from '../ui/interface';
 
-type RGBA = { r: number; g: number; b: number; a: number };
-
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-const lerpRGBA = (f: RGBA, t: RGBA, k: number): RGBA => ({
-  r: lerp(f.r, t.r, k),
-  g: lerp(f.g, t.g, k),
-  b: lerp(f.b, t.b, k),
-  a: lerp(f.a, t.a, k),
-});
-
 export default class LightRenderer {
-  public layer: Container;
-
+  public readonly layer: Container;
   private darkness: Graphics;
-  private holes: Container;            // container of gradient sprites used as mask
-  private appRenderer?: Renderer;
+  private lightContainer: Container;
+  private lightTextures: Map<string, Texture> = new Map();
 
-  private ambient: RGBA       = { r: 0, g: 0, b: 0, a: 0 };
-  private ambientStart: RGBA  = { r: 0, g: 0, b: 0, a: 0 };
-  private ambientTarget: RGBA = { r: 0, g: 0, b: 0, a: 0 };
-  private steps = 0;
-  private counter = 0;
-
-  private readonly DARKNESS: RGBA = { r: 0, g: 0, b: 0, a: 255 };
-
-  constructor(renderer?: Renderer) {
+  constructor() {
     this.layer = new Container();
-
     this.darkness = new Graphics();
     this.layer.addChild(this.darkness);
-
-    // Container for light holes - will be used as mask
-    this.holes = new Container();
-    this.layer.addChild(this.holes);
-
-    // Use holes container as inverse mask for darkness
-    this.darkness.setMask({ mask: this.holes, inverse: true });
-
-    if (renderer) this.setRenderer(renderer);
+    this.lightContainer = new Container();
+    this.layer.addChild(this.lightContainer);
   }
 
-  public setRenderer(renderer: Renderer) {
-    this.appRenderer = renderer;
-  }
-
-  public setAmbientColor(r: number, g: number, b: number, a: number) {
-    this.ambientTarget = { r, g, b, a };
-    this.ambientStart = { ...this.ambient };
-    const d1 = Math.abs(this.ambientStart.r - this.ambientTarget.r);
-    const d2 = Math.abs(this.ambientStart.g - this.ambientTarget.g);
-    const d3 = Math.abs(this.ambientStart.b - this.ambientTarget.b);
-    const d4 = Math.abs(this.ambientStart.a - this.ambientTarget.a);
-    this.steps = 2 * Math.max(d1, d2, d3, d4);
-    this.counter = this.steps;
-  }
-
-  private getNightSine(): number {
-    const unix = window.gameClient.world.clock.getUnix();
-    return Math.sin(0.25 * Math.PI + (2 * Math.PI * unix) / (24 * 60 * 60 * 1000));
-  }
-  
-  private getDarknessFraction(): number {
-    let f = 0.9 * (this.getNightSine() + 1);
-    if (window.gameClient.player!.isUnderground()) f = 1;
-    return f;
-  }
-  private interpT(): number {
-    return this.steps > 0 ? (this.counter - 1) / this.steps : 0;
-  }
-
-  /** Call once per frame before adding bubbles. */
-  public begin(width: number, height: number) {
-    if (this.counter > 0) {
-      this.ambient = lerpRGBA(this.ambientTarget, this.ambientStart, this.interpT());
-      this.counter--;
-    }
-
-    const night = this.getDarknessFraction();
-    const ambientNight = lerpRGBA(this.ambient, this.DARKNESS, night);
-    const alpha = ambientNight.a / 255;
-
-    // Draw the darkness quad
+  public begin(width: number, height: number, ambientAlpha = 0.8) {
+    this.lightContainer.removeChildren();
     this.darkness.clear();
-    this.darkness.rect(-2, -2, width + 4, height + 4).fill({ color: 0x000000, alpha });
-
-    // Clear holes for this frame
-    this.holes.removeChildren();
+    this.darkness.rect(-2, -2, width + 4, height + 4);
+    this.darkness.fill({ color: 0x000000, alpha: ambientAlpha });
   }
 
-  /** Add feathered "hole". */
-  public addLightBubble(tileX: number, tileY: number, sizeTiles: number, _colorByte: number) {
+  public addLightBubble(tileX: number, tileY: number, sizeTiles: number, colorByte: number) {
     const cx = (tileX + 0.5) * Interface.TILE_SIZE;
     const cy = (tileY + 0.5) * Interface.TILE_SIZE;
-    const radiusPx = Math.max(1, sizeTiles * Interface.TILE_SIZE);
+    const radius = Math.max(1, sizeTiles * Interface.TILE_SIZE);
+    const texture = this.createLightTexture(radius);
 
-    // Create a circular graphics shape for the mask
-    const circle = new Graphics();
-    circle.circle(0, 0, radiusPx);
-    circle.fill({ color: 0xFFFFFF, alpha: 1.0 });
-    circle.position.set(cx, cy);
-    this.holes.addChild(circle);
+    const erase = new Sprite(texture);
+    erase.anchor.set(0.5);
+    erase.position.set(cx, cy);
+    erase.alpha = 1;
+    erase.blendMode = 'erase';
+    this.lightContainer.addChild(erase);
+
+    // const { r, g, b } = this.colorFromByte(colorByte);
+    // const glow = new Sprite(texture);
+    // glow.anchor.set(0.5);
+    // glow.position.set(cx, cy);
+    // glow.tint = (r << 16) | (g << 8) | b;
+    // glow.alpha = 0.45;
+    // glow.blendMode = 'add';
+    // this.lightContainer.addChild(glow);
   }
 
-  /** After adding all bubbles this frame. */
-  public end() {
-    // No-op - we'll use a different approach that doesn't interfere with the render loop
+  public end() {}
+
+  private createLightTexture(radius: number): Texture {
+    const key = `${radius | 0}`;
+    const cached = this.lightTextures.get(key);
+    if (cached) return cached;
+
+    const diameter = Math.max(2, (radius * 2) | 0);
+    const canvas = document.createElement('canvas');
+    canvas.width = diameter;
+    canvas.height = diameter;
+    const ctx = canvas.getContext('2d')!;
+    const cx = diameter / 2;
+    const cy = diameter / 2;
+
+    const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+    gradient.addColorStop(0.0, 'rgba(255,255,255,1.0)');
+    gradient.addColorStop(0.3, 'rgba(255,255,255,0.8)');
+    gradient.addColorStop(0.6, 'rgba(255,255,255,0.4)');
+    gradient.addColorStop(0.8, 'rgba(255,255,255,0.1)');
+    gradient.addColorStop(1.0, 'rgba(255,255,255,0.0)');
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    const texture = Texture.from(canvas);
+    this.lightTextures.set(key, texture);
+    return texture;
   }
 
+  private colorFromByte(colorByte: number) {
+    const r = 51 * (Math.floor(colorByte / 36) % 6);
+    const g = 51 * (Math.floor(colorByte / 6) % 6);
+    const b = 51 * (colorByte % 6);
+    return { r, g, b };
+  }
 }

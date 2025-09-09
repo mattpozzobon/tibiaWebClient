@@ -208,11 +208,11 @@ export default class Renderer {
   }
 
   public getStaticScreenPosition(position: Position): Position {
-    return this.positionHelper.getStaticScreenPosition(position);
+    return PositionHelper.getStaticScreenPosition(position);
   }
 
   public getCreatureScreenPosition(creature: Creature): Position {
-    return this.positionHelper.getCreatureScreenPosition(creature);
+    return PositionHelper.getCreatureScreenPosition(creature);
   }
 
   public getWorldCoordinates(event: MouseEvent): Tile | null {

@@ -106,12 +106,12 @@ export default class LightRenderer {
     u.uLightCount = 0;
   }
 
-  public addLightBubble(tileX: number, tileY: number, sizeTiles: number, _colorByte: number) {
+  public addLightBubble(tileX: number, tileY: number, size: number, _colorByte: number) {
     if (this.count >= MAX_LIGHTS) return;
 
-    const cx = (tileX + 0.5) * Interface.TILE_SIZE;
-    const cy = (tileY + 0.5) * Interface.TILE_SIZE;
-    const r  = Math.max(1, sizeTiles * Interface.TILE_SIZE);
+    const cx = (tileX - 0.5) * Interface.TILE_SIZE;
+    const cy = (tileY) * Interface.TILE_SIZE;
+    const r  = Math.max(1, size * Interface.TILE_SIZE);
 
     const i = this.count * 3;
     this.lights[i + 0] = cx;

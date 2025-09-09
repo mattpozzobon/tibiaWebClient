@@ -13,7 +13,7 @@ export class PositionHelper {
     this.scalingContainer = scalingContainer;
   }
 
-  public getStaticScreenPosition(position: Position): Position {
+  public static getStaticScreenPosition(position: Position): Position {
     const projectedPlayer = window.gameClient.player!.getPosition().projected();
     const projectedThing = position.projected();
     const x = ((Interface.TILE_WIDTH-1)/2) + window.gameClient.player!.getMoveOffset().x + projectedThing.x - projectedPlayer.x;
@@ -21,8 +21,8 @@ export class PositionHelper {
     return new Position(x, y, 0);
   }
 
-  public getCreatureScreenPosition(creature: Creature): Position {
-    const staticPosition = this.getStaticScreenPosition(creature.getPosition());
+  public static getCreatureScreenPosition(creature: Creature): Position {
+    const staticPosition = PositionHelper.getStaticScreenPosition(creature.getPosition());
     const creatureMoveOffset = creature.getMoveOffset();
     const elevationOffset = creature.renderer.getElevationOffset();
 
@@ -57,7 +57,7 @@ export class PositionHelper {
   }
 
   public getOverlayScreenPosition(creature: Creature): { x: number, y: number } {
-    const screenPos: Position = this.getCreatureScreenPosition(creature);
+    const screenPos: Position = PositionHelper.getCreatureScreenPosition(creature);
     const scale = this.scalingContainer.scale.x;
     const tileSize = Interface.TILE_SIZE;
 

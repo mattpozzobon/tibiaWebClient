@@ -1,6 +1,5 @@
 // src/renderer/light-renderer.ts
 import {
-  BLEND_MODES,
   BlurFilter,
   Container,
   Graphics,
@@ -11,17 +10,6 @@ import {
 } from 'pixi.js';
 import Interface from '../ui/interface';
 
-// --- Helpers to mirror your Canvas version ---
-function getNightSine(): number {
-  const unix = window.gameClient.world.clock.getUnix();
-  return Math.sin(0.25 * Math.PI + (2 * Math.PI * unix) / (24 * 60 * 60 * 1000));
-}
-function getDarknessFraction(): number {
-  let fraction = 0.5 * (getNightSine() + 1);
-  if (window.gameClient.player!.isUnderground()) fraction = 1;
-  return fraction; // 0..1
-}
-// Tibia-style 6×6×6 palette (0..215), or allow 0xRRGGBB
 function decodeLightColor(colorByte: number): number {
   if (colorByte > 0xFFFFFF) colorByte &= 0xFFFFFF;
   if (colorByte > 0xFF) return colorByte;
@@ -34,7 +22,6 @@ function decodeLightColor(colorByte: number): number {
 export default class LightRenderer {
   public readonly layer: Container;
 
-  // Offscreen composition: darkness + ERASE sprites
   private darkStage: Container;
   private darkness: Sprite;
   private holesLayer: Container;
@@ -42,37 +29,30 @@ export default class LightRenderer {
   private rt!: RenderTexture;
   private rtSprite!: Sprite;
 
-  // Pre-baked radial alpha gradient (white → transparent)
   private holeTex!: Texture;
 
-  // NEW: On-screen additive glow layer using same gradient, tinted
   private glowLayer: Container;
   private glowPool: Sprite[] = [];
   private glowUsed = 0;
 
-  // Pools (erase sprites)
   private pool: Sprite[] = [];
   private used = 0;
 
-  // Controls
   private ambient = 0.8;
   private rtW = 0;
   private rtH = 0;
 
-  // Bake quality / shaping
-  private baseSize = 512;        // gradient diameter (px) before scaling
-  private bakeResolution = 2;    // 1..3
-  private softnessPx = 8;        // one-time blur to smooth/defuzz gradient
-  private falloffPower = 1.6;    // >1 = slower fade near center
+  private baseSize = 512;
+  private bakeResolution = 2;
+  private softnessPx = 8;
+  private falloffPower = 1.6;
 
-  // Glow tuning
-  private glowScale = 1.0;       // scale vs. erase radius (1.0 = same; try 1.1 for a slight halo)
-  private glowMaxAlpha = 1.0;    // cap for glow alpha
+  private glowScale = 1.0;
+  private glowMaxAlpha = 1.0;
 
   constructor(private renderer: Renderer) {
     this.layer = new Container();
 
-    // Offscreen darkness compositor
     this.darkStage = new Container();
 
     this.darkness = new Sprite(Texture.WHITE);
@@ -87,15 +67,12 @@ export default class LightRenderer {
     this.rtSprite = new Sprite(this.rt);
     this.layer.addChild(this.rtSprite);
 
-    // NEW: glow goes ABOVE the darkness overlay so it’s visible even in dark areas
     this.glowLayer = new Container();
     this.layer.addChild(this.glowLayer);
 
-    // Build gradient once
     this.rebuildHoleTexture();
   }
 
-  /** Build (or rebuild) the radial gradient texture: center alpha=1 → edge 0. */
   private rebuildHoleTexture() {
     const size = this.baseSize * this.bakeResolution;
     const canvas = document.createElement('canvas');
@@ -105,11 +82,10 @@ export default class LightRenderer {
 
     const cx = size / 2, cy = size / 2, r = size / 2;
     const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-
     const steps = 16;
     for (let i = 0; i <= steps; i++) {
-      const t = i / steps;                     // 0..1 from center to edge
-      const alpha = Math.pow(1 - t, this.falloffPower); // 1→0 curve
+      const t = i / steps;
+      const alpha = Math.pow(1 - t, this.falloffPower);
       grad.addColorStop(t, `rgba(255,255,255,${alpha.toFixed(4)})`);
     }
 
@@ -119,7 +95,6 @@ export default class LightRenderer {
 
     const gradientTex = Texture.from(canvas);
 
-    // Optional one-time blur to remove banding
     const holder = new Sprite(gradientTex);
     holder.width = this.baseSize;
     holder.height = this.baseSize;
@@ -165,13 +140,38 @@ export default class LightRenderer {
     this.rtSprite.height = height;
   }
 
-  /** Call at start of world render with base (unscaled) size. */
-  public begin(width: number, height: number, ambientAlpha = 0.8) {
+  private computeAmbient(): number {
+    const t = window.gameClient.world.clock.getUnix();
+    const minutes = Math.floor(t / 60000) % (24 * 60);
+    const isCave = window.gameClient.player!.isUnderground();
+
+    const isNight = minutes >= 22 * 60 || minutes < 4 * 60;
+    if (isCave || isNight) return 1;
+
+    const sunriseStart = 4 * 60, sunriseEnd = 6 * 60;
+    const sunsetStart = 18 * 60, sunsetEnd = 22 * 60;
+
+    if (minutes < sunriseStart) return 1;
+    if (minutes < sunriseEnd) {
+      const t01 = (minutes - sunriseStart) / (sunriseEnd - sunriseStart);
+      return 1 - t01;
+    }
+    if (minutes < sunsetStart) return 0;
+    if (minutes < sunsetEnd) {
+      const t01 = (minutes - sunsetStart) / (sunsetEnd - sunsetStart);
+      return t01;
+    }
+    return 1;
+  }
+
+  public begin() {
+    const width  = Interface.TILE_WIDTH  * Interface.TILE_SIZE;
+    const height = Interface.TILE_HEIGHT * Interface.TILE_SIZE;
     this.ensureRT(width, height);
+    const a = this.computeAmbient();
+    console.log('ambient', a);
+    this.darkness.alpha = this.ambient = a;
 
-    this.darkness.alpha = this.ambient = ambientAlpha;
-
-    // Reset pools
     this.used = 0;
     for (let i = 0; i < this.pool.length; i++) this.pool[i].visible = false;
 
@@ -180,16 +180,16 @@ export default class LightRenderer {
   }
 
   public addLightBubble(tileX: number, tileY: number, size: number, colorByte: number) {
+    
     const cx = (tileX + 0.5) * Interface.TILE_SIZE;
     const cy = (tileY + 0.5) * Interface.TILE_SIZE;
     const r  = Math.max(1, size * Interface.TILE_SIZE);
 
-    // ERASE sprite (removes darkness alpha with smooth falloff)
     let e = this.pool[this.used];
     if (!e) {
       e = new Sprite(this.holeTex);
       e.anchor.set(0.5);
-      e.blendMode = 'erase'; // requires: import 'pixi.js/advanced-blend-modes'
+      e.blendMode = 'erase';
       this.pool.push(e);
       this.holesLayer.addChild(e);
     } else {
@@ -203,7 +203,6 @@ export default class LightRenderer {
 
     this.used++;
 
-    // ADDITIVE GLOW sprite (same gradient, tinted by item color)
     const tint = decodeLightColor(colorByte);
     let g = this.glowPool[this.glowUsed];
     if (!g) {
@@ -220,20 +219,42 @@ export default class LightRenderer {
     g.scale.set(scale * this.glowScale);
     g.tint = tint;
 
-    // Night-based intensity (similar to your Canvas code)
-    const night = getDarknessFraction(); // 0..1
-    const intensity = 0.5 * night;       // 0 at day, 0.5 at full night
-    g.alpha = Math.min(this.glowMaxAlpha, intensity);
+    const intensity = Math.min(this.glowMaxAlpha, 0.75 * this.ambient);
+    g.alpha = intensity;
 
     this.glowUsed++;
   }
 
-  /** Compose darkness + holes into the RT; the RT sprite is already on stage. */
   public end() {
     this.renderer.render({
       container: this.darkStage,
       target: this.rt,
       clear: true,
     });
+  }
+
+  public setSoftness(px: number) {
+    const v = Math.max(0, Math.floor(px));
+    if (v === this.softnessPx) return;
+    this.softnessPx = v;
+    this.rebuildHoleTexture();
+  }
+
+  public setFalloff(power: number) {
+    const p = Math.max(0.1, Math.min(5, power));
+    if (p === this.falloffPower) return;
+    this.falloffPower = p;
+    this.rebuildHoleTexture();
+  }
+
+  public setBakeQuality(opts: { size?: number; resolution?: number }) {
+    if (opts.size) this.baseSize = Math.max(128, Math.min(2048, Math.floor(opts.size)));
+    if (opts.resolution) this.bakeResolution = Math.max(1, Math.min(4, Math.floor(opts.resolution)));
+    this.rebuildHoleTexture();
+  }
+
+  public setGlowStyle(opts: { scale?: number; maxAlpha?: number }) {
+    if (opts.scale !== undefined) this.glowScale = Math.max(0.5, Math.min(2.0, opts.scale));
+    if (opts.maxAlpha !== undefined) this.glowMaxAlpha = Math.max(0, Math.min(1, opts.maxAlpha));
   }
 }

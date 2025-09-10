@@ -52,6 +52,7 @@ class PacketHandler {
   }
 
   handleWorldTime(time: number): void {
+    console.log('handleWorldTime', time);
     window.gameClient.world.clock.setPhase(time);
   }
 

@@ -102,8 +102,11 @@ export default class Debugger {
     this.__updateAverageStatistics();
 
     const r = window.gameClient.renderer;
+    const worldTime = window.gameClient.world.clock.getTimeString();
 
     const debugInfo = [
+      `World Time: ${worldTime}`,
+      '--------------------------------',
       `Server Version: ${window.gameClient.serverVersion}`,
       `Client Version: ${window.gameClient.clientVersion}`,
       `Server Tick Interval: ${window.gameClient.getTickInterval()}ms`,

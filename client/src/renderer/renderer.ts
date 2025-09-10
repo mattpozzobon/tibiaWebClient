@@ -226,10 +226,7 @@ export default class Renderer {
   public __renderWorld(): void {
     const tAssembleStart = performance.now();
     
-    const baseWidth  = Interface.TILE_WIDTH  * Interface.TILE_SIZE;
-    const baseHeight = Interface.TILE_HEIGHT * Interface.TILE_SIZE;
-
-    this.light.begin(baseWidth, baseHeight);
+    this.light.begin();
 
     this.poolIndex = 0;
     this.drawCalls = 0;

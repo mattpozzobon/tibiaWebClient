@@ -48,7 +48,13 @@ export default class LightRenderer {
   private falloffPower = 1.6;
 
   private glowScale = 1.0;
-  private glowMaxAlpha = 1.0;
+  private glowMaxAlpha = 0.6;
+
+  private gridW = 0;
+  private gridH = 0;
+  private overlapGrid: Uint16Array | null = null;
+  private overlapK = 1.0;
+  private glowBlend: 'screen' | 'add' = 'screen';
 
   constructor(private renderer: Renderer) {
     this.layer = new Container();
@@ -168,8 +174,8 @@ export default class LightRenderer {
     const width  = Interface.TILE_WIDTH  * Interface.TILE_SIZE;
     const height = Interface.TILE_HEIGHT * Interface.TILE_SIZE;
     this.ensureRT(width, height);
+
     const a = this.computeAmbient();
-    console.log('ambient', a);
     this.darkness.alpha = this.ambient = a;
 
     this.used = 0;
@@ -177,10 +183,18 @@ export default class LightRenderer {
 
     this.glowUsed = 0;
     for (let i = 0; i < this.glowPool.length; i++) this.glowPool[i].visible = false;
+
+    const gw = Interface.TILE_WIDTH | 0;
+    const gh = Interface.TILE_HEIGHT | 0;
+    if (!this.overlapGrid || gw !== this.gridW || gh !== this.gridH) {
+      this.gridW = gw; this.gridH = gh;
+      this.overlapGrid = new Uint16Array(gw * gh);
+    } else {
+      this.overlapGrid.fill(0);
+    }
   }
 
   public addLightBubble(tileX: number, tileY: number, size: number, colorByte: number) {
-    
     const cx = (tileX + 0.5) * Interface.TILE_SIZE;
     const cy = (tileY + 0.5) * Interface.TILE_SIZE;
     const r  = Math.max(1, size * Interface.TILE_SIZE);
@@ -198,9 +212,7 @@ export default class LightRenderer {
     e.visible = true;
     e.position.set(cx, cy);
     const texRadius = this.baseSize / 2;
-    const scale = r / texRadius;
-    e.scale.set(scale);
-
+    e.scale.set(r / texRadius);
     this.used++;
 
     const tint = decodeLightColor(colorByte);
@@ -208,19 +220,32 @@ export default class LightRenderer {
     if (!g) {
       g = new Sprite(this.holeTex);
       g.anchor.set(0.5);
-      g.blendMode = 'add';
+      g.blendMode = this.glowBlend;
       this.glowPool.push(g);
       this.glowLayer.addChild(g);
     } else {
       g.texture = this.holeTex;
+      g.blendMode = this.glowBlend;
     }
     g.visible = true;
     g.position.set(cx, cy);
-    g.scale.set(scale * this.glowScale);
+    g.scale.set((r / texRadius) * this.glowScale);
     g.tint = tint;
 
-    const intensity = Math.min(this.glowMaxAlpha, 0.75 * this.ambient);
-    g.alpha = intensity;
+    const gx = Math.max(0, Math.min(this.gridW - 1, Math.floor(tileX + 0.5)));
+    const gy = Math.max(0, Math.min(this.gridH - 1, Math.floor(tileY + 0.5)));
+    const idx = gy * this.gridW + gx;
+    const prev = this.overlapGrid ? this.overlapGrid[idx] : 0;
+    if (this.overlapGrid) this.overlapGrid[idx] = prev + 1;
+
+    const atten = 1 / (1 + this.overlapK * prev);
+
+    const r8 = (tint >> 16) & 0xff, g8 = (tint >> 8) & 0xff, b8 = tint & 0xff;
+    const lum = 0.2126 * r8 + 0.7152 * g8 + 0.0722 * b8;
+    const lumScale = 0.5 + 0.5 * (1 - lum / 255);
+
+    const base = Math.min(this.glowMaxAlpha, 0.5 * this.ambient);
+    g.alpha = base * lumScale * atten;
 
     this.glowUsed++;
   }
@@ -253,8 +278,10 @@ export default class LightRenderer {
     this.rebuildHoleTexture();
   }
 
-  public setGlowStyle(opts: { scale?: number; maxAlpha?: number }) {
+  public setGlowStyle(opts: { scale?: number; maxAlpha?: number; blend?: 'screen' | 'add'; overlapK?: number }) {
     if (opts.scale !== undefined) this.glowScale = Math.max(0.5, Math.min(2.0, opts.scale));
     if (opts.maxAlpha !== undefined) this.glowMaxAlpha = Math.max(0, Math.min(1, opts.maxAlpha));
+    if (opts.blend !== undefined) this.glowBlend = opts.blend;
+    if (opts.overlapK !== undefined) this.overlapK = Math.max(0, opts.overlapK);
   }
 }

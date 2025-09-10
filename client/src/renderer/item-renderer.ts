@@ -40,9 +40,7 @@ export default class ItemRenderer {
         if (tile.getPosition().z === playerZ) {
           const info = item.getDataObject().properties.light;
           if (info) {
-            const frames = window.gameClient.renderer.debugger.__nFrames;
-            const size = info.level + 0.2 * info.level * Math.sin(frames / (8 * 2 * Math.PI));
-            this.light.addLightBubble(screenPos.x, screenPos.y, size, info.color);
+            this.light.addLightBubble(screenPos.x, screenPos.y, info.level, info.color);
           }
         }
       }
@@ -85,9 +83,7 @@ export default class ItemRenderer {
         if (tile.getPosition().z === playerZ) {
           const info = item.getDataObject().properties.light;
           if (info) {
-            const frames = window.gameClient.renderer.debugger.__nFrames;
-            const size = info.level + 0.2 * info.level * Math.sin(frames / (8 * 2 * Math.PI));
-            this.light.addLightBubble(screenPos.x, screenPos.y, size, info.color);
+            this.light.addLightBubble(screenPos.x, screenPos.y, info.level, info.color);
           }
         }
       }

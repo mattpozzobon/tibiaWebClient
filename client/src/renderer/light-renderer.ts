@@ -1,130 +1,186 @@
 // src/renderer/light-renderer.ts
-import { Container, Filter, GlProgram, Sprite, Texture } from 'pixi.js';
+import {
+  BLEND_MODES,
+  BlurFilter,
+  Container,
+  Graphics,
+  RenderTexture,
+  Renderer,
+  Sprite,
+  Texture,
+} from 'pixi.js';
 import Interface from '../ui/interface';
-
-const MAX_LIGHTS = 64;
-
-const VERT = `
-in vec2 aPosition;
-out vec2 vTextureCoord;
-
-uniform vec4 uInputSize;
-uniform vec4 uOutputFrame;
-uniform vec4 uOutputTexture;
-
-vec4 filterVertexPosition(void)
-{
-    vec2 position = aPosition * uOutputFrame.zw + uOutputFrame.xy;
-    position.x = position.x * (2.0 / uOutputTexture.x) - 1.0;
-    position.y = position.y * (2.0*uOutputTexture.z / uOutputTexture.y) - uOutputTexture.z;
-    return vec4(position, 0.0, 1.0);
-}
-
-vec2 filterTextureCoord(void)
-{
-    return aPosition * (uOutputFrame.zw * uInputSize.zw);
-}
-
-void main(void)
-{
-    gl_Position = filterVertexPosition();
-    vTextureCoord = filterTextureCoord();
-}
-`;
-
-const FRAG = `
-precision mediump float;
-
-in vec2 vTextureCoord;
-
-uniform vec2  uLocalSize;
-uniform float uAmbient;
-uniform int   uLightCount;
-uniform float uSoftness;
-uniform vec3  uLights[${MAX_LIGHTS}];
-
-void main(void)
-{
-    vec2 frag = vTextureCoord * uLocalSize;
-    float light = 0.0;
-
-    for (int i = 0; i < ${MAX_LIGHTS}; ++i)
-    {
-        if (i >= uLightCount) break;
-        vec3 L = uLights[i];
-        float d = distance(frag, L.xy);
-        float inner = max(L.z - uSoftness, 0.0);
-        float t = 1.0 - smoothstep(inner, L.z, d);
-        light = max(light, t);
-    }
-
-    float alpha = clamp(uAmbient * (1.0 - light), 0.0, 1.0);
-    gl_FragColor = vec4(0.0, 0.0, 0.0, alpha);
-}
-`;
 
 export default class LightRenderer {
   public readonly layer: Container;
 
-  private overlay: Sprite;
-  private filter: Filter;
-  private lights = new Float32Array(MAX_LIGHTS * 3);
-  private count = 0;
+  // Offscreen composition: darkness + ERASE sprites
+  private darkStage: Container;
+  private darkness: Sprite;          // black fullscreen quad in darkStage
+  private holesLayer: Container;     // holds ERASE sprites in darkStage
 
-  constructor() {
+  private rt!: RenderTexture;        // output of darkStage
+  private rtSprite!: Sprite;         // drawn over the game
+
+  // Pre-baked eraser texture (circle). We create it once.
+  private holeTex!: Texture;
+
+  // Optional blur (applied ONCE to the baked hole texture if soft edges requested)
+  private softnessPx = 0; // 0 = hard edge; >0 = soft edge baked once
+
+  // Pools to avoid GC churn
+  private pool: Sprite[] = [];
+  private used = 0;
+
+  // Settings
+  private ambient = 0.8;
+  private rtW = 0;
+  private rtH = 0;
+
+  constructor(private renderer: Renderer) {
     this.layer = new Container();
-    this.overlay = new Sprite(Texture.WHITE);
-    this.layer.addChild(this.overlay);
 
-    this.filter = new Filter({
-      glProgram: new GlProgram({ vertex: VERT, fragment: FRAG }),
-      resources: {
-        uniforms: {
-          uLocalSize:  { value: new Float32Array([1, 1]), type: 'vec2<f32>' },
-          uAmbient:    { value: 0.8,                      type: 'f32' },
-          uSoftness:   { value: 24.0,                     type: 'f32' },
-          uLightCount: { value: 0,                        type: 'i32' },
-          uLights:     { value: this.lights,              type: 'vec3<f32>', size: MAX_LIGHTS },
-        },
-      },
-    });
+    // Offscreen scene to compose the darkness
+    this.darkStage = new Container();
 
-    this.overlay.filters = [this.filter];
+    // 1) Black overlay (what we’ll be erasing from)
+    this.darkness = new Sprite(Texture.WHITE);
+    this.darkness.tint = 0x000000;
+    this.darkness.alpha = this.ambient;
+    this.darkStage.addChild(this.darkness);
+
+    // 2) Container for ERASE sprites
+    this.holesLayer = new Container();
+    this.darkStage.addChild(this.holesLayer);
+
+    // 3) Output RT + on-screen sprite
+    this.rt = RenderTexture.create({ width: 2, height: 2 });
+    this.rtSprite = new Sprite(this.rt);
+    this.layer.addChild(this.rtSprite);
+
+    // 4) Build the eraser texture once (hard edge by default)
+    this.rebuildHoleTexture();
   }
 
+  /** Build (or rebuild) the eraser texture. Call again if you change softness. */
+  private rebuildHoleTexture() {
+    const baseSize = 512; // 256–1024; bigger = smoother edge when scaled
+    const g = new Graphics();
+  
+    // draw solid white circle on transparent background
+    g.clear();
+    g.circle(baseSize / 2, baseSize / 2, baseSize / 2).fill(0xffffff);
+  
+    if (this.softnessPx > 0) {
+      const blur = new BlurFilter({
+        strength: this.softnessPx,
+        quality: 3,
+      });
+      blur.padding = Math.max(32, this.softnessPx * 2);
+      g.filters = [blur];
+    } else {
+      g.filters = null;
+    }
+  
+    // Build an RT to hold the baked circle (hi-res for nice edges)
+    const holeRT = RenderTexture.create({
+      width: baseSize,
+      height: baseSize,
+      resolution: 2, // bump to 3 if you still see jaggies
+    });
+  
+    // Render the Graphics into the RT (v8 render signature)
+    this.renderer.render({ container: g, target: holeRT, clear: true });
+  
+    // Use the RT as our reusable texture
+    this.holeTex = holeRT as unknown as Texture; // Sprite accepts it fine
+  
+    g.destroy(true);
+  }
+
+  /** Ensure the offscreen RT matches our base (unscaled) game size. */
+  private ensureRT(width: number, height: number) {
+    if (width === this.rtW && height === this.rtH) return;
+
+    this.rtW = width;
+    this.rtH = height;
+
+    this.rt.destroy(true);
+    this.rt = RenderTexture.create({ width, height });
+
+    // Resize darkness quad and output sprite
+    this.darkness.position.set(0, 0);
+    this.darkness.width = width;
+    this.darkness.height = height;
+
+    this.rtSprite.texture = this.rt;
+    this.rtSprite.position.set(0, 0);
+    this.rtSprite.width = width;
+    this.rtSprite.height = height;
+  }
+
+  /** Call at the start of your world render with base (unscaled) size. */
   public begin(width: number, height: number, ambientAlpha = 0.8) {
-    this.overlay.position.set(0, 0);
-    this.overlay.width = width;
-    this.overlay.height = height;
+    this.ensureRT(width, height);
 
-    this.count = 0;
+    // Update darkness intensity
+    this.darkness.alpha = this.ambient = ambientAlpha;
 
-    const u = this.filter.resources.uniforms.uniforms;
-    (u.uLocalSize as Float32Array)[0] = width;
-    (u.uLocalSize as Float32Array)[1] = height;
-    u.uAmbient = ambientAlpha;
-    u.uLightCount = 0;
+    // Reset pool usage
+    this.used = 0;
+    for (let i = 0; i < this.pool.length; i++) this.pool[i].visible = false;
   }
 
   public addLightBubble(tileX: number, tileY: number, size: number, _colorByte: number) {
-    if (this.count >= MAX_LIGHTS) return;
-
-    const cx = (tileX - 0.5) * Interface.TILE_SIZE;
-    const cy = (tileY) * Interface.TILE_SIZE;
+    const cx = (tileX + 0.5) * Interface.TILE_SIZE;
+    const cy = (tileY + 0.5) * Interface.TILE_SIZE;
     const r  = Math.max(1, size * Interface.TILE_SIZE);
-
-    const i = this.count * 3;
-    this.lights[i + 0] = cx;
-    this.lights[i + 1] = cy;
-    this.lights[i + 2] = r;
-    this.count++;
+  
+    let s = this.pool[this.used];
+    if (!s) {
+      s = new Sprite(this.holeTex);
+      s.anchor.set(0.5);
+      s.blendMode = 'erase'; // requires: import 'pixi.js/advanced-blend-modes'
+      this.pool.push(s);
+      this.holesLayer.addChild(s);
+    } else {
+      s.texture = this.holeTex; // in case softness changed and we rebuilt
+    }
+  
+    s.visible = true;
+    s.position.set(cx, cy);
+  
+    const texRadius = this.holeTex.width / 2;
+    const blurComp = this.softnessPx > 0 ? 1.0 - (this.softnessPx / (texRadius * 1.5)) : 1.0;
+    const scale = (r / texRadius) * blurComp;
+    s.scale.set(scale);
+  
+    this.used++;
   }
 
+  /** Compose darkness + holes into the RT; the RT sprite is already on stage. */
   public end() {
-    this.filter.resources.uniforms.uniforms.uLightCount = this.count;
+    this.renderer.render({
+      container: this.darkStage,
+      target: this.rt,
+      clear: true,
+    });
   }
 
+  /** 0..1 how dark the world is where there’s no light. */
+  public setAmbient(alpha: number) {
+    this.ambient = Math.min(1, Math.max(0, alpha));
+    this.darkness.alpha = this.ambient;
+  }
+
+  /**
+   * Soft edges without per-frame cost.
+   * We rebuild the eraser texture ONCE with a blur, then reuse it every frame.
+   */
   public setSoftness(px: number) {
-    this.filter.resources.uniforms.uniforms.uSoftness = Math.max(0, px);
+    const v = Math.max(0, Math.floor(px));
+    if (v === this.softnessPx) return;
+    this.softnessPx = v;
+    this.rebuildHoleTexture();
   }
 }

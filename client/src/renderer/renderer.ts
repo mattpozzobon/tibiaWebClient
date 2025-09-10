@@ -67,7 +67,7 @@ export default class Renderer {
     this.scalingContainer = new Container();
     this.overlayLayer = new Container();
     this.gameLayer = new Container();
-    this.light = new LightRenderer();
+    this.light = new LightRenderer(this.app.renderer);
 
     this.hoverOutline = new OutlineFilter(2, 0xFFFFFF);
 
@@ -123,7 +123,7 @@ export default class Renderer {
       backgroundAlpha: 0,
       roundPixels: false,
       preference: 'webgl',
-      useBackBuffer: true
+      useBackBuffer: true,
     });
 
     await BMFontLoader.load('/png/fonts/Tibia-Border-16px-Subtle.xml');

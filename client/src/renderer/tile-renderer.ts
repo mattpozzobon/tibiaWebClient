@@ -63,9 +63,7 @@ export default class TileRenderer {
       if (tile.getPosition().z === playerZ) {
         const info = tile.getDataObject().properties.light;
         if (info) {
-          const size = info.level; //+ 0.2 * info.level * Math.sin(frames / (8 * 2 * Math.PI));
-          // screenPos is in tile units
-          this.light.addLightBubble(screenPos.x, screenPos.y, size, info.color);
+          this.light.addLightBubble(screenPos.x, screenPos.y, info.level, info.color);
         }
       }
     }

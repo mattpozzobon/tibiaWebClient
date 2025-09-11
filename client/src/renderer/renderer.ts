@@ -223,10 +223,13 @@ export default class Renderer {
     return this.positionHelper.getOverlayScreenPosition(creature);
   }
 
-  public __renderWorld(): void {
+  // src/renderer/renderer.ts (__renderWorld only)
+  private __renderWorld(): void {
     const tAssembleStart = performance.now();
-    
-    this.light.begin();
+
+    const playerZ = window.gameClient.player!.getPosition().z;
+    const lastVisibleZ = playerZ;
+    this.light.beginFrame(playerZ, lastVisibleZ);
 
     this.poolIndex = 0;
     this.drawCalls = 0;
@@ -250,7 +253,6 @@ export default class Renderer {
 
       for (let t = 0; t < tiles.length; t++) {
         const tile = tiles[t];
-
         const screenPos = getStatic(tile.getPosition());
         this.collectForTile(tile, screenPos, getStatic, getCreature);
       }
@@ -259,7 +261,7 @@ export default class Renderer {
     }
 
     this.renderSpriteBatches();
-    this.light.end();
+    this.light.endFrame();
     this.lastFramePoolUsed = this.poolIndex;
 
     const dt = performance.now() - tAssembleStart;
@@ -267,6 +269,7 @@ export default class Renderer {
     this.totalAssembleMs += dt;
     this.totalDrawTime += dt;
   }
+
 
   private collectForTile(
     tile: Tile,

@@ -1,4 +1,5 @@
-// tile-renderer.ts
+// src/renderer/tile-renderer.ts
+import { Texture } from 'pixi.js';
 import Tile from "../game/tile";
 import Position from "../game/position";
 import FrameGroup from "../utils/frame-group";
@@ -43,35 +44,36 @@ export default class TileRenderer {
 
   public collectSprites(tile: Tile, screenPos: Position, batcher: SpriteBatcher): void {
     tile.setElevation(0);
-    const xCell = screenPos.x, yCell = screenPos.y;
+    const xCell = screenPos.x;
+    const yCell = screenPos.y;
     if (xCell < -1 || xCell > Interface.TILE_WIDTH || yCell < -1 || yCell > Interface.TILE_HEIGHT) return;
 
-    const px = xCell * Interface.TILE_SIZE;
-    const py = yCell * Interface.TILE_SIZE;
+    const size = Interface.TILE_SIZE;
+    const tileZ = tile.getPosition().z;
 
     let fg: FrameGroup;
     try { fg = tile.getFrameGroup(FrameGroup.NONE); } catch { return; }
 
     const f = tile.getFrame();
     const p = tile.getPattern();
-
     const style = this.lighting?.styleFor(tile);
 
-    // bubble lighting for tiles on the current floor
     if (tile.isLight()) {
-      const playerZ = window.gameClient.player!.getPosition().z;
-      if (tile.getPosition().z === playerZ) {
-        const info = tile.getDataObject().properties.light;
-        if (info) {
-          this.light.addLightBubble(screenPos.x, screenPos.y, info.level, info.color);
-        }
+      const info = tile.getDataObject().properties.light;
+      if (info) {
+        this.light.addLightBubble(screenPos.x, screenPos.y, info.level, info.color, tileZ);
       }
     }
 
     if (fg.width === 1 && fg.height === 1 && fg.layers === 1) {
       const sid = fg.getSpriteIndex(f, p.x, p.y, p.z, 0, 0, 0);
-      const tex = fg.getSprite(sid);
-      if (tex) batcher.push(tex, px, py, Interface.TILE_SIZE, Interface.TILE_SIZE, false, style);
+      const tex = fg.getSprite(sid) as Texture | undefined;
+      if (tex) {
+        const px = xCell * size;
+        const py = yCell * size;
+        batcher.push(tex, px, py, size, size, false, style);
+        this.light.addOccluderSprite(tileZ, tex, px, py, size, size);
+      }
       return;
     }
 
@@ -79,10 +81,18 @@ export default class TileRenderer {
       for (let cx = 0; cx < fg.width; cx++) {
         for (let cy = 0; cy < fg.height; cy++) {
           const sid = fg.getSpriteIndex(f, p.x, p.y, p.z, l, cx, cy);
-          const tex = fg.getSprite(sid);
-          if (tex) {
-            batcher.push(tex, px, py, Interface.TILE_SIZE, Interface.TILE_SIZE, false, style);
-          }
+          const tex = fg.getSprite(sid) as Texture | undefined;
+          if (!tex) continue;
+
+          const xCellDraw = xCell - cx - tile.__renderElevation;
+          const yCellDraw = yCell - cy - tile.__renderElevation;
+          if (xCellDraw < -1 || xCellDraw > Interface.TILE_WIDTH || yCellDraw < -1 || yCellDraw > Interface.TILE_HEIGHT) continue;
+
+          const px = xCellDraw * size;
+          const py = yCellDraw * size;
+
+          batcher.push(tex, px, py, size, size, false, style);
+          this.light.addOccluderSprite(tileZ, tex, px, py, size, size);
         }
       }
     }

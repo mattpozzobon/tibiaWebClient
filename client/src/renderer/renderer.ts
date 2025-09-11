@@ -72,8 +72,9 @@ export default class Renderer {
     this.hoverOutline = new OutlineFilter(2, 0xFFFFFF);
 
     this.app.stage.addChild(this.scalingContainer);
-    this.app.stage.addChild(this.overlayLayer);
+    //this.app.stage.addChild(this.overlayLayer);
     this.scalingContainer.addChild(this.gameLayer);
+    this.scalingContainer.addChild(this.overlayLayer);
     this.scalingContainer.addChild(this.light.layer);
 
     this.__start = performance.now();

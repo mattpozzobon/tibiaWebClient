@@ -1,32 +1,25 @@
-import { Container, Graphics, BitmapText, TextOptions } from "pixi.js";
+// src/ui/character-pixi-element.ts
+import { Container, Sprite, BitmapText, TextOptions, Texture, BlurFilter } from "pixi.js";
 import Creature from "../../game/creature";
-import Position from "../../game/position";
+import Interface from "../interface";
 
-export enum BarType {
-  Health = 0,
-  Mana = 1,
-  Energy = 2,
-}
-
+export enum BarType { Health = 0, Mana = 1, Energy = 2 }
 export enum COLOR {
-  BLACK      = 0x000000,
-  BLUE       = 0x0030FF,
-  LIGHTGREEN = 0x50F050,
-  ORANGE     = 0xFF9F00,
-  RED        = 0xD60000,
-  DARKRED    = 0x6A0000,
-  YELLOW     = 0xFFFF00,
-  WHITE      = 0xFFFFFF,
+  BLACK=0x000000, BLUE=0x0030FF, LIGHTGREEN=0x50F050, ORANGE=0xFF9F00,
+  RED=0xD60000, DARKRED=0x6A0000, YELLOW=0xFFFF00, WHITE=0xFFFFFF
 }
+
+type BarSprites = { bg: Sprite; fill: Sprite; glow?: Sprite; height: number };
 
 export default class CharacterPixiElement extends Container {
   private __creature: Creature;
-  private readonly BAR_WIDTH = 32;
+  private readonly BAR_WIDTH  = 48;
   private readonly BAR_HEIGHT = 4;
+  private readonly FONT_SIZE  = 24;
 
   private barCount = 1;
   private nameText!: BitmapText;
-  private bars: Record<BarType, { fill: Graphics }> = {} as any;
+  private bars: Record<BarType, BarSprites> = {} as any;
 
   constructor(creature: Creature) {
     super();
@@ -48,78 +41,124 @@ export default class CharacterPixiElement extends Container {
     const nameColor = this.getHealthColor(fraction);
     this.nameText = new BitmapText({
       text: this.__creature.getName(),
-      style: {
-        fontFamily: "Tibia-Border-16px-Subtle",
-        fontSize: 18,
-      }
+      style: { fontFamily: "Tibia-Border-16px-Subtle", fontSize: this.FONT_SIZE }
     } as TextOptions);
-
     this.nameText.tint = nameColor;
     this.nameText.anchor.set(0.5, 1);
-    this.nameText.position.set(this.BAR_WIDTH / 2, -2); // Centered above bars
+    this.nameText.position.set(this.BAR_WIDTH / 2, -this.BAR_HEIGHT);
+    (this.nameText as any).roundPixels = true;
     this.addChild(this.nameText);
   }
 
+  private getBarYPosition(barType: BarType): number {
+    const h = this.barHeight(barType);
+    let y = 0;
+    if (barType === BarType.Mana) y = this.barHeight(BarType.Health) - 1;
+    if (barType === BarType.Energy) y = this.barHeight(BarType.Health) + this.barHeight(BarType.Mana) - 2;
+    return y;
+  }
+
+  private barHeight(barType: BarType): number {
+    return barType === BarType.Health ? Math.round(this.BAR_HEIGHT * 1.5) : this.BAR_HEIGHT;
+  }
+
   private createBar(barType: BarType): void {
-    const y = barType * (this.BAR_HEIGHT);
+    const unit = Texture.WHITE;
+    const height = this.barHeight(barType);
+
+    const bg = new Sprite(unit);
+    bg.tint = COLOR.BLACK;
+    bg.width = this.BAR_WIDTH;
+    bg.height = height;
+    (bg as any).roundPixels = true;
+
+    const fill = new Sprite(unit);
+    fill.x = 0.5;
+    fill.y = 1;
+    fill.height = Math.max(1, height - 2);
+    (fill as any).roundPixels = true;
+
+    let glow: Sprite | undefined;
+    if (barType === BarType.Health) {
+      glow = new Sprite(unit);
+      glow.x = 1;
+      glow.y = 1 + Math.floor((fill.height * 0.5) * -0.15);
+      glow.height = Math.ceil(fill.height * 1.3);
+      glow.alpha = 0.85;
+      glow.blendMode = "add" as any;
+      (glow as any).roundPixels = true;
+    }
 
     const bar = new Container();
-    const border = new Graphics();
-    const fill = new Graphics();
-
-    border.rect(0, 0, this.BAR_WIDTH, this.BAR_HEIGHT).fill(0x000000);
-
-    bar.addChild(border);
-    border.addChild(fill);
-
-    bar.position.set(0, y);
+    bar.addChild(bg);
+    if (glow) bar.addChild(glow);
+    bar.addChild(fill);
+    bar.position.set(0, this.getBarYPosition(barType));
     this.addChild(bar);
-    this.bars[barType] = { fill };
+
+    this.bars[barType] = { bg, fill, glow, height };
   }
-  
+
   private getBarYOffset(): number {
-    return this.barCount * this.BAR_HEIGHT;
+    return this.barHeight(BarType.Health) + (this.barCount > 1 ? this.barHeight(BarType.Mana) : 0) + (this.barCount > 2 ? this.barHeight(BarType.Energy) : 0);
   }
 
   public render(): void {
-    const pos = window.gameClient.renderer.getOverlayScreenPosition(this.__creature);
-    this.position.set(Math.round(pos.x-20), Math.round(pos.y + 12 - this.getBarYOffset()));
+    const tilePos = window.gameClient.renderer.getCreatureScreenPosition(this.__creature);
+    const ts = Interface.TILE_SIZE;
+    const px = tilePos.x * ts + (ts / 2);
+    const py = tilePos.y * ts;
+
+    const worldScale = window.gameClient.renderer.scalingContainer.scale.x || 1;
+    this.scale.set(1 / worldScale);
+    const snap = (v: number) => Math.round(v * worldScale) / worldScale;
+
+    const aboveHead = ts + this.getBarYOffset() - (ts - 3);
+    this.position.set(
+      snap(px - this.BAR_WIDTH / 2),
+      snap(py - aboveHead)
+    );
+
     this.visible = true;
 
-    // Health
     const healthFraction = this.__creature.getHealthFraction?.() ?? 1;
     const healthColor = this.getHealthColor(healthFraction);
-    this.updateBar(BarType.Health, healthFraction, healthColor);
+    this.updateBar(BarType.Health, healthFraction, healthColor, worldScale);
     this.nameText.tint = healthColor;
 
-    // Mana
     if (this.bars[BarType.Mana]) {
-        const manaFraction = this.__creature.getManaFraction?.() ?? 1;
-        this.updateBar(BarType.Mana, manaFraction, COLOR.BLUE);
+      const manaFraction = this.__creature.getManaFraction?.() ?? 1;
+      this.updateBar(BarType.Mana, manaFraction, COLOR.BLUE, worldScale);
     }
-
-    // Energy
     if (this.bars[BarType.Energy]) {
-        const energyFraction = this.__creature.getEnergyFraction?.() ?? 1;
-        this.updateBar(BarType.Energy, energyFraction, COLOR.YELLOW);
+      const energyFraction = this.__creature.getEnergyFraction?.() ?? 1;
+      this.updateBar(BarType.Energy, energyFraction, COLOR.YELLOW, worldScale);
     }
   }
 
-  private updateBar(barType: BarType, fraction: number, color: number): void {
-      const bar = this.bars[barType];
-      const fill = bar.fill;
+  private updateBar(barType: BarType, fraction: number, color: number, worldScale: number): void {
+    const { fill, bg, glow, height } = this.bars[barType];
+    const clamped = Math.max(0, Math.min(fraction, 1));
+    const innerW = this.BAR_WIDTH - 2;
+    const w = Math.max(0, Math.round(innerW * clamped));
 
-      fill.clear();
+    fill.tint = color;
+    fill.width = w;
 
-      const fillWidth = Math.max(1, Math.round((this.BAR_WIDTH) * Math.max(0, Math.min(fraction, 1))))-1;
+    if (glow) {
+      glow.tint = color;
+      glow.width = Math.max(0, Math.round(w * 1.02));
+      const blur = new BlurFilter({ strength: 2.2 * worldScale, quality: 2 });
+      glow.filters = [blur];
+    }
 
-      fill.rect(1, 1, fillWidth, this.BAR_HEIGHT-2).fill(color);
+    (bg as any).roundPixels = true;
+    (fill as any).roundPixels = true;
+    if (glow) (glow as any).roundPixels = true;
   }
 
   public remove(): void {
-    if (this.parent) {
-      this.parent.removeChild(this);
-    }
+    if (this.parent) this.parent.removeChild(this);
   }
 
   private getHealthColor(fraction: number): number {

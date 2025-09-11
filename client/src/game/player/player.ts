@@ -7,7 +7,7 @@ import Creature, { CreatureData } from "../creature";
 import ConditionManager from "../condition";
 import SkillModal from "../../ui/modals/modal-skills";
 import BattleWindow from "../../ui/window/window-battle";
-import CharacterPixiElement from "../../ui/screen-elements/screen-element-characther-pixi";
+import CharacterPixiElement from "../../ui/screen-elements/screen-element-character";
 
 export interface PlayerData extends CreatureData {
   equipment: any;

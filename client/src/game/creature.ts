@@ -7,7 +7,7 @@ import Interface from "../ui/interface";
 import CastingManager from "../ui/managers/casting-manager";
 import BoxAnimation from "../utils/box-animation";
 import CreatureRendererHelper from "../renderer/creature-renderer-helper";
-import CharacterPixiElement from "../ui/screen-elements/screen-element-characther-pixi";
+import CharacterPixiElement from "../ui/screen-elements/screen-element-character";
 
 
 export interface CreatureData {

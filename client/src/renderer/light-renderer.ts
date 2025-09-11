@@ -59,6 +59,7 @@ export default class LightRenderer {
   // Screen size cache
   private rtW = 0;
   private rtH = 0;
+  private edgePad = 2;
 
   // Bubble bake params
   private baseSize = 512;
@@ -399,23 +400,28 @@ export default class LightRenderer {
     if (width === this.rtW && height === this.rtH) return;
     this.rtW = width;
     this.rtH = height;
-
+  
     // main darkness RT
     this.rt.destroy(true);
     this.rt = RenderTexture.create({ width, height });
+  
+    // ---- overscan the display sprite a couple of pixels ----
+    const pad = this.edgePad;
+  
     this.rtSprite.texture = this.rt;
-    this.rtSprite.position.set(0, 0);
-    this.rtSprite.width = width;
-    this.rtSprite.height = height;
-
-    // darkness quad
+    this.rtSprite.position.set(-pad, -pad);
+    this.rtSprite.width  = width  + pad * 2;
+    this.rtSprite.height = height + pad * 2;
+  
+    // darkness quad (still render exactly to RT size)
     this.darkness.position.set(0, 0);
     this.darkness.width = width;
     this.darkness.height = height;
-
+  
     // resize all floor glow RTs
     for (const fg of this.glowByZ.values()) this.ensureGlowRT(fg, width, height);
   }
+  
 
   private ensureGlowRT(fg: FloorGlow, width: number, height: number) {
     fg.rt.destroy(true);

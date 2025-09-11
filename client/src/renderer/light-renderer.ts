@@ -64,19 +64,21 @@ export default class LightRenderer {
   // Bubble bake params
   private baseSize = 512;
   private bakeResolution = 2;
-  private softnessPx = 8;
+  private softnessPx = 24;
   private falloffPower = 1.6;
 
   // Glow style (tuned to be dimmer + non-accumulating)
   private glowScale: number = 1.0;
-  private glowMaxAlpha: number = 0.2;                        // ↓ was 0.6
-  private glowBlend: 'lighten' = 'lighten'; // 'lighten' avoids stacking
+  private glowMaxAlpha: number = 0.3;                       
+  private lowerGlowMaxAlpha: number = 0.38;   // slightly brighter cap for lower floors
+  private lowerGlowBoost: number = 1.4;       // boost lower-floor glow to match the player’s
+  private glowBlend: 'lighten' = 'lighten';   // 'lighten' avoids stacking
 
   // Overlap (current floor only) — stronger damping to reduce stacking
   private gridW = 0;
   private gridH = 0;
   private overlapGrid: Uint16Array | null = null;
-  private overlapK = 10.0; // ↑ was 1.0 (higher => additional lights contribute less)
+  private overlapK = 20.0; // ↑ was 1.0 (higher => additional lights contribute less)
 
   // Floors
   private currentZ = 0;
@@ -263,7 +265,7 @@ export default class LightRenderer {
     });
 
     // draw carved lower-floor glows above darkness for colored halos (scaled by ambient too)
-    const ambientScale = 0.4 * this.ambient; // ↓ was 0.5
+    const ambientScale = 0.4 * this.ambient * this.lowerGlowBoost;
     for (const [zLower, fg] of this.glowByZ) {
       if (zLower >= this.currentZ) continue;
       if (fg.used === 0) continue;
@@ -365,8 +367,8 @@ export default class LightRenderer {
     s.scale.set((r / texRadius) * this.glowScale);
     s.tint = decodeLightColor(colorByte);
 
-    const ambientScale = 0.4 * this.ambient; // ↓ was 0.5
-    s.alpha = Math.min(this.glowMaxAlpha, 0.55) * this.depthAlphaFor(floorZ) * ambientScale;
+    const ambientScale = 0.4 * this.ambient * this.lowerGlowBoost;
+    s.alpha = Math.min(this.lowerGlowMaxAlpha, 0.55) * this.depthAlphaFor(floorZ) * ambientScale;
 
     fg.used++;
   }

@@ -23,8 +23,8 @@ type FloorGlow = {
   pool: Sprite[];
   used: number;
   rt: RenderTexture;    // baked carved glow (after occluders)
-  spr: Sprite;          // reusable sprite for displaying carved glow
-  holeSpr: Sprite;      // reusable sprite to ERASE into darkness pass
+  spr: Sprite;          // sprite for displaying carved glow
+  holeSpr: Sprite;      // sprite to ERASE into darkness pass
 };
 
 type FloorOcclusion = {
@@ -39,7 +39,7 @@ export default class LightRenderer {
   // Darkness pipeline
   private darkStage: Container;
   private darkness: Sprite;
-  private holesLayer: Container;  // all erase sprites live here (current + lower floors)
+  private holesLayer: Container;  // all 'erase' sprites (current + lower floors)
 
   private rt!: RenderTexture;     // main darkness RT shown on screen
   private rtSprite!: Sprite;
@@ -66,16 +66,16 @@ export default class LightRenderer {
   private softnessPx = 8;
   private falloffPower = 1.6;
 
-  // Glow style
-  private glowScale = 1.0;
-  private glowMaxAlpha = 0.6;
-  private glowBlend: 'screen' | 'add' = 'screen';
+  // Glow style (tuned to be dimmer + non-accumulating)
+  private glowScale: number = 1.0;
+  private glowMaxAlpha: number = 0.2;                        // ↓ was 0.6
+  private glowBlend: 'lighten' = 'lighten'; // 'lighten' avoids stacking
 
-  // Overlap (current floor only)
+  // Overlap (current floor only) — stronger damping to reduce stacking
   private gridW = 0;
   private gridH = 0;
   private overlapGrid: Uint16Array | null = null;
-  private overlapK = 1.0;
+  private overlapK = 10.0; // ↑ was 1.0 (higher => additional lights contribute less)
 
   // Floors
   private currentZ = 0;
@@ -87,6 +87,11 @@ export default class LightRenderer {
   // Per-floor collections
   private glowByZ = new Map<number, FloorGlow>();
   private occByZ = new Map<number, FloorOcclusion>();
+
+  // Light-leak mitigation knobs (OFF by default to avoid seams)
+  private eraseInflatePx = 0;
+  private eraseBlurStrength = 0;
+  private snapPixelPositions = false;
 
   constructor(private renderer: Renderer) {
     this.layer = new Container();
@@ -129,7 +134,7 @@ export default class LightRenderer {
 
     // update ambient and set darkness alpha
     this.ambient = this.computeAmbient();
-    this.darkness.alpha = this.ambient;
+    this.darkness.alpha = Math.min(1, this.ambient * 1.15);
 
     // reset darkness holes
     for (let i = 0; i < this.pool.length; i++) this.pool[i].visible = false;
@@ -172,6 +177,13 @@ export default class LightRenderer {
       if (zLower >= this.currentZ) continue;
       if (fg.used === 0) continue;
 
+      // detect if any occluders exist above this floor
+      let hasAbove = false;
+      for (let z = zLower + 1; z <= this.lastVisibleZ; z++) {
+        const oc = this.occByZ.get(z);
+        if (oc && oc.used) { hasAbove = true; break; }
+      }
+
       // render that floor's glow
       this.renderer.render({
         container: fg.stage,
@@ -180,24 +192,57 @@ export default class LightRenderer {
       });
 
       // carve with occluders from floors above it (zLower, lastVisibleZ]
-      for (let z = zLower + 1; z <= this.lastVisibleZ; z++) {
-        const oc = this.occByZ.get(z);
-        if (!oc || oc.used === 0) continue;
+      if (hasAbove) {
+        const blur = (this.eraseBlurStrength > 0)
+          ? new BlurFilter({ strength: this.eraseBlurStrength, quality: 1 })
+          : null;
 
-        const originals: (string | number)[] = new Array(oc.stage.children.length);
-        for (let i = 0; i < oc.stage.children.length; i++) {
-          const s = oc.stage.children[i] as Sprite;
-          originals[i] = s.blendMode;
-          s.blendMode = 'erase';
-        }
-        this.renderer.render({
-          container: oc.stage,
-          target: fg.rt,
-          clear: false,
-        });
-        for (let i = 0; i < oc.stage.children.length; i++) {
-          const s = oc.stage.children[i] as Sprite;
-          s.blendMode = originals[i] as any;
+        for (let z = zLower + 1; z <= this.lastVisibleZ; z++) {
+          const oc = this.occByZ.get(z);
+          if (!oc || oc.used === 0) continue;
+
+          const originals: (string | number)[] = new Array(oc.stage.children.length);
+          const origX: number[] = new Array(oc.stage.children.length);
+          const origY: number[] = new Array(oc.stage.children.length);
+          const origW: number[] = new Array(oc.stage.children.length);
+          const origH: number[] = new Array(oc.stage.children.length);
+
+          if (blur) oc.stage.filters = [blur];
+
+          for (let i = 0; i < oc.stage.children.length; i++) {
+            const s = oc.stage.children[i] as Sprite;
+            originals[i] = s.blendMode;
+            origX[i] = s.x; origY[i] = s.y; origW[i] = s.width; origH[i] = s.height;
+
+            s.blendMode = 'erase';
+
+            // optional inflate to avoid leaks — OFF by default
+            if (this.eraseInflatePx > 0) {
+              s.x = origX[i] - this.eraseInflatePx;
+              s.y = origY[i] - this.eraseInflatePx;
+              s.width  = origW[i] + this.eraseInflatePx * 2;
+              s.height = origH[i] + this.eraseInflatePx * 2;
+            }
+
+            if (this.snapPixelPositions) {
+              s.x = Math.round(s.x);
+              s.y = Math.round(s.y);
+            }
+          }
+
+          this.renderer.render({
+            container: oc.stage,
+            target: fg.rt,
+            clear: false,
+          });
+
+          // restore
+          for (let i = 0; i < oc.stage.children.length; i++) {
+            const s = oc.stage.children[i] as Sprite;
+            s.blendMode = originals[i] as any;
+            s.x = origX[i]; s.y = origY[i]; s.width = origW[i]; s.height = origH[i];
+          }
+          if (blur) oc.stage.filters = null;
         }
       }
 
@@ -217,13 +262,13 @@ export default class LightRenderer {
     });
 
     // draw carved lower-floor glows above darkness for colored halos (scaled by ambient too)
-    const ambientScale = 0.5 * this.ambient;
+    const ambientScale = 0.4 * this.ambient; // ↓ was 0.5
     for (const [zLower, fg] of this.glowByZ) {
       if (zLower >= this.currentZ) continue;
       if (fg.used === 0) continue;
 
       fg.spr.texture = fg.rt;
-      fg.spr.blendMode = this.glowBlend; // 'screen' or 'add'
+      fg.spr.blendMode = this.glowBlend; // 'lighten' by default to avoid stacking
       fg.spr.alpha = this.depthAlphaFor(zLower) * ambientScale;
       fg.spr.visible = true;
       if (!fg.spr.parent) this.lowerGlowLayer.addChild(fg.spr);
@@ -260,17 +305,17 @@ export default class LightRenderer {
         e.texture = this.holeTex;
       }
       e.visible = true;
-      e.position.set(cx, cy);
+      e.position.set(this.snap(cx), this.snap(cy));
       e.scale.set(r / texRadius);
       this.used++;
 
-      // Visible glow on current floor (ambient scaled)
+      // Visible glow on current floor
       const tint = decodeLightColor(colorByte);
       let g = this.glowPool[this.glowUsed];
       if (!g) {
         g = new Sprite(this.holeTex);
         g.anchor.set(0.5);
-        g.blendMode = this.glowBlend;
+        g.blendMode = this.glowBlend; // 'lighten' to avoid stacking
         this.glowPool.push(g);
         this.glowLayer.addChild(g);
       } else {
@@ -278,7 +323,7 @@ export default class LightRenderer {
         g.blendMode = this.glowBlend;
       }
       g.visible = true;
-      g.position.set(cx, cy);
+      g.position.set(this.snap(cx), this.snap(cy));
       g.scale.set((r / texRadius) * this.glowScale);
       g.tint = tint;
 
@@ -294,20 +339,20 @@ export default class LightRenderer {
       const lum = 0.2126 * r8 + 0.7152 * g8 + 0.0722 * b8;
       const lumScale = 0.5 + 0.5 * (1 - lum / 255);
 
-      const base = Math.min(this.glowMaxAlpha, 0.5 * this.ambient);
+      const base = Math.min(this.glowMaxAlpha, 0.4 * this.ambient); // ↓ was 0.5
       g.alpha = base * lumScale * atten;
 
       this.glowUsed++;
       return;
     }
 
-    // Lower floor: collect glow sprite (its alpha will also be scaled by ambient)
+    // Lower floor: collect glow sprite (alpha scaled by ambient and depth)
     const fg = this.getFloorGlow(floorZ);
     let s = fg.pool[fg.used];
     if (!s) {
       s = new Sprite(this.holeTex);
       s.anchor.set(0.5);
-      s.blendMode = this.glowBlend;
+      s.blendMode = this.glowBlend; // 'lighten'
       fg.pool.push(s);
       fg.stage.addChild(s);
     } else {
@@ -315,11 +360,11 @@ export default class LightRenderer {
       s.blendMode = this.glowBlend;
     }
     s.visible = true;
-    s.position.set(cx, cy);
+    s.position.set(this.snap(cx), this.snap(cy));
     s.scale.set((r / texRadius) * this.glowScale);
     s.tint = decodeLightColor(colorByte);
 
-    const ambientScale = 0.5 * this.ambient;
+    const ambientScale = 0.4 * this.ambient; // ↓ was 0.5
     s.alpha = Math.min(this.glowMaxAlpha, 0.55) * this.depthAlphaFor(floorZ) * ambientScale;
 
     fg.used++;
@@ -331,7 +376,7 @@ export default class LightRenderer {
     let s = oc.pool[oc.used];
     if (!s) {
       s = new Sprite(texture);
-      s.tint = 0x000000;      // color ignored for 'erase'; we only need alpha from texture
+      s.tint = 0x000000;      // color ignored during 'erase'; alpha matters
       s.alpha = 1.0;
       s.blendMode = 'normal';
       oc.pool.push(s);
@@ -341,8 +386,8 @@ export default class LightRenderer {
       s.blendMode = 'normal';
     }
     s.visible = true;
-    s.x = x;
-    s.y = y;
+    s.x = this.snap(x);
+    s.y = this.snap(y);
     s.width = w;
     s.height = h;
     oc.used++;
@@ -414,7 +459,8 @@ export default class LightRenderer {
 
   private depthAlphaFor(zLower: number): number {
     const d = Math.max(0, this.currentZ - zLower);
-    return Math.max(0.15, 0.6 * Math.pow(0.75, d - 1));
+    // slightly stronger first layer, faster falloff
+    return Math.max(0.12, 0.7 * Math.pow(0.7, d - 1));
   }
 
   private rebuildHoleTexture() {
@@ -477,24 +523,22 @@ export default class LightRenderer {
     const sunriseStart = 4 * 60, sunriseEnd = 6 * 60;
     const sunsetStart = 18 * 60, sunsetEnd = 22 * 60;
 
+    const smooth = (v:number)=> v * v * (3 - 2 * v);
+
     if (minutes < sunriseStart) return 1;
     if (minutes < sunriseEnd) {
       const t01 = (minutes - sunriseStart) / (sunriseEnd - sunriseStart);
-      return 1 - t01;
+      return 1 - smooth(t01);
     }
     if (minutes < sunsetStart) return 0;
     if (minutes < sunsetEnd) {
       const t01 = (minutes - sunsetStart) / (sunsetEnd - sunsetStart);
-      return t01;
+      return smooth(t01);
     }
     return 1;
   }
 
-  // Tweaks
-  public setGlowStyle(opts: { scale?: number; maxAlpha?: number; blend?: 'screen' | 'add'; overlapK?: number }) {
-    if (opts.scale !== undefined) this.glowScale = Math.max(0.5, Math.min(2.0, opts.scale));
-    if (opts.maxAlpha !== undefined) this.glowMaxAlpha = Math.max(0, Math.min(1, opts.maxAlpha));
-    if (opts.blend !== undefined) this.glowBlend = opts.blend;
-    if (opts.overlapK !== undefined) this.overlapK = Math.max(0, opts.overlapK);
+  private snap(v: number): number {
+    return this.snapPixelPositions ? Math.round(v) : v;
   }
 }

@@ -340,7 +340,6 @@ export default class Renderer {
         spr.visible = true;
         spr.filters = spriteData.outline ? [this.hoverOutline] : null;
         spr.tint = spriteData.tint ?? 0xFFFFFF;
-        spr.alpha = spriteData.alpha ?? 1;
         spr.blendMode = spriteData.blendMode ?? 'normal';
 
         this.drawCalls++;

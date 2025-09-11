@@ -1,75 +1,49 @@
+// src/ui/screen-element-floating.ts
+import { Container, BitmapText, TextOptions } from "pixi.js";
 import Position from "../../game/position";
 import Interface from "../interface";
-import ScreenElement from "./screen-element";
+import { PositionHelper } from "../../renderer/position-helper";
 
+export default class FloatingElement {
+  public container: Container;
 
-export default class FloatingElement extends ScreenElement {
-  private __position: Position;
+  private __position: Position; // static world tile the float originates from
   private __start: number;
+  private text: BitmapText;
 
   constructor(message: string, position: Position, color: number) {
-    // Call the parent constructor with the prototype identifier and gameClient.
-    super( "floating-element-prototype");
-    this.__position = position;
-    this.setColor(color);
-    this.setMessage(message);
+    this.container = new Container();
+    this.container.sortableChildren = true;
+    this.__position = position.copy();
+    this.text = new BitmapText({text: message, style: { fontFamily: "Tibia-Border-16px-Subtle", fontSize: 18 }} as TextOptions);
+    this.text.anchor.set(0.5, 1); // center x, baseline y for upward float
+    this.text.tint = color;
+    (this.text as any).roundPixels = true;
+
+    this.container.addChild(this.text);
     this.__start = performance.now();
   }
 
-  /**
-   * Returns the duration (in milliseconds or any unit) the element should appear.
-   */
-  public getDuration(): number {
-    return 20;
-  }
+  public getDuration(): number { return 20; }
+  public getAge(): number { return performance.now() - this.__start; }
+  public setMessage(message: string): void { this.text.text = message; }
+  public setColor(color: number): void { this.text.tint = color; }
 
-  /**
-   * Returns the age (time elapsed) of the element.
-   */
-  public getAge(): number {
-    return performance.now() - this.__start;
-  }
-
-  /**
-   * Updates the text position based on the element's age and position.
-   */
+  /** World-space placement on overlayLayer (same as CharacterElement). */
   public setTextPosition(): void {
-    const staticPos = window.gameClient.renderer.getStaticScreenPosition(this.__position);
-    const offset = this.__getAbsoluteOffset(staticPos);
-    const age = this.getAge();
-  
-    // Animate upward
-    offset.top -= Math.floor(0.05 * age);
-  
-    // Fade out after 500ms
-    if (age > 500) {
-      this.element.style.opacity = String(1 - ((age - 500) / 250));
-    }
-  
-    // ✅ Shrink over time: starts at 1.5 → shrinks to 1.0
-    const scale = 2.0 - Math.min(age / 600, 0.5); // shrink over 600ms
-    this.element.style.transform = `scale(${scale})`;
-  
-    this.__updateTextPosition(offset);
+    const { x, y, scale } = PositionHelper.getOverlayPosNonScaled(this.__position);
+    const headGapPx = (Interface.TILE_SIZE - 6) * scale;
+    this.container.scale.set(1);
+    this.container.position.set(Math.round(x), Math.round(y - headGapPx ));
+
+    // fade + scale over time
+    this.container.alpha = this.getAge() > 500 ? Math.max(0, 1 - (this.getAge() - 500) / 250) : 1;
+    const s = 2.0 - Math.min(this.getAge() / 600, 0.5);
+    // NOTE: we already applied inverse scale to container; multiply the “effect scale”
+    this.container.scale.set((1 / scale) * s, (1 / scale) * s);
   }
 
-  /**
-   * Sets the text message of the floating element.
-   */
-  public setMessage(message: string): void {
-    const span = this.element.querySelector("span");
-    if (span) {
-      span.innerHTML = message;
-    }
-  }
-
-  /**
-   * Sets the text color of the floating element.
-   */
-  public setColor(color: number): void {
-    const span = this.element.querySelector("span") as HTMLElement | null;
-    if (span) {
-      span.style.color = Interface.prototype.getHexColor(color);
-    }
+  public remove(): void {
+    if (this.container.parent) this.container.parent.removeChild(this.container);
   }
 }

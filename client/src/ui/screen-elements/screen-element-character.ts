@@ -2,6 +2,7 @@
 import { Container, Sprite, BitmapText, TextOptions, Texture, BlurFilter } from "pixi.js";
 import Creature from "../../game/creature";
 import Interface from "../interface";
+import { PositionHelper } from "../../renderer/position-helper";
 
 export enum BarType { Health = 0, Mana = 1, Energy = 2 }
 export enum COLOR {
@@ -104,28 +105,21 @@ export default class CharacterElement extends Container {
   }
 
   public render(): void {
-    const tilePos = window.gameClient.renderer.getCreatureScreenPosition(this.__creature);
-    const ts = Interface.TILE_SIZE;
-    const px = tilePos.x * ts + (ts / 2);
-    const py = tilePos.y * ts;
-
-    const worldScale = window.gameClient.renderer.scalingContainer.scale.x || 1;
+    const { x, y, worldScale, snap } = PositionHelper.getOverlayCreatureScaled(this.__creature);
+  
+    // bars render in world space → inverse scale to keep them crisp
     this.scale.set(1 / worldScale);
-    const snap = (v: number) => Math.round(v * worldScale) / worldScale;
-
-    const aboveHead = ts + this.getBarYOffset() - (ts - 3);
-    this.position.set(
-      snap(px - this.BAR_WIDTH / 2),
-      snap(py - aboveHead)
-    );
-
+    const aboveHead = Interface.TILE_SIZE + this.getBarYOffset() - (Interface.TILE_SIZE - 3);
+  
+    this.position.set(snap(x - this.BAR_WIDTH / 2), snap(y - aboveHead));
+  
     this.visible = true;
-
+  
     const healthFraction = this.__creature.getHealthFraction?.() ?? 1;
-    const healthColor = this.getHealthColor(healthFraction);
+    const healthColor    = this.getHealthColor(healthFraction);
     this.updateBar(BarType.Health, healthFraction, healthColor, worldScale);
     this.nameText.tint = healthColor;
-
+  
     if (this.bars[BarType.Mana]) {
       const manaFraction = this.__creature.getManaFraction?.() ?? 1;
       this.updateBar(BarType.Mana, manaFraction, COLOR.BLUE, worldScale);

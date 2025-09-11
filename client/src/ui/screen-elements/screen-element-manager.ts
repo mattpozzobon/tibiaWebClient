@@ -1,127 +1,95 @@
+// src/ui/screen-elements/screen-element-manager.ts
+import { Container } from "pixi.js";
 import Creature from "../../game/creature";
 import FloatingElement from "./screen-element-floating";
 import MessageElement from "./screen-element-message";
+import Renderer from "../../renderer/renderer";
 
 export default class ScreenElementManager {
-  public activeTextElements: Set<FloatingElement | MessageElement>;
-  public screenWrapper: HTMLElement;
-  private emoteDelays: Map<number, number> = new Map(); // creatureId → last delay in ms
+  private layer: Container;
+  public activeTextElements = new Set<FloatingElement | MessageElement>();
+  private messagesByEntity = new Map<number, MessageElement[]>();
 
-  constructor() {
-    this.activeTextElements = new Set();
-    const wrapper = document.getElementById("text-wrapper");
-    if (!wrapper) {
-      throw new Error("Element with id 'text-wrapper' not found.");
-    }
-    this.screenWrapper = wrapper;
+  constructor(private renderer: Renderer) {
+    this.layer = renderer.noScallingOverlayLayer;
+    this.layer.sortableChildren = true;
   }
 
-  public clear(): void {
-    // Remove all character elements from the DOM
-    Object.values(window.gameClient.world.activeCreatures).forEach((creature: any) => {
-      //creature.characterElement.remove();
-      window.gameClient.renderer.overlayLayer.removeChild(creature.characterElementPixi);
-    });
+  clear(): void {
+    for (const el of this.activeTextElements) el.remove();
+    this.activeTextElements.clear();
+    this.messagesByEntity.clear();
+    this.layer.removeChildren();
   }
 
-  public render(): void {
-    // Render the character elements
-    this.__renderCreatureNameAndBars();
-
-    // Render other text bubbles on the screen
-    this.activeTextElements.forEach((screenElement) => {
-      // Only update the position of the text when it is floating or when the player moves
-      if (window.gameClient.player!.isMoving() || screenElement.constructor.name === "FloatingElement") {
-        screenElement.setTextPosition();
-      }
-    });
-  }
-
-  private __renderCreatureNameAndBars(): void {
+  render(): void {
     Object.values(window.gameClient.world.activeCreatures).forEach((creature: Creature) => {
-      if (window.gameClient.player!.getPosition().z !== creature.getPosition().z) {
+      if (window.gameClient.player!.getPosition().z !== creature.getPosition().z
+       || !window.gameClient.player!.canSeeSmall(creature)) {
         creature.characterElementPixi.visible = false;
-        return;
+      } else {
+        creature.characterElementPixi.render();
+        creature.characterElementPixi.visible = true;
       }
-  
-      if (!window.gameClient.player!.canSeeSmall(creature)) {
-        creature.characterElementPixi.visible = false;
-        return;
-      }
-  
-      creature.characterElementPixi.render();
-      creature.characterElementPixi.visible = true;
     });
+    this.activeTextElements.forEach(el => el.setTextPosition());
   }
 
-  public add(element: HTMLElement): void {
-    this.screenWrapper.appendChild(element);
+  private addToLayer(el: FloatingElement | MessageElement): void {
+    const container = (el as any).container;
+    if (!container) throw new Error("Element must expose a Pixi `container`.");
+    this.layer.addChild(container);
   }
 
-  public createFloatingTextElement(message: string, position: any, color: number, creatureId?: number): void {
-    if (document.hidden) return;
-  
-    let delay = 0;
-    if (creatureId !== undefined) {
-      const lastDelay = this.emoteDelays.get(creatureId) || 0;
-      delay = lastDelay + 200; // Stagger by 100ms
-      this.emoteDelays.set(creatureId, delay);
-  
-      // Reset the delay counter after a short time
-      setTimeout(() => {
-        const current = this.emoteDelays.get(creatureId);
-        if (current === delay) {
-          this.emoteDelays.delete(creatureId);
-        }
-      }, delay + 500);
-    }
-  
-    setTimeout(() => {
-      this.__createTextElement(new FloatingElement(message, position, color));
-    }, delay);
+  private restackEntityMessages(entityId: number): void {
+    const arr = this.messagesByEntity.get(entityId) || [];
+    const line = 18; // world-pixel spacing between stacked messages
+    for (let i = 0; i < arr.length; i++) arr[i].setStackOffset(i * line);
   }
 
-  private __createTextElement(messageElement: FloatingElement | MessageElement): any {
-    // Keep a reference to the active text element
-    this.activeTextElements.add(messageElement);
-    // Add the element to the screen wrapper
-    this.add(messageElement.element);
-    // Must update the position after appending to the parent
-    messageElement.setTextPosition();
-    // Schedule deletion after the element's duration expires
-    const event = window.gameClient.eventQueue.addEvent(this.deleteTextElement.bind(this, messageElement),messageElement.getDuration());
-    return event;
+  private __createTextElement(el: FloatingElement | MessageElement): any {
+    this.activeTextElements.add(el);
+    this.addToLayer(el);
+    el.setTextPosition();
+    return window.gameClient.eventQueue.addEvent(
+      this.deleteTextElement.bind(this, el),
+      el.getDuration()
+    );
   }
 
-  public createTextElement(entity: any, message: string, color: number): any {
-    // If the entity type is not 1, add the message to the default channel instead.
-    if (entity.type !== 1) {
-      window.gameClient.interface.channelManager.getChannel("Default")!.addMessage(message, entity.type, entity.name, color);
-    }
-    if (document.hidden) {
-      return null;
-    }
+  // ✅ Keep the legacy signature so existing callers work
+  public createFloatingTextElement(message: string, entity: Creature, color: number): any {
+    if (document.hidden) return null;
 
-    console.log('Creating text element:', entity, message, color);
-    return this.__createTextElement(new MessageElement(entity, message, color));
+    const id = (entity as any).id as number;
+    if (typeof id !== "number") throw new Error("Creature.id must be a number for stacking.");
+
+    // Always create a NEW MessageElement (no reuse, no buffer)
+    const el = new MessageElement(entity, message, color);
+
+    const list = this.messagesByEntity.get(id) || [];
+    list.push(el);
+    this.messagesByEntity.set(id, list);
+
+    // position in the stack
+    this.restackEntityMessages(id);
+
+    return this.__createTextElement(el);
   }
 
-  public deleteTextElement(textElement: FloatingElement | MessageElement): void {
-    // Remove the element from the DOM
-    textElement.remove();
-    // Delete its reference from active text elements
-    this.activeTextElements.delete(textElement);
+  public deleteTextElement(el: FloatingElement | MessageElement): void {
+    el.remove();
+    this.activeTextElements.delete(el);
 
-    // For MessageElement, if more text is buffered, create a new element with the next message.
-    if (textElement instanceof MessageElement) {
-      if (textElement.__entity.textBuffer.length === 0) {
-        return;
+    if (el instanceof MessageElement) {
+      const id = (el.__entity as any).id as number;
+      const list = this.messagesByEntity.get(id);
+      if (list) {
+        const idx = list.indexOf(el);
+        if (idx !== -1) list.splice(idx, 1);
+        if (list.length === 0) this.messagesByEntity.delete(id);
+        else this.restackEntityMessages(id);
       }
-      this.createTextElement(
-        textElement.__entity,
-        textElement.__entity.textBuffer.shift() || "",
-        textElement.__color
-      );
     }
   }
 }

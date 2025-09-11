@@ -47,6 +47,7 @@ export default class Renderer {
   public itemRenderer: ItemRenderer;
   public light: LightRenderer;
   public scalingContainer: Container;
+  public noScallingOverlayLayer: Container;
   public creatureRenderer: CreatureRenderer;
   public animationRenderer: AnimationRenderer;
   public overlayLayer: Container;
@@ -65,6 +66,7 @@ export default class Renderer {
     this.app = app;
     this.debugger = new Debugger();
     this.scalingContainer = new Container();
+    this.noScallingOverlayLayer = new Container();
     this.overlayLayer = new Container();
     this.gameLayer = new Container();
     this.light = new LightRenderer(this.app.renderer);
@@ -72,7 +74,8 @@ export default class Renderer {
     this.hoverOutline = new OutlineFilter(2, 0xFFFFFF);
 
     this.app.stage.addChild(this.scalingContainer);
-    //this.app.stage.addChild(this.overlayLayer);
+    this.app.stage.addChild(this.noScallingOverlayLayer);
+
     this.scalingContainer.addChild(this.gameLayer);
     this.scalingContainer.addChild(this.overlayLayer);
     this.scalingContainer.addChild(this.light.layer);
@@ -218,10 +221,6 @@ export default class Renderer {
 
   public getWorldCoordinates(event: MouseEvent): Tile | null {
     return this.positionHelper.getWorldCoordinates(event);
-  }
-
-  public getOverlayScreenPosition(creature: Creature): { x: number, y: number } {
-    return this.positionHelper.getOverlayScreenPosition(creature);
   }
 
   // src/renderer/renderer.ts (__renderWorld only)

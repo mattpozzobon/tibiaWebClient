@@ -56,17 +56,43 @@ export class PositionHelper {
     return chunk ? chunk.getFirstTileFromTop(p.projected()) : null;
   }
 
-  public getOverlayScreenPosition(creature: Creature): { x: number, y: number } {
-    const screenPos: Position = PositionHelper.getCreatureScreenPosition(creature);
-    const scale = this.scalingContainer.scale.x;
-    const tileSize = Interface.TILE_SIZE;
+  public static getOverlayPosNonScaled(position: Position): { x: number; y: number; scale: number } {
+    const t = PositionHelper.getStaticScreenPosition(position);
+    const ts = Interface.TILE_SIZE;
+    const sc = window.gameClient.renderer.scalingContainer;
+    const scale = sc.scale.x || 1;
+    const x = (t.x * ts + ts * 0.5) * scale + sc.x;
+    const y = (t.y * ts) * scale + sc.y;
+    return { x, y, scale };
+  }
 
-    let x = (screenPos.x * tileSize) * scale + this.scalingContainer.x;
-    let y = (screenPos.y * tileSize) * scale + this.scalingContainer.y;
+  public static getOverlayPosScaled(position: Position): { x: number; y: number; worldScale: number; snap: (v: number) => number } {
+    const t = PositionHelper.getStaticScreenPosition(position);
+    const ts = Interface.TILE_SIZE;
+    const x = t.x * ts + ts * 0.5;
+    const y = t.y * ts;
+    const worldScale = window.gameClient.renderer.scalingContainer.scale.x || 1;
+    const snap = (v: number) => Math.round(v * worldScale) / worldScale;
+    return { x, y, worldScale, snap };
+  }
 
-    y -= 16 * scale;
-    x += 4 * scale;
+  public static getOverlayCreatureNonScaled(creature: Creature): { x: number; y: number; scale: number } {
+    const t = PositionHelper.getCreatureScreenPosition(creature);
+    const ts = Interface.TILE_SIZE;
+    const sc = window.gameClient.renderer.scalingContainer;
+    const scale = sc.scale.x || 1;
+    const x = (t.x * ts + ts * 0.5) * scale + sc.x;
+    const y = (t.y * ts) * scale + sc.y;
+    return { x, y, scale };
+  }
 
-    return { x, y };
+  public static getOverlayCreatureScaled(creature: Creature): { x: number; y: number; worldScale: number; snap: (v: number) => number } {
+    const t = PositionHelper.getCreatureScreenPosition(creature);
+    const ts = Interface.TILE_SIZE;
+    const x = t.x * ts + ts * 0.5;
+    const y = t.y * ts;
+    const worldScale = window.gameClient.renderer.scalingContainer.scale.x || 1;
+    const snap = (v: number) => Math.round(v * worldScale) / worldScale;
+    return { x, y, worldScale, snap };
   }
 }

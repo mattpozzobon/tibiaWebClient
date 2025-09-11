@@ -50,12 +50,6 @@ export default class Creature {
  
     this.__chunk = window.gameClient.world.getChunkFromWorldPosition(this.vitals.position);
 
-    // Create the character element (method implementation assumed).
-    //this.characterElement = new CharacterElement(this);
-    //window.gameClient.interface.screenElementManager.add(this.characterElement.element);
-    //this.characterElement.setHealthFraction(this.getHealthFraction());
-    
-
     this.__previousPosition = data.vitals.position.copy();
     this.__activeTextElement = null;
     this.__target = null;
@@ -256,7 +250,7 @@ export default class Creature {
   
   protected __setActiveTextElement(message: string, color: number): any {
     // Sets a new active text element for the creature.
-    this.__activeTextElement = window.gameClient.interface.screenElementManager.createTextElement(this, message, color);
+    this.__activeTextElement = window.gameClient.interface.screenElementManager.createFloatingTextElement(message, this, color);
     return this.__activeTextElement;
   }
   

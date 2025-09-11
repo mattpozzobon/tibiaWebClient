@@ -36,7 +36,7 @@ export default class GameClient {
 
   constructor(renderer: Renderer) {
     this.renderer = renderer;
-    this.interface = new Interface();
+    this.interface = new Interface(renderer);
     this.spriteBuffer = new SpriteBuffer(100000);
     this.dataObjects = new ObjectBuffer();
     this.networkManager = new NetworkManager();

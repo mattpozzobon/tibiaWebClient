@@ -160,9 +160,8 @@ class PacketHandler {
   
     window.gameClient.interface.screenElementManager.createFloatingTextElement(
       `<i>${packet.message}</i>`,
-      creature.getPosition(),
+      creature,
       packet.color,
-      packet.id // Pass creature ID for stagger tracking
     );
   }
 
@@ -177,7 +176,7 @@ class PacketHandler {
 
     window.gameClient.interface.screenElementManager.createFloatingTextElement(
       health.toString(),
-      sourceCreature.getPosition(),
+      sourceCreature,
       Interface.COLORS.LIGHTGREEN
     );
 
@@ -335,7 +334,7 @@ class PacketHandler {
 
     window.gameClient.interface.screenElementManager.createFloatingTextElement(
       packet.damage.toString(),
-      targetCreature.getPosition(),
+      targetCreature,
       packet.color
     );
   }
@@ -610,7 +609,7 @@ class PacketHandler {
 
     window.gameClient.interface.screenElementManager.createFloatingTextElement(
       packet.experience.toString(),
-      creature.getPosition(),
+      creature,
       Interface.COLORS.WHITE
     );
 
@@ -641,7 +640,7 @@ class PacketHandler {
   private __handleDamageEnvironment(targetCreature: Creature, damage: number, color: number): void {
     window.gameClient.interface.screenElementManager.createFloatingTextElement(
       damage.toString(),
-      targetCreature.getPosition(),
+      targetCreature,
       color
     );
 

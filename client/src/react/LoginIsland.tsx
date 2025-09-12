@@ -132,16 +132,16 @@ export default function LoginIsland({ onLoggedIn, onShowChangelog }: { onLoggedI
     <div id="login-page-container" className="loaded">
       <div id="login-wrapper">
         
-        <div id="floater-connecting" className="modal" style={{ display: loading ? 'block' : 'none' }}>
+        <div id="floater-connecting" className={`modal ${loading ? 'show' : 'hide'}`}>
           <div className="modal-header">Information</div>
           <div className="modal-body">
-            <div style={{ textAlign: 'center' }}>
+            <div className="modal-center">
               <span>{loading ? 'Connecting...' : ''}</span>
             </div>
           </div>
         </div>
 
-        <div id="pre-login-wrapper" style={{ display: !showCreate && !showRecover ? 'block' : 'none' }}>
+        <div id="pre-login-wrapper" className={!showCreate && !showRecover ? 'show' : 'hide'}>
           <div className="auth-banner">
             <img src="/png/banner.png" alt="Game Logo" />
           </div>
@@ -183,9 +183,8 @@ export default function LoginIsland({ onLoggedIn, onShowChangelog }: { onLoggedI
               <span className="register-line">
                 Don't have an account??
                 <a 
-                  className="register-link" 
+                  className="register-link clickable" 
                   onClick={() => setShowCreate(true)}
-                  style={{ cursor: 'pointer' }}
                 >
                   Register!
                 </a>
@@ -193,9 +192,8 @@ export default function LoginIsland({ onLoggedIn, onShowChangelog }: { onLoggedI
               <span className="register-line">
                 Forgot your account?
                 <a 
-                  className="register-link" 
+                  className="register-link clickable" 
                   onClick={() => setShowRecover(true)}
-                  style={{ cursor: 'pointer' }}
                 >
                   Recover!
                 </a>
@@ -215,7 +213,7 @@ export default function LoginIsland({ onLoggedIn, onShowChangelog }: { onLoggedI
           </div>
         </div>
       
-        <div id="floater-create" style={{ display: showCreate ? 'block' : 'none' }}>
+        <div id="floater-create" className={showCreate ? 'show' : 'hide'}>
           <form onSubmit={submitCreate}>
             <label htmlFor="create-username">Email:</label>
             <input 
@@ -258,7 +256,7 @@ export default function LoginIsland({ onLoggedIn, onShowChangelog }: { onLoggedI
           </form>
         </div>
 
-        <div id="floater-recover" style={{ display: showRecover ? 'block' : 'none' }}>
+        <div id="floater-recover" className={showRecover ? 'show' : 'hide'}>
           <form onSubmit={submitRecover}>
             <label htmlFor="recover-email">Recover Account:</label>
             <input 
@@ -288,21 +286,20 @@ export default function LoginIsland({ onLoggedIn, onShowChangelog }: { onLoggedI
 
         <button 
           id="auth-back-button" 
-          className="btn-round back-link" 
+          className={`btn-round back-link ${(showCreate || showRecover) ? 'show' : 'hide'}`}
           type="button"
           onClick={() => {
             setShowCreate(false);
             setShowRecover(false);
             setErr(null);
           }}
-          style={{ display: (showCreate || showRecover) ? 'block' : 'none' }}
         >
           ←
         </button>
       </div>
 
       {/* Post-login wrapper - required by LoginFlowManager */}
-      <div id="post-login-wrapper" style={{ display: 'none' }}>
+      <div id="post-login-wrapper" className="hide">
         {/* Topbar: Shows user info */}
         <div id="post-login-topbar" className="topbar">
           <div className="user-info">
@@ -342,10 +339,10 @@ export default function LoginIsland({ onLoggedIn, onShowChangelog }: { onLoggedI
         </div>
       
         {/* Asset Download Progress */}
-        <div id="download-progress" style={{ display: 'none', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0, 0, 0, 0.8)', padding: '20px', borderRadius: '5px', color: 'white', textAlign: 'center' }}>
+        <div id="download-progress" className="download-progress">
           <div>Downloading game assets...</div>
-          <div style={{ margin: '10px 0' }}>
-            <div id="download-progress-bar" style={{ width: '0%', height: '20px', background: '#4CAF50', transition: 'width 0.3s' }}></div>
+          <div className="progress-container">
+            <div id="download-progress-bar" className="progress-bar"></div>
           </div>
           <div id="download-status">0%</div>
         </div>

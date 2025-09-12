@@ -83,7 +83,7 @@ export default function TopbarIsland({ gc }: TopbarIslandProps) {
         <span className="shortcut">Ctrl+M</span>
       </div>
       <div className="icon-button" title="Changelog (Ctrl+N)" onClick={handleChangelog}>
-        <span style={{ fontSize: '20px', fontWeight: 'bold' }}>📋</span>
+        <span className="changelog-icon">📋</span>
         <span className="shortcut">Ctrl+N</span>
       </div>
     </div>

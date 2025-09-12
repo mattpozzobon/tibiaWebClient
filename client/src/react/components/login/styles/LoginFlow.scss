@@ -401,3 +401,48 @@ label {
   font-size: 14px;
   padding: 8px 16px;
 }
+
+/* Display utility classes */
+.show {
+  display: block !important;
+}
+
+.hide {
+  display: none !important;
+}
+
+/* Modal center alignment */
+.modal-center {
+  text-align: center;
+}
+
+/* Clickable elements */
+.clickable {
+  cursor: pointer;
+}
+
+/* Download progress styles */
+.download-progress {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  padding: 20px;
+  border-radius: 5px;
+  color: white;
+  text-align: center;
+}
+
+.progress-container {
+  margin: 10px 0;
+}
+
+.progress-bar {
+  width: 0%;
+  height: 20px;
+  background: #4CAF50;
+  transition: width 0.3s;
+  border-radius: 3px;
+}

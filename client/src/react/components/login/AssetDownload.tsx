@@ -206,72 +206,30 @@ export default function AssetDownload({ gc, onDownloadComplete }: AssetDownloadP
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      width: '80%',
-      maxWidth: '600px',
-      backgroundColor: 'rgba(0, 0, 0, 0.9)',
-      border: '3px solid #333',
-      borderRadius: '10px',
-      padding: '40px',
-      zIndex: 10000,
-      textAlign: 'center'
-    }}>
-      <h2 style={{ 
-        color: 'white', 
-        marginBottom: '30px',
-        fontSize: '24px'
-      }}>
+    <div className="asset-download-container">
+      <h2 className="asset-download-title">
         Downloading Game Assets
       </h2>
       
-      <div style={{
-        marginBottom: '30px'
-      }}>
-        <div style={{
-          width: '100%',
-          height: '30px',
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          border: '2px solid #333',
-          borderRadius: '15px',
-          overflow: 'hidden',
-          marginBottom: '15px'
-        }}>
-          <div style={{
-            width: `${downloadState.progress}%`,
-            height: '100%',
-            background: 'linear-gradient(90deg, #00ff00, #66ff66)',
-            borderRadius: '13px',
-            transition: 'width 0.3s ease'
-          }} />
+      <div className="progress-section">
+        <div className="progress-bar-container">
+          <div 
+            className="progress-bar-fill"
+            style={{ width: `${downloadState.progress}%` }}
+          />
         </div>
         
-        <div style={{
-          color: 'white',
-          fontSize: '16px',
-          marginBottom: '10px'
-        }}>
+        <div className="progress-status">
           {downloadState.status}
         </div>
         
-        <div style={{
-          color: '#ccc',
-          fontSize: '14px'
-        }}>
+        <div className="progress-percentage">
           {Math.round(downloadState.progress)}%
         </div>
       </div>
 
       {downloadState.isComplete && (
-        <div style={{
-          color: '#00ff00',
-          fontSize: '18px',
-          fontWeight: 'bold',
-          marginBottom: '20px'
-        }}>
+        <div className="download-complete">
           ✅ Ready to play!
         </div>
       )}
@@ -279,27 +237,13 @@ export default function AssetDownload({ gc, onDownloadComplete }: AssetDownloadP
       {downloadState.status.includes('failed') && (
         <button
           onClick={handleRetry}
-          style={{
-            padding: '12px 24px',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            backgroundColor: '#ff6600',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            marginTop: '20px'
-          }}
+          className="retry-button"
         >
           Retry Download
         </button>
       )}
 
-      <div style={{
-        marginTop: '30px',
-        color: '#999',
-        fontSize: '12px'
-      }}>
+      <div className="download-note">
         This may take a few minutes depending on your connection speed.
       </div>
     </div>

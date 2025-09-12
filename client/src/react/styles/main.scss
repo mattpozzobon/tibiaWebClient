@@ -1,0 +1,191 @@
+/* Main React Components Styles */
+
+// Import component-specific styles
+@import '../components/styles/ChangelogModal.scss';
+@import '../components/styles/TopbarIsland.scss';
+@import '../components/login/styles/LoginFlow.scss';
+@import '../components/login/styles/CharacterSelect.scss';
+@import '../components/login/styles/AssetDownload.scss';
+
+// Global React component styles
+.react-component {
+  // Base styles for all React components
+}
+
+// Utility classes
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #0096ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Common button styles
+.btn-primary {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #0096ff 0%, #007acc 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #00aaff 0%, #0088dd 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 150, 255, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.btn-secondary {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #666 0%, #444 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #777 0%, #555 100%);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.btn-border {
+  padding: 10px 20px;
+  border: 2px solid;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &.btn-gold {
+    border-color: #ffd700;
+    color: #ffd700;
+
+    &:hover {
+      background: #ffd700;
+      color: #000;
+    }
+  }
+
+  &.btn-white {
+    border-color: white;
+    color: white;
+
+    &:hover {
+      background: white;
+      color: #000;
+    }
+  }
+
+  &.btn-red {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+
+    &:hover {
+      background: #ff6b6b;
+      color: white;
+    }
+  }
+}
+
+// Common input styles
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #0096ff;
+    box-shadow: 0 0 0 2px rgba(0, 150, 255, 0.2);
+  }
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
+}
+
+// Common modal overlay
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(5px);
+}
+
+// Common card styles
+.card {
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+// Common text styles
+.text-primary {
+  color: white;
+}
+
+.text-secondary {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.text-accent {
+  color: #0096ff;
+}
+
+.text-success {
+  color: #4caf50;
+}
+
+.text-error {
+  color: #ff6b6b;
+}
+
+.text-warning {
+  color: #ffd700;
+}

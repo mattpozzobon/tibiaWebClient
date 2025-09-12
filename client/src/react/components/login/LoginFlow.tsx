@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import LoginIsland from "../../LoginIsland";
 import AssetDownload from "./AssetDownload";
 import CharacterSelect from "./CharacterSelect";
+import ChangelogModal from "../ChangelogModal";
 import type GameClient from "../../../core/gameclient";
+import './styles/LoginFlow.scss';
 
 type LoginStep = "login" | "asset-download" | "character-select" | "game";
 
@@ -14,6 +16,7 @@ export default function LoginFlow({ onGameStart }: LoginFlowProps) {
   const [step, setStep] = useState<LoginStep>("login");
   const [gameClient, setGameClient] = useState<GameClient | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showChangelog, setShowChangelog] = useState(false);
 
   useEffect(() => {
     // Check if user is already authenticated
@@ -104,20 +107,22 @@ export default function LoginFlow({ onGameStart }: LoginFlowProps) {
   }
 
   return (
-    <div id="login-page-container" className="loaded">
-      <div id="login-wrapper">
-        {step === "login" && (
-          <LoginIsland onLoggedIn={handleLoginSuccess} />
-        )}
+    <>
+      {step === "login" && (
+        <LoginIsland 
+          onLoggedIn={handleLoginSuccess} 
+          onShowChangelog={() => setShowChangelog(true)}
+        />
+      )}
         
-        {step === "asset-download" && gameClient && (
-          <AssetDownload 
-            gc={gameClient} 
-            onDownloadComplete={handleAssetDownloadComplete}
-          />
-        )}
+      {step === "asset-download" && gameClient && (
+        <AssetDownload 
+          gc={gameClient} 
+          onDownloadComplete={handleAssetDownloadComplete}
+        />
+      )}
         
-        {step === "character-select" && gameClient && (
+      {step === "character-select" && gameClient && (
           <div id="post-login-wrapper">
             <div id="post-login-topbar" className="topbar">
               <div className="user-info">
@@ -133,8 +138,8 @@ export default function LoginFlow({ onGameStart }: LoginFlowProps) {
                 <button className="btn-border btn-gold" onClick={() => setStep("character-select")}>
                   Play
                 </button>
-                <button className="btn-border btn-gold">
-                  News
+                <button className="btn-border btn-gold" onClick={() => setShowChangelog(true)}>
+                  📋 Changelog
                 </button>
               </div>
 
@@ -153,7 +158,11 @@ export default function LoginFlow({ onGameStart }: LoginFlowProps) {
             </div>
           </div>
         )}
-      </div>
-    </div>
+        
+      <ChangelogModal 
+        isVisible={showChangelog} 
+        onClose={() => setShowChangelog(false)} 
+      />
+    </>
   );
 }

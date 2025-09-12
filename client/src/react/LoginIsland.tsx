@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { auth } from "../config/firebase";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail } from "firebase/auth";
 
-export default function LoginIsland({ onLoggedIn }: { onLoggedIn: () => void }) {
+export default function LoginIsland({ onLoggedIn, onShowChangelog }: { onLoggedIn: () => void; onShowChangelog?: () => void }) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -201,6 +201,17 @@ export default function LoginIsland({ onLoggedIn }: { onLoggedIn: () => void }) 
                 </a>
               </span>
             </p>
+            
+            {onShowChangelog && (
+              <div className="changelog-button-container">
+                <button 
+                  className="btn-border btn-gold changelog-button" 
+                  onClick={onShowChangelog}
+                >
+                  📋 View Changelog
+                </button>
+              </div>
+            )}
           </div>
         </div>
       

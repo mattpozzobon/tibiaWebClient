@@ -11,7 +11,7 @@ module.exports = {
     path: path.resolve(__dirname, 'client'),
   },
   resolve: {
-    extensions: [".ts", ".tsx", ".js"]
+    extensions: [".ts", ".tsx", ".js", ".scss"]
   },
   mode: 'development',
   module: {
@@ -45,6 +45,14 @@ module.exports = {
         test: /\.tsx?$/,
         use: 'ts-loader',
         exclude: /node_modules/,
+      },
+      {
+        test: /\.scss$/,
+        use: [
+          'style-loader',
+          'css-loader',
+          'sass-loader'
+        ],
       },
     ],
   },

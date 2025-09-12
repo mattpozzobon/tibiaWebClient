@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type GameClient from "../../../core/gameclient";
+import './styles/CharacterSelect.scss';
 
 interface CharacterSelectProps {
   gc: GameClient;
@@ -110,59 +111,21 @@ export default function CharacterSelect({ gc, onCharacterSelected }: CharacterSe
   }
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      width: '80%',
-      maxWidth: '800px',
-      backgroundColor: 'rgba(0, 0, 0, 0.9)',
-      border: '3px solid #333',
-      borderRadius: '10px',
-      padding: '30px',
-      zIndex: 10000
-    }}>
-      <h2 style={{ 
-        color: 'white', 
-        textAlign: 'center', 
-        marginBottom: '20px',
-        fontSize: '24px'
-      }}>
+    <div className="character-select-container">
+      <h2 className="character-select-title">
         Select Character
       </h2>
       
-      
-      <div style={{
-        display: 'flex',
-        gap: '20px',
-        justifyContent: 'center',
-        flexWrap: 'wrap',
-        marginBottom: '30px'
-      }}>
+      <div className="character-grid">
         {characters.map((character) => (
           <div
             key={`char-${character.id}`}
             onClick={() => handleCharacterSelect(character.id)}
-            style={{
-              width: '150px',
-              height: '180px',
-              backgroundColor: selectedCharacter === character.id ? 'rgba(0, 150, 255, 0.8)' : 'rgba(50, 50, 50, 0.8)',
-              border: selectedCharacter === character.id ? '3px solid #0096ff' : '2px solid #666',
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'white',
-              fontSize: '18px',
-              fontWeight: 'bold',
-              textAlign: 'center',
-              padding: '10px',
-              transition: 'all 0.3s ease'
-            }}
+            className={`character-card ${selectedCharacter === character.id ? 'selected' : ''}`}
           >
-            {character.name}
+            <div className="character-name">{character.name}</div>
+            <div className="character-level">Level 1</div>
+            <div className="character-vocation">Knight</div>
           </div>
         ))}
       </div>
@@ -170,29 +133,13 @@ export default function CharacterSelect({ gc, onCharacterSelected }: CharacterSe
       <button 
         onClick={handleEnterGame}
         disabled={!selectedCharacter || loading}
-        style={{
-          width: '100%',
-          padding: '15px',
-          fontSize: '20px',
-          fontWeight: 'bold',
-          backgroundColor: selectedCharacter ? '#00ff00' : '#666',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          cursor: selectedCharacter ? 'pointer' : 'not-allowed',
-          marginTop: '20px'
-        }}
+        className={`character-select-button ${!selectedCharacter ? 'disabled' : ''}`}
       >
         {loading ? "Entering..." : selectedCharacter ? "GO!" : "Select a character"}
       </button>
       
       {error && (
-        <div style={{ 
-          color: 'red', 
-          marginTop: '15px', 
-          textAlign: 'center',
-          fontSize: '16px'
-        }}>
+        <div className="character-select-error">
           {error}
         </div>
       )}

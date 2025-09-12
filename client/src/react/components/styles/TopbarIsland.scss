@@ -1,0 +1,151 @@
+/* Topbar Island Styles */
+
+#top-button-bar {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 8px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.icon-button {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 60px;
+  min-height: 60px;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  img {
+    width: 24px;
+    height: 24px;
+    filter: brightness(0) invert(1);
+    transition: filter 0.3s ease;
+  }
+
+  span:not(.shortcut) {
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 4px;
+  }
+
+  .shortcut {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: rgba(0, 150, 255, 0.9);
+    color: white;
+    font-size: 10px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+    min-width: 20px;
+    text-align: center;
+  }
+}
+
+/* Special styling for changelog button */
+.icon-button:has(span:not(.shortcut)) {
+  img {
+    display: none;
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  #top-button-bar {
+    top: 5px;
+    right: 5px;
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .icon-button {
+    min-width: 50px;
+    min-height: 50px;
+    padding: 6px;
+
+    img {
+      width: 20px;
+      height: 20px;
+    }
+
+    span:not(.shortcut) {
+      font-size: 16px;
+    }
+
+    .shortcut {
+      font-size: 8px;
+      padding: 1px 2px;
+      top: -6px;
+      right: -6px;
+    }
+  }
+}
+
+/* Animation for button interactions */
+@keyframes buttonPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.icon-button:active {
+  animation: buttonPulse 0.2s ease;
+}
+
+/* Tooltip styles (if needed) */
+.icon-button[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1001;
+  pointer-events: none;
+}
+
+/* Loading state */
+.icon-button.loading {
+  opacity: 0.6;
+  cursor: not-allowed;
+
+  img {
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

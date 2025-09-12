@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type GameClient from "../core/gameclient";
+import ChangelogModal from "./components/ChangelogModal";
+import './components/styles/TopbarIsland.scss';
 
 interface TopbarIslandProps {
   gc: GameClient;
 }
 
 export default function TopbarIsland({ gc }: TopbarIslandProps) {
+  const [showChangelog, setShowChangelog] = useState(false);
+
   const handleLogout = () => {
     localStorage.removeItem("auth_token");
     location.reload();
@@ -39,7 +43,12 @@ export default function TopbarIsland({ gc }: TopbarIslandProps) {
     gc.interface?.modalManager?.open?.("map");
   };
 
+  const handleChangelog = () => {
+    setShowChangelog(true);
+  };
+
   return (
+    <>
     <div id="top-button-bar">
       <div className="icon-button" title="Logout (Ctrl+G)" onClick={handleLogout}>
         <img id="logoutButton" src="png/icons/logout.png" alt="Logout" />
@@ -73,6 +82,16 @@ export default function TopbarIsland({ gc }: TopbarIslandProps) {
         <img id="openMap" src="png/icons/map.png" alt="Map" />
         <span className="shortcut">Ctrl+M</span>
       </div>
+      <div className="icon-button" title="Changelog (Ctrl+N)" onClick={handleChangelog}>
+        <span style={{ fontSize: '20px', fontWeight: 'bold' }}>📋</span>
+        <span className="shortcut">Ctrl+N</span>
+      </div>
     </div>
+    
+    <ChangelogModal 
+      isVisible={showChangelog} 
+      onClose={() => setShowChangelog(false)} 
+    />
+    </>
   );
 }

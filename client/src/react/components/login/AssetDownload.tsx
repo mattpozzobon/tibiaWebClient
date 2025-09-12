@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type GameClient from "../../../core/gameclient";
+import './styles/AssetDownload.scss';
 import SpriteBuffer from "../../../renderer/sprite-buffer";
 
 interface AssetDownloadProps {

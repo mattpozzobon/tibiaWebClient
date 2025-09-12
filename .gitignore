@@ -8,3 +8,4 @@ packets.wal
 *.dat
 .wrangler/
 .env
+bundle.js

@@ -27,7 +27,6 @@ export default class CharacterElement extends Container {
     this.__creature = creature;
     this.createNameText();
     this.createBar(BarType.Health);
-    window.gameClient.renderer.overlayLayer.addChild(this);
   }
 
   public enablePlayerBars() {
@@ -153,6 +152,15 @@ export default class CharacterElement extends Container {
 
   public remove(): void {
     if (this.parent) this.parent.removeChild(this);
+  }
+
+  attachTo(layer: Container) {
+    if (this.parent !== layer) layer.addChild(this);
+  }
+
+  destroy(options?: any) {
+    if (this.parent) this.parent.removeChild(this);
+    super.destroy?.(options);
   }
 
   private getHealthColor(fraction: number): number {

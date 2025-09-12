@@ -9,3 +9,5 @@ packets.wal
 .wrangler/
 .env
 *.bundle.js
+**/bundle.js
+client/bundle.js

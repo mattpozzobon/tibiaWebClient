@@ -27,12 +27,9 @@ export default class Creature {
   public castingManager: CastingManager;
   public textBuffer = [];
   public __chunk: any;
-  // This method should create and assign a DOM element representing the creature.
   public __activeTextElement: any;
   public __target: any;
   public __animations: Set<any>;
-  // Assume characterElement is provided (e.g., by Creature or assigned later)
-  //public characterElement: CharacterElement;
   public characterElementPixi!: CharacterPixiElement;
   public vitals: Vitals;
   public renderer: CreatureRendererHelper;
@@ -180,7 +177,6 @@ export default class Creature {
 
   // Method: increaseHealth
   public increaseHealth(amount: number): void {
-    // Assuming state.health and maxHealth are numbers and a .clamp method exists on number.
     this.vitals.state.health = (this.vitals.state.health + amount).clamp(0, this.vitals.state.maxHealth);
   }
 
@@ -189,7 +185,7 @@ export default class Creature {
     return this.__target;
   }
 
-  // Method: remove (removes creature's DOM element)
+  // Method: Characther Element Pixi
   public remove(): void {
     this.characterElementPixi.remove();
   }

@@ -1,8 +1,4 @@
 import Modal from "./modal";
-import LoginModal from "./modal-login";
-import CreateAccountModal from "./modal-create-account";
-import RecoverAccountModal from "./modal-recover-account";
-import CharacterSelectorModal from "./modal-character-select";
 import OutfitModal from "./modal-outfit";
 import MoveItemModal from "./modal-move-item";
 import ChatModal from "./modal-chat";
@@ -13,15 +9,8 @@ import OfferModal from "./modal-offer";
 import MapModal from "./modal-map";
 import SpellbookModal from "./modal-spellbook";
 import SkillModal from "./modal-skills";
-import TextModal from "./modal-text";
 
 const MODAL_IDS = {
-  LOGIN: "floater-enter",
-  CREATE_ACCOUNT: "floater-create",
-  RECOVER_ACCOUNT: "floater-recover",
-  
-  CHARACTER_SELECTOR: "character-selector",
-  
   SETTINGS: "settings-modal",
   SKILL: "skill-modal",
   OUTFIT: "outfit-modal",
@@ -34,7 +23,6 @@ const MODAL_IDS = {
   MAP: "map-modal",
   SPELLBOOK: "spellbook-modal",
 
-  CONNECTING: "floater-connecting"
 } as const;
 
 const ELEMENT_IDS = {
@@ -63,28 +51,26 @@ export default class ModalManager {
   }
 
   private registerModals(): void {
-    const modalRegistrations = [
-      [CharacterSelectorModal, MODAL_IDS.CHARACTER_SELECTOR],
+    // Register only game modals (login/character select now handled by React)
+    const gameModalRegistrations = [
       [Modal, MODAL_IDS.SETTINGS],
-      [LoginModal, MODAL_IDS.LOGIN],
-      [RecoverAccountModal, MODAL_IDS.RECOVER_ACCOUNT],
-      [CreateAccountModal, MODAL_IDS.CREATE_ACCOUNT],
       [SkillModal, MODAL_IDS.SKILL],
       [OutfitModal, MODAL_IDS.OUTFIT],
       [MoveItemModal, MODAL_IDS.MOVE_ITEM],
       [ChatModal, MODAL_IDS.CHAT],
       [EnterNameModal, MODAL_IDS.ENTER_NAME],
       [ConfirmModal, MODAL_IDS.CONFIRM],
-      [TextModal, MODAL_IDS.CONNECTING],
       [ReadableModal, MODAL_IDS.READABLE],
       [OfferModal, MODAL_IDS.OFFER],
       [MapModal, MODAL_IDS.MAP],
       [SpellbookModal, MODAL_IDS.SPELLBOOK]
     ] as const;
 
-    modalRegistrations.forEach(([ModalClass, id]) => {
+    gameModalRegistrations.forEach(([ModalClass, id]) => {
       this.register(ModalClass, id);
     });
+
+    console.log('✅ Game modals registered (login/character select handled by React)');
   }
 
   private register(ModalClass: ModalConstructor, id: string): void {
@@ -97,6 +83,8 @@ export default class ModalManager {
     this.modals.set(id, instance);
   }
 
+
+
   public addEventListeners(): void {
     this.addModalTriggerListeners();
     this.addTopbarListeners();
@@ -105,8 +93,6 @@ export default class ModalManager {
 
   private addModalTriggerListeners(): void {
     const triggerMappings = [
-      [ELEMENT_IDS.CREATE_ACCOUNT, MODAL_IDS.CREATE_ACCOUNT],
-      [ELEMENT_IDS.RECOVER_ACCOUNT, MODAL_IDS.RECOVER_ACCOUNT],
       [ELEMENT_IDS.OPEN_CHAT_MODAL, MODAL_IDS.CHAT],
       [ELEMENT_IDS.OPEN_OUTFIT, MODAL_IDS.OUTFIT],
       [ELEMENT_IDS.OPEN_SETTINGS, MODAL_IDS.SETTINGS],
@@ -206,7 +192,7 @@ export default class ModalManager {
 
     if (this.isAuthFormModal()) {
       this.close();
-      this.open(MODAL_IDS.LOGIN);
+      // Login now handled by React components
       return;
     }
 
@@ -219,7 +205,7 @@ export default class ModalManager {
   }
 
   private isAuthFormModal(): boolean {
-    const id = this.openedModal?.id;
-    return id === MODAL_IDS.CREATE_ACCOUNT || id === MODAL_IDS.RECOVER_ACCOUNT;
+    // Auth forms now handled by React components
+    return false;
   }
 }

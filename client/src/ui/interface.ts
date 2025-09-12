@@ -11,12 +11,12 @@ import SoundManager from "../audio/sound-manager";
 import State from "../core/state";
 import WindowManager from "./window/window-manager";
 import spriteBuffer from "../renderer/sprite-buffer";
-import LoginFlowManager from "./managers/login-manager";
+import ReactLoginFlowManager from "./managers/react-login-manager";
 import Renderer from "../renderer/renderer";
 
 export default class Interface {
   renderer: Renderer;
-  loginFlowManager: LoginFlowManager;
+  loginFlowManager: ReactLoginFlowManager;
   settings: Settings;
   channelManager: ChannelManager;
   hotbarManager: HotbarManager;
@@ -100,7 +100,7 @@ export default class Interface {
   constructor(renderer: Renderer) {
     this.renderer = renderer;
     this.settings = new Settings(this);
-    this.loginFlowManager = new LoginFlowManager();
+    this.loginFlowManager = new ReactLoginFlowManager();
     this.channelManager = new ChannelManager();
     this.hotbarManager = new HotbarManager();
     this.notificationManager = new NotificationManager();

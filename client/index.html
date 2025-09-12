@@ -28,6 +28,7 @@
   <link rel="stylesheet" type="text/css" href="./css/changelog.css">
   <link rel="stylesheet" type="text/css" href="./css/pre-login.css">
   <link rel="stylesheet" type="text/css" href="./css/post-login.css">
+  <link rel="stylesheet" type="text/css" href="./css/react-components.css">
 
   <body>
     <!-- Loading Screen -->
@@ -53,6 +54,7 @@
       <div id="topbar-container"></div>
       <div id="chat-container"></div>
       <div id="hotbar-container"></div>
+      <div id="game-ui-container"></div>
 
       <!-- Main body for the screen etc.. -->   
       <div class="main">
@@ -96,6 +98,9 @@
         }
       }
       
+      // Make updateProgress available globally for react-entry.tsx
+      window.updateProgress = updateProgress;
+      
       document.addEventListener('DOMContentLoaded', async () => {
         updateProgress(10, 'Initializing...');
       
@@ -107,18 +112,13 @@
           console.log('✅', url);
         };
 
-        updateProgress(20, 'Loading login page...');
-        await inject('components/login/login-page.html',  '#login-page-container');
-        document.querySelector('#login-page-container')?.classList.add('loaded');
-
-        updateProgress(40, 'Loading components...');
+        updateProgress(30, 'Loading components...');
         await Promise.all([
           inject('components/modals-wrapper.html',     '#modals-wrapper-container'),
           inject('components/audio.html',              '#audio-container'),
           inject('components/prototypes.html',         '#prototypes-container'),
           inject('components/windows.html',            '#windows-container'),   
           inject('components/hotbar.html',             '#hotbar-container'),
-          inject('components/topbar.html',             '#topbar-container'),
         ]);
       
         updateProgress(60, 'Loading modals...');
@@ -144,23 +144,33 @@
         console.log('🟢 every fragment in DOM');
       
         const s = document.createElement('script');
-        s.src = 'bundle.js';
+        s.src = 'main.js';
         s.onload = () => {
-          updateProgress(100, 'Ready!');
-          console.log('🟢 bundle.js executed');
+          updateProgress(90, 'Loading React components...');
+          console.log('🟢 main.js executed');
           
-          // Hide loading screen after a short delay
-          setTimeout(() => {
-            hideLoadingScreen();
-          }, 500);
+          // Wait for game client to be fully initialized
+          const waitForGameClient = () => {
+            if (window?.gameClient?.interface) {
+              window.gameClient.interface.enableTopbarListeners();
+              window.gameClient.interface.modalManager.addEventListeners();
+              console.log('🟢 top-bar listeners attached');
+            } else {
+              // Game client not ready yet, wait a bit more
+              setTimeout(waitForGameClient, 50);
+            }
+          };
           
-          if (window?.gameClient?.interface) {
-            window.gameClient.interface.enableTopbarListeners();
-            window.gameClient.interface.modalManager.addEventListeners();
-            console.log('🟢 top-bar listeners attached');
-          } else {
-            console.error('❌ window.gameClient.interface is missing!');
-          }
+          waitForGameClient();
+          
+          // Load React bundle after main bundle
+          const reactScript = document.createElement('script');
+          reactScript.src = 'react.js';
+          reactScript.onload = () => {
+            updateProgress(100, 'Ready!');
+            console.log('🟢 react.js executed');
+          };
+          document.body.appendChild(reactScript);
         };
         document.body.appendChild(s);
       });

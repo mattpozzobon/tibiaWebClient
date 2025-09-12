@@ -3,7 +3,7 @@ import { CONST } from "../helper/appContext";
 import SpriteBuffer from "../renderer/sprite-buffer";
 import PacketHandler from "./packet-handler";
 import PacketReader from "./packetreader";
-import { DownloadManager, DownloadProgress } from "./download-manager";
+// DownloadManager removed - asset download now handled by React components
 
 class NetworkManager {
   socket!: WebSocket;
@@ -11,7 +11,6 @@ class NetworkManager {
   nPacketsSent: number = 0;
   latency: number = 0;
   public packetHandler: PacketHandler;
-  public downloadManager: DownloadManager;
 
   constructor() {
     this.state = {
@@ -22,7 +21,6 @@ class NetworkManager {
       connected: false,
     };
     this.packetHandler = new PacketHandler();
-    this.downloadManager = new DownloadManager();
   }
 
   close(): void {

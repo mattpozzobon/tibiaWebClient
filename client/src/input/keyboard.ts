@@ -246,6 +246,8 @@ class Keyboard {
   private __keyDown = (event: KeyboardEvent): void => {
     // convert event.key to lower case for consistency
     //event.preventDefault();
+    if (!event.key) return; // Skip if key is undefined/null
+    
     const lowerKey = event.key.toLowerCase();
 
     if (!this.__isConfigured(lowerKey)) return;
@@ -336,6 +338,8 @@ class Keyboard {
   };
 
   private __keyUp = (event: KeyboardEvent): void => {
+    if (!event.key) return; // Skip if key is undefined/null
+    
     const lowerKey = event.key.toLowerCase();
 
     if (!this.__isConfigured(lowerKey)) return;

@@ -20,6 +20,15 @@ DATA_RE =       re.compile(r"^/data/(sprites|sounds)/(.+)$", re.I)
 
 
 class TibiaHandler(http.server.SimpleHTTPRequestHandler):
+    
+    # Override the MIME type mappings to handle TypeScript/JSX files
+    extensions_map = {
+        **http.server.SimpleHTTPRequestHandler.extensions_map,
+        '.ts': 'application/javascript',
+        '.tsx': 'application/javascript',
+        '.jsx': 'application/javascript',
+        '.mjs': 'application/javascript',
+    }
 
     def _maybe_redirect(self) -> bool:
         m = DATA_RE.match(self.path)

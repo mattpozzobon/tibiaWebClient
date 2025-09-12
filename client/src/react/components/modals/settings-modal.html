@@ -1,0 +1,41 @@
+<div id="settings-modal" class="modal">
+    <button class="close-button-transparent symbol-button" action="cancel" value="Cancel">✕</button>
+    <div class="modal-header">Settings</div>
+    <div class="modal-body">
+      <div class="checkboxes">
+        <label class="checkbox-label" for="enable-lighting">
+          <input type="checkbox" id="enable-lighting" autocomplete="off"> Enable Lighting
+        </label>
+      </div>
+      <div class="checkboxes">
+        <label class="checkbox-label" for="enable-weather">
+          <input type="checkbox" id="enable-weather"> Enable Weather
+        </label>
+      </div>
+      <div class="checkboxes">
+        <label class="checkbox-label" for="enable-sound">
+          <input type="checkbox" id="enable-sound"> Enable Sound
+        </label>
+      </div>
+      <br>
+      Sound Volume <span id="volume-slider-value" style="float: right;"></span>
+      <br>
+      <div style="display: flex">
+        <input style="flex: 1 1 auto;" id="volume-slider" type="range" min="0" max="100" value="50" class="slider" id="myRange">
+      </div>
+      <br>
+      <button onclick="gameClient.interface.requestFullScreen()">Fullscreen</button>
+      <hr>
+      Fixed Resolution
+      <div class="checkboxes">
+        <input type="checkbox" id="enable-resolution">
+        <select id="resolution" style="text-align: center;"></select>
+      </div>
+      <div class="checkboxes">
+        <label class="checkbox-label" for="anti-aliasing">
+          <input type="checkbox" id="anti-aliasing"> Anti-Aliasing
+        </label>
+      </div>
+    </div>
+  </div>
+  

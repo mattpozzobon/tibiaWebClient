@@ -22,7 +22,7 @@
 #pre-login-wrapper #floater-enter,
 #pre-login-wrapper #floater-recover,
 #pre-login-wrapper #floater-create {
-  display: none;
+  /* React components control visibility with inline styles */
 }
 
 .auth-footer {

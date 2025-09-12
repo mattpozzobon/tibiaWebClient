@@ -2,9 +2,12 @@ const path = require('path');
 const Dotenv = require('dotenv-webpack');
 
 module.exports = {
-  entry: './client/src/index.ts',
+  entry: {
+    main: './client/src/index.ts',
+    react: './client/src/react-bundle.tsx'
+  },
   output: {
-    filename: 'bundle.js',
+    filename: '[name].js',
     path: path.resolve(__dirname, 'client'),
   },
   resolve: {

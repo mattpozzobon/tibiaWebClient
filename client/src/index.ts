@@ -10,7 +10,7 @@ async function bootstrapGame() {
   const renderer = await Renderer.create();
   window.gameClient = new GameClient(renderer);
   new ChangelogModal();
-  window.gameClient.interface.modalManager.open("floater-enter");
+  // React components will handle login UI - no need to open modal here
 }
 
 if (document.readyState === "loading") {

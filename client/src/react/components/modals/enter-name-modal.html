@@ -1,0 +1,14 @@
+<!-- Enter Name Modal -->
+<div id="enter-name-modal" class="modal">
+  <button class="close-button-transparent symbol-button" action="cancel" value="Cancel">✕</button>
+  <div class="modal-header">Enter Name</div>
+  <div class="modal-body">
+    <input id="enter-name" type="text" onkeypress="return /[a-z]/i.test(event.key)">
+    <hr>
+    <!-- Buttons aligned to the right -->
+    <div class="modal-footer">
+      <button action="cancel" value="Cancel">Cancel</button>
+      <button action="confirm" value="Ok">Confirm</button>
+    </div>
+  </div>
+</div>

@@ -131,6 +131,7 @@ export default class Renderer {
     });
 
     await BMFontLoader.load('/png/fonts/Tibia-Border-16px-Subtle.xml');
+    await BMFontLoader.load('/png/fonts/Tibia-Chat-20px.xml');
 
     const container = document.getElementById("game-container")!;
     container.innerHTML = "";

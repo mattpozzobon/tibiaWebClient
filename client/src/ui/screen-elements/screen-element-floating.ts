@@ -15,19 +15,17 @@ export default class FloatingElement {
     this.container = new Container();
     this.container.sortableChildren = true;
     this.__position = position.copy();
-    this.text = new BitmapText({text: message, style: { fontFamily: "Tibia-Border-16px-Subtle", fontSize: 18 }} as TextOptions);
+    this.text = new BitmapText({text: message, style: { fontFamily: "Tibia-Chat-22px", fontSize: 18 }} as TextOptions);
     this.text.anchor.set(0.5, 1); // center x, baseline y for upward float
-    this.text.tint = color;
+    this.text.tint = Interface.prototype.getHexColor(color);
     (this.text as any).roundPixels = true;
 
     this.container.addChild(this.text);
     this.__start = performance.now();
   }
 
-  public getDuration(): number { return 20; }
   public getAge(): number { return performance.now() - this.__start; }
-  public setMessage(message: string): void { this.text.text = message; }
-  public setColor(color: number): void { this.text.tint = color; }
+  public getDuration(): number { return 20; }
 
   /** World-space placement on overlayLayer (same as CharacterElement). */
   public setTextPosition(): void {

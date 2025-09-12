@@ -157,12 +157,7 @@ class PacketHandler {
   handleEmote(packet: { id: number; message: string; color: number }): void {
     const creature = window.gameClient.world.getCreature(packet.id);
     if (!creature) return;
-  
-    window.gameClient.interface.screenElementManager.createFloatingTextElement(
-      `<i>${packet.message}</i>`,
-      creature,
-      packet.color,
-    );
+    window.gameClient.interface.screenElementManager.createFloatingElement(creature, packet.message, packet.color);
   }
 
   handleIncreaseHealth(packet: { id: number; amount: number }): void {

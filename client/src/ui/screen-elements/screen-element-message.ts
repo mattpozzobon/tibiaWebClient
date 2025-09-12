@@ -17,25 +17,25 @@ export default class MessageElement {
 
   constructor(entity: Creature, message: string, color: number) {
     this.container = new Container();
-    this.container.sortableChildren = true;
 
     this.__entity   = entity;
     this.__position = entity.getPosition().copy();
     this.__message  = message;
     this.__color    = color;
 
-    this.nameText = new BitmapText({text: entity.getName(), style: { fontFamily: "Tibia-Border-16px-Subtle", fontSize: 20 }} as TextOptions);
-    this.bodyText = new BitmapText({text: message,          style: { fontFamily: "Tibia-Border-16px-Subtle", fontSize: 20 }} as TextOptions);
+    this.nameText = new BitmapText({text: entity.getName(), style: { fontFamily: "Tibia-Chat-20px", fontSize: 20 }} as TextOptions);
+    this.bodyText = new BitmapText({text: message,          style: { fontFamily: "Tibia-Chat-20px", fontSize: 20 }} as TextOptions);
+    
 
     this.nameText.anchor.set(0.5, 1);
     this.bodyText.anchor.set(0.5, 0);
     this.nameText.position.set(0, 0);
     this.bodyText.position.set(0, 2);
-    this.nameText.tint = color;
-    this.bodyText.tint = color;
+    this.nameText.tint = Interface.prototype.getHexColor(color);
+    this.bodyText.tint = Interface.prototype.getHexColor(color);
+
     (this.nameText as any).roundPixels = true;
     (this.bodyText as any).roundPixels = true;
-
     this.container.addChild(this.nameText, this.bodyText);
   }
 

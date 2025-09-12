@@ -57,7 +57,13 @@ export default class ScreenElementManager {
     );
   }
 
-  // ✅ Keep the legacy signature so existing callers work
+  public createFloatingElement(creature: Creature, message: string, color: number): any {
+    console.log('createFloatingElement', message, color);
+    if (document.hidden) return null;
+    const el = new FloatingElement(message, creature.getPosition(), color);
+    return this.__createTextElement(el);
+  }
+
   public createFloatingTextElement(message: string, entity: Creature, color: number): any {
     if (document.hidden) return null;
 

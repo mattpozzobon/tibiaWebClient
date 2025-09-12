@@ -5,10 +5,6 @@ import CharacterMessage from "../chat/message-character";
 import PrivateChannel from "../chat/private-channel";
 import { ChannelJoinPacket, ChannelLeavePacket, ChannelMessagePacket, ChannelPrivatePacket } from "../../core/protocol";
 
-// Utility: If you need a clamp function on numbers, you can add one.
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
-}
 
 export default class ChannelManager {
   channels: Channel[];

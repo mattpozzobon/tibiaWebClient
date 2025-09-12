@@ -7,13 +7,15 @@ export default class Animation extends Thing {
   __created: number;
   static DEFAULT_FRAME_LENGTH_MS: number = 100;
   __durations: number[];
+  private _cachedTotalDuration: number = -1;
   
 
   constructor(id: number) {
-    super( id);
+    super(id);
     
     this.__created = performance.now();
     this.__durations = this.__generateDurations();
+    
   }
 
   getPattern(): Position {
@@ -31,7 +33,10 @@ export default class Animation extends Thing {
   }
 
   totalDuration(): number {
-    return this.__durations[this.__durations.length - 1];
+    if (this._cachedTotalDuration === -1) {
+      this._cachedTotalDuration = this.__durations[this.__durations.length - 1];
+    }
+    return this._cachedTotalDuration;
   }
 
   expired(): boolean {
@@ -63,6 +68,38 @@ export default class Animation extends Thing {
       return this.__generateDefaultDurations();
     }
     return this.generateExtendedDurations();
+  }
+
+  public getSprite(): any {
+    /*
+     * Function Animation.getSprite
+     * Returns the current sprite for the animation based on the current frame
+     */
+    try {
+      const frameGroup = this.getFrameGroup(FrameGroup.NONE);
+      const frame = this.getFrame();
+      const pattern = this.getPattern();
+      
+      // Get the sprite index for the current frame
+      const spriteIndex = frameGroup.getSpriteIndex(frame, pattern.x, pattern.y, pattern.z, 0, 0, 0);
+      
+      // Get the sprite texture
+      const sprite = frameGroup.getSprite(spriteIndex);
+      
+      if (sprite) {
+        return { texture: sprite };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Animation.getSprite: error', error);
+      return null;
+    }
+  }
+
+  public delete(): void {
+    // Cleanup method for when animation expires
+    // This is called by the renderer when removing expired animations
   }
 }
 

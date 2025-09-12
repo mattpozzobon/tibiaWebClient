@@ -1,5 +1,4 @@
 import BinaryHeap from "../utils/binary-heap";
-import GameClient from "./gameclient";
 import HeapEvent from "../utils/heap-event";
 
 export default class EventQueue {
@@ -9,7 +8,6 @@ export default class EventQueue {
   public heap: BinaryHeap<HeapEvent>;
 
   constructor() {
-    
     this.__internalDelta = 0;
     this.__start = performance.now();
     this.heap = new BinaryHeap<HeapEvent>();

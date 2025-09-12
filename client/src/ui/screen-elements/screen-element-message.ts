@@ -1,65 +1,86 @@
-import ScreenElement from "./screen-element";
-import Interface from "../interface";
+// src/ui/screen-elements/message-element.ts
+import { Container, BitmapText, TextOptions } from "pixi.js";
 import Creature from "../../game/creature";
 import Position from "../../game/position";
+import Interface from "../interface";
 
+export default class MessageElement {
+  public container: Container;
+  public __entity: Creature;
+  public __color: number;
 
-export default class MessageElement extends ScreenElement {
-  __entity: Creature;
-  private __position: Position;
+  private __position: Position; // anchor (spawn)
   private __message: string;
-  __color: number;
+  private nameText: BitmapText;
+  private bodyText: BitmapText;
+  private stackOffsetPx = 0;
 
-  constructor(entity: any, message: string, color: number) {
-    // Call the parent constructor with gameClient and the prototype identifier.
-    super( "message-element-prototype");
-    
-    this.__entity = entity;
+  constructor(entity: Creature, message: string, color: number) {
+    this.container = new Container();
+
+    this.__entity   = entity;
     this.__position = entity.getPosition().copy();
-    this.__message = message;
-    this.__color = color;
+    this.__message  = message;
+    this.__color    = color;
 
-    this.setMessage(message);
-    this.setColor(color);
+    this.nameText = new BitmapText({text: entity.getName(), style: { fontFamily: "Tibia-Chat-20px", fontSize: 20 }} as TextOptions);
+    this.bodyText = new BitmapText({text: message,          style: { fontFamily: "Tibia-Chat-20px", fontSize: 20 }} as TextOptions);
+    
+
+    this.nameText.anchor.set(0.5, 1);
+    this.bodyText.anchor.set(0.5, 0);
+    this.nameText.position.set(0, 0);
+    this.bodyText.position.set(0, 2);
+    this.nameText.tint = Interface.prototype.getHexColor(color);
+    this.bodyText.tint = Interface.prototype.getHexColor(color);
+
+    (this.nameText as any).roundPixels = true;
+    (this.bodyText as any).roundPixels = true;
+    this.container.addChild(this.nameText, this.bodyText);
   }
 
-  /**
-   * Returns the duration the message element should remain on the screen.
-   */
+  public setStackOffset(px: number): void {
+    this.stackOffsetPx = px;
+  }
+
   public getDuration(): number {
-    return 15 * Math.sqrt(this.__message.length);
+    const n = this.__message.length || 1;
+    return Math.max(2500, Math.min(2500 + 60 * n, 8000));
   }
 
-  /**
-   * Sets the message of the element.
-   */
   public setMessage(message: string): void {
-    const spans = this.element.querySelectorAll("span");
-    if (spans.length < 2) return;
-    const nameElement = spans[0] as HTMLElement;
-    const textElement = spans[1] as HTMLElement;
-    nameElement.innerHTML = `<u>${this.__entity.getName()}</u>`;
-    textElement.innerHTML = message;
+    this.__message = message;
+    this.nameText.text = this.__entity.getName();
+    this.bodyText.text = message;
   }
 
-  /**
-   * Sets the text color of the element.
-   */
   public setColor(color: number): void {
-    const spans = this.element.querySelectorAll("span");
-    if (spans.length < 2) return;
-    const nameElement = spans[0] as HTMLElement;
-    const textElement = spans[1] as HTMLElement;
-    textElement.style.color = Interface.prototype.getHexColor(color);
-    nameElement.style.color = Interface.prototype.getHexColor(color);
+    this.__color = color;
+    this.nameText.tint = color;
+    this.bodyText.tint = color;
   }
 
-  /**
-   * Updates the text position of the element based on its position.
-   */
+  // world-space placement (overlayLayer), anchored at spawn tile
   public setTextPosition(): void {
-    const staticPos = window.gameClient.renderer.getStaticScreenPosition(this.__position);
-    const offset = this.__getAbsoluteOffset(staticPos);
-    this.__updateTextPosition(offset);
+    const t = window.gameClient.renderer.getStaticScreenPosition(this.__position);
+
+    const ts    = Interface.TILE_SIZE;
+    const sc    = window.gameClient.renderer.scalingContainer;
+    const scale = sc.scale.x || 1;
+
+    let x = (t.x * ts + ts * 0.5) * scale + sc.x;
+    let y = (t.y * ts) * scale + sc.y;
+
+    // raise above head; apply per-message stack (both in screen px)
+    const headGapPx = (ts - 6) * scale;
+    y -= headGapPx + this.stackOffsetPx;
+
+    // crisp text
+    this.container.scale.set(1);
+    this.container.position.set(Math.round(x), Math.round(y));
+  }
+
+  public remove(): void {
+    if (this.container.parent) this.container.parent.removeChild(this.container);
   }
 }

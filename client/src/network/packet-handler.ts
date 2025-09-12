@@ -1,3 +1,4 @@
+import Chunk from "../core/chunk";
 import Book from "../game/book";
 import ConditionManager from "../game/condition";
 import Container from "../game/container";
@@ -45,12 +46,13 @@ class PacketHandler {
         creature.__setLookDirection(packet.value);
         break;
       case CONST.PROPERTIES.CAPACITY:
-        creature.vitals.capacity = packet.value;
+        creature.vitals.state.capacity = packet.value;
         break;
     }
   }
 
   handleWorldTime(time: number): void {
+    console.log('handleWorldTime', time);
     window.gameClient.world.clock.setPhase(time);
   }
 
@@ -120,11 +122,12 @@ class PacketHandler {
   }
 
   handleSendDistanceEffect(packet: any): void {
-    window.gameClient.renderer.addDistanceAnimation(packet);
+    window.gameClient.renderer.animationRenderer.addDistanceAnimation(packet);
   }
 
   handleSendMagicEffect(packet: any): void {
-    window.gameClient.renderer.addPositionAnimation(packet);
+    console.log(`DEBUG: handleSendMagicEffect:`, packet);
+    window.gameClient.renderer.animationRenderer.addPositionAnimation(packet);
   }
 
   handleTransformTile(packet: any): void {
@@ -154,27 +157,21 @@ class PacketHandler {
   handleEmote(packet: { id: number; message: string; color: number }): void {
     const creature = window.gameClient.world.getCreature(packet.id);
     if (!creature) return;
-  
-    window.gameClient.interface.screenElementManager.createFloatingTextElement(
-      `<i>${packet.message}</i>`,
-      creature.getPosition(),
-      packet.color,
-      packet.id // Pass creature ID for stagger tracking
-    );
+    window.gameClient.interface.screenElementManager.createFloatingElement(creature, packet.message, packet.color);
   }
 
   handleIncreaseHealth(packet: { id: number; amount: number }): void {
     let sourceCreature = window.gameClient.world.getCreature(packet.id);
     if (!sourceCreature) return;
 
-    let health = Math.min(packet.amount, sourceCreature.maxHealth - sourceCreature.state.health);
+    let health = Math.min(packet.amount, sourceCreature.vitals.state.maxHealth - sourceCreature.vitals.state.health);
     if (health === 0) return;
 
     sourceCreature.increaseHealth(health);
 
     window.gameClient.interface.screenElementManager.createFloatingTextElement(
       health.toString(),
-      sourceCreature.getPosition(),
+      sourceCreature,
       Interface.COLORS.LIGHTGREEN
     );
 
@@ -194,8 +191,8 @@ class PacketHandler {
     music: string;
   }): void {
     window.gameClient.interface.notificationManager.setZoneMessage(packet.name, packet.title);
-    window.gameClient.renderer.weatherCanvas.setWeather(packet.weather);
-    window.gameClient.renderer.setAmbientColor(packet.ambient.r, packet.ambient.g, packet.ambient.b, packet.ambient.a);
+    //window.gameClient.renderer.weatherCanvas.setWeather(packet.weather);
+    //window.gameClient.renderer.setAmbientColor(packet.ambient.r, packet.ambient.g, packet.ambient.b, packet.ambient.a);
     window.gameClient.interface.soundManager.setAmbientTrace(packet.music);
   }
 
@@ -203,7 +200,7 @@ class PacketHandler {
     window.gameClient.networkManager.state.latency = performance.now() - window.gameClient.networkManager.latency;
   }
 
-  handleChunk(chunk: { id: number }): void {
+  handleChunk(chunk: Chunk): void {
     if (window.gameClient.world.chunks.some((c) => c.id === chunk.id)) return;
 
     window.gameClient.world.chunks.push(chunk);
@@ -292,8 +289,8 @@ class PacketHandler {
     }
 
     let tile = this.getTileUppie(position);
-    let duration = window.gameClient.player!.getStepDuration(tile);
-    window.gameClient.world.handleCreatureMove(window.gameClient.player!.id, position, duration);
+    //let duration = window.gameClient.player!.getStepDuration(tile);
+    //window.gameClient.world.handleCreatureMove(window.gameClient.player!.id, position, duration);
     return true;
   }
 
@@ -320,19 +317,19 @@ class PacketHandler {
 
     if (window.gameClient.player === targetCreature) {
       window.gameClient.interface.channelManager.addConsoleMessage(
-        `You lose ${packet.damage} health to a ${sourceCreature.name}.`,
+        `You lose ${packet.damage} health to a ${sourceCreature.vitals.name}.`,
         Interface.COLORS.WHITE
       );
     } else if (window.gameClient.player === sourceCreature) {
       window.gameClient.interface.channelManager.addConsoleMessage(
-        `You deal ${packet.damage} damage to a ${targetCreature.name}.`,
+        `You deal ${packet.damage} damage to a ${targetCreature.vitals.name}.`,
         Interface.COLORS.WHITE
       );
     }
 
     window.gameClient.interface.screenElementManager.createFloatingTextElement(
       packet.damage.toString(),
-      targetCreature.getPosition(),
+      targetCreature,
       packet.color
     );
   }
@@ -513,9 +510,11 @@ class PacketHandler {
   }
 
   handleCreatureServerMove(packet: { id: number; position: Position; speed: number }): void {
+    console.log('Server stepDuration: ', packet.speed, 'ticks');
     let entity = window.gameClient.world.getCreature(packet.id);
     if (!entity) return;
 
+    // Pass the speed as stepDuration to the creature movement system
     window.gameClient.world.__handleCreatureMove(packet.id, packet.position, packet.speed);
 
     if (window.gameClient.isSelf(entity)) {
@@ -580,7 +579,7 @@ class PacketHandler {
       }
     };
   
-    window.gameClient.world.createCreature(packet.id, new Creature(creatureData));
+    window.gameClient.world.createCreature(packet.id, Creature.create(creatureData));
   }
 
   handleCreatureTurn(packet: { id: number; direction: number }): void {
@@ -605,7 +604,7 @@ class PacketHandler {
 
     window.gameClient.interface.screenElementManager.createFloatingTextElement(
       packet.experience.toString(),
-      creature.getPosition(),
+      creature,
       Interface.COLORS.WHITE
     );
 
@@ -616,7 +615,7 @@ class PacketHandler {
       Interface.COLORS.WHITE
     );
 
-    creature.addExperience(packet.experience);
+    //creature.addExperience(packet.experience);
   }
 
   handleItemAdd(packet: { id: number; count: number; position: Position; slot: number }): void {
@@ -636,7 +635,7 @@ class PacketHandler {
   private __handleDamageEnvironment(targetCreature: Creature, damage: number, color: number): void {
     window.gameClient.interface.screenElementManager.createFloatingTextElement(
       damage.toString(),
-      targetCreature.getPosition(),
+      targetCreature,
       color
     );
 

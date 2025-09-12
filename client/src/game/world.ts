@@ -3,6 +3,8 @@ import Clock from "../core/clock";
 import Pathfinder from "../core/pathfinder";
 import { TargetPacket } from "../core/protocol";
 import BattleWindow from "../ui/window/window-battle";
+import Creature from "./creature";
+import Player from "./player/player";
 import Position from "./position";
 import Tile from "./tile";
 
@@ -15,7 +17,7 @@ export default class World {
   public nSectorsHeight: number;
   public nSectorsDepth: number;
   public activeCreatures: { [id: string]: any };
-  public chunks: any[];
+  public chunks: Chunk[];
   public pathfinder: any;
   public clock: any;
 
@@ -37,17 +39,17 @@ export default class World {
   }
 
   public handleSelfTeleport(): void {
-    window.gameClient.player!.__teleported = true;
+    window.gameClient.player!.renderer.setTeleported(true);
     window.gameClient.player!.__serverWalkConfirmation = true;
     this.checkEntityReferences();
     this.checkChunks();
-    window.gameClient.renderer.updateTileCache();
+    window.gameClient.renderer.tileRenderer.refreshVisibleTiles()
     //window.gameClient.renderer.minimap.setCenter();
-    if (window.gameClient.player!.__movementEvent === null) {
-      window.gameClient.player!.__movementEvent = window.gameClient.eventQueue.addEvent(
+    if (window.gameClient.player!.renderer.getMovementEvent() === null) {
+      window.gameClient.player!.renderer.setMovementEvent(window.gameClient.eventQueue.addEvent(
         window.gameClient.player!.unlockMovement.bind(window.gameClient.player),
         10
-      );
+      ));
     }
   }
 
@@ -104,7 +106,7 @@ export default class World {
     return (window.gameClient.interface.windowManager.getWindow("battle-window") as BattleWindow).addCreature(creature);
   }
 
-  public getCreature(id: number | string): any {
+  public getCreature(id: number | string): Creature | Player | null {
     if (!this.activeCreatures.hasOwnProperty(id)) return null;
     return this.activeCreatures[id];
   }

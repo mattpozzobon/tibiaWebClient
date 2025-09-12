@@ -12,8 +12,10 @@ import State from "../core/state";
 import WindowManager from "./window/window-manager";
 import spriteBuffer from "../renderer/sprite-buffer";
 import LoginFlowManager from "./managers/login-manager";
+import Renderer from "../renderer/renderer";
 
 export default class Interface {
+  renderer: Renderer;
   loginFlowManager: LoginFlowManager;
   settings: Settings;
   channelManager: ChannelManager;
@@ -95,8 +97,9 @@ export default class Interface {
       [9, { name: "Levitate", description: "Move up or down a mountain", icon: { x: 4, y: 10 } }],
   ]);
 
-  constructor() {
-    this.settings = new Settings( this);
+  constructor(renderer: Renderer) {
+    this.renderer = renderer;
+    this.settings = new Settings(this);
     this.loginFlowManager = new LoginFlowManager();
     this.channelManager = new ChannelManager();
     this.hotbarManager = new HotbarManager();
@@ -106,7 +109,7 @@ export default class Interface {
     this.windowManager = new WindowManager();
     this.soundManager = new SoundManager( this.settings.isSoundEnabled());
     this.menuManager = new MenuManager();
-    this.screenElementManager = new ScreenElementManager();
+    this.screenElementManager = new ScreenElementManager(this.renderer);
     this.state = new State();
     
     // this.state.add("spritesLoaded", this.enableEnterGame.bind(this));
@@ -223,9 +226,9 @@ export default class Interface {
     }
   }
 
-  isRaining(): boolean {
-    return window.gameClient.renderer.weatherCanvas.isRaining();
-  }
+  // isRaining(): boolean {
+  //   //return window.gameClient.renderer.weatherCanvas.isRaining();
+  // }
 
   getSpriteScaling(): number {
     return 32 * this.getResolutionScale();
@@ -288,7 +291,7 @@ export default class Interface {
     const scaleY = screenHeight / (Interface.TILE_HEIGHT * Interface.TILE_SIZE);
   
     const scale = Math.min(scaleX, scaleY); // prevent overflow
-    window.gameClient.renderer.screen.setScale(scale);
+    //window.gameClient.renderer.screen.setScale(scale);
   }
   
   __handleStackResize(): void {

@@ -123,7 +123,7 @@ export default class Canvas {
     );
 
     if (window.gameClient.interface.settings.isLightingEnabled() && animation.isLight()) {
-      window.gameClient.renderer.__renderLightThing(renderPosition, animation, 1);
+      //window.gameClient.renderer.__renderLightThing(renderPosition, animation, 1);
     }
 
     this.drawSprite(animation, renderPosition, 32);
@@ -180,7 +180,7 @@ export default class Canvas {
   __drawSprite(sprite: any, position: Position, x: number, y: number, size: number): void {
     if (!sprite) return;
 
-    window.gameClient.renderer.drawCalls++;
+    //window.gameClient.renderer.drawCalls++;
 
     this.context.drawImage(
       sprite.src,
@@ -218,21 +218,21 @@ export default class Canvas {
       for (let y = 0; y < frameGroup.height; y++) {
         for (let l = 0; l < frameGroup.layers; l++) {
           let index = frameGroup.getSpriteIndex(frame, pattern.x, pattern.y, pattern.z, l, x, y);
-          window.gameClient.renderer.outlineCanvas.createOutline(frameGroup.sprites[index]);
+          //window.gameClient.renderer.outlineCanvas.createOutline(frameGroup.sprites[index]);
   
-          this.context.drawImage(
-            window.gameClient.renderer.outlineCanvas.canvas,
-            0, 0, 33, 33,
-            position.x * 32 - 1, position.y * 32 - 1,
-            33, 33
-          );
+          // this.context.drawImage(
+          //   //window.gameClient.renderer.outlineCanvas.canvas,
+          //   0, 0, 33, 33,
+          //   position.x * 32 - 1, position.y * 32 - 1,
+          //   33, 33
+          // );
         }
       }
     }
   }
   
   drawCharacter(creature: Creature, position: Position, size: number, offset: number): void {
-    creature.renderer.draw(position, size, offset);
+    //creature.renderer.draw(position, size, offset);
   }
   
 }

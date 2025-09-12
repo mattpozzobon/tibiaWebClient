@@ -61,7 +61,7 @@ export class Vitals {
       .setCharactherInfo(data);
   }
 
-  private registerStatListener( statKey: "health" | "mana" | "energy",maxStatKey: "maxHealth" | "maxMana" | "maxEnergy", updateFn: () => void
+  private registerStatListener( statKey: "health" | "mana" | "energy", maxStatKey: "maxHealth" | "maxMana" | "maxEnergy", updateFn: () => void
   ): void {
     this.state.add(statKey, updateFn.bind(this));
     this.state.add(maxStatKey, updateFn.bind(this));
@@ -71,7 +71,7 @@ export class Vitals {
     const player = window.gameClient.player;
     if (player && player.vitals.name === this.name) {
       const fraction = player.getHealthFraction();
-      player.characterElement.setHealthFraction(fraction);
+      //player.characterElementPixi.setHealthFraction(fraction);
     }
   }
 
@@ -80,7 +80,7 @@ export class Vitals {
     if (player && player.vitals.name === this.name) {
       const current = this.state.mana ?? 0;
       const max = this.state.maxMana ?? 1;
-      player.characterElement.setDefaultMana(`${(current / max) * 100}%`);
+      //player.characterElementPixi.setManaFraction(100);
     }
   }
 
@@ -89,7 +89,7 @@ export class Vitals {
     if (player && player.vitals.name === this.name) {
       const current = this.state.energy ?? 0;
       const max = this.state.maxEnergy ?? 1;
-      player.characterElement.setDefaultEnergy(`${(current / max) * 100}%`);
+      //player.characterElementPixi.setEnergyFraction(100);
     }
   }
 }

@@ -1,135 +1,176 @@
+// src/ui/screen-elements/screen-element-manager.ts
+import { Container } from "pixi.js";
+import Creature from "../../game/creature";
 import FloatingElement from "./screen-element-floating";
 import MessageElement from "./screen-element-message";
+import Renderer from "../../renderer/renderer";
+
+type BurstState = { t: number; count: number };
 
 export default class ScreenElementManager {
-  public activeTextElements: Set<FloatingElement | MessageElement>;
-  public screenWrapper: HTMLElement;
-  private emoteDelays: Map<number, number> = new Map(); // creatureId → last delay in ms
+  private layer: Container;
+  public activeTextElements = new Set<FloatingElement | MessageElement>();
 
-  constructor() {
-    this.activeTextElements = new Set();
-    const wrapper = document.getElementById("text-wrapper");
-    if (!wrapper) {
-      throw new Error("Element with id 'text-wrapper' not found.");
-    }
-    this.screenWrapper = wrapper;
+  // Per-creature stacks
+  private messagesByEntity = new Map<number, MessageElement[]>();
+  private floatsByEntity   = new Map<number, FloatingElement[]>();
+
+  // Per-creature burst bookkeeping
+  private msgBurst = new Map<number, BurstState>();
+  private dmgBurst = new Map<number, BurstState>();
+
+  // Tweakables
+  private readonly BURST_WINDOW_MS = 60; // same-timestamp window
+  private readonly MSG_LINE = 18;        // px between chat messages (screen px)
+  private readonly DMG_LINE = 14;        // px between damage numbers (screen px)
+  private readonly JITTER = [ -4, -2, 0, 2, 4 ]; // small X offsets
+
+  constructor(private renderer: Renderer) {
+    this.layer = renderer.noScallingOverlayLayer;
+    this.layer.sortableChildren = true;
   }
 
-  public clear(): void {
-    // Remove all character elements from the DOM
-    Object.values(window.gameClient.world.activeCreatures).forEach((creature: any) => {
-      creature.characterElement.remove();
-    });
+  clear(): void {
+    for (const el of this.activeTextElements) el.remove();
+    this.activeTextElements.clear();
+    this.messagesByEntity.clear();
+    this.floatsByEntity.clear();
+    this.msgBurst.clear();
+    this.dmgBurst.clear();
+    this.layer.removeChildren();
   }
 
-  public render(): void {
-    // Render the character elements
-    this.__renderCharacterElements();
-
-    // Render other text bubbles on the screen
-    this.activeTextElements.forEach((screenElement) => {
-      // Only update the position of the text when it is floating or when the player moves
-      if (window.gameClient.player!.isMoving() || screenElement.constructor.name === "FloatingElement") {
-        screenElement.setTextPosition();
+  render(): void {
+    // Nameplates
+    Object.values(window.gameClient.world.activeCreatures).forEach((creature: Creature) => {
+      if (window.gameClient.player!.getPosition().z !== creature.getPosition().z
+       || !window.gameClient.player!.canSeeSmall(creature)) {
+        creature.characterElementPixi.visible = false;
+      } else {
+        creature.characterElementPixi.render();
+        creature.characterElementPixi.visible = true;
       }
     });
+
+    // Update all elements
+    this.activeTextElements.forEach(el => el.setTextPosition());
   }
 
-  private __renderCharacterElements(): void {
-    // Render floating name elements above the active creatures
-    Object.values(window.gameClient.world.activeCreatures).forEach((creature: any) => {
-      // Do not show the name element when on another floor
-      if (window.gameClient.player!.getPosition().z !== creature.getPosition().z) {
-        return creature.characterElement.hide();
-      }
-      // Do not waste time rendering creatures that are not visible
-      if (!window.gameClient.player!.canSeeSmall(creature)) {
-        return creature.characterElement.hide();
-      }
-      // Set color of nameplate for creatures other than the player
-      if (creature !== window.gameClient.player) {
-        if (window.gameClient.player!.getMaxFloor() > creature.getMaxFloor()) {
-          creature.characterElement.setGrey();
-        } else {
-          creature.characterElement.setDefault();
-        }
-      }
-      // Update the position of the name tag
-      creature.characterElement.setTextPosition();
-    });
+  private addToLayer(el: FloatingElement | MessageElement): void {
+    const container = (el as any).container;
+    if (!container) throw new Error("Element must expose a Pixi `container`.");
+    this.layer.addChild(container);
   }
 
-  public add(element: HTMLElement): void {
-    this.screenWrapper.appendChild(element);
-  }
-
-  public createFloatingTextElement(message: string, position: any, color: number, creatureId?: number): void {
-    if (document.hidden) return;
-  
-    let delay = 0;
-    if (creatureId !== undefined) {
-      const lastDelay = this.emoteDelays.get(creatureId) || 0;
-      delay = lastDelay + 200; // Stagger by 100ms
-      this.emoteDelays.set(creatureId, delay);
-  
-      // Reset the delay counter after a short time
-      setTimeout(() => {
-        const current = this.emoteDelays.get(creatureId);
-        if (current === delay) {
-          this.emoteDelays.delete(creatureId);
-        }
-      }, delay + 500);
-    }
-  
-    setTimeout(() => {
-      this.__createTextElement(new FloatingElement(message, position, color));
-    }, delay);
-  }
-
-  private __createTextElement(messageElement: FloatingElement | MessageElement): any {
-    // Keep a reference to the active text element
-    this.activeTextElements.add(messageElement);
-    // Add the element to the screen wrapper
-    this.add(messageElement.element);
-    // Must update the position after appending to the parent
-    messageElement.setTextPosition();
-    // Schedule deletion after the element's duration expires
-    const event = window.gameClient.eventQueue.addEvent(
-      this.deleteTextElement.bind(this, messageElement),
-      messageElement.getDuration()
+  private __createTextElement(el: FloatingElement | MessageElement): any {
+    this.activeTextElements.add(el);
+    this.addToLayer(el);
+    el.setTextPosition();
+    return window.gameClient.eventQueue.addEvent(
+      this.deleteTextElement.bind(this, el),
+      el.getDuration()
     );
-    return event;
   }
 
-  public createTextElement(entity: any, message: string, color: number): any {
-    // If the entity type is not 1, add the message to the default channel instead.
-    if (entity.type !== 1) {
-      window.gameClient.interface.channelManager.getChannel("Default")!.addMessage(message, entity.type, entity.name, color);
+  private nextBurstIndex(map: Map<number, BurstState>, id: number): number {
+    const now = performance.now();
+    const state = map.get(id);
+    if (!state || now - state.t > this.BURST_WINDOW_MS) {
+      map.set(id, { t: now, count: 0 });
+      return 0;
     }
-    if (document.hidden) {
-      return null;
-    }
-
-    console.log('Creating text element:', entity, message, color);
-    return this.__createTextElement(new MessageElement(entity, message, color));
+    state.count += 1;
+    state.t = now;
+    return state.count;
   }
 
-  public deleteTextElement(textElement: FloatingElement | MessageElement): void {
-    // Remove the element from the DOM
-    textElement.remove();
-    // Delete its reference from active text elements
-    this.activeTextElements.delete(textElement);
+  private restackMessages(id: number): void {
+    const list = this.messagesByEntity.get(id) || [];
+    for (let i = 0; i < list.length; i++) list[i].setStackOffset(i * this.MSG_LINE);
+  }
 
-    // For MessageElement, if more text is buffered, create a new element with the next message.
-    if (textElement instanceof MessageElement) {
-      if (textElement.__entity.textBuffer.length === 0) {
-        return;
+  private restackDamage(id: number): void {
+    const list = this.floatsByEntity.get(id) || [];
+    // Only restack the *currently alive* floats, newest on top
+    for (let i = 0; i < list.length; i++) list[i].setStackOffset(i * this.DMG_LINE);
+  }
+
+  /** Damage-style floating numbers (can burst). */
+  public createFloatingElement(creature: Creature, message: string, color: number): any {
+    if (document.hidden) return null;
+
+    const id = (creature as any).id as number;
+    if (typeof id !== "number") return null;
+
+    const el = new FloatingElement(message, creature.getPosition(), color);
+
+    // Burst logic for damage numbers
+    const idx = this.nextBurstIndex(this.dmgBurst, id);
+
+    // Jitter selection (tiny horizontal offset)
+    el.setXJitter(this.JITTER[idx % this.JITTER.length]);
+
+    // Add to per-entity list and restack
+    const list = this.floatsByEntity.get(id) || [];
+    list.unshift(el); // newest first (appears on top)
+    this.floatsByEntity.set(id, list);
+    this.restackDamage(id);
+
+    return this.__createTextElement(el);
+  }
+
+  /** Chat-style lines above head (stack downward/upward consistently). */
+  public createFloatingTextElement(message: string, entity: Creature, color: number): any {
+    if (document.hidden) return null;
+
+    const id = (entity as any).id as number;
+    if (typeof id !== "number") return null;
+
+    const el = new MessageElement(entity, message, color);
+
+    // Burst logic for chat lines (optional; keeps multiple same-tick lines readable)
+    const idx = this.nextBurstIndex(this.msgBurst, id);
+    el.setStackOffset(idx * this.MSG_LINE);
+
+    const list = this.messagesByEntity.get(id) || [];
+    list.push(el);
+    this.messagesByEntity.set(id, list);
+
+    // Normalize final stacking
+    this.restackMessages(id);
+
+    return this.__createTextElement(el);
+  }
+
+  public deleteTextElement(el: FloatingElement | MessageElement): void {
+    el.remove();
+    this.activeTextElements.delete(el);
+
+    if (el instanceof MessageElement) {
+      const id = (el.__entity as any).id as number;
+      const list = this.messagesByEntity.get(id);
+      if (list) {
+        const idx = list.indexOf(el);
+        if (idx !== -1) list.splice(idx, 1);
+        if (list.length === 0) this.messagesByEntity.delete(id);
+        else this.restackMessages(id);
       }
-      this.createTextElement(
-        textElement.__entity,
-        textElement.__entity.textBuffer.shift() || "",
-        textElement.__color
-      );
+      return;
+    }
+
+    if (el instanceof FloatingElement) {
+      // Remove from damage list too
+      // (we duck-type because we don’t keep a back reference)
+      const guess = Array.from(this.floatsByEntity.entries());
+      for (const [id, list] of guess) {
+        const idx = list.indexOf(el);
+        if (idx !== -1) {
+          list.splice(idx, 1);
+          if (list.length === 0) this.floatsByEntity.delete(id);
+          else this.restackDamage(id);
+          break;
+        }
+      }
     }
   }
 }

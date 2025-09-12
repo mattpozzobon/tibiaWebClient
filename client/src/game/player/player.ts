@@ -7,6 +7,7 @@ import Creature, { CreatureData } from "../creature";
 import ConditionManager from "../condition";
 import SkillModal from "../../ui/modals/modal-skills";
 import BattleWindow from "../../ui/window/window-battle";
+import CharacterPixiElement from "../../ui/screen-elements/screen-element-character";
 
 export interface PlayerData extends CreatureData {
   equipment: any;
@@ -44,29 +45,15 @@ export default class Player extends Creature {
     this.outfits = data.outfits;
 
     // Initialize character bars
-    this.characterElement.addManaBar((this.vitals.state.mana / this.vitals.state.maxMana) * 100 + "%");
-    this.characterElement.addEnergyBar((this.vitals.state.energy / this.vitals.state.maxEnergy) * 100 + "%");
+    //this.characterElement.addManaBar((this.vitals.state.mana / this.vitals.state.maxMana) * 100 + "%");
+    //this.characterElement.addEnergyBar((this.vitals.state.energy / this.vitals.state.maxEnergy) * 100 + "%");
   }
 
-  public getSpeed(): number {
-    let base = this.vitals.speed;
-
-    if (this.hasCondition(ConditionManager.HASTE)) {
-      base *= 1.3;
-    }
-
-    return base;
-  }
-
-  public getStepDuration(tile: any): number {
-    const A = 857.36;
-    const B = 261.29;
-    const C = -4795.009;
-
-    let calculatedStepSpeed = Math.max(1, Math.round(A * Math.log(this.getSpeed() + B) + C));
-    let groundSpeed = tile.getFriction();
-
-    return Math.ceil(Math.floor(1000 * groundSpeed / calculatedStepSpeed) / window.gameClient.getTickInterval());
+  static create(data: PlayerData): Player {
+    const player = new Player(data);
+    player.characterElementPixi = new CharacterPixiElement(player);
+    player.characterElementPixi.enablePlayerBars();
+    return player;
   }
 
   public getTile(): any {
@@ -94,9 +81,9 @@ export default class Player extends Creature {
       window.gameClient.interface.soundManager.setVolume("rain", 0);
     } else {
       window.gameClient.interface.soundManager.setAmbientTrace("forest");
-      if (window.gameClient.renderer.weatherCanvas.isRaining()) {
-        window.gameClient.interface.soundManager.setVolume("rain", 1);
-      }
+      // if (window.gameClient.renderer.weatherCanvas.isRaining()) {
+      //   window.gameClient.interface.soundManager.setVolume("rain", 1);
+      // }
     }
   }
 
@@ -117,7 +104,7 @@ export default class Player extends Creature {
 
   public confirmClientWalk(): void {
     if (this.__serverWalkConfirmation) {
-      window.gameClient.renderer.updateTileCache();
+      window.gameClient.renderer.tileRenderer.refreshVisibleTiles()
     }
     this.__serverWalkConfirmation = true;
   }

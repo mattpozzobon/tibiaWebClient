@@ -5,6 +5,7 @@ import FrameGroup from "../utils/frame-group";
 
 
 class ObjectBuffer {
+  private loaded = false;   
   private dataObjects: Record<number, DataObject>;
   __version: number;
   private itemCount: number;
@@ -81,6 +82,10 @@ class ObjectBuffer {
     ThingAttrLast: 255,
   };
   
+  public isLoaded(): boolean {
+    return this.loaded;
+  }
+
   getOutfit(id: number): DataObject | null {
     if (id < 0 || id > this.outfitCount) {
       return null;
@@ -205,7 +210,7 @@ class ObjectBuffer {
     }
   
     //LoopedAnimation.initialize(window.gameClient);
-  
+    this.loaded = true;
     console.log(`Completed loading ${this.totalObjectCount} data objects in ${Math.round(performance.now() - start)} milliseconds.`);
   
     window.gameClient.interface.loadAssetCallback("data", name);

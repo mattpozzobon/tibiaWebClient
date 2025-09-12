@@ -4,6 +4,8 @@ import Animation from "./animation";
 export default class DistanceAnimation extends Animation {
   public fromPosition: Position;
   public toPosition: Position;
+  private _cachedFraction: number = -1;
+  private _cachedFractionTime: number = 0;
 
   constructor(id: number, fromPosition: Position, toPosition: Position) {
     super(id);
@@ -12,15 +14,20 @@ export default class DistanceAnimation extends Animation {
   }
 
   __generateDurations(): number[] {
-    return [2 * Animation.DEFAULT_FRAME_LENGTH_MS];
+    return [4 * Animation.DEFAULT_FRAME_LENGTH_MS];
   }
 
   public getFraction(): number {
-    return Math.min(
-      1,
-      (performance.now() - this.__created) /
-        (2 * Animation.DEFAULT_FRAME_LENGTH_MS)
-    );
+    const now = performance.now();
+    
+    // Cache fraction calculation for 16ms (60fps) to avoid repeated calculations
+    if (this._cachedFractionTime === 0 || now - this._cachedFractionTime > 16) {
+      const totalDuration = this.totalDuration();
+      this._cachedFraction = Math.min(1, (now - this.__created) / totalDuration);
+      this._cachedFractionTime = now;
+    }
+    
+    return this._cachedFraction;
   }
 
   public getPosition(): Position {

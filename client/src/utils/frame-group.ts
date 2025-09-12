@@ -1,3 +1,4 @@
+import { Texture } from "pixi.js";
 import Position from "../game/position";
 import Sprite from "../renderer/sprite";
 
@@ -45,9 +46,9 @@ export default class FrameGroup {
       return index >= 0 && index < this.sprites.length;
     }
   
-    getSprite(index: number): Sprite | null {
+    getSprite(index: number): Texture | null {
       if (!this.isValidIndex(index)) {
-        return null;
+        return null;  
       }
       return window.gameClient.spriteBuffer.get(this.sprites[index]);
     }

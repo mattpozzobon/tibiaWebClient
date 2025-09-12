@@ -1,5 +1,5 @@
+import { Texture } from "pixi.js";
 import { DataObject } from "../core/dataobject";
-import Sprite from "../renderer/sprite";
 import { PropBitFlag } from "../utils/bitflag";
 import FrameGroup from "../utils/frame-group";
 import Container from "./container";
@@ -108,7 +108,7 @@ export default class Thing {
       return this.getDataObject().properties.minimapColor;
     }
   
-    getSprite(group: number, index: number): Sprite | null {
+    getSprite(group: number, index: number): Texture | null {
       /*
        * Function Thing.getSprite
        * Wraps a call to the data object

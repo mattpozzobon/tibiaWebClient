@@ -34,10 +34,10 @@ export default class GameClient {
   serverVersion: number | null = null;
   clientVersion: number | null = null;
 
-  constructor() {
-    this.renderer = new Renderer();
-    this.interface = new Interface();
-    this.spriteBuffer = new SpriteBuffer(32);
+  constructor(renderer: Renderer) {
+    this.renderer = renderer;
+    this.interface = new Interface(renderer);
+    this.spriteBuffer = new SpriteBuffer(100000);
     this.dataObjects = new ObjectBuffer();
     this.networkManager = new NetworkManager();
     this.database = new Database();
@@ -106,7 +106,7 @@ export default class GameClient {
     //this.renderer.minimap.save();
     this.interface.settings.saveState();
     this.gameLoop.abort();
-    this.renderer.screen.clear();
+    //this.renderer.screen.clear();
 
     if (this.player) {
       this.player.closeAllContainers();
@@ -143,10 +143,10 @@ export default class GameClient {
     this.interface.showGameInterface();
     this.interface.modalManager.close();
 
-    this.player = new Player(packet);
+    this.player = Player.create(packet);
     this.world.createCreature(packet.id, this.player);
     console.log(this.player);
-    this.renderer.updateTileCache();
+    window.gameClient.renderer.tileRenderer.refreshVisibleTiles()
     this.player.setAmbientSound();
     //this.renderer.minimap.setRenderLayer(this.player.getPosition().z);
 

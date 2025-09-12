@@ -1,17 +1,13 @@
 
 import Position from "./position";
-import { CONST } from "../helper/appContext";
-
 import Outfit from "./outfit";
-import SpriteBuffer from "../renderer/sprite-buffer";
-import FrameGroup from "../utils/frame-group";
 import ConditionManager from "./condition";
 import { Vitals, VitalsData } from "./player/vitals/vitals";
 import Interface from "../ui/interface";
 import CastingManager from "../ui/managers/casting-manager";
-import CharacterElement from "../ui/screen-elements/screen-element-character";
 import BoxAnimation from "../utils/box-animation";
-import CreatureRenderer from "../renderer/creature-renderer";
+import CreatureRendererHelper from "../renderer/creature-renderer-helper";
+import CharacterPixiElement from "../ui/screen-elements/screen-element-character";
 
 
 export interface CreatureData {
@@ -22,79 +18,48 @@ export interface CreatureData {
   conditions: any;
 }
 
-export interface CharacterFrames {
-  characterGroup: any;
-  mountGroup: any;
-  characterFrame: number;
-  mountFrame: number;
-  headGroup: any;
-  bodyGroup: any;
-  legsGroup: any;
-  feetGroup: any;
-  hairGroup: any;
-  leftHandGroup: any;
-  rightHandGroup: any;
-  headFrame: number;
-  bodyFrame: number;
-  legsFrame: number;
-  feetFrame: number;
-  hairFrame: number;
-  leftHandFrame: number;
-  rightHandFrame: number;
-  isMoving: boolean;
-}
-
 export default class Creature {
   public id: number;
   public type: number;
   public conditions: ConditionManager;
-  public __lookDirection: number;
   public __previousPosition: Position;
   public outfit: Outfit;
   public castingManager: CastingManager;
   public textBuffer = [];
-  public __movementEvent: any;
-  public __lookDirectionBuffer: any;
   public __chunk: any;
-  public __teleported: boolean;
   // This method should create and assign a DOM element representing the creature.
   public __activeTextElement: any;
   public __target: any;
   public __animations: Set<any>;
   // Assume characterElement is provided (e.g., by Creature or assigned later)
-  public characterElement: CharacterElement;
+  //public characterElement: CharacterElement;
+  public characterElementPixi!: CharacterPixiElement;
   public vitals: Vitals;
-  public renderer: CreatureRenderer;
+  public renderer: CreatureRendererHelper;
   
   // gameClient is injected to replace global references.
-
   constructor(data: CreatureData) {
 
     this.vitals = new Vitals(data.vitals);
     this.id = data.id;
     this.type = data.type != null ? data.type : 0;
     this.conditions = new ConditionManager(this, data.conditions);
-    this.__lookDirection = data.vitals.direction;
-    this.__previousPosition = data.vitals.position.copy();
     this.outfit = new Outfit(data.outfit);
     this.castingManager = new CastingManager();
-
-
-    this.renderer = new CreatureRenderer(this);
-
-    this.__movementEvent = null;
-    this.__lookDirectionBuffer = null;
+    this.renderer = new CreatureRendererHelper(this);
+ 
     this.__chunk = window.gameClient.world.getChunkFromWorldPosition(this.vitals.position);
-    this.__teleported = false;
 
-    // Create the character element (method implementation assumed).
-    this.characterElement = new CharacterElement(this);
-    window.gameClient.interface.screenElementManager.add(this.characterElement.element);
-    this.characterElement.setHealthFraction(this.getHealthFraction());
-
+    this.__previousPosition = data.vitals.position.copy();
     this.__activeTextElement = null;
     this.__target = null;
     this.__animations = new Set();
+  }
+
+  static create(data: CreatureData): Creature {
+    const creature = new Creature(data);
+    creature.characterElementPixi = new CharacterPixiElement(creature);
+    return creature;
   }
 
   public removeCondition(cid: number): void {
@@ -110,7 +75,7 @@ export default class Creature {
   }
 
   public blockHit(): any {
-    return window.gameClient.renderer.addPositionAnimation({position: this.vitals.position, type: 3});
+    return window.gameClient.renderer.animationRenderer.addPositionAnimation({position: this.vitals.position, type: 3});
   }
   
   public getMaxFloor(): number {
@@ -137,12 +102,13 @@ export default class Creature {
 
   public serverSetOutfit(outfit: Outfit): void {
     this.outfit = outfit;
-    // Clear the outfit sprite buffer to make room for the new sprite.
-    this.renderer.spriteBuffer = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObject()));
-    // If the creature has a mount, create a sprite buffer for it as well.
-    if (this.outfit.getDataObjectMount()) {
-      this.renderer.spriteBufferMount = new SpriteBuffer(this.outfit.getSpriteBufferSize(this.outfit.getDataObjectMount()));
+    // Clear the texture cache to force regeneration of sprites with new outfit colors
+    // This ensures that masked sprites will be recomposed with the new outfit colors
+    if (window.gameClient.renderer.creatureRenderer) {
+      window.gameClient.renderer.creatureRenderer.clearTextureCache();
     }
+    // Force refresh of the creature's renderer helper to update hair/head logic
+    this.renderer = new CreatureRendererHelper(this);
   }
 
   public setPosition(position: Position): void {
@@ -165,6 +131,14 @@ export default class Creature {
 
   public getHealthFraction(): number {
     return this.clamp(this.vitals.state.health / this.vitals.state.maxHealth, 0, 1);
+  }
+
+  public getManaFraction(): number {
+    return this.clamp(this.vitals.state.mana / this.vitals.state.maxMana, 0, 1);
+  }
+
+  public getEnergyFraction(): number {
+    return this.clamp(this.vitals.state.energy / this.vitals.state.maxEnergy, 0, 1);
   }
 
   clamp(value: number, min: number, max: number): number {
@@ -217,122 +191,41 @@ export default class Creature {
 
   // Method: remove (removes creature's DOM element)
   public remove(): void {
-    this.characterElement.remove();
+    this.characterElementPixi.remove();
   }
 
   // Method: getMoveOffset
   public getMoveOffset(): Position {
-    // If the creature is not moving or has teleported, return a null offset.
-    if (!this.isMoving() || this.__teleported) {
-      return Position.NULL;
-    }
-    const fraction = this.getMovingFraction();
-    switch (this.getLookDirection()) {
-      case CONST.DIRECTION.WEST:
-        return new Position(-fraction, 0, 0);
-      case CONST.DIRECTION.NORTH:
-        return new Position(0, -fraction, 0);
-      case CONST.DIRECTION.EAST:
-        return new Position(fraction, 0, 0);
-      case CONST.DIRECTION.SOUTH:
-        return new Position(0, fraction, 0);
-      // TODO: Implement diagonal movement.
-      // case CONST.DIRECTION.NORTH_WEST:
-      //   return new Position(-fraction, -fraction, 0);
-      // case CONST.DIRECTION.NORTH_EAST:
-      //   return new Position(fraction, -fraction, 0);
-      // case CONST.DIRECTION.SOUTH_EAST:
-      //   return new Position(fraction, fraction, 0);
-      // case CONST.DIRECTION.SOUTH_WEST:
-      //   return new Position(-fraction, fraction, 0);
-      default:
-        return new Position(0, 0, 0);
-    }
+    return this.renderer.getMoveOffset();
   }
 
-  public moveTo(position: Position, speed: number): any {
-    if (!window.gameClient.world.isValidWorldPosition(position)) {
-      return false;
-    }
-    this.__chunk = window.gameClient.world.getChunkFromWorldPosition(position);
+  public moveTo(position: Position, stepDurationTicks: number): any {
+    return this.renderer.moveTo(position, stepDurationTicks);
+  }
 
-    if (this.__movementEvent) {
-      this.__movementEvent.cancel();
-    }
-
-    const modSlowness = (this.getPosition().isDiagonal(position) ? 2 : 1) * speed;
-    this.__movementEvent = window.gameClient.eventQueue.addEvent(this.unlockMovement.bind(this), modSlowness);
-    const angle = this.getPosition().getLookDirection(position);
-
-    if (angle !== null) {
-      this.__lookDirection = angle;
-    }
-
-    this.__previousPosition = this.getPosition();
-    this.vitals.position = position;
-
-    if (window.gameClient.player!.canSeeSmall(this) && position.z === window.gameClient.player!.vitals.position.z) {
-      window.gameClient.interface.soundManager.playWalkBit(position);
-    }
-
-    if (window.gameClient.player && this.id === window.gameClient.player.id) {
-     // return window.gameClient.renderer.minimap.cache();
-    }
+  public unlockMovement(): any {
+    return this.renderer.unlockMovement();
   }
   
   public getLookDirection(): number {
-    return this.__lookDirection;
+    return this.renderer.getLookDirection();
   }
   
   public setTurnBuffer(direction: number): void {
-    if (this.isMoving()) {
-      this.__lookDirectionBuffer = direction;
-      return;
-    }
-    this.__setLookDirection(direction);
+    this.renderer.setTurnBuffer(direction);
   }
-  
-  public unlockMovement(): any {
-    if (this.__lookDirectionBuffer !== null) {
-      this.__lookDirection = this.__lookDirectionBuffer;
-      this.__lookDirectionBuffer = null;
-    }
-    this.__movementEvent = null;
-    this.__teleported = false;
-    if (
-      window.gameClient.player && 
-      this.id === window.gameClient.player.id && 
-      window.gameClient.world.pathfinder.__pathfindCache.length > 0
-    ) {
-      return window.gameClient.world.pathfinder.handlePathfind();
-    }
-
-    // TODO: Implement movement buffer handling.
-    // if (
-    //   window.gameClient.player &&
-    //   this.id === window.gameClient.player.id &&
-    //   this.__movementBuffer !== null
-    // ) {
-    //   window.gameClient.keyboard.handleCharacterMovement(this.__movementBuffer);
-    //   this.__movementBuffer = null;
-    // }
-  }
-  
 
   public getChunk(): any {
     return this.__chunk;
   }
   
+  // Method: isMoving
   public isMoving(): boolean {
-    return this.__movementEvent !== null;
+    return this.renderer.isMoving();
   }
   
   public getMovingFraction(): number {
-    // If not moving or teleported, fraction is 0.
-    if (!this.isMoving() || this.__teleported) {
-      return 0;
-    }
-    return this.__movementEvent.remainingFraction();
+    return this.renderer.getMovingFraction();
   }
   
   public canSee(thing: { getPosition(): Position }): boolean {
@@ -351,19 +244,14 @@ export default class Creature {
     return (dx < 8) && (dy < 6);
   }
   
-  protected __setLookDirection(direction: number): void {
-    this.__lookDirection = direction;
+  public __setLookDirection(direction: number): void {
+    this.renderer.__setLookDirection(direction);
   }
   
   protected __setActiveTextElement(message: string, color: number): any {
     // Sets a new active text element for the creature.
-    this.__activeTextElement = window.gameClient.interface.screenElementManager.createTextElement(this, message, color);
+    this.__activeTextElement = window.gameClient.interface.screenElementManager.createFloatingTextElement(message, this, color);
     return this.__activeTextElement;
-  }
-  
-  protected __getWalkingFrame(frameGroup: any): number {
-    // Calculate walking frame based on remaining movement fraction.
-    return Math.round((1 - this.getMovingFraction()) * (frameGroup.animationLength - 1));
   }
   
 } 

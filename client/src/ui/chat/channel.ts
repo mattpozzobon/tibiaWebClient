@@ -31,8 +31,8 @@ export default class Channel {
   }
 
   public close(): void {
-    // Delegate channel closure to the channel manager.S
-    window.gameClient.interface.channelManager.closeChannel(this);
+    // TODO: Update to use ReactChannelManager
+    // window.gameClient.interface.channelManager.closeChannel(this);
   }
 
   public addPrivateMessage(message: string, name: string): void {
@@ -97,7 +97,8 @@ export default class Channel {
 
   public click(event: Event): void {
     // When the tab is clicked, set this channel as active.
-    window.gameClient.interface.channelManager.setActiveChannelElement(this);
+    // TODO: Update to use ReactChannelManager
+    // window.gameClient.interface.channelManager.setActiveChannelElement(this);
   }
 
   public select(): void {
@@ -123,7 +124,8 @@ export default class Channel {
     this.__contents = this.__contents.slice(-this.MAX_MESSAGE_COUNT);
 
     // If this channel is active, render immediately.
-    if (window.gameClient.interface.channelManager.isActive(this)) {
+    // TODO: Update to use ReactChannelManager
+    if (false) { // window.gameClient.interface.channelManager.isActive(this)) {
       this.render();
       return;
     }

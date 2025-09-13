@@ -74,7 +74,10 @@ class Mouse {
     if (event.target instanceof HTMLElement && event.target.className === "chat-message") {
       const name = event.target.getAttribute("name");
       if (name !== null) {
-        window.gameClient.interface.channelManager.addPrivateChannel(name);
+        // Use ReactChannelManager for private channels
+        if ((window as any).reactChannelManager) {
+          (window as any).reactChannelManager.addPrivateChannel(name);
+        }
       }
     }
   }

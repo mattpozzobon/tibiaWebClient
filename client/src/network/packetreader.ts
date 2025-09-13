@@ -568,12 +568,14 @@ export default class PacketReader extends Packet {
      * Function PacketReader.readChannelMessage
      * Reads a channel message
      */
+   
     return {
       id: this.readUInt32(),
       name: this.readString(),
       message: this.readString(),
       color: this.readUInt8(),
     };
+    
   }
   
   public readItemInformation(): {

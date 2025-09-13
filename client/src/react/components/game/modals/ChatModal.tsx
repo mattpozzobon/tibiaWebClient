@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type GameClient from '../../../../core/gameclient';
+import { reactChannelManager } from '../../../services/ReactChannelManager';
 import './styles/ChatModal.scss';
 
 interface ChatModalProps {
@@ -26,10 +27,9 @@ export default function ChatModal({ isOpen, onClose, gc }: ChatModalProps) {
   ]);
 
   useEffect(() => {
-    if (isOpen && gc && gc.interface && gc.interface.channelManager) {
-      // Load existing channels from the channel manager
-      const channelManager = gc.interface.channelManager;
-      const existingChannels = channelManager.channels.map((channel: any) => ({
+    if (isOpen) {
+      // Load existing channels from ReactChannelManager
+      const existingChannels = reactChannelManager.getChannels().map((channel: any) => ({
         id: channel.name.toLowerCase(),
         name: channel.name,
         type: (channel.id === null ? 'local' : 'global') as 'global' | 'local',
@@ -37,7 +37,7 @@ export default function ChatModal({ isOpen, onClose, gc }: ChatModalProps) {
       }));
       setAvailableChannels(existingChannels);
     }
-  }, [isOpen, gc]);
+  }, [isOpen]);
 
   const handleChannelSelect = (channelId: string) => {
     setSelectedChannel(channelId);
@@ -55,21 +55,17 @@ export default function ChatModal({ isOpen, onClose, gc }: ChatModalProps) {
       if (channel) {
         if (channel.type === 'local') {
           // Add local channel
-          if (gc && gc.interface && gc.interface.channelManager) {
-            gc.interface.channelManager.addLocalChannel(channel.name);
-          }
+          reactChannelManager.addChannel(null, channel.name, 'regular');
         } else {
           // Join global channel
-          if (gc && gc.interface && gc.interface.channelManager && channel.channelId) {
-            gc.interface.channelManager.joinChannel(channel.channelId, channel.name);
+          if (channel.channelId) {
+            reactChannelManager.addChannel(channel.channelId, channel.name, 'regular');
           }
         }
       }
     } else if (privateChannelName.trim()) {
       // Open private channel
-      if (gc && gc.interface && gc.interface.channelManager) {
-        gc.interface.channelManager.addPrivateChannel(privateChannelName.trim());
-      }
+      reactChannelManager.addPrivateChannel(privateChannelName.trim());
     }
     onClose();
   };

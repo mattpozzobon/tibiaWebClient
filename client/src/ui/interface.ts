@@ -1,4 +1,3 @@
-import ChannelManager from "./managers/channel-manager";
 import HotbarManager from "./managers/hotbar-manager";
 import MenuManager from "./menu/menu-manager";
 import ModalManager from "./modals/modal-manager";
@@ -18,7 +17,6 @@ export default class Interface {
   renderer: Renderer;
   loginFlowManager: ReactLoginFlowManager;
   settings: Settings;
-  channelManager: ChannelManager;
   hotbarManager: HotbarManager;
   notificationManager: NotificationManager;
   modalManager: ModalManager;
@@ -101,7 +99,6 @@ export default class Interface {
     this.renderer = renderer;
     this.settings = new Settings(this);
     this.loginFlowManager = new ReactLoginFlowManager();
-    this.channelManager = new ChannelManager();
     this.hotbarManager = new HotbarManager();
     this.notificationManager = new NotificationManager();
     this.modalManager = new ModalManager();

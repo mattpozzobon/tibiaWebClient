@@ -121,30 +121,34 @@ class NetworkManager {
         return this.packetHandler.handleEntityRemove(packet.readUInt32());
       case CONST.PROTOCOL.SERVER.CREATURE_TELEPORT:
         return this.packetHandler.handleEntityTeleport(packet.readCreatureTeleport());
-      case CONST.PROTOCOL.SERVER.MESSAGE_PRIVATE:
-        return this.packetHandler.handleReceivePrivateMessage(packet.readPrivateMessage());
+
       case CONST.PROTOCOL.SERVER.PLAYER_LOGIN:
         return this.packetHandler.handlePlayerConnect(packet.readString());
       case CONST.PROTOCOL.SERVER.PLAYER_LOGOUT:
         return this.packetHandler.handlePlayerDisconnect(packet.readString());
       case CONST.PROTOCOL.SERVER.WORLD_TIME:
         return this.packetHandler.handleWorldTime(packet.readUInt32());
-      case CONST.PROTOCOL.SERVER.CREATURE_MESSAGE:
-        return this.packetHandler.handleChannelMessage(packet.readChannelMessage());
       case CONST.PROTOCOL.SERVER.TOGGLE_CONDITION:
         return this.packetHandler.handleCondition(packet.readToggleCondition());
+      case CONST.PROTOCOL.SERVER.CREATURE_PROPERTY:
+        return this.packetHandler.handlePropertyChange(packet.readProperty());
+
+      // Messages 
       case CONST.PROTOCOL.SERVER.EMOTE:
         return this.packetHandler.handleEmote(packet.readDefaultMessage());
       case CONST.PROTOCOL.SERVER.CREATURE_SAY:
         return this.packetHandler.handleDefaultMessage(packet.readDefaultMessage());
-      case CONST.PROTOCOL.SERVER.CREATURE_PROPERTY:
-        return this.packetHandler.handlePropertyChange(packet.readProperty());
+      case CONST.PROTOCOL.SERVER.MESSAGE_PRIVATE:
+        return this.packetHandler.handleReceivePrivateMessage(packet.readPrivateMessage());
+      case CONST.PROTOCOL.SERVER.CREATURE_MESSAGE:
+          return this.packetHandler.handleChannelMessage(packet.readChannelMessage());
       default:
         throw new Error("An unknown packet was received from the server.");
     }
   }
 
   send(packet: any): void {
+    console.log('Sending packet:', packet);
     if (!this.isConnected()) return;
     const buffer = packet.getBuffer();
     this.state.bytesSent += buffer.length;

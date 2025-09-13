@@ -228,7 +228,10 @@ class Keyboard {
         return;
       }
       // Fallback for other inputs
-      window.gameClient.interface.channelManager.suggestPrevious();
+      // Use ReactChannelManager for channel suggestions
+      if ((window as any).reactChannelManager) {
+        (window as any).reactChannelManager.suggestPrevious();
+      }
     }
   }
 
@@ -277,7 +280,10 @@ class Keyboard {
 
       if (lowerKey === Keyboard.KEYS.KEY_E && this.isControlDown()) {
         event.preventDefault();
-        return window.gameClient.interface.channelManager.closeCurrentChannel();
+        // Use ReactChannelManager for channel closing
+        if ((window as any).reactChannelManager) {
+          (window as any).reactChannelManager.closeCurrentChannel();
+        }
       }
     }
 
@@ -311,7 +317,10 @@ class Keyboard {
 
     if (lowerKey === Keyboard.KEYS.TAB && window.gameClient.isConnected()) {
       event.preventDefault();
-      return window.gameClient.interface.channelManager.handleChannelIncrement(1);
+      // Use ReactChannelManager for channel navigation
+      if ((window as any).reactChannelManager) {
+        (window as any).reactChannelManager.handleChannelIncrement(1);
+      }
     }
 
     // When modal is open, block other inputs

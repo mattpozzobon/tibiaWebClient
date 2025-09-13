@@ -14,7 +14,7 @@ import ChatModal from './modals/ChatModal';
 // import OfferModal from './modals/OfferModal';
 // import SpellbookModal from './modals/SpellbookModal';
 
-import ChatWindow from './ChatWindowClean';
+import ChatWindow from './hud/ChatWindowClean';
 // import FriendList from './FriendList';
 // import Hotbar from './Hotbar';
 // import PlayerStats from './PlayerStats';

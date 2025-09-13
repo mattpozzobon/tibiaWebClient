@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import type GameClient from '../../../core/gameclient';
-import { usePlayerConditions } from '../../hooks/usePlayerAttribute';
+import type GameClient from '../../../../core/gameclient';
+import { usePlayerConditions } from '../../../hooks/usePlayerAttribute';
 import './styles/StatusBar.scss';
 
 interface StatusBarProps {

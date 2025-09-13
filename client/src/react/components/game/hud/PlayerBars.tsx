@@ -1,6 +1,6 @@
 import React from 'react';
-import type GameClient from '../../../core/gameclient';
-import { usePlayerVitals } from '../../hooks/usePlayerAttribute';
+import type GameClient from '../../../../core/gameclient';
+import { usePlayerVitals } from '../../../hooks/usePlayerAttribute';
 import './styles/PlayerBars.scss';
 
 interface PlayerBarsProps {

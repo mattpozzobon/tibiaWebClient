@@ -7,6 +7,7 @@ import GameWindows from './GameWindows';
 import { layoutManager, type LayoutManagerState } from '../../services/LayoutManager';
 import './styles/GameLayout.scss';
 import GameUIManager from './GameUIManager';
+import Hud from './StandaloneComponents';
 
 interface GameLayoutProps {
   gameClient: GameClient | null;
@@ -49,7 +50,7 @@ const GameLayout: React.FC<GameLayoutProps> = ({ gameClient }) => {
 
       {gameClient && (
         <>
-          <StandaloneComponents gameClient={gameClient} /> 
+          <Hud gameClient={gameClient} /> 
           <GameUIManager gc={gameClient} />
           {/* <Modals modals={layoutState.modals}onCloseModal={(id) => layoutManager.closeModal(id)}/> */}
           <GameWindows gameWindows={layoutState.gameWindows} onCloseWindow={(id) => layoutManager.removeGameWindow(id)}/> 

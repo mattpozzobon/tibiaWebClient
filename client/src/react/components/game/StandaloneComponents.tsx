@@ -1,15 +1,15 @@
 import React from 'react';
 import type GameClient from '../../../core/gameclient';
-import TopbarIsland from '../../TopbarIsland';
-import ChatWindowClean from './ChatWindowClean';
-import StatusBar from './StatusBar';
-import PlayerBars from './PlayerBars';
+import TopbarIsland from './hud/TopbarIsland';
+import ChatWindowClean from './hud/ChatWindowClean';
+import StatusBar from './hud/StatusBar';
+import PlayerBars from './hud/PlayerBars';
 
-interface StandaloneComponentsProps {
+interface HudProps {
   gameClient: GameClient;
 }
 
-const StandaloneComponents: React.FC<StandaloneComponentsProps> = ({ gameClient }) => {
+const Hud: React.FC<HudProps> = ({ gameClient }) => {
 
   return (
     <>
@@ -21,4 +21,4 @@ const StandaloneComponents: React.FC<StandaloneComponentsProps> = ({ gameClient 
   );
 };
 
-export default StandaloneComponents;
+export default Hud;

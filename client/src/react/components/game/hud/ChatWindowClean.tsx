@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import type GameClient from '../../../core/gameclient';
-import { ChannelMessagePacket, ChannelPrivatePacket } from '../../../core/protocol';
-import { chatEventManager, ChatMessageData } from '../../services/ChatEventManager';
-import { reactChannelManager, Channel } from '../../services/ReactChannelManager';
+import type GameClient from '../../../../core/gameclient';
+import { ChannelMessagePacket, ChannelPrivatePacket } from '../../../../core/protocol';
+import { chatEventManager, ChatMessageData } from '../../../services/ChatEventManager';
+import { reactChannelManager, Channel } from '../../../services/ReactChannelManager';
 import './styles/ChatWindow.scss';
 
 // Ensure services are initialized

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import type GameClient from "../core/gameclient";
-import ChangelogModal from "./components/ChangelogModal";
+import type GameClient from "../../../../core/gameclient";
+import ChangelogModal from "../../ChangelogModal";
 import './components/styles/TopbarIsland.scss';
 
 interface TopbarIslandProps {

@@ -514,7 +514,6 @@ class PacketHandler {
   }
 
   handleCreatureServerMove(packet: { id: number; position: Position; speed: number }): void {
-    console.log('Server stepDuration: ', packet.speed, 'ticks');
     let entity = window.gameClient.world.getCreature(packet.id);
     if (!entity) return;
 

@@ -123,7 +123,14 @@ export default class Player extends Creature {
 
   public setTarget(creature: any): void {
     this.__target = creature;
-    (window.gameClient.interface.windowManager.getWindow("battle-window")! as BattleWindow).setTarget(creature);
+    
+    // Battle window is now handled by React components
+    // Legacy window system is disabled
+    const battleWindow = window.gameClient.interface.windowManager.getWindow("battle-window");
+    if (battleWindow) {
+      (battleWindow as BattleWindow).setTarget(creature);
+    }
+    // TODO: Update React battle component when it's implemented
   }
 
   public openContainer(container: any): void {

@@ -189,9 +189,8 @@ export default class CreatureRendererHelper {
     // const frameIndex = Math.floor(progress * frameCount);
     // return Math.max(0, Math.min(frameIndex, frameCount));
 
-    const frame = Math.round((1 - this.getMovingFraction()) * (frameGroup.animationLength - 1))
-    console.log('frame', frame, 'movingFraction', this.getMovingFraction(), 'animationLength', frameGroup.animationLength);
-    return frame;
+    return Math.round((1 - this.getMovingFraction()) * (frameGroup.animationLength - 1))
+
   }
   
 

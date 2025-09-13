@@ -119,7 +119,6 @@ const App: React.FC<AppProps> = ({ onProgressUpdate }) => {
     initializeApp();
   }, []);
 
-  // Listen for authentication changes
   useEffect(() => {
     const checkAuthStatus = () => {
       const authed = !!localStorage.getItem("auth_token");
@@ -135,7 +134,6 @@ const App: React.FC<AppProps> = ({ onProgressUpdate }) => {
     return () => clearInterval(interval);
   }, [isAuthenticated]);
 
-  // Initialize game client after React components are rendered
   useEffect(() => {
     if (isAuthenticated && componentsLoaded && !gameClient) {
       const initGameClient = async () => {

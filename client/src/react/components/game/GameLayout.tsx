@@ -14,16 +14,11 @@ interface GameLayoutProps {
 const GameLayout: React.FC<GameLayoutProps> = ({ gameClient }) => {
   return (
     <div id="game-wrapper" className="game-wrapper">
-      {/* Audio Manager */}
+      
       <AudioManager />
-      
-      {/* Windows and Prototypes */}
       <WindowsPrototypes />
-      
-      {/* Modals Wrapper */}
       <ModalsWrapper />
-      
-      {/* Game Client Dependent Components - only render when gameClient is available */}
+ 
       {gameClient && (
         <>
           {/* Topbar */}

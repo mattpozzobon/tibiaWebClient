@@ -4,10 +4,11 @@ const Dotenv = require('dotenv-webpack');
 module.exports = {
   entry: './client/src/App.tsx',
   output: {
-    filename: 'bundle.js',
+    filename: 'build/bundle.js',
     path: path.resolve(__dirname, 'client'),
     publicPath: '/',
     assetModuleFilename: 'assets/[name][ext]',
+    chunkFilename: 'build/[name].js',
   },
   resolve: {
     extensions: [".ts", ".tsx", ".js", ".scss"],

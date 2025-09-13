@@ -63,8 +63,9 @@ export default function ChatWindow({ gc }: ChatWindowProps) {
         // Note: Message will be added through the event system when the server responds
       }
       
-      // Clear input and blur (but keep chat window visible)
+      // Clear input, blur, and deactivate chat
       setInputValue('');
+      setIsActive(false);
       inputRef.current?.blur();
     }
   };

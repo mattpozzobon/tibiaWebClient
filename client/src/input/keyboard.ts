@@ -208,6 +208,14 @@ class Keyboard {
   }
 
   private __handleEscapeKey(): void {
+    // Check if chat is active first
+    const reactChatInput = document.querySelector(".chat-window .chat-input") as HTMLInputElement;
+    if (reactChatInput && document.activeElement === reactChatInput) {
+      // Chat is focused - let React chat handle Escape
+      reactChatInput.blur();
+      return;
+    }
+    
     if (window.gameClient.interface.modalManager.isOpened()) {
       window.gameClient.interface.modalManager.handleEscape();
     } else if (window.gameClient.interface.menuManager.isOpened()) {

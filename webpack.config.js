@@ -2,16 +2,18 @@ const path = require('path');
 const Dotenv = require('dotenv-webpack');
 
 module.exports = {
-  entry: {
-    main: './client/src/index.ts',
-    react: './client/src/react-bundle.tsx'
-  },
+  entry: './client/src/App.tsx',
   output: {
-    filename: '[name].js',
+    filename: 'bundle.js',
     path: path.resolve(__dirname, 'client'),
+    publicPath: '/',
+    assetModuleFilename: 'assets/[name][ext]',
   },
   resolve: {
-    extensions: [".ts", ".tsx", ".js", ".scss"]
+    extensions: [".ts", ".tsx", ".js", ".scss"],
+    alias: {
+      '/png': path.resolve(__dirname, 'client/png')
+    }
   },
   mode: 'development',
   module: {
@@ -52,6 +54,18 @@ module.exports = {
           'style-loader',
           'css-loader',
           'sass-loader'
+        ],
+      },
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              url: true
+            }
+          }
         ],
       },
     ],

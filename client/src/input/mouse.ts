@@ -164,7 +164,7 @@ class Mouse {
 
     // Detect simultaneous left + right click and call look() if __mouseDownObject exists
     if (this.__leftButtonPressed && this.__rightButtonPressed) {
-      console.log('look');
+      console.log('look', this.__mouseDownObject);
       if (this.__mouseDownObject) {
         this.look(this.__mouseDownObject);
       }

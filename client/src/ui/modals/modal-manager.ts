@@ -1,14 +1,5 @@
 import Modal from "./modal";
-import OutfitModal from "./modal-outfit";
-import MoveItemModal from "./modal-move-item";
-// ChatModal removed - now handled by React
-import EnterNameModal from "./modal-enter-name";
-import ConfirmModal from "./modal-confirm";
-import ReadableModal from "./modal-readable";
-import OfferModal from "./modal-offer";
-import MapModal from "./modal-map";
-import SpellbookModal from "./modal-spellbook";
-import SkillModal from "./modal-skills";
+// All modal classes removed - now handled by React components
 
 const MODAL_IDS = {
   SETTINGS: "settings-modal",
@@ -51,26 +42,7 @@ export default class ModalManager {
   }
 
   private registerModals(): void {
-    // Register only game modals (login/character select now handled by React)
-    const gameModalRegistrations = [
-      [Modal, MODAL_IDS.SETTINGS],
-      [SkillModal, MODAL_IDS.SKILL],
-      [OutfitModal, MODAL_IDS.OUTFIT],
-      [MoveItemModal, MODAL_IDS.MOVE_ITEM],
-        // [ChatModal, MODAL_IDS.CHAT], // Now handled by React
-      [EnterNameModal, MODAL_IDS.ENTER_NAME],
-      [ConfirmModal, MODAL_IDS.CONFIRM],
-      [ReadableModal, MODAL_IDS.READABLE],
-      [OfferModal, MODAL_IDS.OFFER],
-      [MapModal, MODAL_IDS.MAP],
-      [SpellbookModal, MODAL_IDS.SPELLBOOK]
-    ] as const;
-
-    gameModalRegistrations.forEach(([ModalClass, id]) => {
-      this.register(ModalClass, id);
-    });
-
-    console.log('✅ Game modals registered (login/character select handled by React)');
+    // All modals now handled by React UI system
   }
 
   private register(ModalClass: ModalConstructor, id: string): void {
@@ -92,37 +64,15 @@ export default class ModalManager {
   }
 
   private addModalTriggerListeners(): void {
-    const triggerMappings = [
-      // [ELEMENT_IDS.OPEN_CHAT_MODAL, MODAL_IDS.CHAT], // Now handled by React
-      [ELEMENT_IDS.OPEN_OUTFIT, MODAL_IDS.OUTFIT],
-      [ELEMENT_IDS.OPEN_SETTINGS, MODAL_IDS.SETTINGS],
-      [ELEMENT_IDS.OPEN_SKILLS, MODAL_IDS.SKILL]
-    ] as const;
-
-    triggerMappings.forEach(([elementId, modalId]) => {
-      const element = document.getElementById(elementId);
-      element?.addEventListener("click", () => this.open(modalId));
-    });
+    // Modal triggers handled by React event system
   }
 
   private addTopbarListeners(): void {
-    const topbarPlayBtn = document.getElementById(ELEMENT_IDS.TOPBAR_PLAY_BTN);
-    const topbarNewsBtn = document.getElementById(ELEMENT_IDS.TOPBAR_NEWS_BTN);
-
-    topbarPlayBtn?.addEventListener("click", () => {
-      window.gameClient.interface.loginFlowManager.showPostLogin();
-    });
-
-    topbarNewsBtn?.addEventListener("click", () => {
-      window.gameClient.interface.loginFlowManager.showChangelog();
-    });
+    // Topbar interactions handled by React components
   }
 
   private addModalHeaderListeners(): void {
-    const modalHeaders = document.querySelectorAll(".modal-header");
-    modalHeaders.forEach(header => {
-      header.addEventListener("mousedown", this.handleHeaderMouseDown.bind(this) as EventListener);
-    });
+    // Modal header interactions handled by React components
   }
 
   private handleHeaderMouseDown(event: MouseEvent): void {
@@ -189,7 +139,8 @@ export default class ModalManager {
   }
 
   public get(id: string): Modal | null {
-    return this.modals.get(id) || null;
+    // React components handle all modal interactions
+    return null;
   }
 
   public isOpened(): boolean {

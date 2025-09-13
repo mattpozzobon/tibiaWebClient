@@ -80,7 +80,7 @@ export default class GameClient {
 
     this.__setTickInterval(serverData.tick);
 
-    document.getElementById("anti-aliasing")!.dispatchEvent(new Event("change"));
+    //document.getElementById("anti-aliasing")!.dispatchEvent(new Event("change"));
   }
 
   getFrame(): number {

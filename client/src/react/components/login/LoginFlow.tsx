@@ -10,9 +10,10 @@ type LoginStep = "login" | "asset-download" | "character-select" | "game";
 
 interface LoginFlowProps {
   onGameStart: () => void;
+  onCharacterSelected: () => void;
 }
 
-export default function LoginFlow({ onGameStart }: LoginFlowProps) {
+export default function LoginFlow({ onGameStart, onCharacterSelected }: LoginFlowProps) {
   const [step, setStep] = useState<LoginStep>("login");
   const [gameClient, setGameClient] = useState<GameClient | null>(null);
   const [loading, setLoading] = useState(false);
@@ -44,15 +45,25 @@ export default function LoginFlow({ onGameStart }: LoginFlowProps) {
     }
   }, []);
 
+
   const handleLoginSuccess = async () => {
     setLoading(true);
     try {
-      // Wait for game client to be available
+      
+      // Wait for game client to be available (this will be set by the main App component)
       const waitForGameClient = () => {
-        return new Promise<GameClient>((resolve) => {
+        return new Promise<GameClient>((resolve, reject) => {
+          let attempts = 0;
+          const maxAttempts = 200; // 20 seconds max wait (increased for React rendering)
+          
           const checkForGameClient = () => {
+            attempts++;
             if (window.gameClient) {
+              console.log('✅ Game client found after login');
               resolve(window.gameClient);
+            } else if (attempts >= maxAttempts) {
+              console.error('❌ Game client not found after login timeout');
+              reject(new Error('Game client initialization timeout - React components may not be rendered yet'));
             } else {
               setTimeout(checkForGameClient, 100);
             }
@@ -67,17 +78,15 @@ export default function LoginFlow({ onGameStart }: LoginFlowProps) {
       // Trigger server handshake to get characters
       const authToken = localStorage.getItem("auth_token");
       if (authToken && gc.networkManager) {
-        console.log('🔄 Starting server handshake for character loading...');
         gc.networkManager.openGameSocket(authToken);
-        
-        // Move to asset download first
         setStep("asset-download");
+        setLoading(false);
       } else {
         console.error('❌ Missing auth token or network manager');
+        setLoading(false);
       }
     } catch (error) {
       console.error("Failed to initialize game client:", error);
-    } finally {
       setLoading(false);
     }
   };
@@ -89,6 +98,7 @@ export default function LoginFlow({ onGameStart }: LoginFlowProps) {
   const handleCharacterSelected = () => {
     setStep("game");
     onGameStart();
+    onCharacterSelected(); // Notify App component that character was selected
   };
 
   const handleLogout = () => {
@@ -105,6 +115,7 @@ export default function LoginFlow({ onGameStart }: LoginFlowProps) {
       </div>
     );
   }
+
 
   return (
     <>

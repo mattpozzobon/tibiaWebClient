@@ -61,7 +61,8 @@ export default function AssetDownload({ gc, onDownloadComplete }: AssetDownloadP
       await downloadAssetsWithProgress();
 
     } catch (error) {
-      console.error('Asset download failed:', error);
+      console.error('❌ Asset download failed:', error);
+      console.error('❌ Error details:', error);
       setDownloadState({
         progress: 0,
         status: "Download failed. Please try again.",
@@ -172,6 +173,7 @@ export default function AssetDownload({ gc, onDownloadComplete }: AssetDownloadP
 
     // Wait a moment then proceed
     setTimeout(() => {
+      console.log('✅ Asset download finished, calling onDownloadComplete');
       onDownloadComplete();
     }, 1500);
   };

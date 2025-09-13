@@ -1,5 +1,3 @@
-import FriendWindow from "../../../ui/window/window-friend";
-
 export interface Friend {
   name: string;
   online: boolean;
@@ -75,7 +73,11 @@ export default class Friendlist {
     const friendArray: Friend[] = Array.from(this.__friends, this.__deconstructMap.bind(this))
       .filter(this.__showOfflineFilter.bind(this))
       .sort(this.__sortFunction);
-    (window.gameClient.interface.windowManager.getWindow("friend-window") as FriendWindow).generateContent(friendArray);
+    
+    // Window system now handled by React components
+    
+    // Optional: Could dispatch a custom event for React components to listen to
+    // window.dispatchEvent(new CustomEvent('friendsUpdate', { detail: friendArray }));
   }
 
   public toggleShowOffline(): void {

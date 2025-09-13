@@ -57,8 +57,9 @@ export class Vitals {
   }
 
   private setCharactherModal(data: VitalsData): void {
-    (window.gameClient.interface.modalManager.get("skill-modal") as SkillModal)
-      .setCharactherInfo(data);
+    // Modal system now handled by React components
+    // Optional: Could dispatch a custom event for React components to listen to
+    // window.dispatchEvent(new CustomEvent('characterInfoUpdate', { detail: data }));
   }
 
   private registerStatListener( statKey: "health" | "mana" | "energy", maxStatKey: "maxHealth" | "maxMana" | "maxEnergy", updateFn: () => void

@@ -2,7 +2,6 @@ import Chunk from "../core/chunk";
 import Clock from "../core/clock";
 import Pathfinder from "../core/pathfinder";
 import { TargetPacket } from "../core/protocol";
-import BattleWindow from "../ui/window/window-battle";
 import Creature from "./creature";
 import Player from "./player/player";
 import Position from "./position";
@@ -103,7 +102,12 @@ export default class World {
   public createCreature(id: number | string, creature: any): any {
     this.activeCreatures[id] = creature;
     this.addCreature(creature);
-    return (window.gameClient.interface.windowManager.getWindow("battle-window") as BattleWindow).addCreature(creature);
+    
+    // Window system now handled by React components
+    
+    // Optional: Could dispatch a custom event for React components to listen to
+    // window.dispatchEvent(new CustomEvent('creatureAdded', { detail: { id, creature } }));
+    return creature;
   }
 
   public getCreature(id: number | string): Creature | Player | null {

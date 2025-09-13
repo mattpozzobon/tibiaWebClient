@@ -53,14 +53,28 @@ export default function ChatWindow({ gc }: ChatWindowProps) {
         
         // Send message based on channel type
         if (activeChannel.type === 'private') {
-          // Private channel - send private packet
+          // Private channel - send private packet and add message immediately
+          // (server response only goes to recipient, not back to sender)
           gc.send(new ChannelPrivatePacket(activeChannel.name, message));
+          
+          // Add message immediately for sender feedback
+          const senderMessage: ChatMessage = {
+            id: `sent-${activeChannel.name}-${message}-${Date.now()}`,
+            text: message,
+            sender: gc.player?.vitals.name || 'You',
+            timestamp: new Date(),
+            color: '#ffffff',
+            type: 1,
+            channelName: activeChannel.name
+          };
+          
+          // Add to allMessages for immediate display
+          setAllMessages(prev => [...prev, senderMessage]);
         } else if (activeChannel.id !== null) {
           // Regular channel - send with say (loudness 1)
+          // Message will appear when server broadcasts it back
           gc.send(new ChannelMessagePacket(activeChannel.id, 1, message));
         }
-        
-        // Note: Message will be added through the event system when the server responds
       }
       
       // Clear input, blur, and deactivate chat
@@ -108,6 +122,8 @@ export default function ChatWindow({ gc }: ChatWindowProps) {
     // Subscribe to channel changes
     const unsubscribeChannel = reactChannelManager.onChannelChange((channel: Channel) => {
       setActiveChannel(channel);
+      // Also update the channels array when it changes
+      setChannels(reactChannelManager.getChannels());
     });
 
     // Loudness system removed - all messages use say
@@ -156,13 +172,28 @@ export default function ChatWindow({ gc }: ChatWindowProps) {
 
 
   const handleChannelChange = (channel: Channel) => {
-    // Join the channel if not already joined (except for Console)
-    if (channel.type !== 'local' && channel.id !== null) {
+    // Join the channel if not already joined (except for Console and private channels)
+    if (channel.type !== 'local' && channel.type !== 'private' && channel.id !== null) {
       reactChannelManager.joinChannel(channel.id);
     }
     
-    // Set as active channel
-    reactChannelManager.setActiveChannel(channels.findIndex(c => c.id === channel.id));
+    // Clear unread count for private channels when switching to them
+    if (channel.type === 'private') {
+      reactChannelManager.clearUnreadCount(channel.name);
+    }
+    
+    // Set as active channel - find by name for private channels, by id for regular channels
+    const channelIndex = channels.findIndex(c => {
+      if (channel.type === 'private') {
+        return c.name === channel.name && c.type === 'private';
+      } else {
+        return c.id === channel.id && c.name === channel.name;
+      }
+    });
+    
+    if (channelIndex !== -1) {
+      reactChannelManager.setActiveChannel(channelIndex);
+    }
   };
 
   // Filter messages by active channel
@@ -213,15 +244,32 @@ export default function ChatWindow({ gc }: ChatWindowProps) {
       <div className="chat-header">
         <div className="chat-channel-tabs">
           {channels.filter(ch => ch.type !== 'local').map((channel) => (
-            <button
-              key={channel.id}
-              className={`channel-tab ${activeChannel?.id === channel.id ? 'active' : ''} ${reactChannelManager.isJoinedToChannel(channel.id!) ? 'joined' : 'not-joined'}`}
-              onClick={() => handleChannelChange(channel)}
-              title={`Switch to ${channel.name} channel ${reactChannelManager.isJoinedToChannel(channel.id!) ? '(joined)' : '(not joined)'}`}
-            >
-              {channel.name}
-              {reactChannelManager.isJoinedToChannel(channel.id!) && <span className="joined-indicator">●</span>}
-            </button>
+            <div key={channel.id || channel.name} className="channel-tab-wrapper">
+              <button
+                className={`channel-tab ${activeChannel?.id === channel.id && activeChannel?.name === channel.name ? 'active' : ''} ${channel.type === 'private' ? 'private' : (reactChannelManager.isJoinedToChannel(channel.id!) ? 'joined' : 'not-joined')}`}
+                onClick={() => handleChannelChange(channel)}
+                title={`Switch to ${channel.name} channel ${channel.type === 'private' ? '(private)' : (reactChannelManager.isJoinedToChannel(channel.id!) ? '(joined)' : '(not joined)')}`}
+              >
+                {channel.name}
+                {channel.type === 'private' && <span className="private-indicator">🔒</span>}
+                {channel.type !== 'private' && reactChannelManager.isJoinedToChannel(channel.id!) && <span className="joined-indicator">●</span>}
+                {channel.type === 'private' && channel.unreadCount && channel.unreadCount > 0 && (
+                  <span className="unread-count">{channel.unreadCount}</span>
+                )}
+              </button>
+              {channel.type === 'private' && (
+                <button
+                  className="channel-close-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    reactChannelManager.removePrivateChannel(channel.name);
+                  }}
+                  title={`Close private chat with ${channel.name}`}
+                >
+                  ×
+                </button>
+              )}
+            </div>
           ))}
         </div>
         <div className="chat-controls">

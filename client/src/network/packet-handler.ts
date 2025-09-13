@@ -614,7 +614,6 @@ class PacketHandler {
   }
 
   handleReceivePrivateMessage(packet: { message: string; name: string }): void {
-    // Dispatch event for React chat to handle
     const event = new CustomEvent('private-message', {
       detail: {
         message: packet.message,

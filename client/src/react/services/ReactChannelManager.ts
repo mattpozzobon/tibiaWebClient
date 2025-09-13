@@ -9,6 +9,7 @@ export interface Channel {
   name: string;
   type: 'regular' | 'private' | 'local';
   messages: any[];
+  unreadCount?: number;
 }
 
 class ReactChannelManager {
@@ -57,7 +58,68 @@ class ReactChannelManager {
   }
 
   public addPrivateChannel(name: string): void {
-    this.addChannel(null, name, 'private');
+    // Check if private channel already exists
+    const existingChannel = this.channels.find(ch => ch.name === name && ch.type === 'private');
+    if (existingChannel) {
+      // Don't auto-switch to existing private channel
+      // Just return - the channel exists and will receive the message
+      return;
+    }
+
+    // Check if trying to message yourself
+    if (window.gameClient && window.gameClient.player && window.gameClient.player.vitals.name === name) {
+      console.warn("Cannot open a private chat with yourself.");
+      return;
+    }
+
+    // Create new private channel
+    const newChannel = {
+      id: null,
+      name: name,
+      type: 'private' as const,
+      messages: [],
+      unreadCount: 0
+    };
+
+    this.channels.push(newChannel);
+    // Don't automatically switch to the new private channel
+    // this.setActiveChannel(this.channels.length - 1);
+    this.notifyChannelChange();
+  }
+
+  public removePrivateChannel(name: string): boolean {
+    const index = this.channels.findIndex(ch => ch.name === name && ch.type === 'private');
+    if (index !== -1) {
+      this.channels.splice(index, 1);
+      if (this.activeChannelIndex >= index) {
+        this.activeChannelIndex = Math.max(0, this.activeChannelIndex - 1);
+      }
+      this.notifyChannelChange();
+      return true;
+    }
+    return false;
+  }
+
+  public getPrivateChannels(): Channel[] {
+    return this.channels.filter(ch => ch.type === 'private');
+  }
+
+  public incrementUnreadCount(channelName: string): void {
+    const channel = this.channels.find(ch => ch.name === channelName);
+    if (channel && channel.type === 'private') {
+      if (this.channels[this.activeChannelIndex] !== channel) {
+        channel.unreadCount = (channel.unreadCount || 0) + 1;
+        this.notifyChannelChange();
+      }
+    }
+  }
+
+  public clearUnreadCount(channelName: string): void {
+    const channel = this.channels.find(ch => ch.name === channelName);
+    if (channel && channel.type === 'private') {
+      channel.unreadCount = 0;
+      this.notifyChannelChange();
+    }
   }
 
   public removeChannel(name: string): boolean {

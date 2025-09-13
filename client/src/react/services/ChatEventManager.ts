@@ -97,6 +97,18 @@ class ChatEventManager {
   }
 
   private handlePrivateMessage(data: any): void {
+    // Don't process private messages from ourselves (we already added them immediately)
+    if (window.gameClient && window.gameClient.player && window.gameClient.player.vitals.name === data.name) {
+      return;
+    }
+
+    // Automatically create private channel if it doesn't exist
+    const channelName = data.name;
+    reactChannelManager.addPrivateChannel(channelName);
+
+    // Increment unread count if not currently viewing this channel
+    reactChannelManager.incrementUnreadCount(channelName);
+
     const messageData: ChatMessageData = {
       id: `private-${data.name}-${data.message}-${Date.now()}`,
       text: data.message,
@@ -104,7 +116,7 @@ class ChatEventManager {
       timestamp: new Date(),
       color: '#ffffff',
       type: 1,
-      channelName: data.channelName || 'Private'
+      channelName: channelName
     };
 
     this.notifyMessageCallbacks(messageData);

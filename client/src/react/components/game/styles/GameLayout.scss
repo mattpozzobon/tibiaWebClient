@@ -1,0 +1,220 @@
+// GameLayout.scss - 3-tier system styling
+
+.game-layout {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  
+  // Standalone Components (Chat, Topbar)
+  .standalone-component {
+    position: absolute;
+    z-index: 10;
+    
+    &#topbar-container {
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+    }
+    
+    &#chat-container {
+      bottom: 20px;
+      left: 20px;
+      width: 400px;
+      height: 300px;
+    }
+  }
+  
+  // Game Windows - Left/Right Columns
+  .game-windows-column {
+    position: absolute;
+    top: 70px; // Below topbar
+    width: 300px;
+    bottom: 20px;
+    z-index: 15;
+    
+    &.left {
+      left: 20px;
+    }
+    
+    &.right {
+      right: 20px;
+    }
+    
+    .game-window {
+      background: rgba(0, 0, 0, 0.8);
+      border: 2px solid #8B4513;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      padding: 10px;
+      color: #FFFFFF;
+      font-family: 'Tibia', monospace;
+      
+      // Sticky behavior
+      position: relative;
+      min-height: 100px;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      // Window header
+      .window-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #8B4513;
+        
+        .window-title {
+          font-weight: bold;
+          color: #FFD700;
+        }
+        
+        .window-close {
+          background: none;
+          border: none;
+          color: #FF6B6B;
+          cursor: pointer;
+          font-size: 16px;
+          
+          &:hover {
+            color: #FF4444;
+          }
+        }
+      }
+    }
+  }
+  
+  // Modals - Center Screen Overlay
+  .modals-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    pointer-events: none; // Allow clicks to pass through when no modals
+    
+    &:has(.modal-backdrop) {
+      pointer-events: auto; // Enable interaction when modals are present
+    }
+    
+    .modal-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      
+      .modal-container {
+        background: linear-gradient(135deg, #2C1810 0%, #1A0F0A 100%);
+        border: 3px solid #8B4513;
+        border-radius: 12px;
+        padding: 20px;
+        max-width: 80vw;
+        max-height: 80vh;
+        overflow: auto;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+        color: #FFFFFF;
+        font-family: 'Tibia', monospace;
+        position: relative;
+        
+        // Modal close button
+        .modal-close {
+          position: absolute;
+          top: 10px;
+          right: 15px;
+          background: none;
+          border: none;
+          color: #FF6B6B;
+          cursor: pointer;
+          font-size: 20px;
+          font-weight: bold;
+          
+          &:hover {
+            color: #FF4444;
+          }
+        }
+        
+        // Modal header
+        .modal-header {
+          margin-bottom: 15px;
+          padding-bottom: 10px;
+          border-bottom: 2px solid #8B4513;
+          
+          .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #FFD700;
+            margin: 0;
+          }
+        }
+        
+        // Modal content
+        .modal-content {
+          color: #FFFFFF;
+          line-height: 1.4;
+        }
+      }
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 1200px) {
+  .game-layout {
+    .game-windows-column {
+      width: 250px;
+      
+      &.left {
+        left: 10px;
+      }
+      
+      &.right {
+        right: 10px;
+      }
+    }
+    
+    .standalone-component#chat-container {
+      left: 10px;
+      width: 350px;
+      height: 250px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .game-layout {
+    .game-windows-column {
+      width: 200px;
+      
+      &.left {
+        left: 5px;
+      }
+      
+      &.right {
+        right: 5px;
+      }
+    }
+    
+    .standalone-component#chat-container {
+      left: 5px;
+      width: 300px;
+      height: 200px;
+    }
+    
+    .modals-overlay .modal-backdrop .modal-container {
+      max-width: 95vw;
+      max-height: 90vh;
+      padding: 15px;
+    }
+  }
+}

@@ -16,7 +16,7 @@ export default class MenuManager {
     // Register the configured menus.
     
     this.menus = {
-      "screen-menu": new ScreenMenu( "screen-menu"),
+      //"screen-menu": new ScreenMenu( "screen-menu"),
       // Chat menus removed - now handled by React
       // "chat-header-menu": new ChatHeaderMenu( "chat-header-menu"),
       // "chat-entry-menu": new MessageMenu( "chat-entry-menu"),

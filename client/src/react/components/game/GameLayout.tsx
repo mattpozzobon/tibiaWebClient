@@ -7,6 +7,7 @@ import GameWindows from './GameWindows';
 import Modals from './Modals';
 import { layoutManager, type LayoutManagerState } from '../../services/LayoutManager';
 import './styles/GameLayout.scss';
+import GameUIManager from './GameUIManager';
 
 interface GameLayoutProps {
   gameClient: GameClient | null;
@@ -45,15 +46,17 @@ const GameLayout: React.FC<GameLayoutProps> = ({ gameClient }) => {
       
       <AudioManager />
       
+      <GameCanvas />
+
       {gameClient && (
         <>
-          <StandaloneComponents gameClient={gameClient} />
-          <GameWindows gameWindows={layoutState.gameWindows} onCloseWindow={(id) => layoutManager.removeGameWindow(id)}/> 
+          <StandaloneComponents gameClient={gameClient} /> 
+          <GameUIManager gc={gameClient} />
           <Modals modals={layoutState.modals}onCloseModal={(id) => layoutManager.closeModal(id)}/>
+          <GameWindows gameWindows={layoutState.gameWindows} onCloseWindow={(id) => layoutManager.removeGameWindow(id)}/> 
         </>
       )}
       
-      <GameCanvas />
     </div>
   );
 };

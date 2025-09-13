@@ -48,7 +48,7 @@ export default function TopbarIsland({ gc }: TopbarIslandProps) {
   };
 
   return (
-    <>
+    <div id="topbar-container" className="standalone-component">
     <div id="top-button-bar">
       <div className="icon-button" title="Logout (Ctrl+G)" onClick={handleLogout}>
         <img id="logoutButton" src="png/icons/logout.png" alt="Logout" />
@@ -92,6 +92,6 @@ export default function TopbarIsland({ gc }: TopbarIslandProps) {
       isVisible={showChangelog} 
       onClose={() => setShowChangelog(false)} 
     />
-    </>
+    </div>
   );
 }

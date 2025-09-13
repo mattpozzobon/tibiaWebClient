@@ -12,18 +12,8 @@ const StandaloneComponents: React.FC<StandaloneComponentsProps> = ({ gameClient 
 
   return (
     <>
-      
-      {/* Topbar - Always at the top */}
-      <div id="topbar-container" className="standalone-component">
-        <TopbarIsland gc={gameClient} />
-      </div>
-      
-      {/* Chat - Bottom left */}
-      <div id="chat-container" className="standalone-component">
-        <ChatWindowClean gc={gameClient} />
-      </div>
-      
-      {/* Status Bar - Bottom center */}
+      <TopbarIsland gc={gameClient} />
+      <ChatWindowClean gc={gameClient} />
       <StatusBar gameClient={gameClient} />
     </>
   );

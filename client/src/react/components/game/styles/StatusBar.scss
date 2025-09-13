@@ -114,6 +114,6 @@
 .status-bar {
   pointer-events: auto;
   
-  // Make sure it's above game canvas but below modals
-  z-index: 20;
+  // Make sure it's above game canvas but below chat and modals
+  z-index: 10;
 }

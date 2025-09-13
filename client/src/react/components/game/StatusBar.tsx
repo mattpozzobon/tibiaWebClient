@@ -78,14 +78,7 @@ const StatusBar: React.FC<StatusBarProps> = ({ gameClient }) => {
   }, [gameClient]);
 
   return (
-    <div id="status-bar" className="status-bar" style={{
-      position: 'fixed',
-      bottom: '20px',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      padding: '10px',
-      zIndex: 9999
-      }}>
+    <div id="status-bar" className="status-bar">
         {conditions.map(condition => {
           return (
           <img
@@ -93,12 +86,7 @@ const StatusBar: React.FC<StatusBarProps> = ({ gameClient }) => {
             src={condition.src}
             title={condition.title}
             alt={condition.title}
-            style={{
-              width: '32px',
-              height: '32px',
-              border: '2px solid blue',
-              margin: '5px'
-            }}
+            className="status-icon"
           />
         );
       })}

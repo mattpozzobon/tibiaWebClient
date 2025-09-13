@@ -263,6 +263,7 @@ export default function ChatWindow({ gc }: ChatWindowProps) {
   }
 
   return (
+    <div id="chat-container" className="standalone-component">
     <div className="chat-window">
       <div className="chat-header">
         <div className="chat-channel-tabs">
@@ -386,6 +387,7 @@ export default function ChatWindow({ gc }: ChatWindowProps) {
           Send
         </button>
       </div>
+    </div>
     </div>
   );
 }

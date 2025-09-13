@@ -460,3 +460,67 @@
     font-size: 12px;
   }
 }
+
+/* Collapsed Chat Icon */
+.chat-collapsed {
+  position: fixed;
+  bottom: 80px;
+  left: 10px;
+  width: 50px;
+  height: 50px;
+  background: rgba(0, 0, 0, 0.95);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+
+  &:hover {
+    background: rgba(0, 0, 0, 1);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+  }
+
+  .chat-icon {
+    font-size: 20px;
+    color: rgba(255, 255, 255, 0.8);
+    transition: color 0.3s ease;
+  }
+
+  &:hover .chat-icon {
+    color: white;
+  }
+
+  .chat-notification-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    background: #ff4444;
+    border: 2px solid rgba(0, 0, 0, 0.95);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

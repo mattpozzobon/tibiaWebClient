@@ -29,6 +29,7 @@ export default function ChatWindow({ gc }: ChatWindowProps) {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
   const [isActive, setIsActive] = useState(false); // Chat input active state
+  const [isCollapsed, setIsCollapsed] = useState(true); // Chat window collapsed state
   const chatMessagesEndRef = useRef<HTMLDivElement>(null);
   const consoleMessagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -36,8 +37,9 @@ export default function ChatWindow({ gc }: ChatWindowProps) {
   // Method to handle Enter key from keyboard system
   const handleEnterKey = () => {
     if (!isActive) {
-      // First Enter press - activate chat
+      // First Enter press - activate chat and expand window
       setIsActive(true);
+      setIsCollapsed(false);
       setTimeout(() => {
         inputRef.current?.focus();
       }, 0);
@@ -223,12 +225,21 @@ export default function ChatWindow({ gc }: ChatWindowProps) {
   };
 
   const handleInputClick = () => {
-
+    if (!isActive) {
       setIsActive(true);
+      setIsCollapsed(false);
       setTimeout(() => {
         inputRef.current?.focus();
       }, 0);
-    
+    } else {
+      inputRef.current?.focus();
+    }
+  };
+
+  const handleCollapseChat = () => {
+    setIsCollapsed(true);
+    setIsActive(false);
+    inputRef.current?.blur();
   };
 
   // Loudness system removed - all messages use say
@@ -238,6 +249,18 @@ export default function ChatWindow({ gc }: ChatWindowProps) {
       (window as any).reactUIManager.openModal('chat');
     }
   };
+
+  // Show collapsed icon when chat is inactive
+  if (isCollapsed) {
+    return (
+      <div className="chat-collapsed" onClick={() => setIsCollapsed(false)} title="Click to open chat">
+        <div className="chat-icon">💬</div>
+        {channels.some(ch => ch.type === 'private' && ch.unreadCount && ch.unreadCount > 0) && (
+          <div className="chat-notification-dot"></div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="chat-window">
@@ -279,6 +302,13 @@ export default function ChatWindow({ gc }: ChatWindowProps) {
             title="Open Chat Options"
           >
             💬
+          </button>
+          <button 
+            className="chat-control-btn chat-collapse-btn"
+            onClick={handleCollapseChat}
+            title="Collapse chat"
+          >
+            
           </button>
         </div>
       </div>

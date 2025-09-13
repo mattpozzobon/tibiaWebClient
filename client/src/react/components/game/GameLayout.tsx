@@ -4,7 +4,6 @@ import AudioManager from './AudioManager';
 import GameCanvas from './GameCanvas';
 import StandaloneComponents from './StandaloneComponents';
 import GameWindows from './GameWindows';
-import Modals from './Modals';
 import { layoutManager, type LayoutManagerState } from '../../services/LayoutManager';
 import './styles/GameLayout.scss';
 import GameUIManager from './GameUIManager';
@@ -42,7 +41,7 @@ const GameLayout: React.FC<GameLayoutProps> = ({ gameClient }) => {
   }, [gameClient]);
 
   return (
-    <div id="game-wrapper" className="game-layout">
+    <>
       
       <AudioManager />
       
@@ -57,7 +56,7 @@ const GameLayout: React.FC<GameLayoutProps> = ({ gameClient }) => {
         </>
       )}
       
-    </div>
+    </>
   );
 };
 

@@ -2,23 +2,22 @@ import HotbarManager from "./managers/hotbar-manager";
 import MenuManager from "./menu/menu-manager";
 import ModalManager from "./modals/modal-manager";
 import OutfitModal from "./modals/modal-outfit";
-import NotificationManager from "./notification";
 import { KeyringOpenPacket, LogoutPacket } from "../core/protocol";
 import ScreenElementManager from "./screen-elements/screen-element-manager";
 import Settings from "./settings";
 import SoundManager from "../audio/sound-manager";
 import State from "../core/state";
 import WindowManager from "./window/window-manager";
-import spriteBuffer from "../renderer/sprite-buffer";
 import ReactLoginFlowManager from "./managers/react-login-manager";
 import Renderer from "../renderer/renderer";
+import { reactNotificationManager } from "../react/services/ReactNotificationManager";
 
 export default class Interface {
   renderer: Renderer;
   loginFlowManager: ReactLoginFlowManager;
   settings: Settings;
   hotbarManager: HotbarManager;
-  notificationManager: NotificationManager;
+
   modalManager: ModalManager;
   //statusBar: StatusBar;
   windowManager: WindowManager;
@@ -100,7 +99,6 @@ export default class Interface {
     this.settings = new Settings(this);
     this.loginFlowManager = new ReactLoginFlowManager();
     this.hotbarManager = new HotbarManager();
-    this.notificationManager = new NotificationManager();
     this.modalManager = new ModalManager();
     //this.statusBar = new StatusBar();
     this.windowManager = new WindowManager();
@@ -161,7 +159,7 @@ export default class Interface {
   }
 
   setCancelMessage(message: string): void {
-    this.notificationManager.setCancelMessage(message);
+    reactNotificationManager.addCancelMessage(message);
   }
 
   hideGameInterface(): void {

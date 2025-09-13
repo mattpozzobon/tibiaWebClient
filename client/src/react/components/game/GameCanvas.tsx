@@ -1,4 +1,5 @@
 import React from 'react';
+import NotificationManager from './NotificationManager';
 import './styles/GameCanvas.scss';
 
 const GameCanvas: React.FC = () => {
@@ -8,13 +9,13 @@ const GameCanvas: React.FC = () => {
         <div id="canvas-id" className="canvas-wrapper">
           <div id="game-container"></div>
 
-          <div id="text-wrapper" className="no-select">
-            <span id="server-message"></span>
-            <span id="zone-message"></span>
-          </div>
+
           
           <div id="debug-statistics"></div>
-          <div id="notification" className="canvas-notification"></div>
+          
+          {/* React-based notification system */}
+          <NotificationManager />
+          
           <div id="achievement" className="canvas-notification hidden"></div>
         </div>
       </div>

@@ -12,6 +12,7 @@ import { CONST } from "../helper/appContext";
 import Interface from "../ui/interface";
 import BattleWindow from "../ui/window/window-battle";
 import { reactChannelManager } from "../react/services/ReactChannelManager";
+import { reactNotificationManager } from "../react/services/ReactNotificationManager";
 
 
 class PacketHandler {
@@ -149,7 +150,7 @@ class PacketHandler {
   }
 
   handleCancelMessage(packet: any): void {
-    window.gameClient.interface.notificationManager.setCancelMessage(packet);
+    reactNotificationManager.addCancelMessage(packet);
   }
 
   handleServerData(packet: any): void {
@@ -192,7 +193,7 @@ class PacketHandler {
     ambient: { r: number; g: number; b: number; a: number };
     music: string;
   }): void {
-    window.gameClient.interface.notificationManager.setZoneMessage(packet.name, packet.title);
+    reactNotificationManager.addZoneMessage(packet.name, packet.title);
     //window.gameClient.renderer.weatherCanvas.setWeather(packet.weather);
     //window.gameClient.renderer.setAmbientColor(packet.ambient.r, packet.ambient.g, packet.ambient.b, packet.ambient.a);
     window.gameClient.interface.soundManager.setAmbientTrace(packet.music);
@@ -227,7 +228,7 @@ class PacketHandler {
   }
 
   handleServerMessage(string: string): void {
-    window.gameClient.interface.notificationManager.setServerMessage(string, Interface.COLORS.RED);
+    reactNotificationManager.addServerMessage(string, Interface.COLORS.RED);
   }
 
   
@@ -416,7 +417,7 @@ class PacketHandler {
     const gender = packet.gender === 0 ? "He" : "She";
     const message = `You see ${packet.name}. ${gender} is level ${packet.level}.`;
 
-    window.gameClient.interface.notificationManager.setServerMessage(message, Interface.COLORS.LIGHTGREEN);
+    reactNotificationManager.addServerMessage(message, Interface.COLORS.LIGHTGREEN);
     reactChannelManager.addConsoleMessage(message, Interface.COLORS.LIGHTGREEN);
   }
 
@@ -457,7 +458,8 @@ class PacketHandler {
       message += ` (X: ${packet.x}, Y: ${packet.y}, Z: ${packet.z})`;
     }
 
-    window.gameClient.interface.notificationManager.setServerMessage(message, Interface.COLORS.LIGHTGREEN);
+    // Use simplified React notification system
+    reactNotificationManager.addServerMessage(message, Interface.COLORS.LIGHTGREEN);
     reactChannelManager.addConsoleMessage(message, Interface.COLORS.LIGHTGREEN);
   }
 

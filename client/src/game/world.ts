@@ -6,6 +6,7 @@ import Creature from "./creature";
 import Player from "./player/player";
 import Position from "./position";
 import Tile from "./tile";
+import { reactNotificationManager } from "../react/services/ReactNotificationManager";
 
 
 export default class World {
@@ -212,7 +213,8 @@ export default class World {
   
     // Only monsters can be attacked
     if (monster.constructor.name !== "Creature") {
-      return window.gameClient.interface.notificationManager.setCancelMessage("You cannot attack this creature.");
+      reactNotificationManager.addCancelMessage("You cannot attack this creature.");
+      return;
     }
   
     window.gameClient.player!.setTarget(monster);

@@ -1,7 +1,7 @@
 import Modal from "./modal";
 import OutfitModal from "./modal-outfit";
 import MoveItemModal from "./modal-move-item";
-import ChatModal from "./modal-chat";
+// ChatModal removed - now handled by React
 import EnterNameModal from "./modal-enter-name";
 import ConfirmModal from "./modal-confirm";
 import ReadableModal from "./modal-readable";
@@ -15,7 +15,7 @@ const MODAL_IDS = {
   SKILL: "skill-modal",
   OUTFIT: "outfit-modal",
   MOVE_ITEM: "move-item-modal",
-  CHAT: "chat-modal",
+  // CHAT: "chat-modal", // Now handled by React
   ENTER_NAME: "enter-name-modal",
   CONFIRM: "confirm-modal",
   READABLE: "readable-modal",
@@ -57,7 +57,7 @@ export default class ModalManager {
       [SkillModal, MODAL_IDS.SKILL],
       [OutfitModal, MODAL_IDS.OUTFIT],
       [MoveItemModal, MODAL_IDS.MOVE_ITEM],
-      [ChatModal, MODAL_IDS.CHAT],
+        // [ChatModal, MODAL_IDS.CHAT], // Now handled by React
       [EnterNameModal, MODAL_IDS.ENTER_NAME],
       [ConfirmModal, MODAL_IDS.CONFIRM],
       [ReadableModal, MODAL_IDS.READABLE],
@@ -93,7 +93,7 @@ export default class ModalManager {
 
   private addModalTriggerListeners(): void {
     const triggerMappings = [
-      [ELEMENT_IDS.OPEN_CHAT_MODAL, MODAL_IDS.CHAT],
+      // [ELEMENT_IDS.OPEN_CHAT_MODAL, MODAL_IDS.CHAT], // Now handled by React
       [ELEMENT_IDS.OPEN_OUTFIT, MODAL_IDS.OUTFIT],
       [ELEMENT_IDS.OPEN_SETTINGS, MODAL_IDS.SETTINGS],
       [ELEMENT_IDS.OPEN_SKILLS, MODAL_IDS.SKILL]
@@ -130,6 +130,33 @@ export default class ModalManager {
   }
 
   public open(id: string, options?: ModalOptions): Modal | null {
+    // Bridge to React UI system
+    if ((window as any).reactUIManager) {
+      console.log(`🔄 Redirecting modal "${id}" to React UI system`);
+      
+      // Map old modal IDs to React modal names
+      const modalMapping: { [key: string]: string } = {
+        [MODAL_IDS.SETTINGS]: 'settings',
+        [MODAL_IDS.SKILL]: 'skills',
+        [MODAL_IDS.OUTFIT]: 'outfit',
+        [MODAL_IDS.MAP]: 'map',
+        // [MODAL_IDS.CHAT]: 'chat', // Now handled by React
+        [MODAL_IDS.MOVE_ITEM]: 'moveItem',
+        [MODAL_IDS.CONFIRM]: 'confirm',
+        [MODAL_IDS.ENTER_NAME]: 'enterName',
+        [MODAL_IDS.READABLE]: 'readable',
+        [MODAL_IDS.OFFER]: 'offer',
+        [MODAL_IDS.SPELLBOOK]: 'spellbook'
+      };
+
+      const reactModalName = modalMapping[id];
+      if (reactModalName) {
+        (window as any).reactUIManager.openModal(reactModalName, options);
+        return null; // Return null since React is handling it
+      }
+    }
+
+    // Fallback to old system if React UI is not available
     if (this.isOpened() && this.openedModal?.id === id && this.openedModal.shouldStayOpenOnReopen()) {
       return null;
     }

@@ -1,0 +1,229 @@
+/* Chat Modal Styles */
+
+.chat-modal {
+  background: rgba(0, 0, 0, 0.95);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  width: 90%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+
+  h2 {
+    color: #0096ff;
+    margin: 0;
+    font-size: 20px;
+    font-weight: bold;
+  }
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.modal-content {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.channel-section,
+.private-section {
+  h3 {
+    color: white;
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    font-weight: bold;
+  }
+}
+
+.channel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.channel-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(0, 150, 255, 0.3);
+  }
+
+  &.selected {
+    background: rgba(0, 150, 255, 0.2);
+    border-color: #0096ff;
+  }
+}
+
+.channel-name {
+  color: white;
+  font-weight: bold;
+}
+
+.channel-type {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 10px 0;
+
+  hr {
+    flex: 1;
+    border: none;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  span {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+}
+
+.private-channel-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  padding: 12px 15px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #0096ff;
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  padding: 20px 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #0096ff 0%, #007acc 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #00aaff 0%, #0088dd 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 150, 255, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.btn-secondary {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #666 0%, #444 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #777 0%, #555 100%);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .chat-modal {
+    width: 95%;
+  }
+
+  .modal-header,
+  .modal-content,
+  .modal-footer {
+    padding: 15px 20px;
+  }
+
+  .modal-header h2 {
+    font-size: 18px;
+  }
+
+  .channel-option {
+    padding: 10px 12px;
+  }
+
+  .private-channel-input {
+    padding: 10px 12px;
+  }
+}

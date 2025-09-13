@@ -192,37 +192,19 @@ class Keyboard {
     window.gameClient.send(new PlayerTurnPacket(direction));
   }
 
-  private __setChatOpacity(value: number): void {
-    const wrapper = document.querySelector(".chatbox-wrapper") as HTMLElement;
-    if (wrapper) wrapper.style.opacity = `${value}`;
-  }
   
   private __handleReturnKey(): void {
     const modalManager = window.gameClient.interface.modalManager;
-    const input = window.gameClient.interface.channelManager;
-  
-    // if (!modalManager.isOpened() && !window.gameClient.isConnected()) {
-      //window.gameClient.interface.enterGame();
-    //   return;
-    // }
   
     if (modalManager.isOpened()) {
       modalManager.handleConfirm();
       return;
     }
   
-    const chatInput = document.getElementById("chat-input") as HTMLInputElement;
-  
-    if (input.isDisabled()) {
-      input.toggleInputLock();
-      this.__setChatOpacity(1); // fully visible when active
-      return;
+    // Call React chat's handleEnterKey method directly
+    if ((window as any).reactChatWindow && (window as any).reactChatWindow.handleEnterKey) {
+      (window as any).reactChatWindow.handleEnterKey();
     }
-  
-    // Send message, then lock input again
-    input.handleMessageSend();
-    input.toggleInputLock();
-    this.__setChatOpacity(0.6); // fade out when not typing
   }
 
   private __handleEscapeKey(): void {
@@ -239,9 +221,17 @@ class Keyboard {
 
   private __handleKeyType(key: string): void {
     if (this.isShiftDown() && key === Keyboard.KEYS.UP_ARROW) {
+      // Message history - let React chat handle this if it's focused
+      const reactChatInput = document.querySelector(".chat-window .chat-input") as HTMLInputElement;
+      if (reactChatInput && document.activeElement === reactChatInput) {
+        // React chat handles message history in its own component
+        return;
+      }
+      // Fallback for other inputs
       window.gameClient.interface.channelManager.suggestPrevious();
     }
   }
+
 
   private __keyDown = (event: KeyboardEvent): void => {
     // convert event.key to lower case for consistency

@@ -319,21 +319,28 @@ export default class ChannelManager {
 
   // Reads the chat input and sends the message to the appropriate channel.
   handleMessageSend(): void {
-    const message = this.__inputElement.value.trim();
-    this.__inputElement.value = "";
-    if (message.length === 0) return;
-    const channel = this.getActiveChannel();
-    if (channel instanceof LocalChannel) {
-      window.gameClient.interface.setCancelMessage("Cannot write to a local channel.");
-      return;
-    }
-    if (channel instanceof PrivateChannel) {
-      this.__handlePrivateMessageSend(channel, message);
-      return;
-    }
-    const loudness = this.getLoudness();
-    if (channel.id !== null) {
-      window.gameClient.send(new ChannelMessagePacket(channel.id, loudness, message));
+    // Check if the old input element exists (for backward compatibility)
+    if (this.__inputElement) {
+      const message = this.__inputElement.value.trim();
+      this.__inputElement.value = "";
+      if (message.length === 0) return;
+      const channel = this.getActiveChannel();
+      if (channel instanceof LocalChannel) {
+        window.gameClient.interface.setCancelMessage("Cannot write to a local channel.");
+        return;
+      }
+      if (channel instanceof PrivateChannel) {
+        this.__handlePrivateMessageSend(channel, message);
+        return;
+      }
+      const loudness = this.getLoudness();
+      if (channel.id !== null) {
+        window.gameClient.send(new ChannelMessagePacket(channel.id, loudness, message));
+      }
+    } else {
+      // Input element doesn't exist (React chat system is being used)
+      // This method should not be called directly from React chat
+      console.warn("ChannelManager.handleMessageSend() called but input element is null. This should be handled by React chat system.");
     }
   }
 

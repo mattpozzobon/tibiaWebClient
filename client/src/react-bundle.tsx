@@ -165,6 +165,9 @@ async function mountReactComponents() {
               
               if (gameWrapper) {
                 gameWrapper.style.display = 'flex';
+                
+                // Mount the React Game UI components
+                mountGameUI();
               }
             }} 
           />
@@ -181,6 +184,51 @@ async function mountReactComponents() {
     console.error('❌ Error setting up React components:', error);
     hideLoading();
   }
+}
+
+// Function to mount game UI components
+function mountGameUI() {
+  try {
+    console.log('🎮 Mounting React Game UI components...');
+    
+    // Check if game client is ready
+    if (!window.gameClient) {
+      console.log('⏳ Game client not ready yet, waiting...');
+      
+      const checkForGameClient = () => {
+        if (window.gameClient) {
+          console.log('✅ Game client ready, mounting Game UI');
+          mountGameUIComponents();
+        } else {
+          setTimeout(checkForGameClient, 100);
+        }
+      };
+      
+      checkForGameClient();
+      return;
+    }
+    
+    mountGameUIComponents();
+    
+  } catch (error) {
+    console.error('❌ Error mounting game UI:', error);
+  }
+}
+
+function mountGameUIComponents() {
+  // Create a container for the game UI if it doesn't exist
+  let gameUIContainer = document.getElementById('game-ui-container');
+  if (!gameUIContainer) {
+    gameUIContainer = document.createElement('div');
+    gameUIContainer.id = 'game-ui-container';
+    document.body.appendChild(gameUIContainer);
+  }
+  
+  // Mount the GameUI component
+  const gameUIRoot = createRoot(gameUIContainer);
+  gameUIRoot.render(<GameUI gc={window.gameClient} />);
+  
+  console.log('✅ React Game UI components mounted successfully');
 }
 
 // Start the React components setup

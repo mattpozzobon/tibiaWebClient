@@ -1,0 +1,258 @@
+/* Friend List Styles */
+
+.friend-list-panel {
+  position: fixed;
+  top: 50px;
+  right: 10px;
+  width: 350px;
+  max-height: 600px;
+  background: rgba(0, 0, 0, 0.95);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+
+  h3 {
+    color: #0096ff;
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+  }
+}
+
+.panel-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.friend-controls {
+  margin-bottom: 20px;
+}
+
+.friend-filters {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.friend-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(0, 150, 255, 0.3);
+  }
+
+  &.offline {
+    opacity: 0.6;
+  }
+}
+
+.friend-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.friend-name {
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.friend-details {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+}
+
+.friend-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  margin: 0 10px;
+}
+
+.status-indicator {
+  font-size: 12px;
+  
+  &.online {
+    color: #4caf50;
+  }
+  
+  &.offline {
+    color: #666;
+  }
+}
+
+.friend-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.btn-small {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  &.btn-danger {
+    background: rgba(255, 107, 107, 0.2);
+    color: #ff6b6b;
+
+    &:hover {
+      background: rgba(255, 107, 107, 0.3);
+    }
+  }
+}
+
+.no-friends {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 40px 20px;
+
+  p {
+    margin: 5px 0;
+    font-size: 14px;
+  }
+}
+
+.btn-primary {
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #0096ff 0%, #007acc 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #00aaff 0%, #0088dd 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 150, 255, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.btn-secondary {
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #666 0%, #444 100%);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #777 0%, #555 100%);
+  }
+
+  &.active {
+    background: linear-gradient(135deg, #0096ff 0%, #007acc 100%);
+  }
+}
+
+/* Scrollbar styling */
+.panel-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.panel-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.panel-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 150, 255, 0.6);
+  border-radius: 3px;
+}
+
+.panel-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 150, 255, 0.8);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .friend-list-panel {
+    width: 300px;
+    right: 5px;
+  }
+
+  .panel-header,
+  .panel-content {
+    padding: 12px 15px;
+  }
+
+  .friend-filters {
+    gap: 5px;
+  }
+
+  .friend-item {
+    padding: 10px;
+  }
+}

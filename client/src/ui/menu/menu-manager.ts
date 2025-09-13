@@ -1,10 +1,6 @@
-import GameClient from "../../core/gameclient";
-import ChatBodyMenu from "./menu-chat-body";
-import ChatHeaderMenu from "./menu-chat-header";
 import FriendListMenu from "./menu-friend-list";
 import FriendWindowMenu from "./menu-friend-window";
 import HotbarMenu from "./menu-hotbar";
-import MessageMenu from "./menu-message";
 import ScreenMenu from "./menu-screen";
 
 export interface IMenu {
@@ -13,7 +9,6 @@ export interface IMenu {
 }
 
 export default class MenuManager {
-  ;
   public menus: { [name: string]: IMenu };
   private __activeMenu: IMenu | null;
 
@@ -22,12 +17,13 @@ export default class MenuManager {
     
     this.menus = {
       "screen-menu": new ScreenMenu( "screen-menu"),
-      "chat-header-menu": new ChatHeaderMenu( "chat-header-menu"),
-      "chat-entry-menu": new MessageMenu( "chat-entry-menu"),
-      "chat-body-menu": new ChatBodyMenu( "chat-body-menu"),
-      "friend-list-menu": new FriendListMenu( "friend-list-menu"),
-      "friend-window-menu": new FriendWindowMenu( "friend-window-menu"),
-      "hotbar-menu": new HotbarMenu( "hotbar-menu"),
+      // Chat menus removed - now handled by React
+      // "chat-header-menu": new ChatHeaderMenu( "chat-header-menu"),
+      // "chat-entry-menu": new MessageMenu( "chat-entry-menu"),
+      // "chat-body-menu": new ChatBodyMenu( "chat-body-menu"),
+      // "friend-list-menu": new FriendListMenu( "friend-list-menu"),
+      // "friend-window-menu": new FriendWindowMenu( "friend-window-menu"),
+      // "hotbar-menu": new HotbarMenu( "hotbar-menu"),
     };
 
     // Reference the currently active open menu.

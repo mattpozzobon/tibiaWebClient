@@ -3,6 +3,7 @@ import type GameClient from '../../../core/gameclient';
 
 interface InventoryPanelProps {
   gc: GameClient;
+  onClose?: () => void;
 }
 
 interface InventoryItem {
@@ -14,7 +15,7 @@ interface InventoryItem {
   rarity?: 'common' | 'rare' | 'epic' | 'legendary';
 }
 
-export default function InventoryPanel({ gc }: InventoryPanelProps) {
+export default function InventoryPanel({ gc, onClose }: InventoryPanelProps) {
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [inventoryItems] = useState<InventoryItem[]>([
     {

@@ -3,6 +3,7 @@ import type GameClient from '../../../core/gameclient';
 
 interface PlayerStatsProps {
   gc: GameClient;
+  onClose?: () => void;
 }
 
 interface PlayerData {
@@ -22,7 +23,7 @@ interface PlayerData {
   };
 }
 
-export default function PlayerStats({ gc }: PlayerStatsProps) {
+export default function PlayerStats({ gc, onClose }: PlayerStatsProps) {
   // TODO: Get real player data from game client
   const playerData: PlayerData = {
     name: 'Player',

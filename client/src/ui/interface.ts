@@ -178,25 +178,25 @@ export default class Interface {
     window.onresize?.(new UIEvent("resize"));
   }
 
-  loadGameFiles(event: Event): void {
-    console.log('LOAD FROM INTERFACE');
-    const target = event.target as HTMLInputElement;
-    if (!target.files) return;
+  // loadGameFiles(event: Event): void {
+  //   console.log('LOAD FROM INTERFACE');
+  //   const target = event.target as HTMLInputElement;
+  //   if (!target.files) return;
     
-    Array.from(target.files).forEach((file) => {
-      console.debug(`Loading asset ${file.name} from disk.`);
-      const reader = new FileReader();
-      if (file.name === "Tibia.dat") {
-        reader.addEventListener("load", (e) => window.gameClient.dataObjects.load(file.name, e));
-      } else if (file.name === "Tibia.spr") {
-        reader.addEventListener("load", (e) => spriteBuffer.load(file.name, e));
-      } else {
-        console.error(`Unknown asset file ${file.name} was selected.`);
-        return;
-      }
-      reader.readAsArrayBuffer(file);
-    });
-  }
+  //   Array.from(target.files).forEach((file) => {
+  //     console.debug(`Loading asset ${file.name} from disk.`);
+  //     const reader = new FileReader();
+  //     if (file.name === "Tibia.dat") {
+  //       reader.addEventListener("load", (e) => window.gameClient.dataObjects.load(file.name, e));
+  //     } else if (file.name === "Tibia.spr") {
+  //       reader.addEventListener("load", (e) => spriteBuffer.load(file.name, e));
+  //     } else {
+  //       console.error(`Unknown asset file ${file.name} was selected.`);
+  //       return;
+  //     }
+  //     reader.readAsArrayBuffer(file);
+  //   });
+  // }
 
   loadAssetCallback(which: string, filename: string): void {
     if (which === "sprite") {
@@ -347,14 +347,14 @@ export default class Interface {
   }
 
   public enableTopbarListeners(): void {
-    document.getElementById("openSkills")?.addEventListener("click", () => this.toggleWindow("skill-window"));
-    document.getElementById("openBattle")?.addEventListener("click", () => this.toggleWindow("battle-window"));
-    document.getElementById("openFriends")?.addEventListener("click", () => this.toggleWindow("friend-window"));
-    document.getElementById("logoutButton")?.addEventListener("click", () => this.sendLogout());
-    document.getElementById("load-assets")?.addEventListener("click", () => this.loadAssetsDelegator());
-    document.getElementById("asset-selector")?.addEventListener("change", (event) => this.loadGameFiles(event));
-    //document.getElementById("enter-game")?.addEventListener("click", () => this.enterGame());
-    window.onbeforeunload = () => window.gameClient.isConnected() ? true : undefined;
-    window.onresize = () => this.handleResize();
+    // document.getElementById("openSkills")?.addEventListener("click", () => this.toggleWindow("skill-window"));
+    // document.getElementById("openBattle")?.addEventListener("click", () => this.toggleWindow("battle-window"));
+    // document.getElementById("openFriends")?.addEventListener("click", () => this.toggleWindow("friend-window"));
+    // document.getElementById("logoutButton")?.addEventListener("click", () => this.sendLogout());
+    // document.getElementById("load-assets")?.addEventListener("click", () => this.loadAssetsDelegator());
+    // document.getElementById("asset-selector")?.addEventListener("change", (event) => this.loadGameFiles(event));
+    // //document.getElementById("enter-game")?.addEventListener("click", () => this.enterGame());
+    // window.onbeforeunload = () => window.gameClient.isConnected() ? true : undefined;
+    // window.onresize = () => this.handleResize();
   }  
 }

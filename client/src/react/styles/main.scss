@@ -6,6 +6,13 @@
 @import '../components/login/styles/LoginFlow.scss';
 @import '../components/login/styles/CharacterSelect.scss';
 @import '../components/login/styles/AssetDownload.scss';
+@import '../components/game/styles/FriendList.scss';
+@import '../components/game/styles/Hotbar.scss';
+@import '../components/game/styles/ChatWindow.scss';
+@import '../components/game/modals/styles/SettingsModal.scss';
+@import '../components/game/modals/styles/ConfirmModal.scss';
+@import '../components/game/modals/styles/SkillsModal.scss';
+@import '../components/game/modals/styles/ChatModal.scss';
 
 // Global React component styles
 .react-component {

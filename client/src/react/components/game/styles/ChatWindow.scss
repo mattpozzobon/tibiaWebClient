@@ -258,7 +258,7 @@
 
   &:disabled {
     opacity: 0.5;
-    cursor: not-allowed;
+    cursor: pointer; // Allow clicking even when disabled for activation
   }
 
   &::placeholder {

@@ -154,34 +154,6 @@ export default function ChatWindow({ gc }: ChatWindowProps) {
     };
   }, []);
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Handle form submission (from Send button)
-    const message = inputValue.trim();
-    if (message && activeChannel) {
-      // Check if it's a LocalChannel (Console) - cannot send to local channels
-      if (activeChannel.type === 'local') {
-        gc.interface.setCancelMessage("Cannot write to a local channel.");
-        return;
-      }
-      
-      // Send message based on channel type
-      if (activeChannel.type === 'private') {
-        // Private channel - send private packet
-        gc.send(new ChannelPrivatePacket(activeChannel.name, message));
-      } else if (activeChannel.id !== null) {
-        // Regular channel - send with say (loudness 1)
-        gc.send(new ChannelMessagePacket(activeChannel.id, 1, message));
-      }
-      
-      // Note: Message will be added through the event system when the server responds
-      
-      // Clear input and blur (but keep chat window visible)
-      setInputValue('');
-      inputRef.current?.blur();
-    }
-  };
 
   const handleChannelChange = (channel: Channel) => {
     // Join the channel if not already joined (except for Console)
@@ -217,6 +189,15 @@ export default function ChatWindow({ gc }: ChatWindowProps) {
 
   const handleBlur = () => {
     // Let Enter/Escape control deactivation
+  };
+
+  const handleInputClick = () => {
+
+      setIsActive(true);
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+    
   };
 
   // Loudness system removed - all messages use say
@@ -304,27 +285,29 @@ export default function ChatWindow({ gc }: ChatWindowProps) {
         </div>
       </div>
 
-      <form className="chat-input-form" onSubmit={handleSendMessage}>
+      <div className="chat-input-form">
         <input
           ref={inputRef}
           type="text"
           value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          onChange={(e) => isActive && setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
           onBlur={handleBlur}
-          placeholder={isActive ? "Type a message..." : "Press Enter to chat"}
+          onClick={handleInputClick}
+          placeholder={isActive ? "Type a message..." : "Press Enter or click to chat"}
           className={`chat-input ${isActive ? 'active' : 'inactive'}`}
-          disabled={!isActive}
+          readOnly={!isActive}
         />
         <button 
-          type="submit" 
+          type="button" 
           className="chat-send-btn"
-          disabled={!inputValue.trim()}
+          disabled={!inputValue.trim() || !isActive}
+          onClick={handleEnterKey}
         >
           Send
         </button>
-      </form>
+      </div>
     </div>
   );
 }

@@ -52,7 +52,7 @@ const GameLayout: React.FC<GameLayoutProps> = ({ gameClient }) => {
         <>
           <StandaloneComponents gameClient={gameClient} /> 
           <GameUIManager gc={gameClient} />
-          <Modals modals={layoutState.modals}onCloseModal={(id) => layoutManager.closeModal(id)}/>
+          {/* <Modals modals={layoutState.modals}onCloseModal={(id) => layoutManager.closeModal(id)}/> */}
           <GameWindows gameWindows={layoutState.gameWindows} onCloseWindow={(id) => layoutManager.removeGameWindow(id)}/> 
         </>
       )}

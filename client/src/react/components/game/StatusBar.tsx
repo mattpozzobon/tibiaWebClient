@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type GameClient from '../../../core/gameclient';
+import { usePlayerConditions } from '../../hooks/usePlayerAttribute';
 import './styles/StatusBar.scss';
 
 interface StatusBarProps {
@@ -14,6 +15,8 @@ interface StatusCondition {
 
 const StatusBar: React.FC<StatusBarProps> = ({ gameClient }) => {
   const [conditions, setConditions] = useState<StatusCondition[]>([]);
+  const { conditions: playerConditions, conditionIds } = usePlayerConditions(gameClient);
+  
   const STATUS_CONDITIONS: Map<number, StatusCondition> = new Map([
     [0, { id: 0, title: "You are drunk.", src: "/png/status/status-drunk.png" }],
     [1, { id: 1, title: "You are poisoned.", src: "/png/status/status-poisoned.png" }],
@@ -27,55 +30,22 @@ const StatusBar: React.FC<StatusBarProps> = ({ gameClient }) => {
     [15, { id: 15, title: "You are hasted.", src: "/png/status/status-haste.png" }],
   ]);
 
-  // Listen to condition events directly
+  // Update conditions when conditionIds change
   useEffect(() => {
-    console.log('StatusBar: useEffect running, player:', !!gameClient?.player, 'conditions:', !!gameClient?.player?.conditions);
-    
-    const updateConditions = () => {
-      if (!gameClient?.player) return;
-      
-      const activeConditions: StatusCondition[] = [];
-      STATUS_CONDITIONS.forEach((condition, conditionId) => {
-        if (gameClient.player?.hasCondition(conditionId)) {
-          activeConditions.push(condition);
-        }
-      });
-      console.log('StatusBar: Setting conditions:', activeConditions);
-      setConditions(activeConditions);
-    };
-
-    // Always try to listen to events, even if player isn't ready yet
-    const checkAndSubscribe = () => {
-      if (gameClient?.player?.conditions) {
-        console.log('StatusBar: Adding event listeners');
-        gameClient.player.conditions.on('conditionAdded', updateConditions);
-        gameClient.player.conditions.on('conditionRemoved', updateConditions);
-        updateConditions();
-        return true;
-      }
-      return false;
-    };
-
-    // Try to subscribe immediately
-    if (!checkAndSubscribe()) {
-      // If player not ready, poll every 100ms until it is
-      const pollInterval = setInterval(() => {
-        if (checkAndSubscribe()) {
-          clearInterval(pollInterval);
-        }
-      }, 100);
-
-      return () => clearInterval(pollInterval);
+    if (!conditionIds) {
+      setConditions([]);
+      return;
     }
 
-    return () => {
-      if (gameClient?.player?.conditions) {
-        console.log('StatusBar: Removing event listeners');
-        gameClient.player.conditions.off('conditionAdded', updateConditions);
-        gameClient.player.conditions.off('conditionRemoved', updateConditions);
+    const activeConditions: StatusCondition[] = [];
+    STATUS_CONDITIONS.forEach((condition, conditionId) => {
+      if (conditionIds.has(conditionId)) {
+        activeConditions.push(condition);
       }
-    };
-  }, [gameClient]);
+    });
+    setConditions(activeConditions);
+
+  }, [conditionIds]);
 
   return (
     <div id="status-bar" className="status-bar">

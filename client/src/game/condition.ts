@@ -1,8 +1,7 @@
 class ConditionManager {
     
-    private __player: any;
-    private __conditions: Set<number>;
-    private __listeners: Map<string, Set<Function>> = new Map();
+  private __player: any;
+  private __conditions: Set<number>;
   
     static readonly DRUNK = 0;
     static readonly POISONED = 1;
@@ -38,31 +37,6 @@ class ConditionManager {
       return this.__conditions.has(cid);
     }
 
-    // Event system methods
-    on(event: string, callback: Function): void {
-      if (!this.__listeners.has(event)) {
-        this.__listeners.set(event, new Set());
-      }
-      this.__listeners.get(event)!.add(callback);
-    }
-
-    off(event: string, callback: Function): void {
-      const listeners = this.__listeners.get(event);
-      if (listeners) {
-        listeners.delete(callback);
-      }
-    }
-
-    emit(event: string, ...args: any[]): void {
-      console.log(`ConditionManager: Emitting event '${event}' with args:`, args);
-      const listeners = this.__listeners.get(event);
-      if (listeners) {
-        console.log(`ConditionManager: Found ${listeners.size} listeners for '${event}'`);
-        listeners.forEach(callback => callback(...args));
-      } else {
-        console.log(`ConditionManager: No listeners found for '${event}'`);
-      }
-    }
   
     add(cid: number): void {
       /*
@@ -70,9 +44,6 @@ class ConditionManager {
        * Adds a condition to the list of conditions
        */
       this.__conditions.add(cid);
-
-      // Emit condition added event
-      this.emit('conditionAdded', cid);
 
       // Update the status bar
       if (this.__player === window.gameClient.player) {
@@ -94,8 +65,6 @@ class ConditionManager {
        */
       this.__conditions.delete(cid);
 
-      // Emit condition removed event
-      this.emit('conditionRemoved', cid);
 
       // Update the status bar
       if (this.__player === window.gameClient.player) {

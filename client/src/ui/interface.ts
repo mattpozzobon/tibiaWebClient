@@ -275,6 +275,13 @@ export default class Interface {
   }
 
   openOutfit(): void {
+    // Try React UI system first
+    if ((window as any).reactUIManager) {
+      (window as any).reactUIManager.openModal('outfit');
+      return;
+    }
+    
+    // Fallback to old modal system
     this.modalManager.open("outfit-modal");
   }
 

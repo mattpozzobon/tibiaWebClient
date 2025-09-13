@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type GameClient from '../../../../core/gameclient';
 import Outfit from '../../../../game/outfit';
 import { OutfitChangePacket } from '../../../../core/protocol';
@@ -31,12 +31,16 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
     }
   }, [isOpen, gc.player]);
 
-  // Render outfit when it changes
-  useEffect(() => {
-    if (outfit && canvasRef.current) {
-      renderOutfit();
+  // Simple hash function (copied from SpriteBuffer)
+  const hashString = useCallback((str: string): number => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
     }
-  }, [outfit, faceDirection, animate, mountIndex, outfitIndex]);
+    return Math.abs(hash);
+  }, []);
 
   const getIndex = (array: any[], id: number): number => {
     for (let i = 0; i < array.length; i++) {
@@ -106,7 +110,7 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
     setOutfit(newOutfit);
   };
 
-  const renderOutfit = () => {
+  const renderOutfit = useCallback(() => {
     if (!outfit || !canvasRef.current || !gc.player) return;
     
     const canvas = canvasRef.current;
@@ -116,16 +120,90 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // For now, just draw a placeholder
-    ctx.fillStyle = '#333';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = '#fff';
-    ctx.font = '16px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Outfit Preview', canvas.width / 2, canvas.height / 2);
-    ctx.fillText(`Face: ${faceDirection}`, canvas.width / 2, canvas.height / 2 + 20);
-  };
+    try {
+      // Get the outfit data object
+      const outfitObject = outfit.getDataObject();
+      if (!outfitObject) {
+        console.warn('No outfit data object found');
+        return;
+      }
+
+      // Get frame group (idle = 0, moving = 1)
+      const frameGroup = outfitObject.getFrameGroup(animate ? 1 : 0);
+      if (!frameGroup) {
+        console.warn('No frame group found');
+        return;
+      }
+
+      // Calculate direction pattern
+      let xPattern: number;
+      switch (faceDirection) {
+        case 0: xPattern = 2; break; // South
+        case 1: xPattern = 3; break; // West  
+        case 2: xPattern = 0; break; // North
+        case 3: xPattern = 1; break; // East
+        default: xPattern = 0;
+      }
+
+      // Calculate z pattern for mounted creatures
+      const zPattern = frameGroup.pattern.z > 1 && outfit.mounted ? 1 : 0;
+
+      // Get frame number
+      const frame = animate ? frameGroup.getAlwaysAnimatedFrame() : 0;
+
+      // Render each layer of the outfit
+      for (let y = 0; y < frameGroup.height; y++) {
+        for (let x = 0; x < frameGroup.width; x++) {
+          // Get sprite ID for this position
+          const spriteId = frameGroup.getSpriteId(frame, xPattern, 0, zPattern, 0, x, y);
+          if (!spriteId || spriteId === 0) continue;
+
+          // Try to get composed sprite if it has a mask
+          let finalSpriteId = spriteId;
+          const maskId = frameGroup.getSpriteId(frame, xPattern, 0, zPattern, 1, x, y);
+          if (maskId && maskId !== 0) {
+            // Create composed key for this sprite
+            const composedKey = `${outfit.id}_${spriteId}_${maskId}_${frame}_${xPattern}_${zPattern}_${x}_${y}`;
+            const hashKey = hashString(composedKey);
+            
+            // Check if we have this composed sprite, if not create it
+            if (!window.gameClient.spriteBuffer.has(hashKey)) {
+              window.gameClient.spriteBuffer.addComposedOutfit(composedKey, outfit, spriteId, maskId);
+            }
+            finalSpriteId = hashKey;
+          }
+
+          // Get the sprite texture
+          const texture = window.gameClient.spriteBuffer.get(finalSpriteId);
+          if (!texture) continue;
+
+          // Calculate position on canvas (centered)
+          const canvasX = (canvas.width / 2) + (x - frameGroup.width / 2) * 32;
+          const canvasY = (canvas.height / 2) + (y - frameGroup.height / 2) * 32;
+
+          // Draw the sprite
+          if (texture.source && texture.source.resource && texture.source.resource.source) {
+            const img = texture.source.resource.source as HTMLImageElement;
+            ctx.drawImage(img, texture.frame.x, texture.frame.y, 32, 32, canvasX, canvasY, 32, 32);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error rendering outfit:', error);
+      // Fallback to placeholder
+      ctx.fillStyle = '#333';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#fff';
+      ctx.font = '12px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('Render Error', canvas.width / 2, canvas.height / 2);
+    }
+  }, [outfit, faceDirection, animate, gc.player, hashString]);
+
+  // Render outfit when it changes
+  useEffect(() => {
+    renderOutfit();
+  }, [renderOutfit]);
 
   const handleConfirm = () => {
     if (!outfit || !gc.player || gc.player.outfit.equals(outfit)) {
@@ -159,8 +237,8 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
           <div className="outfit-preview">
             <canvas
               ref={canvasRef}
-              width={128}
-              height={128}
+              width={64}
+              height={64}
               className="outfit-canvas"
             />
             <div className="preview-controls">

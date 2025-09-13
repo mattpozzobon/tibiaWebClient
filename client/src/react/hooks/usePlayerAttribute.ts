@@ -74,11 +74,14 @@ export function usePlayerConditions(gameClient: GameClient | null): { conditions
       }
       
       // Only update if the set actually changed
-      if (currentIds.size !== conditionIds.size || 
-          [...currentIds].some(id => !conditionIds.has(id)) ||
-          [...conditionIds].some(id => !currentIds.has(id))) {
-        setConditionIds(currentIds);
-      }
+      setConditionIds(prevIds => {
+        if (currentIds.size !== prevIds.size || 
+            [...currentIds].some(id => !prevIds.has(id)) ||
+            [...prevIds].some(id => !currentIds.has(id))) {
+          return currentIds;
+        }
+        return prevIds;
+      });
     };
 
     // Initial update
@@ -88,7 +91,7 @@ export function usePlayerConditions(gameClient: GameClient | null): { conditions
     const interval = setInterval(updateConditionIds, 100);
 
     return () => clearInterval(interval);
-  }, [conditions, conditionIds]);
+  }, [conditions]);
 
   return { conditions, conditionIds };
 }
@@ -117,14 +120,17 @@ export function usePlayerVitals(gameClient: GameClient | null): { vitals: Vitals
       };
       
       // Only update if values actually changed
-      if (current.health !== vitalValues.health ||
-          current.maxHealth !== vitalValues.maxHealth ||
-          current.mana !== vitalValues.mana ||
-          current.maxMana !== vitalValues.maxMana ||
-          current.energy !== vitalValues.energy ||
-          current.maxEnergy !== vitalValues.maxEnergy) {
-        setVitalValues(current);
-      }
+      setVitalValues(prevValues => {
+        if (current.health !== prevValues.health ||
+            current.maxHealth !== prevValues.maxHealth ||
+            current.mana !== prevValues.mana ||
+            current.maxMana !== prevValues.maxMana ||
+            current.energy !== prevValues.energy ||
+            current.maxEnergy !== prevValues.maxEnergy) {
+          return current;
+        }
+        return prevValues;
+      });
     };
 
     // Initial update
@@ -134,7 +140,7 @@ export function usePlayerVitals(gameClient: GameClient | null): { vitals: Vitals
     const interval = setInterval(updateVitalValues, 100);
 
     return () => clearInterval(interval);
-  }, [vitals, vitalValues]);
+  }, [vitals]);
 
   return { vitals, vitalValues };
 }
@@ -170,17 +176,15 @@ export function usePlayer(gameClient: GameClient | null) {
     updatePlayer();
 
     // If not available, poll until it becomes available
-    if (!player) {
-      const pollInterval = setInterval(() => {
-        if (gameClient.player) {
-          setPlayer(gameClient.player);
-          clearInterval(pollInterval);
-        }
-      }, 100);
+    const pollInterval = setInterval(() => {
+      if (gameClient.player) {
+        setPlayer(gameClient.player);
+        clearInterval(pollInterval);
+      }
+    }, 100);
 
-      return () => clearInterval(pollInterval);
-    }
-  }, [gameClient, player]);
+    return () => clearInterval(pollInterval);
+  }, [gameClient]);
 
   return player;
 }

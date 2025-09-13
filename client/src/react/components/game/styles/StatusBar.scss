@@ -1,0 +1,119 @@
+// StatusBar.scss - Bottom screen status bar styling
+
+.status-bar {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid #8B4513;
+  border-radius: 8px;
+  z-index: 20;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  
+  .status-icon {
+    width: 24px;
+    height: 24px;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    transition: transform 0.2s ease;
+    
+    &:hover {
+      transform: scale(1.2);
+      filter: brightness(1.2);
+    }
+    
+    // Special styling for different condition types
+    &[title*="drunk"] {
+      filter: hue-rotate(120deg) saturate(1.5);
+    }
+    
+    &[title*="poisoned"] {
+      filter: hue-rotate(280deg) saturate(1.3);
+    }
+    
+    &[title*="burning"] {
+      filter: hue-rotate(15deg) saturate(1.4) brightness(1.1);
+    }
+    
+    &[title*="electrified"] {
+      filter: hue-rotate(200deg) saturate(1.6) brightness(1.2);
+    }
+    
+    &[title*="invisible"] {
+      filter: grayscale(0.7) opacity(0.8);
+    }
+    
+    &[title*="protection zone"] {
+      filter: hue-rotate(60deg) saturate(1.2);
+    }
+    
+    &[title*="combat"] {
+      filter: hue-rotate(0deg) saturate(1.5) brightness(1.1);
+    }
+    
+    &[title*="magic shield"] {
+      filter: hue-rotate(240deg) saturate(1.4) brightness(1.1);
+    }
+    
+    &[title*="hungry"] {
+      filter: hue-rotate(30deg) saturate(1.3);
+    }
+    
+    &[title*="hasted"] {
+      filter: hue-rotate(300deg) saturate(1.4) brightness(1.1);
+    }
+  }
+  
+  // Animation for status changes
+  .status-icon {
+    animation: statusIconAppear 0.3s ease-out;
+  }
+  
+  @keyframes statusIconAppear {
+    from {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  // Responsive adjustments
+  @media (max-width: 768px) {
+    bottom: 5px;
+    padding: 6px 12px;
+    gap: 6px;
+    
+    .status-icon {
+      width: 20px;
+      height: 20px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    bottom: 5px;
+    padding: 4px 8px;
+    gap: 4px;
+    
+    .status-icon {
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+// Ensure status bar doesn't interfere with other UI elements
+.status-bar {
+  pointer-events: auto;
+  
+  // Make sure it's above game canvas but below modals
+  z-index: 20;
+}

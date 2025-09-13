@@ -45,8 +45,6 @@ export default class SpriteBuffer {
     // Clamp to edge so UVs don't wrap
     this.atlasSource = new CanvasSource({
       resource: this.atlasCanvas,
-    
-      // pixel‐perfect sampling
       minFilter: SCALE_MODES.NEAREST,
       magFilter: SCALE_MODES.NEAREST,
       mipmapFilter: SCALE_MODES.NEAREST,

@@ -17,6 +17,7 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
   // Removed mountIndex and outfitIndex since we're not changing outfits or mounts
   const [faceDirection, setFaceDirection] = useState<number>(2); // default South, matches helper
   const [animate, setAnimate] = useState<boolean>(false);
+  const [selectedHair, setSelectedHair] = useState<number>(904); // default hair ID
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -26,30 +27,28 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
     if (!isOpen || !gc.player) return;
     const base = gc.player.outfit.copy();
     setOutfit(base);
-    // No need to set active section since we only use head
-    // Removed mount and outfit index initialization since we're not changing them
     setFaceDirection(2); // South
     setAnimate(false);
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, gc.player]);
 
-  // Removed getIndex function since we're not using it anymore
-
-  // Removed outfit sync useEffect since we're not changing outfits
-
-  // Removed mount sync useEffect since we're not using mounts
-
-  // Removed handleOutfitSelection and handleMountSelection since we're not changing outfits or mounts
 
   const handleColorChange = (colorIndex: number) => {
     if (!outfit) return;
     const next = outfit.copy();
     next.details.head = colorIndex; // Always apply to head
     setOutfit(next);
+  };
+
+  const handleHairChange = (hairId: number) => {
+    if (!outfit) return;
+    const next = outfit.copy();
+    next.equipment.hair = hairId; // Apply hair ID
+    setOutfit(next);
+    setSelectedHair(hairId);
   };
 
   const handleRotateLeft = () => {
@@ -168,6 +167,21 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
                   );
                 })
               )}
+            </div>
+          </div>
+
+          <div className="hair-picker">
+            <div className="hair-grid">
+              {[904, 905].map((hairId) => (
+                <button
+                  key={hairId}
+                  className={`hair-option ${selectedHair === hairId ? 'selected' : ''}`}
+                  onClick={() => handleHairChange(hairId)}
+                  title={`Hair ${hairId}`}
+                >
+                  {hairId}
+                </button>
+              ))}
             </div>
           </div>
         </div>

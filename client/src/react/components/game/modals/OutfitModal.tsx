@@ -13,21 +13,18 @@ interface OutfitModalProps {
 
 export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
   const [outfit, setOutfit] = useState<Outfit | null>(null);
-  // Removed activeSection since we only use head colors now
-  // Removed mountIndex and outfitIndex since we're not changing outfits or mounts
-  const [faceDirection, setFaceDirection] = useState<number>(2); // default South, matches helper
+  const [faceDirection, setFaceDirection] = useState<number>(2);
   const [animate, setAnimate] = useState<boolean>(false);
-  const [selectedHair, setSelectedHair] = useState<number>(904); // default hair ID
+  const [selectedHair, setSelectedHair] = useState<number>(904);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
 
-  // Initialize local copy when modal opens
   useEffect(() => {
     if (!isOpen || !gc.player) return;
     const base = gc.player.outfit.copy();
     setOutfit(base);
-    setFaceDirection(2); // South
+    setFaceDirection(2);
     setAnimate(false);
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
@@ -39,24 +36,24 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
   const handleColorChange = (colorIndex: number) => {
     if (!outfit) return;
     const next = outfit.copy();
-    next.details.head = colorIndex; // Always apply to head
+    next.details.head = colorIndex;
     setOutfit(next);
   };
 
   const handleHairChange = (hairId: number) => {
     if (!outfit) return;
     const next = outfit.copy();
-    next.equipment.hair = hairId; // Apply hair ID
+    next.equipment.hair = hairId;
     setOutfit(next);
     setSelectedHair(hairId);
   };
 
   const handleRotateLeft = () => {
-    setFaceDirection(prev => (prev + 1) % 4); // 0 N, 1 E, 2 S, 3 W
+    setFaceDirection(prev => (prev + 1) % 4);
   };
 
   const handleRotateRight = () => {
-    setFaceDirection(prev => (prev - 1 + 4) % 4); // 0 N, 1 E, 2 S, 3 W
+    setFaceDirection(prev => (prev - 1 + 4) % 4);
   };
 
   const handleCheckboxChange = (property: keyof Outfit, value: boolean) => {
@@ -66,18 +63,16 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
     setOutfit(next);
   };
 
-  // Render once
   const renderOnce = useCallback(() => {
     if (!outfit || !canvasRef.current) return;
     renderOutfitToCanvas(gc, outfit, canvasRef.current, {
       faceDirection,
-      animate,           // helper will pick animated frame; we drive the loop below
+      animate,
       padding: 4,
       background: "transparent",
     });
   }, [gc, outfit, faceDirection, animate]);
 
-  // Animate loop (only when animate === true)
   useEffect(() => {
     if (!isOpen) return;
     if (rafRef.current !== null) {
@@ -99,16 +94,14 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
     };
   }, [isOpen, animate, renderOnce]);
 
-  // Also update preview on any param change when not animating
   useEffect(() => {
-    if (animate) return; // loop handles it
+    if (animate) return;
     renderOnce();
   }, [renderOnce, animate, outfit, faceDirection]);
 
   const handleConfirm = () => {
     if (!outfit || !gc.player) return onClose();
 
-    // Only send color changes, no outfit or mount changes
     if (!gc.player.outfit.equals(outfit)) {
       gc.send(new OutfitChangePacket(outfit));
     }
@@ -116,8 +109,6 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
   };
 
   if (!isOpen || !gc.player || !outfit) return null;
-
-  // Removed currentOutfit and currentMount since we're not changing outfits or mounts
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -171,23 +162,23 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
 
           <div className="hair-picker">
             <div className="hair-grid">
-              {[904, 905].map((hairId) => (
+              {[0, 904, 905].map((hairId) => (
                 <button
                   key={hairId}
                   className={`hair-option ${selectedHair === hairId ? 'selected' : ''}`}
                   onClick={() => handleHairChange(hairId)}
                 >
                   <canvas
-                    width={64}
-                    height={64}
+                    width={40}
+                    height={40}
                     className="hair-canvas"
                     ref={(canvas) => {
                       if (canvas && outfit) {
                         const hairOutfit = outfit.copy();
                         hairOutfit.equipment.hair = hairId;
-                        hairOutfit.details.head = 0; // Default head color for preview
+                        hairOutfit.details.head = 0;
                         renderOutfitToCanvas(gc, hairOutfit, canvas, {
-                          faceDirection: 2, // South
+                          faceDirection: 2,
                           animate: false,
                           padding: 4,
                           background: "transparent",

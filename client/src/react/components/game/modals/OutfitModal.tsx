@@ -13,7 +13,7 @@ interface OutfitModalProps {
 
 export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
   const [outfit, setOutfit] = useState<Outfit | null>(null);
-  const [activeSection, setActiveSection] = useState<string>('head');
+  // Removed activeSection since we only use head colors now
   // Removed mountIndex and outfitIndex since we're not changing outfits or mounts
   const [faceDirection, setFaceDirection] = useState<number>(2); // default South, matches helper
   const [animate, setAnimate] = useState<boolean>(false);
@@ -26,7 +26,7 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
     if (!isOpen || !gc.player) return;
     const base = gc.player.outfit.copy();
     setOutfit(base);
-    setActiveSection('head');
+    // No need to set active section since we only use head
     // Removed mount and outfit index initialization since we're not changing them
     setFaceDirection(2); // South
     setAnimate(false);
@@ -48,12 +48,7 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
   const handleColorChange = (colorIndex: number) => {
     if (!outfit) return;
     const next = outfit.copy();
-    switch (activeSection) {
-      case 'head': next.details.head = colorIndex; break;
-      case 'body': next.details.body = colorIndex; break;
-      case 'legs': next.details.legs = colorIndex; break;
-      case 'feet': next.details.feet = colorIndex; break;
-    }
+    next.details.head = colorIndex; // Always apply to head
     setOutfit(next);
   };
 
@@ -130,65 +125,62 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
         </div>
 
         <div className="modal-content">
+          
           <div className="outfit-preview">
             <canvas
               ref={canvasRef}
               width={128}
               height={128}
               className="outfit-canvas"
-              style={{
-                imageRendering: 'pixelated',
-                borderRadius: '25%',
-                clipPath: 'circle(25%)'
-              }}
             />
-            <div className="preview-controls">
-              <button onClick={handleRotate} className="rotate-btn">Rotate</button>
-              <label className="animate-toggle">
-                <input
-                  type="checkbox"
-                  checked={animate}
-                  onChange={(e) => setAnimate(e.target.checked)}
-                />
-                Animate
-              </label>
-            </div>
-          </div>
-
-          <div className="outfit-controls">
-            {/* Removed outfit selection, mount selection, and addons sections for a cleaner interface */}
           </div>
 
           <div className="color-picker">
-            <h3>Colors</h3>
-            <div className="section-tabs">
-              {['head', 'body', 'legs', 'feet'].map((section) => (
-                <button
-                  key={section}
-                  className={`section-tab ${activeSection === section ? 'active' : ''}`}
-                  onClick={() => setActiveSection(section)}
-                >
-                  {section.charAt(0).toUpperCase() + section.slice(1)}
-                </button>
-              ))}
-            </div>
+            <h3 className="color-picker-title">Hair Color</h3>
             <div className="color-grid">
-              {Outfit.colors.slice(0, 64).map((color, index) => (
-                <button
-                  key={index}
-                  className="color-swatch"
-                  style={{ backgroundColor: `#${color.toString(16).padStart(6, '0')}` }}
-                  onClick={() => handleColorChange(index)}
-                  title={`Color ${index}`}
-                />
-              ))}
+              {Array.from({ length: 7 }).map((_, r) =>
+                Array.from({ length: 19 }).map((_, c) => {
+                  const index = r * 19 + c;
+                  const color = [
+                    'rgb(255, 255, 255)','rgb(255, 212, 191)','rgb(255, 233, 191)','rgb(255, 255, 191)','rgb(233, 255, 191)','rgb(212, 255, 191)','rgb(191, 255, 191)','rgb(191, 255, 212)','rgb(191, 255, 233)','rgb(191, 255, 255)','rgb(191, 233, 255)','rgb(191, 212, 255)','rgb(191, 191, 255)','rgb(212, 191, 255)','rgb(233, 191, 255)','rgb(255, 191, 255)','rgb(255, 191, 233)','rgb(255, 191, 212)','rgb(255, 191, 191)',
+                    'rgb(218, 218, 218)','rgb(191, 159, 143)','rgb(191, 175, 143)','rgb(191, 191, 143)','rgb(175, 191, 143)','rgb(159, 191, 143)','rgb(143, 191, 143)','rgb(143, 191, 159)','rgb(143, 191, 175)','rgb(143, 191, 191)','rgb(143, 175, 191)','rgb(143, 159, 191)','rgb(143, 143, 191)','rgb(159, 143, 191)','rgb(175, 143, 191)','rgb(191, 143, 191)','rgb(191, 143, 175)','rgb(191, 143, 159)','rgb(191, 143, 143)',
+                    'rgb(182, 182, 182)','rgb(191, 127, 95)','rgb(191, 175, 143)','rgb(191, 191, 95)','rgb(159, 191, 95)','rgb(127, 191, 95)','rgb(95, 191, 95)','rgb(95, 191, 127)','rgb(95, 191, 159)','rgb(95, 191, 191)','rgb(95, 159, 191)','rgb(95, 127, 191)','rgb(95, 95, 191)','rgb(127, 95, 191)','rgb(159, 95, 191)','rgb(191, 95, 191)','rgb(191, 95, 159)','rgb(191, 95, 127)','rgb(191, 95, 95)',
+                    'rgb(145, 145, 145)','rgb(191, 106, 63)','rgb(191, 148, 63)','rgb(191, 191, 63)','rgb(148, 191, 63)','rgb(106, 191, 63)','rgb(63, 191, 63)','rgb(63, 191, 106)','rgb(63, 191, 148)','rgb(63, 191, 191)','rgb(63, 148, 191)','rgb(63, 106, 191)','rgb(63, 63, 191)','rgb(106, 63, 191)','rgb(148, 63, 191)','rgb(191, 63, 191)','rgb(191, 63, 148)','rgb(191, 63, 106)','rgb(191, 63, 63)',
+                    'rgb(109, 109, 109)','rgb(255, 85, 0)','rgb(255, 170, 0)','rgb(255, 255, 0)','rgb(170, 255, 0)','rgb(84, 255, 0)','rgb(0, 255, 0)','rgb(0, 255, 84)','rgb(0, 255, 170)','rgb(0, 255, 255)','rgb(0, 169, 255)','rgb(0, 85, 255)','rgb(0, 0, 255)','rgb(85, 0, 255)','rgb(169, 0, 255)','rgb(254, 0, 255)','rgb(255, 0, 170)','rgb(255, 0, 85)','rgb(255, 0, 0)',
+                    'rgb(72, 72, 72)','rgb(191, 63, 0)','rgb(191, 127, 0)','rgb(191, 191, 0)','rgb(127, 191, 0)','rgb(63, 191, 0)','rgb(0, 191, 0)','rgb(0, 191, 63)','rgb(0, 191, 127)','rgb(0, 191, 191)','rgb(0, 127, 191)','rgb(0, 63, 191)','rgb(0, 0, 191)','rgb(63, 0, 191)','rgb(127, 0, 191)','rgb(191, 0, 191)','rgb(191, 0, 127)','rgb(191, 0, 63)','rgb(191, 0, 0)',
+                    'rgb(36, 36, 36)','rgb(127, 42, 0)','rgb(127, 85, 0)','rgb(127, 127, 0)','rgb(85, 127, 0)','rgb(42, 127, 0)','rgb(0, 127, 0)','rgb(0, 127, 42)','rgb(0, 127, 85)','rgb(0, 127, 127)','rgb(0, 84, 127)','rgb(0, 42, 127)','rgb(0, 0, 127)','rgb(42, 0, 127)','rgb(84, 0, 127)','rgb(127, 0, 127)','rgb(127, 0, 85)','rgb(127, 0, 42)','rgb(127, 0, 0)'
+                  ][index];
+                  return (
+                    <button
+                      key={index}
+                      className="color-swatch"
+                      style={{ backgroundColor: color }}
+                      onClick={() => handleColorChange(index)}
+                      title={`Color ${index}`}
+                    />
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
 
         <div className="modal-footer">
-          <button className="btn-cancel" onClick={onClose}>Cancel</button>
-          <button className="btn-confirm" onClick={handleConfirm}>Confirm</button>
+          <div className="footer-controls">
+            <button onClick={handleRotate} className="rotate-btn">Rotate</button>
+            <label className="animate-toggle">
+              <input
+                type="checkbox"
+                checked={animate}
+                onChange={(e) => setAnimate(e.target.checked)}
+              />
+              Animate
+            </label>
+          </div>
+          <div className="footer-buttons">
+            <button className="btn-cancel" onClick={onClose}>Cancel</button>
+            <button className="btn-confirm" onClick={handleConfirm}>Confirm</button>
+          </div>
         </div>
       </div>
     </div>

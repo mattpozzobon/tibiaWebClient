@@ -52,8 +52,12 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
     setOutfit(next);
   };
 
-  const handleRotate = () => {
+  const handleRotateLeft = () => {
     setFaceDirection(prev => (prev + 1) % 4); // 0 N, 1 E, 2 S, 3 W
+  };
+
+  const handleRotateRight = () => {
+    setFaceDirection(prev => (prev - 1 + 4) % 4); // 0 N, 1 E, 2 S, 3 W
   };
 
   const handleCheckboxChange = (property: keyof Outfit, value: boolean) => {
@@ -133,6 +137,10 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
               height={128}
               className="outfit-canvas"
             />
+            <div className="rotate-controls">
+              <button onClick={handleRotateLeft} className="rotate-left-btn">‹</button>
+              <button onClick={handleRotateRight} className="rotate-right-btn">›</button>
+            </div>
           </div>
 
           <div className="color-picker">
@@ -166,15 +174,12 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
 
         <div className="modal-footer">
           <div className="footer-controls">
-            <button onClick={handleRotate} className="rotate-btn">Rotate</button>
-            <label className="animate-toggle">
-              <input
-                type="checkbox"
-                checked={animate}
-                onChange={(e) => setAnimate(e.target.checked)}
-              />
+            <button 
+              onClick={() => setAnimate(!animate)} 
+              className={`animate-btn ${animate ? 'active' : ''}`}
+            >
               Animate
-            </label>
+            </button>
           </div>
           <div className="footer-buttons">
             <button className="btn-cancel" onClick={onClose}>Cancel</button>

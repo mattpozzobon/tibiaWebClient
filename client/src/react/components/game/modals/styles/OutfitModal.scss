@@ -72,7 +72,10 @@
 
 
 .outfit-preview {
-
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 
   .outfit-canvas {
     border: 2px solid #8B4513;
@@ -86,6 +89,38 @@
     clip-path: circle(25%);
     object-position: center top;
     object-fit: cover;
+  }
+
+  .rotate-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+
+    .rotate-left-btn,
+    .rotate-right-btn {
+      background: linear-gradient(145deg, #4CAF50, #45a049);
+      border: none;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 18px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover {
+        background: linear-gradient(145deg, #45a049, #4CAF50);
+        transform: translateY(-1px);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
   }
 }
 
@@ -215,10 +250,11 @@
     align-items: center;
     flex: 0 0 auto;
 
-    .rotate-btn {
-      background: linear-gradient(145deg, #4CAF50, #45a049);
-      border: none;
-      color: white;
+
+    .animate-btn {
+      background: linear-gradient(145deg, #666, #444);
+      border: 1px solid #888;
+      color: #fff;
       padding: 8px 16px;
       border-radius: 6px;
       cursor: pointer;
@@ -227,23 +263,14 @@
       font-size: 14px;
 
       &:hover {
-        background: linear-gradient(145deg, #45a049, #4CAF50);
+        background: linear-gradient(145deg, #777, #555);
         transform: translateY(-1px);
       }
-    }
 
-    .animate-toggle {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #fff;
-      cursor: pointer;
-      font-size: 14px;
-
-      input[type="checkbox"] {
-        width: 16px;
-        height: 16px;
-        accent-color: #FFD700;
+      &.active {
+        background: linear-gradient(145deg, #FFD700, #FFA500);
+        color: #000;
+        border: 1px solid #FFD700;
       }
     }
   }

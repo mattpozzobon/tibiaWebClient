@@ -5,6 +5,7 @@ import type GameClient from '../../../core/gameclient';
 // import SettingsModal from './modals/SettingsModal';
 // import SkillsModal from './modals/SkillsModal';
 import OutfitModal from './modals/OutfitModal';
+import FriendModal from './modals/FriendModal';
 // import MapModal from './modals/MapModal';
 import ChatModal from './modals/ChatModal';
 // import MoveItemModal from './modals/MoveItemModal';
@@ -35,6 +36,7 @@ export default function GameUIManager({ gc }: GameUIManagerProps) {
     // settings: { isOpen: false },
     // skills: { isOpen: false },
     outfit: { isOpen: false },
+    friends: { isOpen: false },
     // map: { isOpen: false },
     chat: { isOpen: false },
     // moveItem: { isOpen: false },
@@ -208,6 +210,12 @@ export default function GameUIManager({ gc }: GameUIManagerProps) {
         gc={gc}
       />
       
+      <FriendModal 
+        isOpen={modals.friends.isOpen}
+        onClose={() => closeModal('friends')}
+        gc={gc}
+      />
+      
       <MapModal 
         isOpen={modals.map.isOpen}
         onClose={() => closeModal('map')}
@@ -217,12 +225,6 @@ export default function GameUIManager({ gc }: GameUIManagerProps) {
       <ChatModal 
         isOpen={modals.chat.isOpen}
         onClose={() => closeModal('chat')}
-        gc={gc}
-      />
-      
-      <OutfitModal 
-        isOpen={modals.outfit.isOpen}
-        onClose={() => closeModal('outfit')}
         gc={gc}
       />
       

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type GameClient from "../../../../core/gameclient";
 import ChangelogModal from "../../ChangelogModal";
 import OutfitModal from "../modals/OutfitModal";
+import FriendModal from "../modals/FriendModal";
 import './styles/TopbarIsland.scss';
 
 interface TopbarIslandProps {
@@ -11,6 +12,7 @@ interface TopbarIslandProps {
 export default function TopbarIsland({ gc }: TopbarIslandProps) {
   const [showChangelog, setShowChangelog] = useState(false);
   const [showOutfitModal, setShowOutfitModal] = useState(false);
+  const [showFriendModal, setShowFriendModal] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("auth_token");
@@ -34,7 +36,7 @@ export default function TopbarIsland({ gc }: TopbarIslandProps) {
   };
 
   const handleFriends = () => {
-    gc.interface?.modalManager?.open?.("friends");
+    setShowFriendModal(true);
   };
 
   const handleInventory = () => {
@@ -98,6 +100,12 @@ export default function TopbarIsland({ gc }: TopbarIslandProps) {
     <OutfitModal 
       isOpen={showOutfitModal} 
       onClose={() => setShowOutfitModal(false)} 
+      gc={gc}
+    />
+    
+    <FriendModal 
+      isOpen={showFriendModal} 
+      onClose={() => setShowFriendModal(false)} 
       gc={gc}
     />
     </div>

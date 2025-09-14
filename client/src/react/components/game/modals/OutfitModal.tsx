@@ -162,7 +162,6 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
                       className="color-swatch"
                       style={{ backgroundColor: color }}
                       onClick={() => handleColorChange(index)}
-                      title={`Color ${index}`}
                     />
                   );
                 })
@@ -177,9 +176,25 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
                   key={hairId}
                   className={`hair-option ${selectedHair === hairId ? 'selected' : ''}`}
                   onClick={() => handleHairChange(hairId)}
-                  title={`Hair ${hairId}`}
                 >
-                  {hairId}
+                  <canvas
+                    width={64}
+                    height={64}
+                    className="hair-canvas"
+                    ref={(canvas) => {
+                      if (canvas && outfit) {
+                        const hairOutfit = outfit.copy();
+                        hairOutfit.equipment.hair = hairId;
+                        hairOutfit.details.head = 0; // Default head color for preview
+                        renderOutfitToCanvas(gc, hairOutfit, canvas, {
+                          faceDirection: 2, // South
+                          animate: false,
+                          padding: 4,
+                          background: "transparent",
+                        });
+                      }
+                    }}
+                  />
                 </button>
               ))}
             </div>

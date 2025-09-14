@@ -16,25 +16,7 @@ interface GameLayoutProps {
 const GameLayout: React.FC<GameLayoutProps> = ({ gameClient }) => {
   const [layoutState, setLayoutState] = useState<LayoutManagerState>(layoutManager.getState());
 
-  // Subscribe to layout manager changes
-  useEffect(() => {
-    const unsubscribe = layoutManager.subscribe(setLayoutState);
-    return unsubscribe;
-  }, []);
 
-  // Handle ESC key to close modals
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        layoutManager.closeLastModal();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  // Expose layout manager globally for game client access
   useEffect(() => {
     if (gameClient) {
       (window as any).gameLayoutManager = layoutManager;
@@ -45,7 +27,6 @@ const GameLayout: React.FC<GameLayoutProps> = ({ gameClient }) => {
     <>
       
       <AudioManager />
-      
       <GameCanvas />
 
       {gameClient && (

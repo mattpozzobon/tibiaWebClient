@@ -194,8 +194,6 @@ const App: React.FC<AppProps> = ({ onProgressUpdate }) => {
   return (
     <>
       {loginFlowComponent}
-      
-      {/* Game Layout - render when authenticated to create DOM elements */}
       {isAuthenticated && <GameLayout gameClient={gameClient} />}
     </>
   );

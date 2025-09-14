@@ -340,6 +340,7 @@ class PacketHandler {
   handleChangeOutfit(packet: { id: number; outfit: any }): void {
     let creature = window.gameClient.world.getCreature(packet.id);
     if (!creature) return;
+    console.log('handleChangeOutfit: ', packet.outfit);
     creature.serverSetOutfit(packet.outfit);
   }
 

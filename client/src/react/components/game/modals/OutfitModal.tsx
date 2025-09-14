@@ -136,7 +136,6 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
           </div>
 
           <div className="color-picker">
-            <h3 className="color-picker-title">Hair Color</h3>
             <div className="color-grid">
               {Array.from({ length: 7 }).map((_, r) =>
                 Array.from({ length: 19 }).map((_, c) => {

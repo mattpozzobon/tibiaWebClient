@@ -164,19 +164,21 @@
 }
 
 .color-picker {
-  flex: 0 0 auto;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  flex: 1 1 auto;        /* was: 0 0 auto */
   min-width: 200px;
+  display: flex;
 
   .color-grid {
     display: grid;
-    grid-template-columns: repeat(19, 8px);
-    grid-template-rows: repeat(7, 8px);
-    gap: 4px;
+    grid-template-columns: repeat(19, 16px);
+    grid-template-rows: repeat(7, 16px);
+    gap: 6px;
+    padding: 6px;
     overflow-y: auto;
     justify-content: start;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
 
     .color-swatch {
       width: 16px;
@@ -201,16 +203,17 @@
 .modal-footer {
   background: linear-gradient(145deg, #2c2c2c, #1a1a1a);
   padding: 15px 20px;
-  display: flex;
-  justify-content: space-between;
+  display: flex !important;
+  justify-content: space-between !important;
   align-items: center;
   gap: 10px;
   border-top: 2px solid #654321;
 
   .footer-controls {
-    display: flex;
+    display: flex !important;
     gap: 15px;
     align-items: center;
+    flex: 0 0 auto;
 
     .rotate-btn {
       background: linear-gradient(145deg, #4CAF50, #45a049);
@@ -246,8 +249,9 @@
   }
 
   .footer-buttons {
-    display: flex;
+    display: flex !important;
     gap: 10px;
+    flex: 0 0 auto;
   }
 
   button {

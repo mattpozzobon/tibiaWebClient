@@ -31,11 +31,39 @@ export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
   useEffect(() => {
     if (!isOpen || !gc.player) return;
     
+    // Initialize friends list from the old friendlist system for now
     const friendList = gc.player.friendlist;
     if (friendList) {
       const friendsArray = Array.from(friendList['__friends'] || new Map(), ([name, online]) => ({ name, online }));
       setFriends(friendsArray);
     }
+
+    // Listen for friend status changes directly from packet handler
+    const handlePlayerConnect = (event: CustomEvent) => {
+      const { name } = event.detail;
+      setFriends(prevFriends => 
+        prevFriends.map(friend => 
+          friend.name === name ? { ...friend, online: true } : friend
+        )
+      );
+    };
+
+    const handlePlayerDisconnect = (event: CustomEvent) => {
+      const { name } = event.detail;
+      setFriends(prevFriends => 
+        prevFriends.map(friend => 
+          friend.name === name ? { ...friend, online: false } : friend
+        )
+      );
+    };
+
+    window.addEventListener('playerConnect', handlePlayerConnect as EventListener);
+    window.addEventListener('playerDisconnect', handlePlayerDisconnect as EventListener);
+    
+    return () => {
+      window.removeEventListener('playerConnect', handlePlayerConnect as EventListener);
+      window.removeEventListener('playerDisconnect', handlePlayerDisconnect as EventListener);
+    };
   }, [isOpen, gc.player]);
 
   useEffect(() => {
@@ -52,16 +80,21 @@ export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
   const handleAddFriend = () => {
     if (!newFriendName.trim()) return;
     
-    gc.send(new FriendAddPacket(newFriendName.trim()));
+    const friendName = newFriendName.trim();
+    gc.send(new FriendAddPacket(friendName));
     setNewFriendName('');
+    
+    // Add friend to the list immediately (optimistic update)
+    setFriends(prevFriends => [...prevFriends, { name: friendName, online: false }]);
   };
 
   const handleRemoveFriend = (friendName: string) => {
     if (window.confirm(`Are you sure you want to remove ${friendName} from your friend list?`)) {
       gc.send(new FriendRemovePacket(friendName));
+      // Remove friend from the list immediately
+      setFriends(prevFriends => prevFriends.filter(friend => friend.name !== friendName));
     }
   };
-
 
   const handleFriendRightClick = (event: React.MouseEvent, friendName: string) => {
     event.preventDefault();

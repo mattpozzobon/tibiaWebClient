@@ -74,10 +74,13 @@ export default class Friendlist {
       .filter(this.__showOfflineFilter.bind(this))
       .sort(this.__sortFunction);
     
-    // Window system now handled by React components
-    
-    // Optional: Could dispatch a custom event for React components to listen to
-    // window.dispatchEvent(new CustomEvent('friendsUpdate', { detail: friendArray }));
+    // Dispatch custom event for React components to listen to
+    window.dispatchEvent(new CustomEvent('friendsUpdate', { 
+      detail: { 
+        friends: friendArray,
+        allFriends: Array.from(this.__friends, this.__deconstructMap.bind(this))
+      } 
+    }));
   }
 
   public toggleShowOffline(): void {

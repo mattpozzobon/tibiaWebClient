@@ -465,6 +465,7 @@ class PacketHandler {
   }
 
   handleEntityRemove(id: number): void {
+    console.log('handleEntityRemove: ', id);
     let creature = window.gameClient.world.getCreature(id);
     if (!creature || window.gameClient.isSelf(creature)) return;
 
@@ -478,7 +479,8 @@ class PacketHandler {
 
     creature.remove();
     delete window.gameClient.world.activeCreatures[id];
-    (window.gameClient.interface.windowManager.getWindow("battle-window") as BattleWindow).removeCreature(id);
+    creature.remove();
+    //(window.gameClient.interface.windowManager.getWindow("battle-window") as BattleWindow).removeCreature(id);
   }
 
   handleContainerItemRemove(packet: { containerIndex: number; slotIndex: number; count: number }): void {
@@ -507,11 +509,11 @@ class PacketHandler {
   }
 
   handlePlayerDisconnect(name: string): void {
-    window.gameClient.player!.friendlist.setOnlineStatus(name, false);
+    window.dispatchEvent(new CustomEvent('playerDisconnect', { detail: { name } }));
   }
 
   handlePlayerConnect(name: string): void {
-    window.gameClient.player!.friendlist.setOnlineStatus(name, true);
+    window.dispatchEvent(new CustomEvent('playerConnect', { detail: { name } }));
   }
 
   handleCreatureServerMove(packet: { id: number; position: Position; speed: number }): void {

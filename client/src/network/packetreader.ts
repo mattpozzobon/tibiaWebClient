@@ -210,13 +210,6 @@ export default class PacketReader extends Packet {
     };
   }
   
-  public readFriend(): { name: string; online: boolean } {
-    return {
-      name: this.readString(),
-      online: this.readBoolean(),
-    };
-  }
-  
   public readAnimationLength(): { min: number; max: number } {
     return {
       min: this.readUInt32(),
@@ -668,6 +661,29 @@ export default class PacketReader extends Packet {
     };
   }
 
+  public readFriend(): { name: string; online: boolean } {
+    const nameLength = this.readUInt8();
+    const name = new TextDecoder("utf-8").decode(this.buffer.slice(this.index, this.index + nameLength));
+    this.index += nameLength;
+    const online = this.readUInt8() === 1;
+    
+    return {
+      name: name,
+      online: online
+    };
+  }
+  
+  public readFriendlist(): Array<{ name: string; online: boolean }> {
+    let length = this.readUInt8();
+    let friendlist: Array<{ name: string; online: boolean }> = [];
+    
+    for (let i = 0; i < length; i++) {
+      friendlist.push(this.readFriend());
+    }
+    
+    return friendlist;
+  }
+  
   public readPlayerInfo(): {
     id: number;
     skills: any;
@@ -676,7 +692,7 @@ export default class PacketReader extends Packet {
     mounts: OutfitIdName[];
     outfits: OutfitIdName[];
     spellbook: number[];
-    friendlist: any[];
+    friendlist: Array<{ name: string; online: boolean }>;
     outfit: Outfit;
     vitals: VitalsData;
     conditions: number[];
@@ -708,17 +724,6 @@ export default class PacketReader extends Packet {
       },
       conditions: this.readConditions(),
     };
-  }
-  
-  public readFriendlist(): any[] {
-    let length = this.readUInt8();
-    let friendlist: any[] = [];
-  
-    for (let i = 0; i < length; i++) {
-      friendlist.push(this.readFriend());
-    }
-  
-    return friendlist;
   }
   
   public readArray(): number[] {

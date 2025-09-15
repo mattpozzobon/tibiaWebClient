@@ -683,6 +683,28 @@ export default class PacketReader extends Packet {
     
     return friendlist;
   }
+
+  public readFriendRequests(): string[] {
+    const count = this.readUInt8();
+    const requests: string[] = [];
+    
+    for (let i = 0; i < count; i++) {
+      const nameLength = this.readUInt8();
+      const nameBytes = this.buffer.slice(this.index, this.index + nameLength);
+      this.index += nameLength;
+      const requesterName = new TextDecoder('utf-8').decode(nameBytes);
+      requests.push(requesterName);
+    }
+    
+    return requests;
+  }
+
+  public readFriendUpdate(): { friends: Array<{ name: string; online: boolean }>; friendRequests: string[] } {
+    const friends = this.readFriendlist();
+    const friendRequests = this.readFriendRequests();
+    
+    return { friends, friendRequests };
+  }
   
   public readPlayerInfo(): {
     id: number;
@@ -692,7 +714,7 @@ export default class PacketReader extends Packet {
     mounts: OutfitIdName[];
     outfits: OutfitIdName[];
     spellbook: number[];
-    friendlist: Array<{ name: string; online: boolean }>;
+    friendlist: { friends: Array<{ name: string; online: boolean }>; friendRequests: string[] };
     outfit: Outfit;
     vitals: VitalsData;
     conditions: number[];
@@ -705,7 +727,10 @@ export default class PacketReader extends Packet {
       mounts: this.readOutfits(),
       outfits: this.readOutfits(),
       spellbook: this.readArray(),
-      friendlist: this.readFriendlist(),
+      friendlist: {
+        friends: this.readFriendlist(),
+        friendRequests: this.readFriendRequests()
+      },
       outfit: this.readOutfit(),
       vitals: {
         name: this.readString(),

@@ -82,7 +82,8 @@
       "CREATURE_PROPERTY": 37,
       "REMOVE_FRIEND": 40,
       "PLAYER_STATISTICS": 49,
-      "CHANNEL_JOIN": 50
+      "CHANNEL_JOIN": 50,
+      "FRIEND_UPDATE": 51
     }
   },
   "DIRECTION": {

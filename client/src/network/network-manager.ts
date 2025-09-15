@@ -65,6 +65,8 @@ class NetworkManager {
         return this.packetHandler.handleTradeOffer(packet.readTradeOffer());
       case CONST.PROTOCOL.SERVER.REMOVE_FRIEND:
         return this.packetHandler.handleRemoveFriend(packet.readString());
+      case CONST.PROTOCOL.SERVER.FRIEND_UPDATE:
+        return this.packetHandler.handleFriendUpdate(packet.readFriendUpdate());
       case CONST.PROTOCOL.SERVER.ITEM_TRANSFORM:
         return this.packetHandler.handleTransformTile(packet.readTransformTile());
       case CONST.PROTOCOL.SERVER.MESSAGE_CANCEL:

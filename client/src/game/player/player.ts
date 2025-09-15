@@ -40,7 +40,7 @@ export default class Player extends Creature {
     this.skills = new Skills(data.skills);
     this.equipment = new Equipment(data.equipment);
     this.spellbook = new Spellbook(data.spellbook);
-    this.friendlist = new Friendlist(data.friendlist);
+    this.friendlist = new Friendlist(data.friendlist.friends, data.friendlist.friendRequests);
     this.mounts = data.mounts;
     this.outfits = data.outfits;
 

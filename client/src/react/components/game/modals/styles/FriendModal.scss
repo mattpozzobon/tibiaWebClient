@@ -61,6 +61,37 @@
   }
 }
 
+.modal-tabs {
+  background: #2a2a2a;
+  border-bottom: 1px solid #444;
+  display: flex;
+  padding: 0;
+
+  .tab-button {
+    flex: 1;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 2px solid transparent;
+
+    &:hover {
+      background: #3a3a3a;
+      color: #fff;
+    }
+
+    &.active {
+      color: #007acc;
+      border-bottom-color: #007acc;
+      background: #333;
+    }
+  }
+}
+
 .modal-content {
   padding: 16px;
   display: flex !important;
@@ -214,6 +245,89 @@
   }
 }
 
+
+.friend-requests-section {
+  width: 100%;
+  display: block;
+
+  .requests-list {
+    background: #222;
+    border: 1px solid #444;
+    border-radius: 6px;
+    overflow: hidden;
+    max-height: 300px;
+    overflow-y: auto;
+
+    .no-requests {
+      padding: 20px;
+      text-align: center;
+      color: #888;
+      font-style: italic;
+    }
+
+    .request-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid #333;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background: #2a2a2a;
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .requester-name {
+        font-weight: 500;
+        font-size: 14px;
+        color: #fff;
+      }
+
+      .request-actions {
+        display: flex;
+        gap: 8px;
+
+        .accept-btn {
+          padding: 6px 12px;
+          background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+          border: none;
+          border-radius: 4px;
+          color: #fff;
+          font-size: 12px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+
+          &:hover {
+            background: linear-gradient(135deg, #34ce57 0%, #28a745 100%);
+            transform: translateY(-1px);
+          }
+        }
+
+        .decline-btn {
+          padding: 6px 12px;
+          background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+          border: none;
+          border-radius: 4px;
+          color: #fff;
+          font-size: 12px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+
+          &:hover {
+            background: linear-gradient(135deg, #e74c3c 0%, #dc3545 100%);
+            transform: translateY(-1px);
+          }
+        }
+      }
+    }
+  }
+}
 
 .context-menu {
   background: #2a2a2a;

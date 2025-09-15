@@ -516,6 +516,15 @@ class PacketHandler {
     window.dispatchEvent(new CustomEvent('playerConnect', { detail: { name } }));
   }
 
+  handleFriendUpdate(friendUpdateData: { friends: any[]; friendRequests: string[] }): void {
+    const { friends, friendRequests } = friendUpdateData;
+    
+    // Update the player's friendlist with new data
+    if (window.gameClient.player?.friendlist) {
+      window.gameClient.player.friendlist.updateFromServer(friends, friendRequests);
+    }
+  }
+
   handleCreatureServerMove(packet: { id: number; position: Position; speed: number }): void {
     let entity = window.gameClient.world.getCreature(packet.id);
     if (!entity) return;

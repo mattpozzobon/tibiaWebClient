@@ -22,7 +22,9 @@ interface ContextMenu {
 }
 
 export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
+  const [activeTab, setActiveTab] = useState<'friends' | 'requests'>('friends');
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [friendRequests, setFriendRequests] = useState<string[]>([]);
   const [newFriendName, setNewFriendName] = useState('');
   const [showOffline, setShowOffline] = useState(true);
   const [contextMenu, setContextMenu] = useState<ContextMenu>({ visible: false, x: 0, y: 0, friendName: '' });
@@ -36,6 +38,11 @@ export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
     if (friendList) {
       const friendsArray = Array.from(friendList['__friends'] || new Map(), ([name, online]) => ({ name, online }));
       setFriends(friendsArray);
+    }
+
+    // Initialize friend requests
+    if (gc.player.friendlist) {
+      setFriendRequests(gc.player.friendlist.getFriendRequests());
     }
 
     // Listen for friend status changes directly from packet handler
@@ -57,12 +64,20 @@ export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
       );
     };
 
+    const handleFriendsUpdate = (event: CustomEvent) => {
+      const { friends, friendRequests } = event.detail;
+      setFriends(friends);
+      setFriendRequests(friendRequests);
+    };
+
     window.addEventListener('playerConnect', handlePlayerConnect as EventListener);
     window.addEventListener('playerDisconnect', handlePlayerDisconnect as EventListener);
+    window.addEventListener('friendsUpdate', handleFriendsUpdate as EventListener);
     
     return () => {
       window.removeEventListener('playerConnect', handlePlayerConnect as EventListener);
       window.removeEventListener('playerDisconnect', handlePlayerDisconnect as EventListener);
+      window.removeEventListener('friendsUpdate', handleFriendsUpdate as EventListener);
     };
   }, [isOpen, gc.player]);
 
@@ -84,16 +99,26 @@ export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
     gc.send(new FriendAddPacket(friendName));
     setNewFriendName('');
     
-    // Add friend to the list immediately (optimistic update)
-    setFriends(prevFriends => [...prevFriends, { name: friendName, online: false }]);
+    // Server will send FriendUpdatePacket to update the UI
   };
 
   const handleRemoveFriend = (friendName: string) => {
     if (window.confirm(`Are you sure you want to remove ${friendName} from your friend list?`)) {
       gc.send(new FriendRemovePacket(friendName));
-      // Remove friend from the list immediately
-      setFriends(prevFriends => prevFriends.filter(friend => friend.name !== friendName));
+      // Server will send FriendUpdatePacket to update the UI
     }
+  };
+
+  const handleAcceptFriendRequest = (requesterName: string) => {
+    // Send accept packet to server
+    gc.send(new FriendAddPacket(requesterName));
+    // Server will send FriendUpdatePacket to update the UI
+  };
+
+  const handleDeclineFriendRequest = (requesterName: string) => {
+    // Send decline packet to server
+    gc.send(new FriendRemovePacket(requesterName));
+    // Server will send FriendUpdatePacket to update the UI
   };
 
   const handleFriendRightClick = (event: React.MouseEvent, friendName: string) => {
@@ -125,58 +150,107 @@ export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
 
+        <div className="modal-tabs">
+          <button 
+            className={`tab-button ${activeTab === 'friends' ? 'active' : ''}`}
+            onClick={() => setActiveTab('friends')}
+          >
+            Friends ({friends.length})
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'requests' ? 'active' : ''}`}
+            onClick={() => setActiveTab('requests')}
+          >
+            Requests ({friendRequests.length})
+          </button>
+        </div>
+
         <div className="modal-content">
-          <div className="add-friend-section">
-            <div className="add-friend-form">
-              <input
-                type="text"
-                value={newFriendName}
-                onChange={(e) => setNewFriendName(e.target.value)}
-                placeholder="Enter friend's name..."
-                maxLength={30}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddFriend()}
-              />
-              <button 
-                className="add-friend-btn"
-                onClick={handleAddFriend}
-                disabled={!newFriendName.trim()}
-              >
-                Add Friend
-              </button>
-            </div>
-          </div>
-
-          <div className="friends-list">
-            {filteredFriends.length === 0 ? (
-              <div className="no-friends">No friends found</div>
-            ) : (
-              filteredFriends.map((friend) => (
-                <div 
-                  key={friend.name} 
-                  className="friend-row"
-                  onContextMenu={(e) => handleFriendRightClick(e, friend.name)}
-                >
-                  <span className={`friend-name ${friend.online ? 'online' : 'offline'}`}>
-                    {friend.name}
-                  </span>
-                  <span className={`friend-status ${friend.online ? 'online' : 'offline'}`}>
-                    {friend.online ? 'Online' : 'Offline'}
-                  </span>
+          {activeTab === 'friends' && (
+            <>
+              <div className="add-friend-section">
+                <div className="add-friend-form">
+                  <input
+                    type="text"
+                    value={newFriendName}
+                    onChange={(e) => setNewFriendName(e.target.value)}
+                    placeholder="Enter friend's name..."
+                    maxLength={30}
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddFriend()}
+                  />
+                  <button 
+                    className="add-friend-btn"
+                    onClick={handleAddFriend}
+                    disabled={!newFriendName.trim()}
+                  >
+                    Add Friend
+                  </button>
                 </div>
-              ))
-            )}
-          </div>
+              </div>
 
-          <div className="friends-controls">
-            <label className="show-offline-toggle">
-              <input
-                type="checkbox"
-                checked={showOffline}
-                onChange={(e) => setShowOffline(e.target.checked)}
-              />
-              Show Offline Friends
-            </label>
-          </div>
+              <div className="friends-list">
+                {filteredFriends.length === 0 ? (
+                  <div className="no-friends">No friends found</div>
+                ) : (
+                  filteredFriends.map((friend) => (
+                    <div 
+                      key={friend.name} 
+                      className="friend-row"
+                      onContextMenu={(e) => handleFriendRightClick(e, friend.name)}
+                    >
+                      <span className={`friend-name ${friend.online ? 'online' : 'offline'}`}>
+                        {friend.name}
+                      </span>
+                      <span className={`friend-status ${friend.online ? 'online' : 'offline'}`}>
+                        {friend.online ? 'Online' : 'Offline'}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="friends-controls">
+                <label className="show-offline-toggle">
+                  <input
+                    type="checkbox"
+                    checked={showOffline}
+                    onChange={(e) => setShowOffline(e.target.checked)}
+                  />
+                  Show Offline Friends
+                </label>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'requests' && (
+            <div className="friend-requests-section">
+              <div className="requests-list">
+                {friendRequests.length === 0 ? (
+                  <div className="no-requests">No friend requests</div>
+                ) : (
+                  friendRequests.map((requesterName) => (
+                    <div key={requesterName} className="request-row">
+                      <span className="requester-name">{requesterName}</span>
+                      <div className="request-actions">
+                        <button 
+                          className="accept-btn"
+                          onClick={() => handleAcceptFriendRequest(requesterName)}
+                        >
+                          Accept
+                        </button>
+                        <button 
+                          className="decline-btn"
+                          onClick={() => handleDeclineFriendRequest(requesterName)}
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
 
         </div>
 

@@ -40,15 +40,13 @@ export default class SpriteBuffer {
     this.atlasCanvas.height = this.size * cell;
     this.atlasCtx = this.atlasCanvas.getContext("2d")!;
 
-    // Prepare CanvasSource (for v8)
-    this.atlasSource = new CanvasSource({ resource: this.atlasCanvas });
     // Clamp to edge so UVs don't wrap
     this.atlasSource = new CanvasSource({
       resource: this.atlasCanvas,
-      minFilter: SCALE_MODES.NEAREST,
-      magFilter: SCALE_MODES.NEAREST,
-      mipmapFilter: SCALE_MODES.NEAREST,
-      wrapMode: WRAP_MODES.CLAMP
+      minFilter: 'nearest',
+      magFilter: 'nearest',
+      mipmapFilter: 'nearest',
+      wrapMode: 'clamp-to-edge'
     });
 
     // Prepare texture slots and scratch buffer

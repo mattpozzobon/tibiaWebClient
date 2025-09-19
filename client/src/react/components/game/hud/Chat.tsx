@@ -8,7 +8,7 @@ import './styles/ChatWindow.scss';
 // Ensure services are initialized
 chatEventManager;
 
-interface ChatWindowProps {
+interface ChatProps {
   gc: GameClient;
 }
 
@@ -22,7 +22,7 @@ interface ChatMessage {
   channelName?: string;
 }
 
-export default function ChatWindow({ gc }: ChatWindowProps) {
+export default function Chat({ gc }: ChatProps) {
   const [allMessages, setAllMessages] = useState<ChatMessage[]>([]);
   const [consoleMessages, setConsoleMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');

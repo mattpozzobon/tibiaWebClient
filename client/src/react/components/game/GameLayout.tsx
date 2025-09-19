@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import type GameClient from '../../../core/gameclient';
 import AudioManager from './AudioManager';
-import GameCanvas from './GameCanvas';
-import StandaloneComponents from './StandaloneComponents';
 import GameWindows from './GameWindows';
 import { layoutManager, type LayoutManagerState } from '../../services/LayoutManager';
 import './styles/GameLayout.scss';
 import GameUIManager from './GameUIManager';
-import Hud from './StandaloneComponents';
+import Hud from './HudComponents';
+import NotificationManager from './NotificationManager';
 
 interface GameLayoutProps {
   gameClient: GameClient | null;
@@ -27,7 +26,10 @@ const GameLayout: React.FC<GameLayoutProps> = ({ gameClient }) => {
     <>
       
       <AudioManager />
-      <GameCanvas />
+      <div id="game-container"></div>
+      <div id="debug-statistics"></div>
+      <NotificationManager />
+      <div id="achievement" className="canvas-notification hidden"></div>
 
       {gameClient && (
         <>

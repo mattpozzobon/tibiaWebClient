@@ -1,7 +1,7 @@
 import React from 'react';
 import type GameClient from '../../../core/gameclient';
 import TopbarIsland from './hud/TopbarIsland';
-import ChatWindowClean from './hud/ChatWindowClean';
+import Chat from './hud/Chat';
 import StatusBar from './hud/StatusBar';
 import PlayerBars from './hud/PlayerBars';
 
@@ -15,7 +15,7 @@ const Hud: React.FC<HudProps> = ({ gameClient }) => {
     <>
       <TopbarIsland gc={gameClient} />
       <PlayerBars gameClient={gameClient} />
-      <ChatWindowClean gc={gameClient} />
+      <Chat gc={gameClient} />
       <StatusBar gameClient={gameClient} />
     </>
   );

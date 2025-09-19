@@ -155,9 +155,6 @@ class ChatEventManager {
     });
   }
 
-  /**
-   * Register a callback to receive chat messages
-   */
   public onMessage(callback: (message: ChatMessageData) => void): () => void {
     this.messageCallbacks.add(callback);
     
@@ -167,9 +164,6 @@ class ChatEventManager {
     };
   }
 
-  /**
-   * Dispatch a custom chat event (for testing or other systems)
-   */
   public dispatchCreatureSpeech(data: CreatureSpeechEvent): void {
     const event = new CustomEvent('creature-speech', { detail: data });
     window.dispatchEvent(event);

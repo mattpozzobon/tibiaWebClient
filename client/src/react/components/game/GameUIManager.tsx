@@ -8,6 +8,7 @@ import OutfitModal from './modals/OutfitModal';
 import FriendModal from './modals/FriendModal';
 // import MapModal from './modals/MapModal';
 import ChatModal from './modals/ChatModal';
+import ChangelogModal from '../ChangelogModal';
 // import MoveItemModal from './modals/MoveItemModal';
 // import ConfirmModal from './modals/ConfirmModal';
 // import EnterNameModal from './modals/EnterNameModal';
@@ -15,7 +16,7 @@ import ChatModal from './modals/ChatModal';
 // import OfferModal from './modals/OfferModal';
 // import SpellbookModal from './modals/SpellbookModal';
 
-import ChatWindow from './hud/ChatWindowClean';
+import ChatWindow from './hud/Chat';
 // import FriendList from './FriendList';
 // import Hotbar from './Hotbar';
 // import PlayerStats from './PlayerStats';
@@ -37,6 +38,7 @@ export default function GameUIManager({ gc }: GameUIManagerProps) {
     // skills: { isOpen: false },
     outfit: { isOpen: false },
     friends: { isOpen: false },
+    changelog: { isOpen: false },
     // map: { isOpen: false },
     chat: { isOpen: false },
     // moveItem: { isOpen: false },
@@ -97,75 +99,10 @@ export default function GameUIManager({ gc }: GameUIManagerProps) {
       // toggleFriendList,
     };
 
-    // Listen for keyboard shortcuts
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey) {
-        switch (event.key.toLowerCase()) {
-          // case 'o':
-          //   event.preventDefault();
-          //   openModal('settings');
-          //   break;
-          // case 'k':
-          //   event.preventDefault();
-          //   openModal('skills');
-          //   break;
-          // case 'u':
-          //   event.preventDefault();
-          //   openModal('outfit');
-          //   break;
-          // case 'm':
-          //   event.preventDefault();
-          //   openModal('map');
-          //   break;
-          // case 'f':
-          //   event.preventDefault();
-          //   toggleFriendList();
-          //   break;
-          // case 'i':
-          //   event.preventDefault();
-          //   toggleInventory();
-          //   break;
-          case 't':
-            event.preventDefault();
-            if (event.shiftKey) {
-              openModal('chat');
-            } else {
-              toggleChat();
-            }
-            break;
-          // case 'b':
-          //   event.preventDefault();
-          //   openModal('battle');
-          //   break;
-          // case 'n':
-          //   event.preventDefault();
-          //   openModal('changelog');
-          //   break;
-          case 'g':
-            event.preventDefault();
-            // Logout functionality
-            localStorage.removeItem("auth_token");
-            location.reload();
-            break;
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      delete (window as any).reactUIManager;
-    };
   }, [openModal, closeModal, closeAllModals, toggleChat]);
 
   return (
     <div className="game-ui-manager">
-      {/* Main UI Panels */}
-      {showChat && (
-        <ChatWindow 
-          gc={gc}
-        />
-      )}
       
       {/* {showInventory && (
         <InventoryPanel 
@@ -202,7 +139,7 @@ export default function GameUIManager({ gc }: GameUIManagerProps) {
         isOpen={modals.skills.isOpen}
         onClose={() => closeModal('skills')}
         gc={gc}
-      />
+      /> */}
       
       <OutfitModal 
         isOpen={modals.outfit.isOpen}
@@ -216,7 +153,12 @@ export default function GameUIManager({ gc }: GameUIManagerProps) {
         gc={gc}
       />
       
-      <MapModal 
+      <ChangelogModal 
+        isVisible={modals.changelog.isOpen}
+        onClose={() => closeModal('changelog')}
+      />
+      
+      {/* <MapModal 
         isOpen={modals.map.isOpen}
         onClose={() => closeModal('map')}
         gc={gc}

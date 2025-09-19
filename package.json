@@ -1,6 +1,10 @@
 {
   "scripts": {
-    "build": "webpack --config webpack.config.js",
+    "build": "webpack --config webpack.config.js --mode production",
+    "build:dev": "webpack --config webpack.config.js --mode development",
+    "watch": "webpack --config webpack.config.js --mode development --watch",
+    "dev": "concurrently \"npm run watch\" \"py client-server.py\"",
+    "start": "npm run dev",
     "upload:data": "node scripts/upload-data.mjs"
   },
   "devDependencies": {
@@ -11,9 +15,11 @@
     "@types/react-dom": "^19.1.9",
     "@types/webpack": "^5.28.5",
     "babel-loader": "^9.2.1",
+    "concurrently": "^9.2.1",
     "css-loader": "^7.1.2",
     "dotenv-webpack": "^8.1.0",
     "html-loader": "^5.1.0",
+    "nodemon": "^3.1.10",
     "sass": "^1.92.1",
     "sass-loader": "^16.0.5",
     "style-loader": "^4.0.0",

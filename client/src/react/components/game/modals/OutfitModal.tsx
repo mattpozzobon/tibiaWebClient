@@ -3,6 +3,7 @@ import type GameClient from '../../../../core/gameclient';
 import Outfit from '../../../../game/outfit';
 import { OutfitChangePacket } from '../../../../core/protocol';
 import { renderOutfitToCanvas } from '../../../../utils/outfit-renderer'; // <- helper with {faceDirection, animate, padding, background}
+import BaseModal from '../../shared/BaseModal';
 import './styles/OutfitModal.scss';
 
 interface OutfitModalProps {
@@ -110,15 +111,32 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
 
   if (!isOpen || !gc.player || !outfit) return null;
 
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="outfit-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Outfit</h2>
-          <button className="modal-close" onClick={onClose}>×</button>
-        </div>
+  const footer = (
+    <>
+      <div className="footer-controls">
+        <button 
+          onClick={() => setAnimate(!animate)} 
+          className={`animate-btn ${animate ? 'active' : ''}`}
+        >
+          Animate
+        </button>
+      </div>
+      <div className="footer-buttons">
+        <button className="btn-secondary" onClick={onClose}>Cancel</button>
+        <button className="btn-primary" onClick={handleConfirm}>Confirm</button>
+      </div>
+    </>
+  );
 
-        <div className="modal-content">
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Outfit"
+      footer={footer}
+      size="large"
+      className="outfit-modal"
+    >
           
           <div className="outfit-preview">
             <canvas
@@ -190,23 +208,6 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
               ))}
             </div>
           </div>
-        </div>
-
-        <div className="modal-footer">
-          <div className="footer-controls">
-            <button 
-              onClick={() => setAnimate(!animate)} 
-              className={`animate-btn ${animate ? 'active' : ''}`}
-            >
-              Animate
-            </button>
-          </div>
-          <div className="footer-buttons">
-            <button className="btn-cancel" onClick={onClose}>Cancel</button>
-            <button className="btn-confirm" onClick={handleConfirm}>Confirm</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    </BaseModal>
   );
 }

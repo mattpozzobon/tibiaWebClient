@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type GameClient from '../../../../core/gameclient';
 import { FriendAddPacket, FriendRemovePacket } from '../../../../core/protocol';
+import BaseModal from '../../shared/BaseModal';
 import './styles/FriendModal.scss';
 
 interface FriendModalProps {
@@ -143,29 +144,29 @@ export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
   if (!isOpen || !gc.player) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="friend-modal" ref={modalRef} onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Friends</h2>
-          <button className="modal-close" onClick={onClose}>×</button>
-        </div>
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Friends"
+      size="medium"
+      className="friend-modal"
+    >
+      <div className="modal-tabs">
+        <button 
+          className={`tab-button ${activeTab === 'friends' ? 'active' : ''}`}
+          onClick={() => setActiveTab('friends')}
+        >
+          Friends ({friends.length})
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'requests' ? 'active' : ''}`}
+          onClick={() => setActiveTab('requests')}
+        >
+          Requests ({friendRequests.length})
+        </button>
+      </div>
 
-        <div className="modal-tabs">
-          <button 
-            className={`tab-button ${activeTab === 'friends' ? 'active' : ''}`}
-            onClick={() => setActiveTab('friends')}
-          >
-            Friends ({friends.length})
-          </button>
-          <button 
-            className={`tab-button ${activeTab === 'requests' ? 'active' : ''}`}
-            onClick={() => setActiveTab('requests')}
-          >
-            Requests ({friendRequests.length})
-          </button>
-        </div>
-
-        <div className="modal-content">
+      <div className="modal-content">
           {activeTab === 'friends' && (
             <>
               <div className="add-friend-section">
@@ -252,27 +253,26 @@ export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
             </div>
           )}
 
-        </div>
-
-        {contextMenu.visible && (
-          <div 
-            className="context-menu"
-            style={{
-              position: 'fixed',
-              left: contextMenu.x,
-              top: contextMenu.y,
-              zIndex: 1000
-            }}
-          >
-            <button 
-              className="context-menu-item"
-              onClick={() => handleContextMenuAction('remove', contextMenu.friendName)}
-            >
-              Remove Friend
-            </button>
-          </div>
-        )}
       </div>
-    </div>
+
+      {contextMenu.visible && (
+        <div 
+          className="context-menu"
+          style={{
+            position: 'fixed',
+            left: contextMenu.x,
+            top: contextMenu.y,
+            zIndex: 1000
+          }}
+        >
+          <button 
+            className="context-menu-item"
+            onClick={() => handleContextMenuAction('remove', contextMenu.friendName)}
+          >
+            Remove Friend
+          </button>
+        </div>
+      )}
+    </BaseModal>
   );
 }

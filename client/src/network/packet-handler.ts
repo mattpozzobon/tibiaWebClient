@@ -540,6 +540,7 @@ class PacketHandler {
   }
 
   handleReadText(packet: any): void {
+    console.log('handleReadText: ', packet);
     window.gameClient.interface.modalManager.open("readable-modal", packet);
   }
 

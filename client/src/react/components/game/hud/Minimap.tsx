@@ -21,7 +21,7 @@ interface MinimapProps {
 
 export default function Minimap({ gc }: MinimapProps) {
   const player = usePlayer(gc);
-
+  
   // Refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const minimapCanvasRef = useRef<Canvas | null>(null);
@@ -288,19 +288,19 @@ export default function Minimap({ gc }: MinimapProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.imageSmoothingEnabled = false;
+        ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, MINIMAP_CONFIG.CANVAS_SIZE, MINIMAP_CONFIG.CANVAS_SIZE);
-
+        
     const { sourceSize, sourceOffset } = computeZoomWindow();
-    ctx.drawImage(
-      minimap.canvas,
-      sourceOffset, sourceOffset, sourceSize, sourceSize,
+        ctx.drawImage(
+          minimap.canvas,
+          sourceOffset, sourceOffset, sourceSize, sourceSize,
       0, 0, MINIMAP_CONFIG.CANVAS_SIZE, MINIMAP_CONFIG.CANVAS_SIZE
-    );
-
+        );
+        
     // overlays
     drawMarkersOnFinalCanvas(ctx);
-    drawPlayerIndicator(ctx);
+        drawPlayerIndicator(ctx);
   }, [renderLayer, computeZoomWindow, drawMarkersOnFinalCanvas, drawPlayerIndicator, getQuantizedCenter]);
 
   const chunkUpdate = useCallback((chunks: any) => {
@@ -393,7 +393,7 @@ export default function Minimap({ gc }: MinimapProps) {
         prevCenterRef.current = null;
         gc.database.saveMinimapChunksForCurrentLevel();
       }
-
+      
       if (isFollowingPlayer) setViewCenter(p.x, p.y, p.z);
 
       const focus = isFollowingPlayer ? p : getQuantizedCenter();
@@ -469,65 +469,109 @@ export default function Minimap({ gc }: MinimapProps) {
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
 
-    const { worldX, worldY } = finalCanvasToWorld(x, y);
+     const { worldX, worldY } = finalCanvasToWorld(x, y);
+     
+     // Snap to tile position
+     const tileX = Math.round(worldX);
+     const tileY = Math.round(worldY);
 
-    PerformanceMonitor.start(PERFORMANCE_LABELS.COLLISION_DETECTION);
-    const clicked = markers.find(m => {
-      // hit-test around the tile center (same anchor used for drawing)
-      const { cx, cy } = worldTileCenterToFinal(m.x, m.y);
-      const tol = MINIMAP_CONFIG.CLICK_TOLERANCE;
-      const dx = x - cx;
-      const dy = y - cy;
-      const img = markerImages[m.icon];
-      if (img && img.complete && img.naturalWidth > 0) {
-        const halfW = img.naturalWidth / 2;
-        const fullH = img.naturalHeight;
-        return Math.abs(dx) <= halfW && dy >= -fullH && dy <= 0;
-      }
-      return (dx * dx + dy * dy) <= tol * tol;
-    });
-    PerformanceMonitor.end(PERFORMANCE_LABELS.COLLISION_DETECTION);
+     PerformanceMonitor.start(PERFORMANCE_LABELS.COLLISION_DETECTION);
+     // First check if we clicked on a marker's tile (tile-based collision)
+     const clickedByTile = markers.find(m => 
+       Math.round(m.x) === tileX && Math.round(m.y) === tileY && m.floor === currentFloorRef.current
+     );
+     
+     // If no tile-based match, check visual hit detection
+     const clicked = clickedByTile || markers.find(m => {
+       // hit-test around the tile center (same anchor used for drawing)
+       const { cx, cy } = worldTileCenterToFinal(m.x, m.y);
+       const tol = MINIMAP_CONFIG.CLICK_TOLERANCE;
+       const dx = x - cx;
+       const dy = y - cy;
+       const img = markerImages[m.icon];
+       if (img && img.complete && img.naturalWidth > 0) {
+         const halfW = img.naturalWidth / 2;
+         const fullH = img.naturalHeight;
+         return Math.abs(dx) <= halfW && dy >= -fullH && dy <= 0;
+       }
+       return (dx * dx + dy * dy) <= tol * tol;
+     });
+     PerformanceMonitor.end(PERFORMANCE_LABELS.COLLISION_DETECTION);
 
-    if (clicked) {
-      setContextMenu({ visible: true, x: event.clientX, y: event.clientY });
-      setEditMarkerModal({ visible: false, marker: clicked });
-    } else {
-      setCreateMarkerModal({ visible: false, x: worldX, y: worldY, floor: currentFloorRef.current });
-      setEditMarkerModal({ visible: false, marker: null });
-      setContextMenu({ visible: true, x: event.clientX, y: event.clientY });
-    }
+     if (clicked) {
+       setContextMenu({ visible: true, x: event.clientX, y: event.clientY });
+       setEditMarkerModal({ visible: false, marker: clicked });
+     } else {
+       // Check if there's already a marker on this exact tile
+       const existingMarker = markers.find(m => m.x === tileX && m.y === tileY && m.floor === currentFloorRef.current);
+       
+       if (existingMarker) {
+         // If there's already a marker on this tile, show edit options for it
+         setContextMenu({ visible: true, x: event.clientX, y: event.clientY });
+         setEditMarkerModal({ visible: false, marker: existingMarker });
+       } else {
+         // No marker on this tile, allow creation
+         setCreateMarkerModal({ visible: false, x: tileX, y: tileY, floor: currentFloorRef.current });
+         setEditMarkerModal({ visible: false, marker: null });
+         setContextMenu({ visible: true, x: event.clientX, y: event.clientY });
+       }
+     }
   }, [player, markers, markerImages, finalCanvasToWorld, worldTileCenterToFinal]);
 
-  // Hover / magnifier
-  const handleCanvasMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
-    const rect = (event.currentTarget as HTMLCanvasElement).getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+   // Hover / magnifier
+   const handleCanvasMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+     const rect = (event.currentTarget as HTMLCanvasElement).getBoundingClientRect();
+     const x = event.clientX - rect.left;
+     const y = event.clientY - rect.top;
 
-    const magnifierSize = 120, offset = 20;
-    let displayX = event.clientX - magnifierSize - offset;
-    let displayY = event.clientY - magnifierSize / 2;
-    if (displayX < 10) displayX = event.clientX + offset;
-    if (displayY < 10) displayY = 10;
-    if (displayY + magnifierSize > window.innerHeight - 10) displayY = window.innerHeight - magnifierSize - 10;
+     // Fixed position: overlapping the minimap slightly, more downwards and right
+     const magnifierSize = 120;
+     const offset = 10;
+     
+     // Position to the right, overlapping the minimap slightly
+     let displayX = rect.right - 40; // Overlap 40px into the minimap
+     if (displayX + magnifierSize > window.innerWidth - 10) {
+       displayX = rect.left - magnifierSize + 40; // Fallback to left side with overlap
+     }
+     
+     // Position further down, overlapping the minimap slightly
+     let displayY = rect.bottom - 20; // Overlap 20px into the minimap
+     if (displayY + magnifierSize > window.innerHeight - 10) {
+       displayY = rect.top - magnifierSize + 20; // Above with overlap if no room below
+     }
 
-    setMagnifier({ visible: true, x, y, mouseX: event.clientX, mouseY: event.clientY, displayX, displayY });
+     setMagnifier({ visible: true, x, y, mouseX: event.clientX, mouseY: event.clientY, displayX, displayY });
 
     if (!player) { setHoveredMarker(null); return; }
 
-    let over: MapMarker | null = null;
-    for (const m of markers) {
-      const { cx, cy } = worldTileCenterToFinal(m.x, m.y);
-      const tol = MINIMAP_CONFIG.HOVER_TOLERANCE;
-      const dx = x - cx;
-      const dy = y - cy;
-      const img = markerImages[m.icon];
-      if (img && img.complete && img.naturalWidth > 0) {
-        const halfW = img.naturalWidth / 2;
-        const fullH = img.naturalHeight;
-        if (Math.abs(dx) <= halfW && dy >= -fullH && dy <= 0) { over = m; break; }
-      } else if (dx * dx + dy * dy <= tol * tol) { over = m; break; }
-    }
+     // Get the tile position for hover detection
+     const { worldX: hoverWorldX, worldY: hoverWorldY } = finalCanvasToWorld(x, y);
+     const hoverTileX = Math.round(hoverWorldX);
+     const hoverTileY = Math.round(hoverWorldY);
+     
+     let over: MapMarker | null = null;
+     // First check for tile-based hover (if hovering over any part of a tile with a marker)
+     const hoverByTile = markers.find(m => 
+       Math.round(m.x) === hoverTileX && Math.round(m.y) === hoverTileY && m.floor === currentFloorRef.current
+     );
+     
+     if (hoverByTile) {
+       over = hoverByTile;
+     } else {
+       // Fallback to visual hover detection
+       for (const m of markers) {
+         const { cx, cy } = worldTileCenterToFinal(m.x, m.y);
+         const tol = MINIMAP_CONFIG.HOVER_TOLERANCE;
+         const dx = x - cx;
+         const dy = y - cy;
+         const img = markerImages[m.icon];
+         if (img && img.complete && img.naturalWidth > 0) {
+           const halfW = img.naturalWidth / 2;
+           const fullH = img.naturalHeight;
+           if (Math.abs(dx) <= halfW && dy >= -fullH && dy <= 0) { over = m; break; }
+         } else if (dx * dx + dy * dy <= tol * tol) { over = m; break; }
+       }
+     }
     setHoveredMarker(over);
   }, [player, markers, markerImages, worldTileCenterToFinal]);
 
@@ -548,28 +592,44 @@ export default function Minimap({ gc }: MinimapProps) {
 
   const handleMouseUp = useCallback(() => { isPanningRef.current = false; }, []);
 
-  const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (skipNextClickRef.current) { skipNextClickRef.current = false; return; }
-    if (!player || !markers.length) return;
+   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+     if (skipNextClickRef.current) { skipNextClickRef.current = false; return; }
+     if (!player || !markers.length) return;
 
-    const rect = (event.currentTarget as HTMLCanvasElement).getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+     const rect = (event.currentTarget as HTMLCanvasElement).getBoundingClientRect();
+     const x = event.clientX - rect.left;
+     const y = event.clientY - rect.top;
 
-    for (const m of markers) {
-      const { cx, cy } = worldTileCenterToFinal(m.x, m.y);
-      const tol = MINIMAP_CONFIG.CLICK_TOLERANCE;
-      const dx = x - cx;
-      const dy = y - cy;
+     // Get tile position for click
+     const { worldX: clickWorldX, worldY: clickWorldY } = finalCanvasToWorld(x, y);
+     const clickTileX = Math.round(clickWorldX);
+     const clickTileY = Math.round(clickWorldY);
 
-      const img = markerImages[m.icon];
-      if (img && img.complete && img.naturalWidth > 0) {
-        const halfW = img.naturalWidth / 2;
-        const fullH = img.naturalHeight;
-        if (Math.abs(dx) <= halfW && dy >= -fullH && dy <= 0) { setEditMarkerModal({ visible: true, marker: m }); return; }
-      } else if (dx * dx + dy * dy <= tol * tol) { setEditMarkerModal({ visible: true, marker: m }); return; }
-    }
-  }, [player, markers, markerImages, worldTileCenterToFinal]);
+     // First check for tile-based click
+     const clickedByTile = markers.find(m => 
+       Math.round(m.x) === clickTileX && Math.round(m.y) === clickTileY && m.floor === currentFloorRef.current
+     );
+
+     if (clickedByTile) {
+       setEditMarkerModal({ visible: true, marker: clickedByTile });
+       return;
+     }
+
+     // Fallback to visual click detection
+     for (const m of markers) {
+       const { cx, cy } = worldTileCenterToFinal(m.x, m.y);
+       const tol = MINIMAP_CONFIG.CLICK_TOLERANCE;
+       const dx = x - cx;
+       const dy = y - cy;
+
+       const img = markerImages[m.icon];
+       if (img && img.complete && img.naturalWidth > 0) {
+         const halfW = img.naturalWidth / 2;
+         const fullH = img.naturalHeight;
+         if (Math.abs(dx) <= halfW && dy >= -fullH && dy <= 0) { setEditMarkerModal({ visible: true, marker: m }); return; }
+       } else if (dx * dx + dy * dy <= tol * tol) { setEditMarkerModal({ visible: true, marker: m }); return; }
+     }
+   }, [player, markers, markerImages, worldTileCenterToFinal, finalCanvasToWorld, currentFloorRef]);
 
   const handleDoubleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = (event.currentTarget as HTMLCanvasElement).getBoundingClientRect();
@@ -648,7 +708,7 @@ export default function Minimap({ gc }: MinimapProps) {
 
   return (
     <MinimapErrorBoundary>
-      <div className="minimap-container">
+    <div className="minimap-container">
         {/* Zoom + Follow */}
         <div className="minimap-zoom-controls">
           <button className="zoom-button zoom-in" onClick={handleZoomIn} disabled={zoomLevel >= 8} title="Zoom In">+</button>
@@ -668,12 +728,12 @@ export default function Minimap({ gc }: MinimapProps) {
           </button>
         </div>
 
-        <div className="minimap-canvas-container">
-          <canvas
-            ref={canvasRef}
+      <div className="minimap-canvas-container">
+        <canvas
+          ref={canvasRef}
             width={MINIMAP_CONFIG.CANVAS_SIZE}
             height={MINIMAP_CONFIG.CANVAS_SIZE}
-            className="minimap-canvas"
+          className="minimap-canvas"
             onContextMenu={handleCanvasRightClick}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
@@ -701,14 +761,12 @@ export default function Minimap({ gc }: MinimapProps) {
           y={contextMenu.y}
           items={editMarkerModal.marker ? [
             { label: 'Edit Marker', onClick: () => setEditMarkerModal(prev => ({ ...prev, visible: true })) },
-            { label: 'Delete Marker', onClick: async () => {
-                const m = editMarkerModal.marker;
-                if (!m || !gc.database) return;
-                if (confirm(`Delete marker "${m.description || 'Untitled'}"?`)) {
-                  try { await gc.database.deleteMapMarker(m.id); await loadMarkers(); }
-                  catch { alert('Failed to delete marker'); }
-                }
-              }, className: 'delete' }
+             { label: 'Delete Marker', onClick: async () => {
+                 const m = editMarkerModal.marker;
+                 if (!m || !gc.database) return;
+                 try { await gc.database.deleteMapMarker(m.id); await loadMarkers(); }
+                 catch { alert('Failed to delete marker'); }
+               }, className: 'delete' }
           ] : [
             { label: 'Create Marker', onClick: () => setCreateMarkerModal(prev => ({ ...prev, visible: true })) }
           ]}

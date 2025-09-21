@@ -8,16 +8,24 @@ interface MinimapProps {
   gc: GameClient;
 }
 
+// Constants
+const ZOOM_LEVEL = 4;
+const CANVAS_SIZE = 160;
+const CENTER_POINT = CANVAS_SIZE / 2;
+
 export default function Minimap({ gc }: MinimapProps) {
+  // Refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const minimapCanvasRef = useRef<Canvas | null>(null);
-  const [renderLayer, setRenderLayer] = useState(0);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [isReady, setIsReady] = useState(false);
   const chunksRef = useRef<any>({});
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastPlayerPositionRef = useRef<Position | null>(null);
   const lastPlayerFloorRef = useRef<number | null>(null);
+
+  // State
+  const [renderLayer, setRenderLayer] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   // Minimap colors (converted from hex to RGB for canvas)
   const colors = useRef([
@@ -50,81 +58,26 @@ export default function Minimap({ gc }: MinimapProps) {
     0xFFCCCCFF, 0xFFFFCCFF, 0xFF00FFFF, 0xFF33FFFF, 0xFF66FFFF, 0xFF99FFFF, 0xFFCCFFFF, 0xFFFFFFFF
   ]);
 
-  // Initialize minimap canvas - use a separate effect that runs after render
+  // Initialize minimap canvas
   useEffect(() => {
-    const initCanvas = () => {
-      if (!minimapCanvasRef.current) {
-        try {
-          // Create a new off-screen canvas for minimap rendering
-          minimapCanvasRef.current = new Canvas(null, 160, 160);
-          console.log('Minimap canvas initialized successfully');
-          setIsInitialized(true);
-        } catch (error) {
-          console.error('Failed to initialize minimap canvas:', error);
-        }
-      }
-    };
-
-    // Try to initialize immediately
-    initCanvas();
-
-    // If not successful, retry with longer delays
     if (!minimapCanvasRef.current) {
-      console.log('Canvas initialization failed, retrying...');
-      const timeout1 = setTimeout(initCanvas, 100);
-      const timeout2 = setTimeout(initCanvas, 500);
-      const timeout3 = setTimeout(initCanvas, 1000);
-      
-      return () => {
-        clearTimeout(timeout1);
-        clearTimeout(timeout2);
-        clearTimeout(timeout3);
-      };
+      try {
+        minimapCanvasRef.current = new Canvas(null, CANVAS_SIZE, CANVAS_SIZE);
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('Failed to initialize minimap canvas:', error);
+      }
     }
   }, []);
-
-  // Separate effect to ensure canvas ref is available for display
-  useEffect(() => {
-    console.log('Canvas ref status:', {
-      hasCanvasRef: !!canvasRef.current,
-      hasMinimapCanvas: !!minimapCanvasRef.current,
-      isInitialized
-    });
-  }, [canvasRef.current, isInitialized]);
 
   // Check if game client is ready for minimap
   useEffect(() => {
     const checkReady = () => {
       const ready = !!(gc.player && gc.world && gc.database && isInitialized);
       
-      // Enhanced debugging to see what's actually in the game client
-      console.log('🔍 Detailed game client state:', {
-        isInitialized,
-        hasPlayer: !!gc.player,
-        hasWorld: !!gc.world,
-        hasDatabase: !!gc.database,
-        playerObject: gc.player ? {
-          exists: true,
-          position: gc.player.getPosition?.() || 'no getPosition method',
-          name: gc.player.vitals.name || 'no name'
-        } : null,
-        worldObject: gc.world ? {
-          exists: true,
-          chunks: gc.world.chunks?.length || 'no chunks',
-        } : null,
-        gameClientKeys: Object.keys(gc),
-        ready,
-        note: !gc.player ? 'Player object missing from game client' : 
-              !gc.world ? 'World object missing from game client' : 
-              !isInitialized ? 'Canvas initialization in progress' : 'All systems ready'
-      });
       
-      if (ready && !isReady) {
-        setIsReady(true);
-        console.log('🎉 Minimap is now ready!');
-      } else if (!ready && isReady) {
-        setIsReady(false);
-        console.log('⚠️ Minimap is no longer ready');
+      if (ready !== isReady) {
+        setIsReady(ready);
       }
     };
 
@@ -137,13 +90,8 @@ export default function Minimap({ gc }: MinimapProps) {
     }
     initTimeoutRef.current = setTimeout(checkReady, 1000);
 
-    // Set up a periodic check every 2 seconds to monitor login progress
-    const periodicCheck = setInterval(() => {
-      if (!isReady) {
-        console.log('⏰ Periodic check - still waiting for game client...');
-        checkReady();
-      }
-    }, 2000);
+    // Set up a periodic check to monitor login progress
+    const periodicCheck = setInterval(checkReady, 2000);
 
     return () => {
       if (initTimeoutRef.current) {
@@ -188,22 +136,12 @@ export default function Minimap({ gc }: MinimapProps) {
     });
   }, [gc.world, gc.player, gc.database, getTileColor]);
 
-  // Simple function to draw player indicator at center
+  // Draw pixel-perfect player indicator
   const drawPlayerIndicator = useCallback((ctx: CanvasRenderingContext2D) => {
     if (!gc.player) return;
     
-    // Player is always at the center of the minimap (80, 80)
-    const centerX = 80;
-    const centerY = 80;
-    
-    // Draw player indicator with better visibility
     ctx.fillStyle = '#ff0000';
-    ctx.fillRect(centerX - 2, centerY - 2, 4, 4);
-    
-    // Add white border for better visibility
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(centerX - 2, centerY - 2, 4, 4);
+    ctx.fillRect(CENTER_POINT, CENTER_POINT, ZOOM_LEVEL, ZOOM_LEVEL);
   }, [gc.player]);
 
   const render = useCallback((chunks: any) => {
@@ -221,31 +159,30 @@ export default function Minimap({ gc }: MinimapProps) {
       
       minimap.context.putImageData(
         chunk.imageData,
-        x * 128 - gc.player!.getPosition().x + 80,
-        y * 128 - gc.player!.getPosition().y + 80
+        x * 128 - gc.player!.getPosition().x + CENTER_POINT,
+        y * 128 - gc.player!.getPosition().y + CENTER_POINT
       );
     });
 
-    // Copy to display canvas with 2x zoom for better visibility
+    // Copy to display canvas with zoom
     if (canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d');
       if (ctx) {
         // Disable image smoothing for sharp pixel-perfect scaling
         ctx.imageSmoothingEnabled = false;
-        ctx.clearRect(0, 0, 160, 160);
+        ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
         
-        // Apply 4x zoom - take 40x40 from center and scale to 160x160
-        const zoomLevel = 4;
-        const sourceSize = 160 / zoomLevel; // 40x40 source area
-        const sourceOffset = (160 - sourceSize) / 2; // Center the source area
+        // Apply zoom - take smaller area from center and scale to full canvas
+        const sourceSize = CANVAS_SIZE / ZOOM_LEVEL;
+        const sourceOffset = (CANVAS_SIZE - sourceSize) / 2;
         
         ctx.drawImage(
           minimap.canvas,
-          sourceOffset, sourceOffset, sourceSize, sourceSize, // Source: 80x80 from center
-          0, 0, 160, 160 // Destination: full 160x160 canvas
+          sourceOffset, sourceOffset, sourceSize, sourceSize,
+          0, 0, CANVAS_SIZE, CANVAS_SIZE
         );
         
-        // Draw player position indicator (always at center)
+        // Draw player indicator
         drawPlayerIndicator(ctx);
       }
     }
@@ -261,23 +198,22 @@ export default function Minimap({ gc }: MinimapProps) {
     if (!gc.player || !gc.database || !gc.world) return;
 
     const position = gc.player.getPosition();
-
-    // Bounding rectangle for the minimap (centered on player)
-    // Use current player's floor for all positions
     const currentFloor = position.z;
+    const radius = CENTER_POINT;
+
+    // Generate positions for minimap area
     const positions = [
       new Position(position.x, position.y, currentFloor),
-      new Position(position.x - 80, position.y - 80, currentFloor),
-      new Position(position.x, position.y - 80, currentFloor),
-      new Position(position.x + 80, position.y - 80, currentFloor),
-      new Position(position.x + 80, position.y, currentFloor),
-      new Position(position.x + 80, position.y + 80, currentFloor),
-      new Position(position.x, position.y + 80, currentFloor),
-      new Position(position.x - 80, position.y + 80, currentFloor),
-      new Position(position.x - 80, position.y, currentFloor)
+      new Position(position.x - radius, position.y - radius, currentFloor),
+      new Position(position.x, position.y - radius, currentFloor),
+      new Position(position.x + radius, position.y - radius, currentFloor),
+      new Position(position.x + radius, position.y, currentFloor),
+      new Position(position.x + radius, position.y + radius, currentFloor),
+      new Position(position.x, position.y + radius, currentFloor),
+      new Position(position.x - radius, position.y + radius, currentFloor),
+      new Position(position.x - radius, position.y, currentFloor)
     ];
 
-    // Preemptively load the chunks
     try {
       gc.database.preloadMinimapChunks(positions, chunkUpdate);
     } catch (error) {
@@ -292,7 +228,6 @@ export default function Minimap({ gc }: MinimapProps) {
       setRenderLayer(playerZ);
       lastPlayerFloorRef.current = playerZ;
       lastPlayerPositionRef.current = gc.player.getPosition();
-      console.log('Setting initial render layer to:', playerZ);
       cache();
     }
   }, [isReady, gc.player, cache]);
@@ -319,22 +254,19 @@ export default function Minimap({ gc }: MinimapProps) {
       const currentPosition = gc.player.getPosition();
       const currentFloor = currentPosition.z;
       
-      // Check if player moved to a different floor
+      // Handle floor changes
       if (lastPlayerFloorRef.current !== null && lastPlayerFloorRef.current !== currentFloor) {
-        console.log(`Player moved from floor ${lastPlayerFloorRef.current} to floor ${currentFloor}`);
         setRenderLayer(currentFloor);
         lastPlayerFloorRef.current = currentFloor;
-        
-        // Clear existing chunks and refresh for new floor
         chunksRef.current = {};
-        cache(); // Refresh chunks for new floor
+        cache();
         return;
       }
       
-      // Update minimap immediately on every move
-      cache(); // Refresh chunks for current position
+      // Update minimap on every move
+      cache();
       
-      // Also trigger immediate render with current chunks if available
+      // Immediate render with current chunks
       if (chunksRef.current && Object.keys(chunksRef.current).length > 0) {
         updateChunks(chunksRef.current);
         render(chunksRef.current);
@@ -397,8 +329,8 @@ export default function Minimap({ gc }: MinimapProps) {
       <div className="minimap-canvas-container">
         <canvas
           ref={canvasRef}
-          width={160}
-          height={160}
+          width={CANVAS_SIZE}
+          height={CANVAS_SIZE}
           className="minimap-canvas"
         />
       </div>

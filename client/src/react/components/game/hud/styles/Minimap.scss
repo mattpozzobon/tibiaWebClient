@@ -50,6 +50,16 @@
     opacity: 0.3;
     cursor: not-allowed;
   }
+  
+  &.follow {
+    font-size: 12px;
+    padding: 0 4px;
+    
+    &.active {
+      background: rgba(0, 122, 204, 0.9);
+      border-color: #007acc;
+    }
+  }
 }
 
 .zoom-in {

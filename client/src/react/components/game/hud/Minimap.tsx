@@ -4,7 +4,7 @@ import Position from '../../../../game/position';
 import Canvas from '../../../../renderer/canvas';
 import { usePlayer } from '../../../hooks/usePlayerAttribute';
 import { MapMarker } from '../../../../types/map-marker';
-import { MINIMAP_CONFIG, PERFORMANCE_LABELS, MINIMAP_COLORS_EARTHY } from '../../../../config/minimap-config';
+import { MINIMAP_CONFIG, MINIMAP_COLORS_EARTHY } from '../../../../config/minimap-config';
 import { ImageLoader } from '../../../../utils/image-loader';
 import { MarkerSpatialIndex } from '../../../../utils/spatial-index';
 import { MemoryManager } from '../../../../utils/memory-manager';
@@ -645,11 +645,6 @@ export default function Minimap({ gc }: MinimapProps) {
   return (
     <MinimapErrorBoundary>
       <div className="minimap-container">
-        <div className="minimap-zoom-controls">
-          <button className="zoom-button zoom-in" onClick={handleZoomIn} disabled={zoomLevel >= 8} title="Zoom In">+</button>
-          <button className="zoom-button zoom-out" onClick={handleZoomOut} disabled={zoomLevel <= 1} title="Zoom Out">−</button>
-        </div>
-
         <div className="minimap-canvas-container">
           <canvas
             ref={canvasRef}
@@ -672,6 +667,12 @@ export default function Minimap({ gc }: MinimapProps) {
               <canvas ref={magnifierCanvasRef} width="120" height="120" />
             </div>
           )}
+
+          {/* Zoom controls inside minimap */}
+          <div className="minimap-zoom-controls">
+            <button className="zoom-button zoom-in" onClick={handleZoomIn} disabled={zoomLevel >= 8} title="Zoom In">+</button>
+            <button className="zoom-button zoom-out" onClick={handleZoomOut} disabled={zoomLevel <= 1} title="Zoom Out">−</button>
+          </div>
         </div>
 
         <ContextMenu

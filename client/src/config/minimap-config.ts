@@ -1,8 +1,8 @@
 export const MINIMAP_CONFIG = {
   // Canvas configuration
-  CANVAS_SIZE: 160,
+  CANVAS_SIZE: 240,
   ZOOM_LEVEL: 4,
-  CENTER_POINT: 80,
+  CENTER_POINT: 120,
   
   // Magnifier configuration
   MAGNIFIER_SIZE: 120,

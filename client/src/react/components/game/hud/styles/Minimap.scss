@@ -1,23 +1,23 @@
 /* Minimap HUD Component Styles */
 
-.minimap-container {
-  position: fixed;
-  bottom: 10px;
-  right: 10px;
-  width: 220px;
-  height: 220px;
-  user-select: none;
-  z-index: 1000;
-}
+  .minimap-container {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: 300px;
+    height: 300px;
+    user-select: none;
+    z-index: 1000;
+  }
 
 /* Zoom controls */
 .minimap-zoom-controls {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   z-index: 1001;
 }
 
@@ -73,15 +73,15 @@
 }
 
 
-.minimap-canvas-container {
-  position: relative;
-  width: 160px;
-  height: 160px;
-  margin: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+  .minimap-canvas-container {
+    position: relative;
+    width: 240px;
+    height: 240px;
+    margin: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 
 .minimap-canvas {
   border: 2px solid #444;
@@ -152,18 +152,18 @@
 
 
 /* Responsive design */
-@media (max-width: 768px) {
-  .minimap-container {
-    width: 160px;
-    height: 160px;
-  }
+  @media (max-width: 768px) {
+    .minimap-container {
+      width: 240px;
+      height: 240px;
+    }
 
-  .minimap-canvas-container {
-    width: 140px;
-    height: 140px;
-    margin: 10px;
+    .minimap-canvas-container {
+      width: 220px;
+      height: 220px;
+      margin: 10px;
+    }
   }
-}
 
 /* Animation for smooth transitions */
 .minimap-canvas {

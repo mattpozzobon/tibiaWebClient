@@ -53,6 +53,40 @@
   z-index: 1;
 }
 
+/* Marker tooltip styles */
+.marker-tooltip {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 10000;
+}
+
+/* Magnifier styles */
+.minimap-magnifier {
+  position: fixed;
+  width: 120px;
+  height: 120px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+  z-index: 1001;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+
+  canvas {
+    width: 120px;
+    height: 120px;
+    pointer-events: none;
+  }
+}
+
 
 
 /* Responsive design */

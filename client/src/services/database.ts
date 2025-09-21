@@ -299,6 +299,28 @@ export default class Database {
     });
   }
 
+  // Batch marker operations for better performance
+  public async batchUpdateMarkers(markers: MapMarker[]): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const transaction = this.createTransaction(this.MARKERS_STORE, "readwrite");
+      
+      const promises = markers.map(marker => {
+        return new Promise<void>((resolve, reject) => {
+          const request = transaction.put(marker);
+          request.onsuccess = () => resolve();
+          request.onerror = () => reject(request.error);
+        });
+      });
+
+      Promise.all(promises)
+        .then(() => {
+          console.log(`Batch updated ${markers.length} markers successfully`);
+          resolve();
+        })
+        .catch(reject);
+    });
+  }
+
   public async getMapMarker(markerId: string): Promise<MapMarker | null> {
     return new Promise((resolve, reject) => {
       const markerStore = this.createTransaction(this.MARKERS_STORE, "readonly");

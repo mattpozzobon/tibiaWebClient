@@ -1,4 +1,5 @@
 import AssetManager from "./asset-manager";
+import { MapMarker } from "../types/map-marker";
 
 
 interface MinimapChunk {
@@ -23,6 +24,7 @@ export default class Database {
   private readonly DATABASE_VERSION = parseInt(process.env.DATABASE_VERSION!, 10);
   private readonly MINIMAP_STORE = "minimap";
   private readonly FILES_STORE = "files";
+  private readonly MARKERS_STORE = "markers";
 
   constructor() {
     this.assetManager = new AssetManager();
@@ -181,6 +183,12 @@ export default class Database {
       const fileStore = this.database!.createObjectStore(this.FILES_STORE, { keyPath: "filename" });
       fileStore.createIndex("id", "filename");
     }
+
+    if (!this.database!.objectStoreNames.contains(this.MARKERS_STORE)) {
+      const markersStore = this.database!.createObjectStore(this.MARKERS_STORE, { keyPath: "id" });
+      markersStore.createIndex("position", ["x", "y", "floor"]);
+      markersStore.createIndex("floor", "floor");
+    }
   }
 
   private createMinimapChunkView(chunk: ImageData): MinimapChunk {
@@ -204,5 +212,105 @@ export default class Database {
     request.onsuccess = (): void => {
       delete this.loadedMinimapChunks[id];
     };
+  }
+
+  // Marker Management
+  public async saveMapMarker(marker: Omit<MapMarker, 'id' | 'createdAt'>): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const markerStore = this.createTransaction(this.MARKERS_STORE, "readwrite");
+      const markerData = {
+        id: `marker_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        ...marker,
+        createdAt: Date.now()
+      };
+      
+      const request = markerStore.put(markerData);
+      request.onsuccess = () => {
+        console.log('Marker saved successfully');
+        resolve();
+      };
+      request.onerror = () => {
+        console.error('Failed to save marker:', request.error);
+        reject(request.error);
+      };
+    });
+  }
+
+  public async getMapMarkers(): Promise<MapMarker[]> {
+    return new Promise((resolve, reject) => {
+      const markerStore = this.createTransaction(this.MARKERS_STORE, "readonly");
+      const request = markerStore.getAll();
+      
+      request.onsuccess = () => {
+        resolve(request.result || []);
+      };
+      request.onerror = () => {
+        console.error('Failed to load markers:', request.error);
+        reject(request.error);
+      };
+    });
+  }
+
+  public async getMapMarkersForFloor(floor: number): Promise<MapMarker[]> {
+    return new Promise((resolve, reject) => {
+      const markerStore = this.createTransaction(this.MARKERS_STORE, "readonly");
+      const index = markerStore.index("floor");
+      const request = index.getAll(floor);
+      
+      request.onsuccess = () => {
+        resolve(request.result || []);
+      };
+      request.onerror = () => {
+        console.error('Failed to load markers for floor:', request.error);
+        reject(request.error);
+      };
+    });
+  }
+
+  public async updateMapMarker(marker: MapMarker): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const markerStore = this.createTransaction(this.MARKERS_STORE, "readwrite");
+      const request = markerStore.put(marker);
+      
+      request.onsuccess = () => {
+        console.log('Marker updated successfully');
+        resolve();
+      };
+      request.onerror = () => {
+        console.error('Failed to update marker:', request.error);
+        reject(request.error);
+      };
+    });
+  }
+
+  public async deleteMapMarker(markerId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const markerStore = this.createTransaction(this.MARKERS_STORE, "readwrite");
+      const request = markerStore.delete(markerId);
+      
+      request.onsuccess = () => {
+        console.log('Marker deleted successfully');
+        resolve();
+      };
+      request.onerror = () => {
+        console.error('Failed to delete marker:', request.error);
+        reject(request.error);
+      };
+    });
+  }
+
+  public async getMapMarker(markerId: string): Promise<MapMarker | null> {
+    return new Promise((resolve, reject) => {
+      const markerStore = this.createTransaction(this.MARKERS_STORE, "readonly");
+      const request = markerStore.get(markerId);
+      
+      request.onsuccess = () => {
+        resolve(request.result || null);
+      };
+      request.onerror = () => {
+        console.error('Failed to get marker:', request.error);
+        reject(request.error);
+      };
+    });
   }
 } 

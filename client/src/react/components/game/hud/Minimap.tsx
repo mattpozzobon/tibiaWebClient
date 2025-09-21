@@ -3,6 +3,10 @@ import type GameClient from '../../../../core/gameclient';
 import Position from '../../../../game/position';
 import Canvas from '../../../../renderer/canvas';
 import { usePlayer } from '../../../hooks/usePlayerAttribute';
+import { MapMarker } from '../../../../types/map-marker';
+import ContextMenu from './ContextMenu';
+import CreateMarkerModal from '../modals/CreateMarkerModal';
+import EditMarkerModal from '../modals/EditMarkerModal';
 import './styles/Minimap.scss';
 
 interface MinimapProps {
@@ -53,6 +57,25 @@ export default function Minimap({ gc }: MinimapProps) {
 
   const [renderLayer, setRenderLayer] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Marker-related state
+  const [markers, setMarkers] = useState<MapMarker[]>([]);
+  const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number }>({ visible: false, x: 0, y: 0 });
+  const [createMarkerModal, setCreateMarkerModal] = useState<{ visible: boolean; x: number; y: number; floor: number }>({ visible: false, x: 0, y: 0, floor: 0 });
+  const [editMarkerModal, setEditMarkerModal] = useState<{ visible: boolean; marker: MapMarker | null }>({ visible: false, marker: null });
+  const [hoveredMarker, setHoveredMarker] = useState<MapMarker | null>(null);
+  
+  // Image cache for marker icons
+  const [markerImages, setMarkerImages] = useState<{ [key: string]: HTMLImageElement }>({});
+  
+  // Zoom magnifier state
+  const [magnifier, setMagnifier] = useState<{ 
+    visible: boolean; 
+    x: number; 
+    y: number; 
+    mouseX: number; 
+    mouseY: number 
+  }>({ visible: false, x: 0, y: 0, mouseX: 0, mouseY: 0 });
 
   useEffect(() => {
     if (!minimapCanvasRef.current) {
@@ -63,6 +86,33 @@ export default function Minimap({ gc }: MinimapProps) {
         setIsInitialized(false);
       }
     }
+  }, []);
+
+  // Preload marker images
+  useEffect(() => {
+    const loadMarkerImages = async () => {
+      const imagePromises = ['flag0.png', 'flag1.png', 'flag12.png'].map((iconName) => {
+        return new Promise<{ name: string; image: HTMLImageElement }>((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve({ name: iconName, image: img });
+          img.onerror = () => reject(new Error(`Failed to load ${iconName}`));
+          img.src = `/data/minimap/${iconName}`;
+        });
+      });
+
+      try {
+        const loadedImages = await Promise.all(imagePromises);
+        const imageMap: { [key: string]: HTMLImageElement } = {};
+        loadedImages.forEach(({ name, image }) => {
+          imageMap[name] = image;
+        });
+        setMarkerImages(imageMap);
+      } catch (error) {
+        console.warn('Failed to load some marker images:', error);
+      }
+    };
+
+    loadMarkerImages();
   }, []);
 
   const getTileColor = useCallback((tile: any) => {
@@ -76,6 +126,18 @@ export default function Minimap({ gc }: MinimapProps) {
     
     return tile.getMinimapColor();
   }, []);
+
+  const loadMarkers = useCallback(async () => {
+    if (!gc.database) return;
+    
+    try {
+      const loadedMarkers = await gc.database.getMapMarkersForFloor(renderLayer);
+      setMarkers(loadedMarkers);
+    } catch (error) {
+      console.error('Failed to load markers:', error);
+      setMarkers([]);
+    }
+  }, [gc.database, renderLayer]);
 
   const updateChunks = useCallback((chunks: any) => {
     if (!gc.world || !player || !gc.database) return;
@@ -117,6 +179,56 @@ export default function Minimap({ gc }: MinimapProps) {
     ctx.fillRect(CENTER_POINT, CENTER_POINT, ZOOM_LEVEL, ZOOM_LEVEL);
   }, [player]);
 
+  const drawMarkersOnFinalCanvas = useCallback((ctx: CanvasRenderingContext2D) => {
+    if (!player || markers.length === 0) return;
+
+    const currentPos = player.getPosition();
+    const currentX = currentPos.x;
+    const currentY = currentPos.y;
+    
+    // Pre-calculate zoom transformation values
+    const sourceSize = CANVAS_SIZE / ZOOM_LEVEL;
+    const sourceOffset = (CANVAS_SIZE - sourceSize) / 2;
+    
+    // Pre-calculate bounds for culling
+    const minX = -sourceOffset * ZOOM_LEVEL;
+    const maxX = (CANVAS_SIZE - sourceOffset) * ZOOM_LEVEL;
+    const minY = -sourceOffset * ZOOM_LEVEL;
+    const maxY = (CANVAS_SIZE - sourceOffset) * ZOOM_LEVEL;
+
+    markers.forEach((marker) => {
+      // Convert world coordinates to final canvas coordinates (optimized)
+      const minimapX = marker.x - currentX + CENTER_POINT;
+      const minimapY = marker.y - currentY + CENTER_POINT;
+      
+      // Convert minimap coordinates to final canvas coordinates
+      const finalX = (minimapX - sourceOffset) * ZOOM_LEVEL;
+      const finalY = (minimapY - sourceOffset) * ZOOM_LEVEL;
+
+      // Early culling - only draw markers within the visible area
+      if (finalX >= minX && finalX <= maxX && finalY >= minY && finalY <= maxY) {
+        // Try to draw the preloaded marker image at original size
+        const image = markerImages[marker.icon];
+        if (image && image.complete && image.naturalWidth > 0) {
+          // Draw the actual marker image at original size (no scaling)
+          const halfWidth = image.naturalWidth / 2;
+          const halfHeight = image.naturalHeight / 2;
+          ctx.drawImage(image, finalX - halfWidth, finalY - halfHeight);
+        } else {
+          // Fallback to colored circle if image is not loaded
+          ctx.fillStyle = '#FFD700';
+          ctx.beginPath();
+          ctx.arc(finalX, finalY, 6, 0, 2 * Math.PI);
+          ctx.fill();
+          
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+    });
+  }, [player, markers, markerImages]);
+
   const render = useCallback((chunks: any) => {
     if (!minimapCanvasRef.current || !player) return;
 
@@ -152,10 +264,13 @@ export default function Minimap({ gc }: MinimapProps) {
           0, 0, CANVAS_SIZE, CANVAS_SIZE
         );
         
+        // Draw markers on final canvas at full size (not affected by zoom)
+        drawMarkersOnFinalCanvas(ctx);
+        
         drawPlayerIndicator(ctx);
       }
     }
-  }, [player, renderLayer, drawPlayerIndicator]);
+  }, [player, renderLayer, drawPlayerIndicator, drawMarkersOnFinalCanvas]);
 
   const chunkUpdate = useCallback((chunks: any) => {
     chunksRef.current = chunks;
@@ -277,6 +392,221 @@ export default function Minimap({ gc }: MinimapProps) {
     };
   }, [player, isInitialized, gc.database]);
 
+  const handleCanvasRightClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    event.preventDefault();
+    
+    const canvas = event.currentTarget;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    // Convert canvas coordinates to world coordinates (reverse of marker rendering)
+    const currentPos = player!.getPosition();
+    
+    // Apply the reverse transformation of the minimap rendering
+    const sourceSize = CANVAS_SIZE / ZOOM_LEVEL;
+    const sourceOffset = (CANVAS_SIZE - sourceSize) / 2;
+    
+    // Convert final canvas coordinates back to minimap coordinates
+    const minimapX = (x / ZOOM_LEVEL) + sourceOffset;
+    const minimapY = (y / ZOOM_LEVEL) + sourceOffset;
+    
+    // Convert minimap coordinates to world coordinates
+    const worldX = minimapX - CENTER_POINT + currentPos.x;
+    const worldY = minimapY - CENTER_POINT + currentPos.y;
+    
+    // Check if right-clicking on an existing marker
+    const clickedMarker = markers.find(marker => {
+      const dx = marker.x - worldX;
+      const dy = marker.y - worldY;
+      return dx * dx + dy * dy <= 16; // Within marker radius
+    });
+    
+    if (clickedMarker) {
+      // Right-clicked on existing marker - show edit/delete options
+      setContextMenu({
+        visible: true,
+        x: event.clientX,
+        y: event.clientY
+      });
+      // Store the clicked marker for context menu actions
+      setEditMarkerModal({
+        visible: false,
+        marker: clickedMarker
+      });
+    } else {
+      // Right-clicked on empty space - show create marker option
+      setCreateMarkerModal({
+        visible: false,
+        x: worldX,
+        y: worldY,
+        floor: currentPos.z
+      });
+      
+      // Clear any stored marker to ensure we show create option
+      setEditMarkerModal({
+        visible: false,
+        marker: null
+      });
+      
+      // Show context menu
+      setContextMenu({
+        visible: true,
+        x: event.clientX,
+        y: event.clientY
+      });
+    }
+  }, [player, markers]);
+
+  const handleCreateMarkerClick = useCallback(() => {
+    // Open the create marker modal with the stored position
+    setCreateMarkerModal(prev => ({
+      ...prev,
+      visible: true
+    }));
+  }, []);
+
+  const handleEditMarkerClick = useCallback(() => {
+    // Open the edit marker modal with the stored marker
+    setEditMarkerModal(prev => ({
+      ...prev,
+      visible: true
+    }));
+  }, []);
+
+  const handleDeleteMarkerClick = useCallback(async () => {
+    const marker = editMarkerModal.marker;
+    if (!marker || !gc.database) return;
+    
+    if (confirm(`Are you sure you want to delete the marker "${marker.description || 'Untitled'}"?`)) {
+      try {
+        await gc.database.deleteMapMarker(marker.id);
+        await loadMarkers(); // Reload markers
+      } catch (error) {
+        console.error('Failed to delete marker:', error);
+        alert('Failed to delete marker');
+      }
+    }
+  }, [editMarkerModal.marker, gc.database, loadMarkers]);
+
+  const handleCanvasMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!player || markers.length === 0) {
+      setHoveredMarker(null);
+      return;
+    }
+    
+    const canvas = event.currentTarget;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    // Convert canvas coordinates to world coordinates (optimized)
+    const currentPos = player.getPosition();
+    
+    // Apply the reverse transformation of the minimap rendering
+    const sourceSize = CANVAS_SIZE / ZOOM_LEVEL;
+    const sourceOffset = (CANVAS_SIZE - sourceSize) / 2;
+    
+    // Convert final canvas coordinates back to minimap coordinates
+    const minimapX = (x / ZOOM_LEVEL) + sourceOffset;
+    const minimapY = (y / ZOOM_LEVEL) + sourceOffset;
+    
+    // Convert minimap coordinates to world coordinates
+    const worldX = minimapX - CENTER_POINT + currentPos.x;
+    const worldY = minimapY - CENTER_POINT + currentPos.y;
+    
+    // Check if mouse is over a marker (optimized with early exit)
+    let markerUnderMouse = null;
+    for (const marker of markers) {
+      const dx = marker.x - worldX;
+      const dy = marker.y - worldY;
+      if (dx * dx + dy * dy <= 16) { // Use squared distance to avoid sqrt
+        markerUnderMouse = marker;
+        break;
+      }
+    }
+    
+    setHoveredMarker(markerUnderMouse);
+  }, [player, markers]);
+
+  const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!player || markers.length === 0) return;
+    
+    const canvas = event.currentTarget;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    // Convert canvas coordinates to world coordinates
+    const currentPos = player.getPosition();
+    
+    // Apply the reverse transformation of the minimap rendering
+    const sourceSize = CANVAS_SIZE / ZOOM_LEVEL;
+    const sourceOffset = (CANVAS_SIZE - sourceSize) / 2;
+    
+    // Convert final canvas coordinates back to minimap coordinates
+    const minimapX = (x / ZOOM_LEVEL) + sourceOffset;
+    const minimapY = (y / ZOOM_LEVEL) + sourceOffset;
+    
+    // Convert minimap coordinates to world coordinates
+    const worldX = minimapX - CENTER_POINT + currentPos.x;
+    const worldY = minimapY - CENTER_POINT + currentPos.y;
+    
+    // Check if clicked on a marker (optimized with early exit)
+    for (const marker of markers) {
+      const dx = marker.x - worldX;
+      const dy = marker.y - worldY;
+      if (dx * dx + dy * dy <= 16) { // Use squared distance to avoid sqrt
+        setEditMarkerModal({
+          visible: true,
+          marker: marker
+        });
+        return;
+      }
+    }
+  }, [player, markers]);
+
+  const handleCreateMarker = useCallback(async (markerData: Omit<MapMarker, 'id' | 'createdAt'>) => {
+    if (!gc.database) return;
+    
+    try {
+      await gc.database.saveMapMarker(markerData);
+      await loadMarkers(); // Reload markers
+    } catch (error) {
+      console.error('Failed to create marker:', error);
+      alert('Failed to create marker');
+    }
+  }, [gc.database, loadMarkers]);
+
+  const handleUpdateMarker = useCallback(async (marker: MapMarker) => {
+    if (!gc.database) return;
+    
+    try {
+      await gc.database.updateMapMarker(marker);
+      await loadMarkers(); // Reload markers
+    } catch (error) {
+      console.error('Failed to update marker:', error);
+      alert('Failed to update marker');
+    }
+  }, [gc.database, loadMarkers]);
+
+  const handleDeleteMarker = useCallback(async (markerId: string) => {
+    if (!gc.database) return;
+    
+    try {
+      await gc.database.deleteMapMarker(markerId);
+      await loadMarkers(); // Reload markers
+    } catch (error) {
+      console.error('Failed to delete marker:', error);
+      alert('Failed to delete marker');
+    }
+  }, [gc.database, loadMarkers]);
+
+  // Load markers when floor changes
+  useEffect(() => {
+    loadMarkers();
+  }, [loadMarkers]);
+
   if (!player || !isInitialized) {
     return null;
   }
@@ -289,8 +619,81 @@ export default function Minimap({ gc }: MinimapProps) {
           width={CANVAS_SIZE}
           height={CANVAS_SIZE}
           className="minimap-canvas"
+          onContextMenu={handleCanvasRightClick}
+          onMouseMove={handleCanvasMouseMove}
+          onClick={handleCanvasClick}
         />
+        
+        {/* Hover tooltip */}
+        {hoveredMarker && (
+          <div 
+            className="marker-tooltip"
+            style={{
+              position: 'absolute',
+              left: '10px',
+              top: '10px',
+              background: 'rgba(0, 0, 0, 0.8)',
+              color: 'white',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              pointerEvents: 'none',
+              zIndex: 1000
+            }}
+          >
+            {hoveredMarker.description}
+          </div>
+        )}
       </div>
+      
+      {/* Context Menu */}
+      <ContextMenu
+        visible={contextMenu.visible}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        items={editMarkerModal.marker ? [
+          // Right-clicked on existing marker
+          {
+            label: 'Edit Marker',
+            onClick: handleEditMarkerClick
+          },
+          {
+            label: 'Delete Marker',
+            onClick: handleDeleteMarkerClick,
+            className: 'delete'
+          }
+        ] : [
+          // Right-clicked on empty space
+          {
+            label: 'Create Marker',
+            onClick: handleCreateMarkerClick
+          }
+        ]}
+        onClose={() => {
+          setContextMenu({ visible: false, x: 0, y: 0 });
+          // Clear the stored marker when closing context menu
+          setEditMarkerModal({ visible: false, marker: null });
+        }}
+      />
+      
+      {/* Create Marker Modal */}
+      <CreateMarkerModal
+        visible={createMarkerModal.visible}
+        x={createMarkerModal.x}
+        y={createMarkerModal.y}
+        floor={createMarkerModal.floor}
+        onClose={() => setCreateMarkerModal({ visible: false, x: 0, y: 0, floor: 0 })}
+        onCreate={handleCreateMarker}
+      />
+      
+      {/* Edit Marker Modal */}
+      <EditMarkerModal
+        visible={editMarkerModal.visible}
+        marker={editMarkerModal.marker}
+        onClose={() => setEditMarkerModal({ visible: false, marker: null })}
+        onUpdate={handleUpdateMarker}
+        onDelete={handleDeleteMarker}
+      />
     </div>
   );
 }

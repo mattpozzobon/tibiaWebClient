@@ -22,6 +22,7 @@ interface MinimapProps {
 export default function Minimap({ gc }: MinimapProps) {
   const player = usePlayer(gc);
 
+  // Refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const minimapCanvasRef = useRef<Canvas | null>(null);
   const magnifierCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -29,6 +30,7 @@ export default function Minimap({ gc }: MinimapProps) {
   const currentFloorRef = useRef<number>(0);
   const spatialIndexRef = useRef<MarkerSpatialIndex>(new MarkerSpatialIndex());
 
+  // View / panning
   const viewCenterRef = useRef<Position | null>(null);
   const prevCenterRef = useRef<{ x: number; y: number; z: number } | null>(null);
   const isPanningRef = useRef(false);
@@ -36,9 +38,11 @@ export default function Minimap({ gc }: MinimapProps) {
   const panStartViewRef = useRef<{ x: number; y: number; z: number } | null>(null);
   const skipNextClickRef = useRef(false);
 
+  // Timers
   const cacheTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastPanCacheRef = useRef(0);
 
+  // State
   const [isInitialized, setIsInitialized] = useState(false);
   const [renderLayer, setRenderLayer] = useState(0);
   const [isFollowingPlayer, setIsFollowingPlayer] = useState(true);
@@ -57,10 +61,10 @@ export default function Minimap({ gc }: MinimapProps) {
   );
 
   const [zoomLevel, setZoomLevel] = useState<number>(MINIMAP_CONFIG.ZOOM_LEVEL);
-
   const handleZoomIn = useCallback(() => setZoomLevel(prev => Math.min(prev + 1, 8)), []);
   const handleZoomOut = useCallback(() => setZoomLevel(prev => Math.max(prev - 1, 1)), []);
 
+  // Init offscreen
   useEffect(() => {
     if (!minimapCanvasRef.current) {
       try {
@@ -72,6 +76,7 @@ export default function Minimap({ gc }: MinimapProps) {
     }
   }, []);
 
+  // Marker icons
   useEffect(() => {
     const loadMarkerImages = async () => {
       PerformanceMonitor.start(PERFORMANCE_LABELS.IMAGE_LOADING);
@@ -85,6 +90,7 @@ export default function Minimap({ gc }: MinimapProps) {
     loadMarkerImages();
   }, []);
 
+  // View helpers
   const getActiveViewCenter = useCallback(() => {
     if (viewCenterRef.current) return viewCenterRef.current;
     if (player) {
@@ -94,6 +100,7 @@ export default function Minimap({ gc }: MinimapProps) {
     return new Position(0, 0, currentFloorRef.current || 0);
   }, [player]);
 
+  // Quantize center to whole tiles so everything uses the SAME snapped origin.
   const getQuantizedCenter = useCallback(() => {
     const c = getActiveViewCenter();
     return new Position(Math.round(c.x), Math.round(c.y), c.z);
@@ -105,12 +112,14 @@ export default function Minimap({ gc }: MinimapProps) {
     setViewCenterVersion(v => v + 1);
   }, [getActiveViewCenter]);
 
+  // Tile color
   const getTileColor = useCallback((tile: any) => {
     const itemColors = tile.items.map((i: any) => i.getMinimapColor()).filter((x: any) => x !== null);
     if (itemColors.length) return itemColors[itemColors.length - 1];
     return tile.getMinimapColor();
   }, []);
 
+  // Load markers for floor
   const loadMarkers = useCallback(async () => {
     if (!gc.database) return;
     try {
@@ -122,6 +131,7 @@ export default function Minimap({ gc }: MinimapProps) {
     }
   }, [gc.database, renderLayer]);
 
+  // Update chunks
   const updateChunks = useCallback((chunks: any) => {
     if (!gc.world || !player || !gc.database) return;
     const currentFloor = player.getPosition().z;
@@ -149,20 +159,34 @@ export default function Minimap({ gc }: MinimapProps) {
     modified.forEach((id: string) => gc.database.saveMinimapChunk(id));
   }, [gc.world, player, gc.database, getTileColor]);
 
+  // Zoom window
   const computeZoomWindow = useCallback(() => {
     const sourceSize = MINIMAP_CONFIG.CANVAS_SIZE / zoomLevel;
     const sourceOffset = (MINIMAP_CONFIG.CANVAS_SIZE - sourceSize) / 2;
     return { sourceSize, sourceOffset };
   }, [zoomLevel]);
 
-  const worldToFinalCanvas = useCallback((wx: number, wy: number) => {
+  // --- Tile-aligned transforms ---
+  // Top-left pixel of the tile in final canvas (snapped to grid).
+  const worldTileTopLeftToFinal = useCallback((wx: number, wy: number) => {
     const { sourceOffset } = computeZoomWindow();
     const c = getQuantizedCenter();
-    const minimapX = wx - c.x + MINIMAP_CONFIG.CENTER_POINT;
-    const minimapY = wy - c.y + MINIMAP_CONFIG.CENTER_POINT;
-    return { finalX: (minimapX - sourceOffset) * zoomLevel, finalY: (minimapY - sourceOffset) * zoomLevel };
+    const x = (wx - c.x + MINIMAP_CONFIG.CENTER_POINT - sourceOffset) * zoomLevel;
+    const y = (wy - c.y + MINIMAP_CONFIG.CENTER_POINT - sourceOffset) * zoomLevel;
+    // snap to tile grid in final canvas
+    return {
+      x: Math.floor(x / zoomLevel) * zoomLevel,
+      y: Math.floor(y / zoomLevel) * zoomLevel
+    };
   }, [computeZoomWindow, getQuantizedCenter, zoomLevel]);
 
+  // Center pixel of the tile in final canvas (snapped).
+  const worldTileCenterToFinal = useCallback((wx: number, wy: number) => {
+    const tl = worldTileTopLeftToFinal(wx, wy);
+    return { cx: tl.x + zoomLevel / 2, cy: tl.y + zoomLevel / 2 };
+  }, [worldTileTopLeftToFinal, zoomLevel]);
+
+  // Inverse (final canvas -> world) respecting the same quantized center.
   const finalCanvasToWorld = useCallback((fx: number, fy: number) => {
     const { sourceOffset } = computeZoomWindow();
     const c = getQuantizedCenter();
@@ -171,18 +195,20 @@ export default function Minimap({ gc }: MinimapProps) {
     return { worldX: minimapX - MINIMAP_CONFIG.CENTER_POINT + c.x, worldY: minimapY - MINIMAP_CONFIG.CENTER_POINT + c.y };
   }, [computeZoomWindow, getQuantizedCenter, zoomLevel]);
 
+  // Player indicator — draw a full tile-aligned square on the exact tile.
   const drawPlayerIndicator = useCallback((ctx: CanvasRenderingContext2D) => {
     if (!player) return;
     const p = player.getPosition();
-    const { finalX, finalY } = worldToFinalCanvas(p.x, p.y);
-    const size = Math.max(2, Math.round(zoomLevel));
+    const { x, y } = worldTileTopLeftToFinal(p.x, p.y);
+    const size = zoomLevel; // exactly one tile in final canvas
     ctx.fillStyle = '#ff0000';
-    ctx.fillRect(finalX - (size >> 1), finalY - (size >> 1), size, size);
+    ctx.fillRect(x, y, size, size);
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 1;
-    ctx.strokeRect(finalX - (size >> 1), finalY - (size >> 1), size, size);
-  }, [player, worldToFinalCanvas, zoomLevel]);
+    ctx.strokeRect(x, y, size, size);
+  }, [player, worldTileTopLeftToFinal, zoomLevel]);
 
+  // Draw markers — anchor at the tile center (bottom-center for images).
   const drawMarkersOnFinalCanvas = useCallback((ctx: CanvasRenderingContext2D) => {
     PerformanceMonitor.start(PERFORMANCE_LABELS.MARKER_RENDER);
     if (!markers.length) {
@@ -190,18 +216,23 @@ export default function Minimap({ gc }: MinimapProps) {
       return;
     }
     const minX = 0, minY = 0, maxX = MINIMAP_CONFIG.CANVAS_SIZE, maxY = MINIMAP_CONFIG.CANVAS_SIZE;
+
     for (const m of markers) {
-      const { finalX, finalY } = worldToFinalCanvas(m.x, m.y);
-      if (finalX < minX - 64 || finalX > maxX + 64 || finalY < minY - 64 || finalY > maxY + 64) continue;
+      const { cx, cy } = worldTileCenterToFinal(m.x, m.y);
+
+      if (cx < minX - 64 || cx > maxX + 64 || cy < minY - 64 || cy > maxY + 64) continue;
+
       const img = markerImages[m.icon];
       if (img && img.complete && img.naturalWidth > 0) {
         const halfW = img.naturalWidth / 2;
         const fullH = img.naturalHeight;
-        ctx.drawImage(img, finalX - halfW, finalY - fullH);
+        // bottom-center anchored at the tile center
+        ctx.drawImage(img, cx - halfW, cy - fullH);
       } else {
+        // fallback: circle centered on the tile
         ctx.fillStyle = '#FFD700';
         ctx.beginPath();
-        ctx.arc(finalX, finalY, 6, 0, 2 * Math.PI);
+        ctx.arc(cx, cy, Math.max(3, zoomLevel * 0.5), 0, 2 * Math.PI);
         ctx.fill();
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 1;
@@ -209,14 +240,16 @@ export default function Minimap({ gc }: MinimapProps) {
       }
     }
     PerformanceMonitor.end(PERFORMANCE_LABELS.MARKER_RENDER);
-  }, [markers, markerImages, worldToFinalCanvas]);
+  }, [markers, markerImages, worldTileCenterToFinal, zoomLevel]);
 
+  // Render (smooth offscreen shift)
   const render = useCallback((chunks: any) => {
     if (!minimapCanvasRef.current) return;
     const center = getQuantizedCenter();
     const minimap = minimapCanvasRef.current;
     const offctx = minimap.context;
 
+    // shift existing pixels by integer camera delta
     if (prevCenterRef.current && prevCenterRef.current.z === renderLayer) {
       const dx = prevCenterRef.current.x - center.x;
       const dy = prevCenterRef.current.y - center.y;
@@ -235,11 +268,13 @@ export default function Minimap({ gc }: MinimapProps) {
     }
     prevCenterRef.current = { x: center.x, y: center.y, z: renderLayer };
 
+    // draw chunks at integer offsets
     Object.keys(chunks).forEach((id: string) => {
       const ch = chunks[id];
       if (!ch) return;
       const [cx, cy, cz] = id.split('.').map(Number);
       if (cz !== renderLayer) return;
+
       offctx.putImageData(
         ch.imageData,
         cx * 128 - center.x + MINIMAP_CONFIG.CENTER_POINT,
@@ -247,6 +282,7 @@ export default function Minimap({ gc }: MinimapProps) {
       );
     });
 
+    // blit to final canvas with zoom
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -262,6 +298,7 @@ export default function Minimap({ gc }: MinimapProps) {
       0, 0, MINIMAP_CONFIG.CANVAS_SIZE, MINIMAP_CONFIG.CANVAS_SIZE
     );
 
+    // overlays
     drawMarkersOnFinalCanvas(ctx);
     drawPlayerIndicator(ctx);
   }, [renderLayer, computeZoomWindow, drawMarkersOnFinalCanvas, drawPlayerIndicator, getQuantizedCenter]);
@@ -272,6 +309,7 @@ export default function Minimap({ gc }: MinimapProps) {
     render(chunks);
   }, [updateChunks, render]);
 
+  // Cache/preload around camera
   const cache = useCallback(() => {
     if (!gc.database || !gc.world) return;
     const center = getQuantizedCenter();
@@ -294,6 +332,7 @@ export default function Minimap({ gc }: MinimapProps) {
     } catch {}
   }, [gc.database, gc.world, chunkUpdate, getQuantizedCenter]);
 
+  // Throttle cache during panning
   const schedulePanCache = useCallback(() => {
     const now = performance.now();
     const PAN_CACHE_MS = 80;
@@ -302,11 +341,13 @@ export default function Minimap({ gc }: MinimapProps) {
     cache();
   }, [cache]);
 
+  // Debounce cache
   const debouncedCache = useCallback(() => {
     if (cacheTimeoutRef.current) clearTimeout(cacheTimeoutRef.current);
     cacheTimeoutRef.current = setTimeout(() => { cache(); }, 100);
   }, [cache]);
 
+  // Init view/layer
   useEffect(() => {
     if (player && isInitialized) {
       const p = player.getPosition();
@@ -323,6 +364,7 @@ export default function Minimap({ gc }: MinimapProps) {
     }
   }, [player, isInitialized, cache, isFollowingPlayer, setViewCenter]);
 
+  // Early retries
   useEffect(() => {
     if (player && isInitialized && gc.world && gc.database) {
       const force = () => {
@@ -336,11 +378,14 @@ export default function Minimap({ gc }: MinimapProps) {
     }
   }, [player, isInitialized, gc.world, gc.database, cache, getQuantizedCenter]);
 
+  // Follow player
   useEffect(() => {
     if (!player || !isInitialized) return;
+
     const handlePlayerMove = () => {
       if (!player) return;
       const p = player.getPosition();
+
       if (currentFloorRef.current !== p.z) {
         setRenderLayer(p.z);
         currentFloorRef.current = p.z;
@@ -348,11 +393,14 @@ export default function Minimap({ gc }: MinimapProps) {
         prevCenterRef.current = null;
         gc.database.saveMinimapChunksForCurrentLevel();
       }
+
       if (isFollowingPlayer) setViewCenter(p.x, p.y, p.z);
+
       const focus = isFollowingPlayer ? p : getQuantizedCenter();
       gc.database.cleanupDistantMinimapChunks(focus);
       cache();
     };
+
     const handleCreatureMove = (e: CustomEvent) => { if (e.detail.id === player?.id) handlePlayerMove(); };
     const handleServerMove =   (e: CustomEvent) => { if (e.detail.id === player?.id) handlePlayerMove(); };
 
@@ -386,6 +434,7 @@ export default function Minimap({ gc }: MinimapProps) {
     };
   }, [player, isInitialized, cache, gc.database, isFollowingPlayer, getQuantizedCenter, setViewCenter, zoomLevel, render, schedulePanCache]);
 
+  // Unmount cleanup
   useEffect(() => {
     if (!player || !isInitialized) return;
     return () => {
@@ -394,6 +443,7 @@ export default function Minimap({ gc }: MinimapProps) {
     };
   }, [player, isInitialized, gc.database]);
 
+  // Re-render when center changes
   useEffect(() => {
     if (chunksRef.current) {
       render(chunksRef.current);
@@ -401,6 +451,7 @@ export default function Minimap({ gc }: MinimapProps) {
     }
   }, [viewCenterVersion, render, debouncedCache]);
 
+  // Actions
   const handleFollowPlayer = useCallback(() => {
     if (!player) return;
     const p = player.getPosition();
@@ -409,28 +460,34 @@ export default function Minimap({ gc }: MinimapProps) {
     if (chunksRef.current) render(chunksRef.current);
   }, [player, setViewCenter, render]);
 
+  // Context menu
   const handleCanvasRightClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     event.preventDefault();
     if (!player) return;
+
     const rect = (event.currentTarget as HTMLCanvasElement).getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
+
     const { worldX, worldY } = finalCanvasToWorld(x, y);
+
     PerformanceMonitor.start(PERFORMANCE_LABELS.COLLISION_DETECTION);
     const clicked = markers.find(m => {
-      const { finalX, finalY } = worldToFinalCanvas(m.x, m.y);
+      // hit-test around the tile center (same anchor used for drawing)
+      const { cx, cy } = worldTileCenterToFinal(m.x, m.y);
       const tol = MINIMAP_CONFIG.CLICK_TOLERANCE;
-      const dx = x - finalX;
-      const dy = y - finalY;
+      const dx = x - cx;
+      const dy = y - cy;
       const img = markerImages[m.icon];
       if (img && img.complete && img.naturalWidth > 0) {
         const halfW = img.naturalWidth / 2;
         const fullH = img.naturalHeight;
         return Math.abs(dx) <= halfW && dy >= -fullH && dy <= 0;
       }
-      return dx * dx + dy * dy <= tol * tol;
+      return (dx * dx + dy * dy) <= tol * tol;
     });
     PerformanceMonitor.end(PERFORMANCE_LABELS.COLLISION_DETECTION);
+
     if (clicked) {
       setContextMenu({ visible: true, x: event.clientX, y: event.clientY });
       setEditMarkerModal({ visible: false, marker: clicked });
@@ -439,26 +496,31 @@ export default function Minimap({ gc }: MinimapProps) {
       setEditMarkerModal({ visible: false, marker: null });
       setContextMenu({ visible: true, x: event.clientX, y: event.clientY });
     }
-  }, [player, markers, markerImages, finalCanvasToWorld, worldToFinalCanvas]);
+  }, [player, markers, markerImages, finalCanvasToWorld, worldTileCenterToFinal]);
 
+  // Hover / magnifier
   const handleCanvasMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = (event.currentTarget as HTMLCanvasElement).getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
+
     const magnifierSize = 120, offset = 20;
     let displayX = event.clientX - magnifierSize - offset;
     let displayY = event.clientY - magnifierSize / 2;
     if (displayX < 10) displayX = event.clientX + offset;
     if (displayY < 10) displayY = 10;
     if (displayY + magnifierSize > window.innerHeight - 10) displayY = window.innerHeight - magnifierSize - 10;
+
     setMagnifier({ visible: true, x, y, mouseX: event.clientX, mouseY: event.clientY, displayX, displayY });
+
     if (!player) { setHoveredMarker(null); return; }
+
     let over: MapMarker | null = null;
     for (const m of markers) {
-      const { finalX, finalY } = worldToFinalCanvas(m.x, m.y);
+      const { cx, cy } = worldTileCenterToFinal(m.x, m.y);
       const tol = MINIMAP_CONFIG.HOVER_TOLERANCE;
-      const dx = x - finalX;
-      const dy = y - finalY;
+      const dx = x - cx;
+      const dy = y - cy;
       const img = markerImages[m.icon];
       if (img && img.complete && img.naturalWidth > 0) {
         const halfW = img.naturalWidth / 2;
@@ -467,7 +529,7 @@ export default function Minimap({ gc }: MinimapProps) {
       } else if (dx * dx + dy * dy <= tol * tol) { over = m; break; }
     }
     setHoveredMarker(over);
-  }, [player, markers, markerImages, worldToFinalCanvas]);
+  }, [player, markers, markerImages, worldTileCenterToFinal]);
 
   const handleCanvasMouseLeave = useCallback(() => {
     setMagnifier({ visible: false, x: 0, y: 0, mouseX: 0, mouseY: 0, displayX: 0, displayY: 0 });
@@ -489,14 +551,17 @@ export default function Minimap({ gc }: MinimapProps) {
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (skipNextClickRef.current) { skipNextClickRef.current = false; return; }
     if (!player || !markers.length) return;
+
     const rect = (event.currentTarget as HTMLCanvasElement).getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
+
     for (const m of markers) {
-      const { finalX, finalY } = worldToFinalCanvas(m.x, m.y);
+      const { cx, cy } = worldTileCenterToFinal(m.x, m.y);
       const tol = MINIMAP_CONFIG.CLICK_TOLERANCE;
-      const dx = x - finalX;
-      const dy = y - finalY;
+      const dx = x - cx;
+      const dy = y - cy;
+
       const img = markerImages[m.icon];
       if (img && img.complete && img.naturalWidth > 0) {
         const halfW = img.naturalWidth / 2;
@@ -504,7 +569,7 @@ export default function Minimap({ gc }: MinimapProps) {
         if (Math.abs(dx) <= halfW && dy >= -fullH && dy <= 0) { setEditMarkerModal({ visible: true, marker: m }); return; }
       } else if (dx * dx + dy * dy <= tol * tol) { setEditMarkerModal({ visible: true, marker: m }); return; }
     }
-  }, [player, markers, markerImages, worldToFinalCanvas]);
+  }, [player, markers, markerImages, worldTileCenterToFinal]);
 
   const handleDoubleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = (event.currentTarget as HTMLCanvasElement).getBoundingClientRect();
@@ -516,6 +581,7 @@ export default function Minimap({ gc }: MinimapProps) {
     if (chunksRef.current) render(chunksRef.current);
   }, [finalCanvasToWorld, setViewCenter, render]);
 
+  // Magnifier
   const updateMagnifier = useCallback(() => {
     if (!magnifier.visible || !canvasRef.current || !magnifierCanvasRef.current) return;
     PerformanceMonitor.start(PERFORMANCE_LABELS.MAGNIFIER_UPDATE);
@@ -541,6 +607,7 @@ export default function Minimap({ gc }: MinimapProps) {
 
   useEffect(() => { if (magnifier.visible) updateMagnifier(); }, [magnifier.visible, magnifier.x, magnifier.y, updateMagnifier]);
 
+  // CRUD
   const handleCreateMarker = useCallback(async (data: Omit<MapMarker, 'id' | 'createdAt'>) => {
     if (!gc.database) return;
     try { await gc.database.saveMapMarker(data); await loadMarkers(); }
@@ -559,8 +626,10 @@ export default function Minimap({ gc }: MinimapProps) {
     catch { alert('Failed to delete marker'); }
   }, [gc.database, loadMarkers]);
 
+  // Load markers when floor changes
   useEffect(() => { loadMarkers(); }, [loadMarkers]);
 
+  // Memory mgmt
   useEffect(() => {
     MemoryManager.registerCache('markerImages', new Map(Object.entries(markerImages)));
     const cleanup = () => { spatialIndexRef.current.clear(); };
@@ -580,16 +649,23 @@ export default function Minimap({ gc }: MinimapProps) {
   return (
     <MinimapErrorBoundary>
       <div className="minimap-container">
+        {/* Zoom + Follow */}
         <div className="minimap-zoom-controls">
           <button className="zoom-button zoom-in" onClick={handleZoomIn} disabled={zoomLevel >= 8} title="Zoom In">+</button>
           <button className="zoom-button zoom-out" onClick={handleZoomOut} disabled={zoomLevel <= 1} title="Zoom Out">−</button>
-          <button className={`zoom-button follow${isFollowingPlayer ? ' active' : ''}`} onClick={() => {
-            if (!player) return;
-            const p = player.getPosition();
-            setViewCenter(p.x, p.y, p.z);
-            setIsFollowingPlayer(true);
-            if (chunksRef.current) render(chunksRef.current);
-          }} title="Recenter & Follow Player">Follow</button>
+          <button
+            className={`zoom-button follow${isFollowingPlayer ? ' active' : ''}`}
+            onClick={() => {
+              if (!player) return;
+              const p = player.getPosition();
+              setViewCenter(p.x, p.y, p.z);
+              setIsFollowingPlayer(true);
+              if (chunksRef.current) render(chunksRef.current);
+            }}
+            title="Recenter & Follow Player"
+          >
+            Follow
+          </button>
         </div>
 
         <div className="minimap-canvas-container">
@@ -607,8 +683,10 @@ export default function Minimap({ gc }: MinimapProps) {
             onDoubleClick={handleDoubleClick}
           />
 
+          {/* Hover tooltip */}
           {hoveredMarker && <div className="marker-tooltip">{hoveredMarker.description}</div>}
 
+          {/* Magnifier */}
           {magnifier.visible && (
             <div className="minimap-magnifier" style={{ left: magnifier.displayX, top: magnifier.displayY }}>
               <canvas ref={magnifierCanvasRef} width="120" height="120" />
@@ -616,6 +694,7 @@ export default function Minimap({ gc }: MinimapProps) {
           )}
         </div>
 
+        {/* Context Menu */}
         <ContextMenu
           visible={contextMenu.visible}
           x={contextMenu.x}
@@ -636,6 +715,7 @@ export default function Minimap({ gc }: MinimapProps) {
           onClose={() => setContextMenu({ visible: false, x: 0, y: 0 })}
         />
 
+        {/* Create Marker Modal */}
         <CreateMarkerModal
           visible={createMarkerModal.visible}
           x={createMarkerModal.x}
@@ -645,6 +725,7 @@ export default function Minimap({ gc }: MinimapProps) {
           onCreate={handleCreateMarker}
         />
 
+        {/* Edit Marker Modal */}
         <EditMarkerModal
           visible={editMarkerModal.visible}
           marker={editMarkerModal.marker}

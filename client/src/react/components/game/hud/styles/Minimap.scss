@@ -4,10 +4,62 @@
   position: fixed;
   bottom: 10px;
   right: 10px;
-  width: 180px;
-  height: 180px;
+  width: 220px;
+  height: 220px;
   user-select: none;
   z-index: 1000;
+}
+
+/* Zoom controls */
+.minimap-zoom-controls {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 1001;
+}
+
+.zoom-button {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #444;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  
+  &:hover:not(:disabled) {
+    background: rgba(0, 122, 204, 0.8);
+    border-color: #007acc;
+  }
+  
+  &:active:not(:disabled) {
+    background: rgba(0, 122, 204, 1);
+    transform: scale(0.95);
+  }
+  
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+}
+
+.zoom-in {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.zoom-out {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 

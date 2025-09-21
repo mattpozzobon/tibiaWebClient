@@ -56,6 +56,18 @@ export default function Minimap({ gc }: MinimapProps) {
     displayY: number;
   }>({ visible: false, x: 0, y: 0, mouseX: 0, mouseY: 0, displayX: 0, displayY: 0 });
 
+  // Zoom state
+  const [zoomLevel, setZoomLevel] = useState<number>(MINIMAP_CONFIG.ZOOM_LEVEL);
+
+  // Zoom functions
+  const handleZoomIn = useCallback(() => {
+    setZoomLevel(prev => Math.min(prev + 1, 8)); // Max zoom level of 8
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    setZoomLevel(prev => Math.max(prev - 1, 1)); // Min zoom level of 1
+  }, []);
+
   useEffect(() => {
     if (!minimapCanvasRef.current) {
       try {
@@ -150,8 +162,8 @@ export default function Minimap({ gc }: MinimapProps) {
     if (!player) return;
     
     ctx.fillStyle = '#ff0000';
-    ctx.fillRect(MINIMAP_CONFIG.CENTER_POINT, MINIMAP_CONFIG.CENTER_POINT, MINIMAP_CONFIG.ZOOM_LEVEL, MINIMAP_CONFIG.ZOOM_LEVEL);
-  }, [player]);
+    ctx.fillRect(MINIMAP_CONFIG.CENTER_POINT, MINIMAP_CONFIG.CENTER_POINT, zoomLevel, zoomLevel);
+  }, [player, zoomLevel]);
 
   const drawMarkersOnFinalCanvas = useCallback((ctx: CanvasRenderingContext2D) => {
     PerformanceMonitor.start(PERFORMANCE_LABELS.MARKER_RENDER);
@@ -165,14 +177,14 @@ export default function Minimap({ gc }: MinimapProps) {
     const currentY = currentPos.y;
     
     // Pre-calculate zoom transformation values
-    const sourceSize = MINIMAP_CONFIG.CANVAS_SIZE / MINIMAP_CONFIG.ZOOM_LEVEL;
+    const sourceSize = MINIMAP_CONFIG.CANVAS_SIZE / zoomLevel;
     const sourceOffset = (MINIMAP_CONFIG.CANVAS_SIZE - sourceSize) / 2;
     
     // Pre-calculate bounds for culling
-    const minX = -sourceOffset * MINIMAP_CONFIG.ZOOM_LEVEL;
-    const maxX = (MINIMAP_CONFIG.CANVAS_SIZE - sourceOffset) * MINIMAP_CONFIG.ZOOM_LEVEL;
-    const minY = -sourceOffset * MINIMAP_CONFIG.ZOOM_LEVEL;
-    const maxY = (MINIMAP_CONFIG.CANVAS_SIZE - sourceOffset) * MINIMAP_CONFIG.ZOOM_LEVEL;
+    const minX = -sourceOffset * zoomLevel;
+    const maxX = (MINIMAP_CONFIG.CANVAS_SIZE - sourceOffset) * zoomLevel;
+    const minY = -sourceOffset * zoomLevel;
+    const maxY = (MINIMAP_CONFIG.CANVAS_SIZE - sourceOffset) * zoomLevel;
 
     markers.forEach((marker) => {
       // Convert world coordinates to final canvas coordinates (optimized)
@@ -180,8 +192,8 @@ export default function Minimap({ gc }: MinimapProps) {
       const minimapY = marker.y - currentY + MINIMAP_CONFIG.CENTER_POINT;
       
       // Convert minimap coordinates to final canvas coordinates
-      const finalX = (minimapX - sourceOffset) * MINIMAP_CONFIG.ZOOM_LEVEL;
-      const finalY = (minimapY - sourceOffset) * MINIMAP_CONFIG.ZOOM_LEVEL;
+      const finalX = (minimapX - sourceOffset) * zoomLevel;
+      const finalY = (minimapY - sourceOffset) * zoomLevel;
 
            // Early culling - only draw markers within the visible area
            if (finalX >= minX && finalX <= maxX && finalY >= minY && finalY <= maxY) {
@@ -206,7 +218,7 @@ export default function Minimap({ gc }: MinimapProps) {
            }
     });
     PerformanceMonitor.end(PERFORMANCE_LABELS.MARKER_RENDER);
-  }, [player, markers, markerImages]);
+  }, [player, markers, markerImages, zoomLevel]);
 
   const render = useCallback((chunks: any) => {
     if (!minimapCanvasRef.current || !player) return;
@@ -234,7 +246,7 @@ export default function Minimap({ gc }: MinimapProps) {
         ctx.imageSmoothingEnabled = false;
         ctx.clearRect(0, 0, MINIMAP_CONFIG.CANVAS_SIZE, MINIMAP_CONFIG.CANVAS_SIZE);
         
-        const sourceSize = MINIMAP_CONFIG.CANVAS_SIZE / MINIMAP_CONFIG.ZOOM_LEVEL;
+        const sourceSize = MINIMAP_CONFIG.CANVAS_SIZE / zoomLevel;
         const sourceOffset = (MINIMAP_CONFIG.CANVAS_SIZE - sourceSize) / 2;
         
         ctx.drawImage(
@@ -383,12 +395,12 @@ export default function Minimap({ gc }: MinimapProps) {
     const currentPos = player!.getPosition();
     
     // Apply the reverse transformation of the minimap rendering
-    const sourceSize = MINIMAP_CONFIG.CANVAS_SIZE / MINIMAP_CONFIG.ZOOM_LEVEL;
+    const sourceSize = MINIMAP_CONFIG.CANVAS_SIZE / zoomLevel;
     const sourceOffset = (MINIMAP_CONFIG.CANVAS_SIZE - sourceSize) / 2;
     
     // Convert final canvas coordinates back to minimap coordinates
-    const minimapX = (x / MINIMAP_CONFIG.ZOOM_LEVEL) + sourceOffset;
-    const minimapY = (y / MINIMAP_CONFIG.ZOOM_LEVEL) + sourceOffset;
+    const minimapX = (x / zoomLevel) + sourceOffset;
+    const minimapY = (y / zoomLevel) + sourceOffset;
     
     // Convert minimap coordinates to world coordinates
     const worldX = minimapX - MINIMAP_CONFIG.CENTER_POINT + currentPos.x;
@@ -403,8 +415,8 @@ export default function Minimap({ gc }: MinimapProps) {
       const markerMinimapY = marker.y - currentPos.y + MINIMAP_CONFIG.CENTER_POINT;
       
       // Convert minimap coordinates to final canvas coordinates
-      const markerFinalX = (markerMinimapX - sourceOffset) * MINIMAP_CONFIG.ZOOM_LEVEL;
-      const markerFinalY = (markerMinimapY - sourceOffset) * MINIMAP_CONFIG.ZOOM_LEVEL;
+      const markerFinalX = (markerMinimapX - sourceOffset) * zoomLevel;
+      const markerFinalY = (markerMinimapY - sourceOffset) * zoomLevel;
       
       // Check if click coordinates match marker coordinates (with tolerance)
       const clickTolerance = MINIMAP_CONFIG.CLICK_TOLERANCE; // Pixels of tolerance for clicking
@@ -463,7 +475,7 @@ export default function Minimap({ gc }: MinimapProps) {
         y: event.clientY
       });
     }
-  }, [player, markers, markerImages]);
+  }, [player, markers, markerImages, zoomLevel]);
 
   const handleCreateMarkerClick = useCallback(() => {
     // Open the create marker modal with the stored position
@@ -546,12 +558,12 @@ export default function Minimap({ gc }: MinimapProps) {
     const currentPos = player.getPosition();
     
     // Apply the reverse transformation of the minimap rendering
-    const sourceSize = MINIMAP_CONFIG.CANVAS_SIZE / MINIMAP_CONFIG.ZOOM_LEVEL;
+    const sourceSize = MINIMAP_CONFIG.CANVAS_SIZE / zoomLevel;
     const sourceOffset = (MINIMAP_CONFIG.CANVAS_SIZE - sourceSize) / 2;
     
     // Convert final canvas coordinates back to minimap coordinates
-    const minimapX = (x / MINIMAP_CONFIG.ZOOM_LEVEL) + sourceOffset;
-    const minimapY = (y / MINIMAP_CONFIG.ZOOM_LEVEL) + sourceOffset;
+    const minimapX = (x / zoomLevel) + sourceOffset;
+    const minimapY = (y / zoomLevel) + sourceOffset;
     
     // Convert minimap coordinates to world coordinates
     const worldX = minimapX - MINIMAP_CONFIG.CENTER_POINT + currentPos.x;
@@ -566,8 +578,8 @@ export default function Minimap({ gc }: MinimapProps) {
       const markerMinimapY = marker.y - currentPos.y + MINIMAP_CONFIG.CENTER_POINT;
       
       // Convert minimap coordinates to final canvas coordinates
-      const markerFinalX = (markerMinimapX - sourceOffset) * MINIMAP_CONFIG.ZOOM_LEVEL;
-      const markerFinalY = (markerMinimapY - sourceOffset) * MINIMAP_CONFIG.ZOOM_LEVEL;
+      const markerFinalX = (markerMinimapX - sourceOffset) * zoomLevel;
+      const markerFinalY = (markerMinimapY - sourceOffset) * zoomLevel;
       
       // Check if mouse coordinates match marker coordinates (with tolerance)
       const hoverTolerance = MINIMAP_CONFIG.HOVER_TOLERANCE; // Pixels of tolerance for hovering
@@ -598,7 +610,7 @@ export default function Minimap({ gc }: MinimapProps) {
     }
     
     setHoveredMarker(markerUnderMouse);
-  }, [player, markers, markerImages]);
+  }, [player, markers, markerImages, zoomLevel]);
 
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!player || markers.length === 0) return;
@@ -612,12 +624,12 @@ export default function Minimap({ gc }: MinimapProps) {
     const currentPos = player.getPosition();
     
     // Apply the reverse transformation of the minimap rendering
-    const sourceSize = MINIMAP_CONFIG.CANVAS_SIZE / MINIMAP_CONFIG.ZOOM_LEVEL;
+    const sourceSize = MINIMAP_CONFIG.CANVAS_SIZE / zoomLevel;
     const sourceOffset = (MINIMAP_CONFIG.CANVAS_SIZE - sourceSize) / 2;
     
     // Convert final canvas coordinates back to minimap coordinates
-    const minimapX = (x / MINIMAP_CONFIG.ZOOM_LEVEL) + sourceOffset;
-    const minimapY = (y / MINIMAP_CONFIG.ZOOM_LEVEL) + sourceOffset;
+    const minimapX = (x / zoomLevel) + sourceOffset;
+    const minimapY = (y / zoomLevel) + sourceOffset;
     
     // Convert minimap coordinates to world coordinates
     const worldX = minimapX - MINIMAP_CONFIG.CENTER_POINT + currentPos.x;
@@ -631,8 +643,8 @@ export default function Minimap({ gc }: MinimapProps) {
       const markerMinimapY = marker.y - currentPos.y + MINIMAP_CONFIG.CENTER_POINT;
       
       // Convert minimap coordinates to final canvas coordinates
-      const markerFinalX = (markerMinimapX - sourceOffset) * MINIMAP_CONFIG.ZOOM_LEVEL;
-      const markerFinalY = (markerMinimapY - sourceOffset) * MINIMAP_CONFIG.ZOOM_LEVEL;
+      const markerFinalX = (markerMinimapX - sourceOffset) * zoomLevel;
+      const markerFinalY = (markerMinimapY - sourceOffset) * zoomLevel;
       
       // Check if click coordinates match marker coordinates (with tolerance)
       const clickTolerance = MINIMAP_CONFIG.CLICK_TOLERANCE; // Pixels of tolerance for clicking
@@ -667,7 +679,7 @@ export default function Minimap({ gc }: MinimapProps) {
         }
       }
     }
-  }, [player, markers, markerImages]);
+  }, [player, markers, markerImages, zoomLevel]);
 
   const handleCanvasMouseLeave = useCallback(() => {
     setMagnifier({ visible: false, x: 0, y: 0, mouseX: 0, mouseY: 0, displayX: 0, displayY: 0 });
@@ -811,7 +823,27 @@ export default function Minimap({ gc }: MinimapProps) {
   return (
     <MinimapErrorBoundary>
       <div className="minimap-container">
-      <div className="minimap-canvas-container">
+        {/* Zoom buttons */}
+        <div className="minimap-zoom-controls">
+          <button 
+            className="zoom-button zoom-in"
+            onClick={handleZoomIn}
+            disabled={zoomLevel >= 8}
+            title="Zoom In"
+          >
+            +
+          </button>
+          <button 
+            className="zoom-button zoom-out"
+            onClick={handleZoomOut}
+            disabled={zoomLevel <= 1}
+            title="Zoom Out"
+          >
+            −
+          </button>
+        </div>
+        
+        <div className="minimap-canvas-container">
         <canvas
           ref={canvasRef}
           width={MINIMAP_CONFIG.CANVAS_SIZE}

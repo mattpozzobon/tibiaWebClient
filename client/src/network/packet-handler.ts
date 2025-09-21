@@ -529,6 +529,11 @@ class PacketHandler {
     let entity = window.gameClient.world.getCreature(packet.id);
     if (!entity) return;
 
+    // Dispatch event for server-confirmed movement (for minimap and other systems)
+    window.dispatchEvent(new CustomEvent('creatureServerMove', {
+      detail: { id: packet.id, position: packet.position, speed: packet.speed }
+    }));
+
     // Pass the speed as stepDuration to the creature movement system
     window.gameClient.world.__handleCreatureMove(packet.id, packet.position, packet.speed);
 

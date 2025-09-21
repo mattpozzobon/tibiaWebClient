@@ -1,0 +1,73 @@
+/* Minimap HUD Component Styles */
+
+.minimap-container {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  width: 180px;
+  height: 180px;
+  user-select: none;
+  z-index: 1000;
+}
+
+
+.minimap-canvas-container {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  margin: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.minimap-canvas {
+  border: 2px solid #444;
+  border-radius: 50%;
+  cursor: crosshair;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  background: #000;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  clip-path: circle(50%);
+  
+  &:hover {
+    border-color: #007acc;
+    box-shadow: 0 0 12px rgba(0, 122, 204, 0.4), 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+}
+
+.minimap-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #888;
+  font-size: 12px;
+  font-style: italic;
+  text-align: center;
+  width: 120px;
+  z-index: 1;
+}
+
+
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .minimap-container {
+    width: 160px;
+    height: 160px;
+  }
+
+  .minimap-canvas-container {
+    width: 140px;
+    height: 140px;
+    margin: 10px;
+  }
+}
+
+/* Animation for smooth transitions */
+.minimap-canvas {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}

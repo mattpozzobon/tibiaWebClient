@@ -1,0 +1,79 @@
+/* Map Modal Specific Styles */
+
+.map-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+.large-minimap {
+  transform: scale(2);
+  transform-origin: center;
+  margin: 80px;
+  
+  .minimap-container {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  }
+}
+
+.map-info {
+  max-width: 600px;
+  text-align: center;
+  
+  p {
+    color: #ccc;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+  
+  ul {
+    color: #aaa;
+    font-size: 13px;
+    text-align: left;
+    list-style: none;
+    padding: 0;
+    
+    li {
+      padding: 4px 0;
+      position: relative;
+      padding-left: 20px;
+      
+      &::before {
+        content: '•';
+        color: #007acc;
+        position: absolute;
+        left: 0;
+        font-weight: bold;
+      }
+    }
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .large-minimap {
+    transform: scale(1.5);
+    margin: 40px;
+  }
+  
+  .map-info {
+    max-width: 100%;
+    
+    p {
+      font-size: 13px;
+    }
+    
+    ul {
+      font-size: 12px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .large-minimap {
+    transform: scale(1.2);
+    margin: 20px;
+  }
+}

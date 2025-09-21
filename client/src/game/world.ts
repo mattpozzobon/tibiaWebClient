@@ -45,12 +45,24 @@ export default class World {
     this.checkChunks();
     window.gameClient.renderer.tileRenderer.refreshVisibleTiles()
     //window.gameClient.renderer.minimap.setCenter();
-    if (window.gameClient.player!.renderer.getMovementEvent() === null) {
-      window.gameClient.player!.renderer.setMovementEvent(window.gameClient.eventQueue.addEvent(
-        window.gameClient.player!.unlockMovement.bind(window.gameClient.player),
-        10
-      ));
-    }
+    
+    // Dispatch teleportation event for minimap and other systems
+    const player = window.gameClient.player!;
+    window.dispatchEvent(new CustomEvent('creatureMove', {
+      detail: { 
+        id: player.id, 
+        position: player.getPosition(), 
+        speed: 0, // Teleportation has no speed
+        creature: player 
+      }
+    }));
+    
+    // if (window.gameClient.player!.renderer.getMovementEvent() === null) {
+    //   window.gameClient.player!.renderer.setMovementEvent(window.gameClient.eventQueue.addEvent(
+    //     window.gameClient.player!.unlockMovement.bind(window.gameClient.player),
+    //     10
+    //   ));
+    // }
   }
 
   public handleTransformTile(packet: { position: Position; id: number }): void {

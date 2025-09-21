@@ -3,6 +3,7 @@ import type GameClient from '../../core/gameclient';
 import type ConditionManager from '../../game/condition';
 import type { Vitals } from '../../game/player/vitals/vitals';
 import type Skills from '../../game/player/skills/skills';
+import type Position from '../../game/position';
 
 /**
  * Custom hook to safely access player attributes that may not be immediately available
@@ -187,4 +188,52 @@ export function usePlayer(gameClient: GameClient | null) {
   }, [gameClient]);
 
   return player;
+}
+
+/**
+ * Hook that tracks player position changes including floor changes and teleportation
+ */
+export function usePlayerPosition(gameClient: GameClient | null) {
+  const [playerPosition, setPlayerPosition] = useState<{ position: Position; floor: number } | null>(null);
+
+  useEffect(() => {
+    if (!gameClient || !gameClient.player) {
+      setPlayerPosition(null);
+      return;
+    }
+
+    const updatePosition = () => {
+      if (gameClient.player) {
+        const position = gameClient.player.getPosition();
+        const floor = position.z;
+        
+        setPlayerPosition(prev => {
+          // Only update if position actually changed
+          if (!prev || 
+              prev.position.x !== position.x || 
+              prev.position.y !== position.y || 
+              prev.position.z !== position.z) {
+            return { position, floor };
+          }
+          return prev;
+        });
+      }
+    };
+
+    // Initial position
+    updatePosition();
+
+    // Listen for movement events for instant updates
+    const handlePlayerMove = () => updatePosition();
+    
+    window.addEventListener('creatureMove', handlePlayerMove);
+    window.addEventListener('creatureServerMove', handlePlayerMove);
+
+    return () => {
+      window.removeEventListener('creatureMove', handlePlayerMove);
+      window.removeEventListener('creatureServerMove', handlePlayerMove);
+    };
+  }, [gameClient]);
+
+  return playerPosition;
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type GameClient from '../../../../core/gameclient';
 import Position from '../../../../game/position';
 import Canvas from '../../../../renderer/canvas';
+import { usePlayer } from '../../../hooks/usePlayerAttribute';
 import './styles/Minimap.scss';
 
 interface MinimapProps {
@@ -14,18 +15,19 @@ const CANVAS_SIZE = 160;
 const CENTER_POINT = CANVAS_SIZE / 2;
 
 export default function Minimap({ gc }: MinimapProps) {
+  // Use the player hook to wait for player to be available
+  const player = usePlayer(gc);
+  
   // Refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const minimapCanvasRef = useRef<Canvas | null>(null);
   const chunksRef = useRef<any>({});
-  const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastPlayerPositionRef = useRef<Position | null>(null);
   const lastPlayerFloorRef = useRef<number | null>(null);
 
   // State
   const [renderLayer, setRenderLayer] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [isReady, setIsReady] = useState(false);
 
   // Minimap colors (converted from hex to RGB for canvas)
   const colors = useRef([
@@ -70,36 +72,6 @@ export default function Minimap({ gc }: MinimapProps) {
     }
   }, []);
 
-  // Check if game client is ready for minimap
-  useEffect(() => {
-    const checkReady = () => {
-      const ready = !!(gc.player && gc.world && gc.database && isInitialized);
-      
-      
-      if (ready !== isReady) {
-        setIsReady(ready);
-      }
-    };
-
-    // Check immediately
-    checkReady();
-
-    // Also check periodically during login process
-    if (initTimeoutRef.current) {
-      clearTimeout(initTimeoutRef.current);
-    }
-    initTimeoutRef.current = setTimeout(checkReady, 1000);
-
-    // Set up a periodic check to monitor login progress
-    const periodicCheck = setInterval(checkReady, 2000);
-
-    return () => {
-      if (initTimeoutRef.current) {
-        clearTimeout(initTimeoutRef.current);
-      }
-      clearInterval(periodicCheck);
-    };
-  }, [isInitialized, gc.player, gc.world, gc.database, isReady]);
 
   const getTileColor = useCallback((tile: any) => {
     const itemColors = tile.items
@@ -114,15 +86,15 @@ export default function Minimap({ gc }: MinimapProps) {
   }, []);
 
   const updateChunks = useCallback((chunks: any) => {
-    if (!gc.world || !gc.player || !gc.database) return;
+    if (!gc.world || !player || !gc.database) return;
 
-    const currentFloor = gc.player.getPosition().z;
+    const currentFloor = player.getPosition().z;
     
     gc.world.chunks.forEach((chunk: any) => {
       const tiles = chunk.getFloorTiles(currentFloor);
       tiles.forEach((tile: any) => {
         if (tile === null) return;
-        if (!gc.player!.canSee(tile)) return;
+        if (!player!.canSee(tile)) return;
         
         const color = getTileColor(tile);
         if (color === null) return;
@@ -134,18 +106,18 @@ export default function Minimap({ gc }: MinimapProps) {
         buffer.view[index] = colors.current[color];
       });
     });
-  }, [gc.world, gc.player, gc.database, getTileColor]);
+  }, [gc.world, player, gc.database, getTileColor]);
 
   // Draw pixel-perfect player indicator
   const drawPlayerIndicator = useCallback((ctx: CanvasRenderingContext2D) => {
-    if (!gc.player) return;
+    if (!player) return;
     
     ctx.fillStyle = '#ff0000';
     ctx.fillRect(CENTER_POINT, CENTER_POINT, ZOOM_LEVEL, ZOOM_LEVEL);
-  }, [gc.player]);
+  }, [player]);
 
   const render = useCallback((chunks: any) => {
-    if (!minimapCanvasRef.current || !gc.player) return;
+    if (!minimapCanvasRef.current || !player) return;
 
     const minimap = minimapCanvasRef.current;
     minimap.clear();
@@ -159,8 +131,8 @@ export default function Minimap({ gc }: MinimapProps) {
       
       minimap.context.putImageData(
         chunk.imageData,
-        x * 128 - gc.player!.getPosition().x + CENTER_POINT,
-        y * 128 - gc.player!.getPosition().y + CENTER_POINT
+        x * 128 - player!.getPosition().x + CENTER_POINT,
+        y * 128 - player!.getPosition().y + CENTER_POINT
       );
     });
 
@@ -186,7 +158,7 @@ export default function Minimap({ gc }: MinimapProps) {
         drawPlayerIndicator(ctx);
       }
     }
-  }, [gc.player, renderLayer, drawPlayerIndicator]);
+  }, [player, renderLayer, drawPlayerIndicator]);
 
   const chunkUpdate = useCallback((chunks: any) => {
     chunksRef.current = chunks;
@@ -195,9 +167,9 @@ export default function Minimap({ gc }: MinimapProps) {
   }, [updateChunks, render]);
 
   const cache = useCallback(() => {
-    if (!gc.player || !gc.database || !gc.world) return;
+    if (!player || !gc.database || !gc.world) return;
 
-    const position = gc.player.getPosition();
+    const position = player.getPosition();
     const currentFloor = position.z;
     const radius = CENTER_POINT;
 
@@ -219,22 +191,22 @@ export default function Minimap({ gc }: MinimapProps) {
     } catch (error) {
       console.warn('Failed to load minimap chunks:', error);
     }
-  }, [gc.player, gc.database, gc.world, chunkUpdate]);
+  }, [player, gc.database, gc.world, chunkUpdate]);
 
   // Set initial render layer based on player position and handle floor changes
   useEffect(() => {
-    if (isReady && gc.player) {
-      const playerZ = gc.player.getPosition().z;
+    if (player && isInitialized) {
+      const playerZ = player.getPosition().z;
       setRenderLayer(playerZ);
       lastPlayerFloorRef.current = playerZ;
-      lastPlayerPositionRef.current = gc.player.getPosition();
+      lastPlayerPositionRef.current = player.getPosition();
       cache();
     }
-  }, [isReady, gc.player, cache]);
+  }, [player, isInitialized, cache]);
 
   // Simple player icon update - player is always centered
   useEffect(() => {
-    if (!isReady || !gc.player || !canvasRef.current) return;
+    if (!player || !isInitialized || !canvasRef.current) return;
 
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
@@ -242,16 +214,16 @@ export default function Minimap({ gc }: MinimapProps) {
     // Clear center area and redraw player icon
     ctx.clearRect(77, 77, 6, 6);
     drawPlayerIndicator(ctx);
-  }, [isReady, gc.player, drawPlayerIndicator]);
+  }, [player, isInitialized, drawPlayerIndicator]);
 
   // Event-driven minimap updates instead of polling
   useEffect(() => {
-    if (!isReady) return;
+    if (!player || !isInitialized) return;
 
     const handlePlayerMove = () => {
-      if (!gc.player || !isInitialized) return;
+      if (!player || !isInitialized) return;
       
-      const currentPosition = gc.player.getPosition();
+      const currentPosition = player.getPosition();
       const currentFloor = currentPosition.z;
       
       // Handle floor changes
@@ -279,7 +251,7 @@ export default function Minimap({ gc }: MinimapProps) {
     // Listen for player movement events
     const handleCreatureMove = (event: CustomEvent) => {
       const { id, position } = event.detail;
-      if (id === gc.player?.id) {
+      if (id === player?.id) {
         handlePlayerMove();
       }
     };
@@ -287,7 +259,7 @@ export default function Minimap({ gc }: MinimapProps) {
     // Listen for creature server move events
     const handleServerMove = (event: CustomEvent) => {
       const { id, position } = event.detail;
-      if (id === gc.player?.id) {
+      if (id === player?.id) {
         handlePlayerMove();
       }
     };
@@ -297,28 +269,22 @@ export default function Minimap({ gc }: MinimapProps) {
     window.addEventListener('creatureServerMove', handleServerMove as EventListener);
 
     // Initial setup
-    if (gc.player) {
-      lastPlayerPositionRef.current = gc.player.getPosition();
-      lastPlayerFloorRef.current = gc.player.getPosition().z;
+    if (player) {
+      lastPlayerPositionRef.current = player.getPosition();
+      lastPlayerFloorRef.current = player.getPosition().z;
     }
 
     return () => {
       window.removeEventListener('creatureMove', handleCreatureMove as EventListener);
       window.removeEventListener('creatureServerMove', handleServerMove as EventListener);
     };
-  }, [isReady, isInitialized, gc.player, cache, updateChunks, render]);
+  }, [player, isInitialized, cache, updateChunks, render]);
 
-  if (!isReady) {
+  if (!player || !isInitialized) {
     return (
       <div className="minimap-container">
-        <div className="minimap-header">
-          <span className="minimap-title">Minimap</span>
-        </div>
         <div className="minimap-loading">
-          {!isInitialized ? 'Initializing canvas...' : 
-           !gc.player ? 'Waiting for login...' :
-           !gc.world ? 'Loading world data...' :
-           !gc.database ? 'Loading database...' : 'Preparing minimap...'}
+          {!isInitialized ? 'Initializing canvas...' : 'Waiting for login...'}
         </div>
       </div>
     );

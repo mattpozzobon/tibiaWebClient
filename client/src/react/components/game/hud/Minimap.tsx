@@ -81,6 +81,7 @@ export default function Minimap({ gc }: MinimapProps) {
     if (!gc.world || !player || !gc.database) return;
 
     const currentFloor = player.getPosition().z;
+    const modifiedChunks = new Set<string>();
     
     gc.world.chunks.forEach((chunk: any) => {
       const tiles = chunk.getFloorTiles(currentFloor);
@@ -91,12 +92,21 @@ export default function Minimap({ gc }: MinimapProps) {
         const color = getTileColor(tile);
         if (color === null) return;
         
-        const buffer = chunks[gc.database.getMinimapChunkId(tile.getPosition())];
+        const chunkId = gc.database.getMinimapChunkId(tile.getPosition());
+        const buffer = chunks[chunkId];
         if (!buffer) return;
         
         const index = (tile.getPosition().x % 128) + ((tile.getPosition().y % 128) * 128);
         buffer.view[index] = MINIMAP_COLORS[color];
+        
+        // Mark chunk as modified for immediate saving
+        modifiedChunks.add(chunkId);
       });
+    });
+    
+    // Save modified chunks immediately
+    modifiedChunks.forEach((chunkId: string) => {
+      gc.database.saveMinimapChunk(chunkId);
     });
   }, [gc.world, player, gc.database, getTileColor]);
 
@@ -184,9 +194,37 @@ export default function Minimap({ gc }: MinimapProps) {
       const playerZ = player.getPosition().z;
       setRenderLayer(playerZ);
       currentFloorRef.current = playerZ;
-      cache();
+      
+      // Initial load with a small delay to ensure everything is ready
+      const initialLoad = () => {
+        cache();
+      };
+      
+      // Try immediate load first
+      initialLoad();
+      
+      // Also try after a small delay to ensure all systems are ready
+      const timeout = setTimeout(initialLoad, 100);
+      
+      return () => clearTimeout(timeout);
     }
   }, [player, isInitialized, cache]);
+
+  useEffect(() => {
+    if (player && isInitialized && gc.world && gc.database) {
+      // Force initial minimap load when all systems are ready
+      const forceInitialLoad = () => {
+        const currentPosition = player.getPosition();
+        gc.database.cleanupDistantMinimapChunks(currentPosition);
+        cache();
+      };
+      
+      // Try multiple times to ensure it loads
+      forceInitialLoad();
+      setTimeout(forceInitialLoad, 50);
+      setTimeout(forceInitialLoad, 200);
+    }
+  }, [player, isInitialized, gc.world, gc.database, cache]);
 
   useEffect(() => {
     if (!player || !isInitialized) return;
@@ -195,13 +233,17 @@ export default function Minimap({ gc }: MinimapProps) {
       if (!player || !isInitialized) return;
       
       const currentFloor = player.getPosition().z;
+      const currentPosition = player.getPosition();
       
       if (currentFloorRef.current !== currentFloor) {
         setRenderLayer(currentFloor);
         currentFloorRef.current = currentFloor;
         chunksRef.current = {};
+        
+        gc.database.saveMinimapChunksForCurrentLevel();
       }
       
+      gc.database.cleanupDistantMinimapChunks(currentPosition);
       cache();
     };
 
@@ -225,6 +267,15 @@ export default function Minimap({ gc }: MinimapProps) {
       window.removeEventListener('creatureServerMove', handleServerMove as EventListener);
     };
   }, [player, isInitialized, cache]);
+
+  useEffect(() => {
+    if (!player || !isInitialized) return;
+
+    return () => {
+      // Save all chunks only on component unmount
+      gc.database.saveAllMinimapChunks();
+    };
+  }, [player, isInitialized, gc.database]);
 
   if (!player || !isInitialized) {
     return null;

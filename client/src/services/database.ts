@@ -195,7 +195,7 @@ export default class Database {
     return new ImageData(new Uint8ClampedArray(size), this.minimapChunkSize, this.minimapChunkSize);
   }
 
-  private saveMinimapChunk(id: string): void {
+  public saveMinimapChunk(id: string): void {
     const minimapStore = this.createTransaction(this.MINIMAP_STORE, "readwrite");
     const request = minimapStore.put({
       chunk: id,

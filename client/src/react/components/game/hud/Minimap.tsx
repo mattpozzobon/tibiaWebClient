@@ -52,6 +52,7 @@ export default function Minimap({ gc }: MinimapProps) {
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const minimapCanvasRef = useRef<Canvas | null>(null);
+  const magnifierCanvasRef = useRef<HTMLCanvasElement>(null);
   const chunksRef = useRef<any>({});
   const currentFloorRef = useRef<number>(0);
 
@@ -74,8 +75,10 @@ export default function Minimap({ gc }: MinimapProps) {
     x: number; 
     y: number; 
     mouseX: number; 
-    mouseY: number 
-  }>({ visible: false, x: 0, y: 0, mouseX: 0, mouseY: 0 });
+    mouseY: number;
+    displayX: number;
+    displayY: number;
+  }>({ visible: false, x: 0, y: 0, mouseX: 0, mouseY: 0, displayX: 0, displayY: 0 });
 
   useEffect(() => {
     if (!minimapCanvasRef.current) {
@@ -205,27 +208,27 @@ export default function Minimap({ gc }: MinimapProps) {
       const finalX = (minimapX - sourceOffset) * ZOOM_LEVEL;
       const finalY = (minimapY - sourceOffset) * ZOOM_LEVEL;
 
-      // Early culling - only draw markers within the visible area
-      if (finalX >= minX && finalX <= maxX && finalY >= minY && finalY <= maxY) {
-        // Try to draw the preloaded marker image at original size
-        const image = markerImages[marker.icon];
-        if (image && image.complete && image.naturalWidth > 0) {
-          // Draw the actual marker image at original size (no scaling)
-          const halfWidth = image.naturalWidth / 2;
-          const halfHeight = image.naturalHeight / 2;
-          ctx.drawImage(image, finalX - halfWidth, finalY - halfHeight);
-        } else {
-          // Fallback to colored circle if image is not loaded
-          ctx.fillStyle = '#FFD700';
-          ctx.beginPath();
-          ctx.arc(finalX, finalY, 6, 0, 2 * Math.PI);
-          ctx.fill();
-          
-          ctx.strokeStyle = '#000000';
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        }
-      }
+           // Early culling - only draw markers within the visible area
+           if (finalX >= minX && finalX <= maxX && finalY >= minY && finalY <= maxY) {
+             // Try to draw the preloaded marker image at original size
+             const image = markerImages[marker.icon];
+             if (image && image.complete && image.naturalWidth > 0) {
+               // Draw the marker image anchored at bottom-center (like a flag pole)
+               const halfWidth = image.naturalWidth / 2;
+               const fullHeight = image.naturalHeight;
+               ctx.drawImage(image, finalX - halfWidth, finalY - fullHeight);
+             } else {
+               // Fallback to colored circle if image is not loaded - centered
+               ctx.fillStyle = '#FFD700';
+               ctx.beginPath();
+               ctx.arc(finalX, finalY, 6, 0, 2 * Math.PI);
+               ctx.fill();
+               
+               ctx.strokeStyle = '#000000';
+               ctx.lineWidth = 1;
+               ctx.stroke();
+             }
+           }
     });
   }, [player, markers, markerImages]);
 
@@ -416,10 +419,36 @@ export default function Minimap({ gc }: MinimapProps) {
     const worldY = minimapY - CENTER_POINT + currentPos.y;
     
     // Check if right-clicking on an existing marker
+    // Use the same coordinate transformation as rendering for accurate collision detection
     const clickedMarker = markers.find(marker => {
-      const dx = marker.x - worldX;
-      const dy = marker.y - worldY;
-      return dx * dx + dy * dy <= 16; // Within marker radius
+      // Convert marker world coordinates to final canvas coordinates (same as rendering)
+      const markerMinimapX = marker.x - currentPos.x + CENTER_POINT;
+      const markerMinimapY = marker.y - currentPos.y + CENTER_POINT;
+      
+      // Convert minimap coordinates to final canvas coordinates
+      const markerFinalX = (markerMinimapX - sourceOffset) * ZOOM_LEVEL;
+      const markerFinalY = (markerMinimapY - sourceOffset) * ZOOM_LEVEL;
+      
+      // Check if click coordinates match marker coordinates (with tolerance)
+      const clickTolerance = 20; // Pixels of tolerance for clicking
+      const dx = x - markerFinalX;
+      const dy = y - markerFinalY;
+      
+      // For bottom-center anchored markers, check if click is within the marker bounds
+      const image = markerImages[marker.icon];
+      if (image && image.complete && image.naturalWidth > 0) {
+        const halfWidth = image.naturalWidth / 2;
+        const fullHeight = image.naturalHeight;
+        
+        // Check if click is within the marker image bounds
+        const withinX = Math.abs(dx) <= halfWidth;
+        const withinY = dy >= -fullHeight && dy <= 0; // Bottom-center anchored
+        
+        return withinX && withinY;
+      } else {
+        // Fallback to circular detection for non-loaded images
+        return dx * dx + dy * dy <= clickTolerance * clickTolerance;
+      }
     });
     
     if (clickedMarker) {
@@ -456,7 +485,7 @@ export default function Minimap({ gc }: MinimapProps) {
         y: event.clientY
       });
     }
-  }, [player, markers]);
+  }, [player, markers, markerImages]);
 
   const handleCreateMarkerClick = useCallback(() => {
     // Open the create marker modal with the stored position
@@ -490,8 +519,9 @@ export default function Minimap({ gc }: MinimapProps) {
   }, [editMarkerModal.marker, gc.database, loadMarkers]);
 
   const handleCanvasMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!player || markers.length === 0) {
+    if (!player) {
       setHoveredMarker(null);
+      setMagnifier({ visible: false, x: 0, y: 0, mouseX: 0, mouseY: 0, displayX: 0, displayY: 0 });
       return;
     }
     
@@ -499,6 +529,40 @@ export default function Minimap({ gc }: MinimapProps) {
     const rect = canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
+    
+    // Calculate smart positioning for magnifier
+    const magnifierSize = 120;
+    const offset = 20;
+    
+    // Default: position to the left of mouse
+    let displayX = event.clientX - magnifierSize - offset;
+    let displayY = event.clientY - magnifierSize / 2;
+    
+    // If magnifier would go off-screen to the left, position it to the right
+    if (displayX < 10) {
+      displayX = event.clientX + offset;
+    }
+    
+    // If magnifier would go off-screen to the top, adjust Y position
+    if (displayY < 10) {
+      displayY = 10;
+    }
+    
+    // If magnifier would go off-screen to the bottom, adjust Y position
+    if (displayY + magnifierSize > window.innerHeight - 10) {
+      displayY = window.innerHeight - magnifierSize - 10;
+    }
+    
+    // Show magnifier when mouse is over minimap
+    setMagnifier({
+      visible: true,
+      x: x,
+      y: y,
+      mouseX: event.clientX,
+      mouseY: event.clientY,
+      displayX: displayX,
+      displayY: displayY
+    });
     
     // Convert canvas coordinates to world coordinates (optimized)
     const currentPos = player.getPosition();
@@ -516,18 +580,47 @@ export default function Minimap({ gc }: MinimapProps) {
     const worldY = minimapY - CENTER_POINT + currentPos.y;
     
     // Check if mouse is over a marker (optimized with early exit)
+    // Use the same coordinate transformation as rendering for accurate collision detection
     let markerUnderMouse = null;
     for (const marker of markers) {
-      const dx = marker.x - worldX;
-      const dy = marker.y - worldY;
-      if (dx * dx + dy * dy <= 16) { // Use squared distance to avoid sqrt
-        markerUnderMouse = marker;
-        break;
+      // Convert marker world coordinates to final canvas coordinates (same as rendering)
+      const markerMinimapX = marker.x - currentPos.x + CENTER_POINT;
+      const markerMinimapY = marker.y - currentPos.y + CENTER_POINT;
+      
+      // Convert minimap coordinates to final canvas coordinates
+      const markerFinalX = (markerMinimapX - sourceOffset) * ZOOM_LEVEL;
+      const markerFinalY = (markerMinimapY - sourceOffset) * ZOOM_LEVEL;
+      
+      // Check if mouse coordinates match marker coordinates (with tolerance)
+      const hoverTolerance = 20; // Pixels of tolerance for hovering
+      const dx = x - markerFinalX;
+      const dy = y - markerFinalY;
+      
+      // For bottom-center anchored markers, check if mouse is within the marker bounds
+      const image = markerImages[marker.icon];
+      if (image && image.complete && image.naturalWidth > 0) {
+        const halfWidth = image.naturalWidth / 2;
+        const fullHeight = image.naturalHeight;
+        
+        // Check if mouse is within the marker image bounds
+        const withinX = Math.abs(dx) <= halfWidth;
+        const withinY = dy >= -fullHeight && dy <= 0; // Bottom-center anchored
+        
+        if (withinX && withinY) {
+          markerUnderMouse = marker;
+          break;
+        }
+      } else {
+        // Fallback to circular detection for non-loaded images
+        if (dx * dx + dy * dy <= hoverTolerance * hoverTolerance) {
+          markerUnderMouse = marker;
+          break;
+        }
       }
     }
     
     setHoveredMarker(markerUnderMouse);
-  }, [player, markers]);
+  }, [player, markers, markerImages]);
 
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!player || markers.length === 0) return;
@@ -553,18 +646,116 @@ export default function Minimap({ gc }: MinimapProps) {
     const worldY = minimapY - CENTER_POINT + currentPos.y;
     
     // Check if clicked on a marker (optimized with early exit)
+    // Use the same coordinate transformation as rendering for accurate collision detection
     for (const marker of markers) {
-      const dx = marker.x - worldX;
-      const dy = marker.y - worldY;
-      if (dx * dx + dy * dy <= 16) { // Use squared distance to avoid sqrt
-        setEditMarkerModal({
-          visible: true,
-          marker: marker
-        });
-        return;
+      // Convert marker world coordinates to final canvas coordinates (same as rendering)
+      const markerMinimapX = marker.x - currentPos.x + CENTER_POINT;
+      const markerMinimapY = marker.y - currentPos.y + CENTER_POINT;
+      
+      // Convert minimap coordinates to final canvas coordinates
+      const markerFinalX = (markerMinimapX - sourceOffset) * ZOOM_LEVEL;
+      const markerFinalY = (markerMinimapY - sourceOffset) * ZOOM_LEVEL;
+      
+      // Check if click coordinates match marker coordinates (with tolerance)
+      const clickTolerance = 20; // Pixels of tolerance for clicking
+      const dx = x - markerFinalX;
+      const dy = y - markerFinalY;
+      
+      // For bottom-center anchored markers, check if click is within the marker bounds
+      const image = markerImages[marker.icon];
+      if (image && image.complete && image.naturalWidth > 0) {
+        const halfWidth = image.naturalWidth / 2;
+        const fullHeight = image.naturalHeight;
+        
+        // Check if click is within the marker image bounds
+        const withinX = Math.abs(dx) <= halfWidth;
+        const withinY = dy >= -fullHeight && dy <= 0; // Bottom-center anchored
+        
+        if (withinX && withinY) {
+          setEditMarkerModal({
+            visible: true,
+            marker: marker
+          });
+          return;
+        }
+      } else {
+        // Fallback to circular detection for non-loaded images
+        if (dx * dx + dy * dy <= clickTolerance * clickTolerance) {
+          setEditMarkerModal({
+            visible: true,
+            marker: marker
+          });
+          return;
+        }
       }
     }
-  }, [player, markers]);
+  }, [player, markers, markerImages]);
+
+  const handleCanvasMouseLeave = useCallback(() => {
+    setMagnifier({ visible: false, x: 0, y: 0, mouseX: 0, mouseY: 0, displayX: 0, displayY: 0 });
+    setHoveredMarker(null);
+  }, []);
+
+  const updateMagnifier = useCallback(() => {
+    if (!magnifier.visible || !canvasRef.current || !magnifierCanvasRef.current) return;
+    
+    const mainCanvas = canvasRef.current;
+    const magnifierCanvas = magnifierCanvasRef.current;
+    const ctx = magnifierCanvas.getContext('2d');
+    
+    if (!ctx) return;
+    
+    // Clear the magnifier canvas
+    ctx.clearRect(0, 0, 120, 120);
+    
+    // Calculate the source region (40x40 pixels around the mouse)
+    const sourceSize = 40;
+    const sourceX = Math.max(0, Math.min(CANVAS_SIZE - sourceSize, magnifier.x - sourceSize / 2));
+    const sourceY = Math.max(0, Math.min(CANVAS_SIZE - sourceSize, magnifier.y - sourceSize / 2));
+    
+    // Draw the magnified region (3x zoom)
+    ctx.drawImage(
+      mainCanvas,
+      sourceX, sourceY, sourceSize, sourceSize,
+      0, 0, 120, 120
+    );
+    
+    // Draw crosshair to show exact mouse position
+    ctx.strokeStyle = '#FF0000';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 2]);
+    
+    // Calculate crosshair position in magnifier (center of the magnifier)
+    const crosshairX = 60;
+    const crosshairY = 60;
+    
+    // Draw horizontal crosshair line
+    ctx.beginPath();
+    ctx.moveTo(0, crosshairY);
+    ctx.lineTo(120, crosshairY);
+    ctx.stroke();
+    
+    // Draw vertical crosshair line
+    ctx.beginPath();
+    ctx.moveTo(crosshairX, 0);
+    ctx.lineTo(crosshairX, 120);
+    ctx.stroke();
+    
+    // Draw center dot
+    ctx.fillStyle = '#FF0000';
+    ctx.beginPath();
+    ctx.arc(crosshairX, crosshairY, 2, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    ctx.setLineDash([]); // Reset line dash
+  }, [magnifier.visible, magnifier.x, magnifier.y]);
+
+  // Update magnifier when it becomes visible
+  useEffect(() => {
+    if (magnifier.visible) {
+      updateMagnifier();
+    }
+  }, [magnifier.visible, magnifier.x, magnifier.y, updateMagnifier]);
 
   const handleCreateMarker = useCallback(async (markerData: Omit<MapMarker, 'id' | 'createdAt'>) => {
     if (!gc.database) return;
@@ -621,6 +812,7 @@ export default function Minimap({ gc }: MinimapProps) {
           className="minimap-canvas"
           onContextMenu={handleCanvasRightClick}
           onMouseMove={handleCanvasMouseMove}
+          onMouseLeave={handleCanvasMouseLeave}
           onClick={handleCanvasClick}
         />
         
@@ -642,6 +834,38 @@ export default function Minimap({ gc }: MinimapProps) {
             }}
           >
             {hoveredMarker.description}
+          </div>
+        )}
+        
+        {/* Magnifier */}
+        {magnifier.visible && (
+          <div
+            className="minimap-magnifier"
+            style={{
+              position: 'fixed',
+              left: magnifier.displayX,
+              top: magnifier.displayY,
+              width: '120px',
+              height: '120px',
+              border: '2px solid #fff',
+              borderRadius: '50%',
+              background: 'rgba(0, 0, 0, 0.9)',
+              pointerEvents: 'none',
+              zIndex: 1001,
+              overflow: 'hidden',
+              boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)'
+            }}
+          >
+            <canvas
+              ref={magnifierCanvasRef}
+              width="120"
+              height="120"
+              style={{
+                width: '120px',
+                height: '120px',
+                pointerEvents: 'none'
+              }}
+            />
           </div>
         )}
       </div>
@@ -671,8 +895,8 @@ export default function Minimap({ gc }: MinimapProps) {
         ]}
         onClose={() => {
           setContextMenu({ visible: false, x: 0, y: 0 });
-          // Clear the stored marker when closing context menu
-          setEditMarkerModal({ visible: false, marker: null });
+          // Don't clear the stored marker when closing context menu
+          // The marker should remain available for the EditMarkerModal
         }}
       />
       

@@ -28,6 +28,8 @@
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
   background: #000;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   clip-path: circle(50%);

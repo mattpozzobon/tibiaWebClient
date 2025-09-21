@@ -226,14 +226,26 @@ export default function Minimap({ gc }: MinimapProps) {
       );
     });
 
-    // Copy to display canvas
+    // Copy to display canvas with 2x zoom for better visibility
     if (canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d');
       if (ctx) {
+        // Disable image smoothing for sharp pixel-perfect scaling
+        ctx.imageSmoothingEnabled = false;
         ctx.clearRect(0, 0, 160, 160);
-        ctx.drawImage(minimap.canvas, 0, 0);
         
-        // Draw player position indicator
+        // Apply 4x zoom - take 40x40 from center and scale to 160x160
+        const zoomLevel = 4;
+        const sourceSize = 160 / zoomLevel; // 40x40 source area
+        const sourceOffset = (160 - sourceSize) / 2; // Center the source area
+        
+        ctx.drawImage(
+          minimap.canvas,
+          sourceOffset, sourceOffset, sourceSize, sourceSize, // Source: 80x80 from center
+          0, 0, 160, 160 // Destination: full 160x160 canvas
+        );
+        
+        // Draw player position indicator (always at center)
         drawPlayerIndicator(ctx);
       }
     }

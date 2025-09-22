@@ -12,16 +12,16 @@ export default class Equipment extends Container {
     
     // The equipment has ten slots for items.
     this.slots = [
-      this.referenceSlotDOM(0, "head-slot"),
-      this.referenceSlotDOM(1, "armor-slot"),
-      this.referenceSlotDOM(2, "legs-slot"),
-      this.referenceSlotDOM(3, "boots-slot"),
-      this.referenceSlotDOM(4, "right-slot"),
-      this.referenceSlotDOM(5, "left-slot"),
-      this.referenceSlotDOM(6, "backpack-slot"),
-      this.referenceSlotDOM(7, "shoulder-slot"),
-      this.referenceSlotDOM(8, "ring-slot"),
-      this.referenceSlotDOM(9, "quiver-slot")
+      this.createSlot(0, "head-slot"),
+      this.createSlot(1, "armor-slot"),
+      this.createSlot(2, "legs-slot"),
+      this.createSlot(3, "boots-slot"),
+      this.createSlot(4, "right-slot"),
+      this.createSlot(5, "left-slot"),
+      this.createSlot(6, "backpack-slot"),
+      this.createSlot(7, "shoulder-slot"),
+      this.createSlot(8, "ring-slot"),
+      this.createSlot(9, "quiver-slot")
     ];
 
     this.BACKGROUNDS = [
@@ -43,14 +43,12 @@ export default class Equipment extends Container {
   public removeItem(slot: number, count: number): any {
     // If the item is not stackable or count is zero, clear the slot.
     if (!this.slots[slot].item!.isStackable() || count === 0) {
-      this.slots[slot].element.style.backgroundImage = `url('${this.BACKGROUNDS[slot]}')`;
       return this.clearSlot(slot);
     }
     // Subtract the count.
     this.slots[slot].item!.count -= count;
     // If the remaining count is zero, clear the slot.
     if (this.slots[slot].item!.count === 0) {
-      this.slots[slot].element.style.backgroundImage = `url('${this.BACKGROUNDS[slot]}')`;
       return this.clearSlot(slot);
     }
     // Render the slot.
@@ -69,10 +67,11 @@ export default class Equipment extends Container {
     });
   }
 
-  public referenceSlotDOM(index: number, id: string): Slot {
-    // Create a new Slot and assign its element.
+  public createSlot(index: number, id: string): Slot {
+    // Create a new Slot - DOM element will be set by React component
     const slot = new Slot();
-    //slot.setElement(document.getElementById(id) as HTMLElement);
+    slot.slotId = id;
+    slot.slotIndex = index;
     return slot;
   }
 
@@ -83,8 +82,7 @@ export default class Equipment extends Container {
 
   public equipSlot(slot: number, item: any): void {
     this.slots[slot].setItem(item);
-    // Update the background image to indicate an item is present.
-    this.slots[slot].element.style.backgroundImage = "url('png/item.png')";
+    // React component will handle visual updates
   }
 
   public render(): void {

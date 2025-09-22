@@ -6,6 +6,8 @@ export default class Slot {
     item: Item | null;
     element!: HTMLElement;
     canvas!: Canvas;
+    slotId?: string;
+    slotIndex?: number;
   
     constructor() {
       /*
@@ -47,8 +49,7 @@ export default class Slot {
   
       this.item = item;
   
-      // Update the class with the rarity color of the item
-      this.element.className = "slot " + this.getRarityColor(item);
+      // React component will handle visual updates including rarity colors
     }
   
     private getRarityColor(item: Item | null): string {
@@ -90,33 +91,20 @@ export default class Slot {
     render(): void {
       /*
        * Function Slot.render
-       * Renders the slot
+       * Renders the slot - React component handles visual rendering
        */
   
-      // Clear the slot
-      this.canvas.clear();
-      this.setCountString(null);
-  
-      if (this.isEmpty()) {
-        return;
-      }
-  
-      // Draw the sprite to the slot canvas
-      this.canvas.drawSprite(this.item!, new Position(0, 0, 0), 32);
-  
-      // If the item is stackable, update the count display
-      if (this.item!.isStackable()) {
-        this.setCountString(this.item!.getCount());
-      }
+      // React component handles all visual rendering
+      // This method is kept for compatibility but does nothing
     }
   
     private setCountString(count: number | null): void {
       /*
        * Function Slot.setCountString
-       * Sets the count DOM element to the passed value
+       * Sets the count DOM element to the passed value - React component handles this
        */
   
-      this.element.lastChild!.textContent = count !== null ? count.toString() : "";
+      // React component handles count display
     }
   
     isEmpty(): boolean {

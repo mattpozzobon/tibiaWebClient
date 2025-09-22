@@ -18,6 +18,7 @@ import MoveItemModal from './modals/MoveItemModal';
 
 import ChatWindow from './hud/Chat';
 import ConfirmModal from './modals/ConfirmModal';
+import EquipmentPanel from './hud/EquipmentPanel';
 // import FriendList from './FriendList';
 // import Hotbar from './Hotbar';
 // import PlayerStats from './PlayerStats';
@@ -98,12 +99,20 @@ export default function GameUIManager({ gc }: GameUIManagerProps) {
       // toggleInventory,
       // togglePlayerStats,
       // toggleFriendList,
+      inventory: {
+        slots: new Map<string, any>(),
+        registerSlot(key: string, api: any) { this.slots.set(key, api); },
+        unregisterSlot(key: string) { this.slots.delete(key); },
+        getSlot(key: string) { return this.slots.get(key); }
+      }
     };
 
   }, [openModal, closeModal, closeAllModals, toggleChat]);
 
   return (
     <div className="game-ui-manager">
+      {/* React Equipment Panel - provides DOM-compatible slots for mouse.ts */}
+      <EquipmentPanel gc={gc} containerIndex={0} />
       
       {/* {showInventory && (
         <InventoryPanel 

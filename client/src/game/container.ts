@@ -27,20 +27,13 @@ export default class Container extends Item {
     createDOM(title: string, items: Item[]): void {
       /*
        * Function Container.createDOM
-       * Creates the DOM for the container
+       * Creates the DOM for the container - React components handle this
        */
-      let element = this.createElement(this.__containerId);
-  
-      this.window = new InteractiveWindow(element);
-      this.window.addTo(document.getElementsByClassName("column")[0] as HTMLElement);
-  
-      // Attach a listener to the window close event to inform the server of container close
-      this.window.on("close", this.close.bind(this));
-      this.window.state.title = title.charAt(0).toUpperCase() + title.slice(1);
-  
-      // Adds the slots to the existing window body
+      
+      // React components handle DOM creation
+      // Just initialize the slots
       this.createBodyContent(this.size);
-  
+      
       // Add the items to the slots
       this.addItems(items);
     }
@@ -95,25 +88,12 @@ export default class Container extends Item {
        * Creates the model for the body that contains slots
        */
   
-      let body = this.window.getElement(".body") as HTMLElement;
-  
-      // Set a limit to the container height based on the number of slots
-      body.style.maxHeight = Math.ceil(size / 4) * 34 + "px";
-      body.style.minHeight = "40px";
-      body.style.height = "100%";
-  
+      // React components handle DOM creation
       for (let i = 0; i < size; i++) {
         let slot = new Slot();
-        slot.createDOM(i);
-        if (this.__containerId === 2) {
-          slot.element.style.backgroundImage = "url(png/icon-key.png)";
-        }
+        slot.slotIndex = i;
         this.slots.push(slot);
       }
-  
-      this.slots.forEach((slot) => {
-        body.appendChild(slot.element);
-      });
     }
   
     addItems(items: Item[]): void {
@@ -155,7 +135,6 @@ export default class Container extends Item {
        */
   
       this.__setItem(slot, null);
-      this.slots[slot].element.className = "slot";
       this.getSlot(slot).render();
     }
   
@@ -187,12 +166,11 @@ export default class Container extends Item {
     private __render(): void {
       /*
        * Function Container.__render
-       * Draws the container
+       * Draws the container - React components handle visual rendering
        */
   
-      this.slots.forEach((slot) => {
-        slot.render();
-      });
+      // React components handle all visual rendering
+      // This method is kept for compatibility but does nothing
     }
   }
   

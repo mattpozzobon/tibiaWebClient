@@ -38,8 +38,9 @@ class Mouse {
       console.error('sendItemMove: Missing fromObject or toObject', { fromObject, toObject });
       return;
     }
-    console.log('Sending item move:', { fromObject, toObject, count });
-    window.gameClient.send(new ItemMovePacket(fromObject, toObject, count));
+    const safe = Math.max(1, (count | 0));
+    console.log('Sending item move:', { fromObject, toObject, count: safe });
+    window.gameClient.send(new ItemMovePacket(fromObject, toObject, safe));
   }
 
   setCursor(which: string): void {
@@ -220,7 +221,7 @@ class Mouse {
     const target = event.target as HTMLElement;
     if (target === window.gameClient.renderer.app.canvas) {
       this.__handleCanvasMouseUp(event);
-    } else if (target.className.includes("slot") || target.className === "body") {
+    } else if (target.className.includes("slot") || target.className === "body" || target.closest('.slot')) {
       this.__handleSlotMouseUp(event);
     }
   
@@ -269,36 +270,39 @@ class Mouse {
   }
 
   private __bindMoveCallback(fromObject: any, toObject: any): void {
-    console.log('__bindMoveCallback called with:', { fromObject, toObject });
+    
+    if (!fromObject || !fromObject.which) {
+      return;
+    }
     
     const item = fromObject.which.peekItem(fromObject.index);
-    console.log('Item from peekItem:', item);
     
     if (!item) {
-      console.log('No item found, sending move with count 1');
       return this.sendItemMove(fromObject, toObject, 1);
     }
     
     if (!item.isMoveable()) {
-      console.log('Item is not moveable:', item);
       return;
     }
     
+    // Determine total available count safely
+    const totalCount: number = typeof (item as any).getCount === 'function'
+      ? (item as any).getCount()
+      : (typeof (item as any).count === 'number' ? Math.max(1, (item as any).count) : 1);
+
     // If item is stackable and has more than 1 count, open move item modal
-    if (item.isStackable() && item.count > 1 && !window.gameClient.keyboard.isShiftDown()) {
-      console.log('Opening move item modal for stackable item');
+    if (item.isStackable() && totalCount > 1 && !window.gameClient.keyboard.isShiftDown()) {
       return this.__openMoveItemModal(fromObject, toObject, item);
     }
     
     // If shift is held down with stackable items, move only 1
     if (item.isStackable() && window.gameClient.keyboard.isShiftDown()) {
-      console.log('Moving 1 stackable item with shift');
       return this.sendItemMove(fromObject, toObject, 1);
     }
     
     // Move all items (non-stackable or single stackable items)
-    console.log('Moving all items:', item.count);
-    return this.sendItemMove(fromObject, toObject, item.count);
+    const moveCount = item.isStackable() ? totalCount : 1;
+    return this.sendItemMove(fromObject, toObject, moveCount);
   }
 
   private __setMultiUseItem(object: any): void {
@@ -325,7 +329,7 @@ class Mouse {
     const target = event.target as HTMLElement;
     if (target === window.gameClient.renderer.app.canvas) {
       this.__mouseDownObject = this.getWorldObject(event);
-    } else if (target.className.includes("slot") || target.className === "body") {
+    } else if (target.className.includes("slot") || target.className === "body" || target.closest('.slot')) {
       this.__mouseDownObject = this.__getSlotObject(event);
     }
   }
@@ -359,13 +363,19 @@ class Mouse {
     let containerIndex: number;
     const target = event.target as HTMLElement;
   
-    // Read the identifiers from the DOM.
-    if (target.className === "body") {
-      slotIndex = 0;
-      containerIndex = Number(target.parentElement?.getAttribute("containerIndex"));
-    } else {
+    // Check if this is an equipment slot first
+    if (target.closest('#react-equipment')) {
       slotIndex = Number(target.getAttribute("slotIndex"));
-      containerIndex = Number(target.parentElement?.parentElement?.getAttribute("containerIndex"));
+      containerIndex = 0; // Equipment is always container 0
+    } else {
+      // Read the identifiers from the DOM for regular containers.
+      if (target.className === "body") {
+        slotIndex = 0;
+        containerIndex = Number(target.parentElement?.getAttribute("containerIndex"));
+      } else {
+        slotIndex = Number(target.getAttribute("slotIndex"));
+        containerIndex = Number(target.parentElement?.parentElement?.getAttribute("containerIndex"));
+      }
     }
   
     // Fetch the container from the player.
@@ -424,8 +434,8 @@ class Mouse {
       return;
     }
   
-    // If hovering over a slot, set the cursor to "grab"
-    if (target.className.includes("slot")) {
+    // If hovering over a slot (including React equipment slots), set the cursor to "grab"
+    if (target.className.includes("slot") || target.closest('.slot')) {
       this.setCursor("grab");
       return;
     }

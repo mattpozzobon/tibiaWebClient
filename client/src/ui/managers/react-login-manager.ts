@@ -76,7 +76,7 @@ export default class ReactLoginFlowManager {
     this.showChangelogElement();
     this.ui.loginWrapper?.classList.add("post-login");
     this.setActiveButton("news");
-    window.gameClient.interface.modalManager.close();
+    //window.gameClient.interface.modalManager.close();
   }
 
   public showGame(): void {

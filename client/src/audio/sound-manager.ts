@@ -36,9 +36,7 @@ export default class SoundManager {
   }
 
   public setMasterVolume(amount: number): void {
-    if (!window.gameClient.interface.settings.isSoundEnabled()) {
-      amount = 0;
-    }
+    
     this.__masterVolume = amount;
     if (this.__currentAmbientTrace) {
       this.__currentAmbientTrace.setVolume(amount);

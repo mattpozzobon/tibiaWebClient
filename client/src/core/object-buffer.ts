@@ -103,7 +103,7 @@ class ObjectBuffer {
         throw new Error("Failed to load Tibia.dat: result is not an ArrayBuffer.");
       }
     } catch (exception) {
-      window.gameClient.interface.modalManager.open("floater-connecting", { message: exception instanceof Error ? exception.message : String(exception) });
+      //window.gameClient.interface.modalManager.open("floater-connecting", { message: exception instanceof Error ? exception.message : String(exception) });
     }
   }
 

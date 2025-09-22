@@ -91,7 +91,7 @@ export default class CreatureRendererHelper {
     this.creature.vitals.position = position;
   
     if (window.gameClient.player?.canSeeSmall(this.creature) && position.z === window.gameClient.player.vitals.position.z) {
-      window.gameClient.interface.soundManager.playWalkBit(position);
+      //window.gameClient.interface.soundManager.playWalkBit(position);
     }
   }
 

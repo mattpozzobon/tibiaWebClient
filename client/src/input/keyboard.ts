@@ -181,7 +181,6 @@ class Keyboard {
   private __move(direction: number, position: any): void {
     if (!window.gameClient.networkManager.packetHandler.handlePlayerMove(position)) return;
     window.gameClient.renderer.tileRenderer.refreshVisibleTiles();
-    window.gameClient.interface.modalManager.close();
     window.gameClient.player!.__serverWalkConfirmation = false;
     window.gameClient.send(new MovementPacket(direction));
   }
@@ -194,12 +193,7 @@ class Keyboard {
 
   
   private __handleReturnKey(): void {
-    const modalManager = window.gameClient.interface.modalManager;
-  
-    if (modalManager.isOpened()) {
-      modalManager.handleConfirm();
-      return;
-    }
+
   
     // Call React chat's handleEnterKey method directly
     if ((window as any).reactChatWindow && (window as any).reactChatWindow.handleEnterKey) {
@@ -216,11 +210,7 @@ class Keyboard {
       return;
     }
     
-    if (window.gameClient.interface.modalManager.isOpened()) {
-      window.gameClient.interface.modalManager.handleEscape();
-    } else if (window.gameClient.interface.menuManager.isOpened()) {
-      window.gameClient.interface.menuManager.close();
-    } else if (window.gameClient.player && window.gameClient.player.hasTarget()) {
+    if (window.gameClient.player && window.gameClient.player.hasTarget()) {
       window.gameClient.player.setTarget(null);
       window.gameClient.send(new TargetPacket(0));
     }
@@ -261,25 +251,9 @@ class Keyboard {
     }
 
     if (window.gameClient.isConnected()) {
-      if (lowerKey === Keyboard.KEYS.KEY_G && this.isControlDown()) {
-        event.preventDefault();
-        return window.gameClient.interface.sendLogout();
-      }
 
-      if (lowerKey === Keyboard.KEYS.KEY_O && this.isControlDown()) {
-        event.preventDefault();
-        return window.gameClient.interface.openOptions();
-      }
 
-      if (lowerKey === Keyboard.KEYS.KEY_K && this.isControlDown()) {
-        event.preventDefault();
-        return window.gameClient.interface.openCharactherStatus();
-      }
 
-      if (lowerKey === Keyboard.KEYS.KEY_U && this.isControlDown()) {
-        event.preventDefault();
-        return window.gameClient.interface.openOutfit();
-      }
 
       if (lowerKey === Keyboard.KEYS.KEY_M && this.isControlDown()) {
         event.preventDefault();
@@ -320,7 +294,7 @@ class Keyboard {
           return window.gameClient.renderer.debugger.toggleStatistics();
         }
       }
-      return window.gameClient.interface.hotbarManager.handleKeyPress(code);
+      //return window.gameClient.interface.hotbarManager.handleKeyPress(code);
     }
 
     if (lowerKey === Keyboard.KEYS.TAB && window.gameClient.isConnected()) {
@@ -332,7 +306,7 @@ class Keyboard {
     }
 
     // When modal is open, block other inputs
-    if (window.gameClient.interface.modalManager.isOpened()) return;
+    //if (window.gameClient.interface.modalManager.isOpened()) return;
 
     // If not on main game body, handle key type
     if (document.activeElement !== document.body) {

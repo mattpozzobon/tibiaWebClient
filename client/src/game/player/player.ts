@@ -67,21 +67,21 @@ export default class Player extends Creature {
     }
   }
 
-  public setLevelSkillValue(which: string, value: number): void {
-    (window.gameClient.interface.modalManager.get("skill-modal") as SkillModal).setSkillValue(which, value, value);
-  }
+  // public setLevelSkillValue(which: string, value: number): void {
+  //   (window.gameClient.interface.modalManager.get("skill-modal") as SkillModal).setSkillValue(which, value, value);
+  // }
 
-  public setAmbientSound(): void {
-    if (this.isUnderground()) {
-      window.gameClient.interface.soundManager.setAmbientTrace("cave");
-      window.gameClient.interface.soundManager.setVolume("rain", 0);
-    } else {
-      window.gameClient.interface.soundManager.setAmbientTrace("forest");
-      // if (window.gameClient.renderer.weatherCanvas.isRaining()) {
-      //   window.gameClient.interface.soundManager.setVolume("rain", 1);
-      // }
-    }
-  }
+  // public setAmbientSound(): void {
+  //   if (this.isUnderground()) {
+  //     window.gameClient.interface.soundManager.setAmbientTrace("cave");
+  //     window.gameClient.interface.soundManager.setVolume("rain", 0);
+  //   } else {
+  //     window.gameClient.interface.soundManager.setAmbientTrace("forest");
+  //     // if (window.gameClient.renderer.weatherCanvas.isRaining()) {
+  //     //   window.gameClient.interface.soundManager.setVolume("rain", 1);
+  //     // }
+  //   }
+  // }
 
   public isUnderground(): boolean {
     return this.getPosition().z < 8;
@@ -122,10 +122,10 @@ export default class Player extends Creature {
     
     // Battle window is now handled by React components
     // Legacy window system is disabled
-    const battleWindow = window.gameClient.interface.windowManager.getWindow("battle-window");
-    if (battleWindow) {
-      (battleWindow as BattleWindow).setTarget(creature);
-    }
+    // const battleWindow = window.gameClient.interface.windowManager.getWindow("battle-window");
+    // if (battleWindow) {
+    //   (battleWindow as BattleWindow).setTarget(creature);
+    // }
     // TODO: Update React battle component when it's implemented
   }
 

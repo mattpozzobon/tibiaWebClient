@@ -82,19 +82,6 @@ const App: React.FC<AppProps> = ({ onProgressUpdate }) => {
     const renderer = await Renderer.create();
     const gameClient = new GameClient(renderer);
     window.gameClient = gameClient;
-    
-    // Wait for game client to be fully initialized
-    const waitForGameClient = () => {
-      if (window?.gameClient?.interface) {
-        window.gameClient.interface.enableTopbarListeners();
-        window.gameClient.interface.modalManager.addEventListeners();
-        setGameClient(window.gameClient);
-      } else {
-        setTimeout(waitForGameClient, 50);
-      }
-    };
-    
-    waitForGameClient();
   };
 
   useEffect(() => {

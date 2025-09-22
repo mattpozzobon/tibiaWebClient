@@ -70,7 +70,7 @@ export default class Settings {
   setVolume(event: Event): void {
     const target = event.target as HTMLInputElement;
     const volume = Number(target.value);
-    window.gameClient.interface.soundManager.setMasterVolume(volume / 100);
+      // window.gameClient.interface.soundManager.setMasterVolume(volume / 100);
     const volumeSliderValue = document.getElementById("volume-slider-value");
     if (volumeSliderValue) {
       volumeSliderValue.innerHTML = `${volume}%`;
@@ -122,7 +122,7 @@ export default class Settings {
       case "enable-weather":
       case "enable-sound":
         this.__state[target.id] = target.checked;
-        window.gameClient.interface.soundManager.enableSound(target.checked);
+        //window.gameClient.interface.soundManager.enableSound(target.checked);
         break;
       case "toggle-scale-gamewindow":
         this.__state[target.id] = target.checked;

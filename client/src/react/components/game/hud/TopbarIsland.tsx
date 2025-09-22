@@ -13,32 +13,12 @@ export default function TopbarIsland({ gc }: TopbarIslandProps) {
     location.reload();
   };
 
-  const handleSettings = () => {
-    gc.interface?.modalManager?.open?.("settings");
-  };
-
-  const handleSkills = () => {
-    gc.interface?.modalManager?.open?.("skills");
-  };
-
-  const handleBattle = () => {
-    gc.interface?.modalManager?.open?.("battle");
-  };
-
   const handleOutfit = () => {
     (window as any).reactUIManager?.openModal('outfit');
   };
 
   const handleFriends = () => {
     (window as any).reactUIManager?.openModal('friends');
-  };
-
-  const handleInventory = () => {
-    gc.interface?.modalManager?.open?.("inventory");
-  };
-
-  const handleMap = () => {
-    gc.interface?.modalManager?.open?.("map");
   };
 
   const handleChangelog = () => {

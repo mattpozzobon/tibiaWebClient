@@ -79,9 +79,7 @@ export default class SpriteBuffer {
       }
       window.gameClient.interface.loadAssetCallback("sprite", name);
     } catch (e) {
-      window.gameClient.interface.modalManager.open("floater-connecting", {
-        message: e instanceof Error ? e.message : String(e),
-      });
+      console.error(e);
     }
   }
 

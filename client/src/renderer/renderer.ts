@@ -357,12 +357,12 @@ export default class Renderer {
   }
 
   public __renderOther(): void {
-    window.gameClient.player!.equipment.render();
-    window.gameClient.interface.modalManager.render();
+    //ndow.gameClient.player!.equipment.render();
+   // window.gameClient.interface.modalManager.render();
     this.__renderContainers();
     window.gameClient.world.clock.updateClockDOM();
     window.gameClient.interface.screenElementManager.render();
-    window.gameClient.interface.hotbarManager.render();
+    // window.gameClient.interface.hotbarManager.render();
     this.debugger.renderStatistics();
   }
 

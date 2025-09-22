@@ -91,7 +91,7 @@ class PacketHandler {
   }
 
   handleTradeOffer(packet: any): void {
-    window.gameClient.interface.modalManager.open("offer-modal", packet);
+    //window.gameClient.interface.modalManager.open("offer-modal", packet);
   }
 
   handlePlayerStatistics(packet: {
@@ -196,7 +196,7 @@ class PacketHandler {
     reactNotificationManager.addZoneMessage(packet.name, packet.title);
     //window.gameClient.renderer.weatherCanvas.setWeather(packet.weather);
     //window.gameClient.renderer.setAmbientColor(packet.ambient.r, packet.ambient.g, packet.ambient.b, packet.ambient.a);
-    window.gameClient.interface.soundManager.setAmbientTrace(packet.music);
+    //window.gameClient.interface.soundManager.setAmbientTrace(packet.music);
   }
 
   handleLatency(): void {
@@ -224,7 +224,7 @@ class PacketHandler {
   }
 
   handleServerError(message: string): void {
-    window.gameClient.interface.modalManager.open("floater-connecting", { message });
+    //window.gameClient.interface.modalManager.open("floater-connecting", { message });
   }
 
   handleServerMessage(string: string): void {
@@ -498,7 +498,7 @@ class PacketHandler {
   handleContainerOpen(packet: any): void {
     let container = new Container(packet);
     container.createDOM(packet.equipped ? `${packet.title}[E]` : packet.title, packet.items);
-    window.gameClient.interface.windowManager.register(container.window);
+    //window.gameClient.interface.windowManager.register(container.window);
     window.gameClient.player!.openContainer(container);
   }
 
@@ -546,7 +546,7 @@ class PacketHandler {
 
   handleReadText(packet: any): void {
     console.log('handleReadText: ', packet);
-    window.gameClient.interface.modalManager.open("readable-modal", packet);
+    //window.gameClient.interface.modalManager.open("readable-modal", packet);
   }
 
   handleChannelMessage(packet: { id: number; message: string; name: string; color: number }): void {

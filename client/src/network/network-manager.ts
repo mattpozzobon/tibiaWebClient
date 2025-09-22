@@ -233,7 +233,7 @@ class NetworkManager {
   }
 
   private __handleError(): void {
-    window.gameClient.interface.modalManager.open("floater-enter");
+    //window.gameClient.interface.modalManager.open("floater-enter");
     const errorBox = document.getElementById("auth-error")!;
     errorBox.textContent = "Could not connect to the Gameworld. Please try again later.";
   }

@@ -89,22 +89,18 @@ class Mouse {
 
   private __handleContextMenu(event: MouseEvent): void {
     event.preventDefault();
-    window.gameClient.interface.menuManager.close();
+    // window.gameClient.interface.menuManager.close();
     const t = event.target as HTMLElement;
-    if (t.className === "hotbar-item") return window.gameClient.interface.menuManager.open("hotbar-menu", event);
-    if (t.id === "chat-text-area" || t.className === "channel-empty") return window.gameClient.interface.menuManager.open("chat-body-menu", event);
-    if (t.parentElement?.id === "chat-text-area" && t.getAttribute("name") !== null) return window.gameClient.interface.menuManager.open("chat-entry-menu", event);
-    if (t.parentElement?.className === "window" && t.parentElement.id === "friend-window") return window.gameClient.interface.menuManager.open("friend-window-menu", event);
-    if (t.className === "friend-entry") return window.gameClient.interface.menuManager.open("friend-list-menu", event);
-    if (t.className.includes("chat-title")) return window.gameClient.interface.menuManager.open("chat-header-menu", event);
+    // if (t.className === "hotbar-item") return window.gameClient.interface.menuManager.open("hotbar-menu", event);
+    // if (t.id === "chat-text-area" || t.className === "channel-empty") return window.gameClient.interface.menuManager.open("chat-body-menu", event);
+    // if (t.parentElement?.id === "chat-text-area" && t.getAttribute("name") !== null) return window.gameClient.interface.menuManager.open("chat-entry-menu", event);
+    // if (t.parentElement?.className === "window" && t.parentElement.id === "friend-window") return window.gameClient.interface.menuManager.open("friend-window-menu", event);
+    // if (t.className === "friend-entry") return window.gameClient.interface.menuManager.open("friend-list-menu", event);
+    // if (t.className.includes("chat-title")) return window.gameClient.interface.menuManager.open("chat-header-menu", event);
   }
 
   private __handleMouseMove(event: MouseEvent): void {
-    console.log('__handleMouseMove called');
-    if (!window.gameClient.isRunning()) {
-      console.log('Game not running, skipping');
-      return;
-    }
+    if (!window.gameClient.isRunning()) return;
     this.x = event.clientX;
     this.y = event.clientY;
     this.__currentMouseTile = window.gameClient.renderer.getWorldCoordinates(event);
@@ -120,9 +116,9 @@ class Mouse {
       this.look(this.__mouseDownObject);
     }
 
-    if (window.gameClient.interface.menuManager.isOpened() && (event.target as HTMLElement).tagName !== "BUTTON") {
-      window.gameClient.interface.menuManager.close();
-    }
+    // if (window.gameClient.interface.menuManager.isOpened() && (event.target as HTMLElement).tagName !== "BUTTON") {
+    //   window.gameClient.interface.menuManager.close();
+    // }
 
     this.__setSelectedObject(event);
 
@@ -132,7 +128,6 @@ class Mouse {
   }
 
   private __handleMouseUp(event: MouseEvent): void {
-    console.log('__handleMouseUp called, button:', event.button, 'target:', event.target);
     if (event.button === 0) this.__leftButtonPressed = false;
     if (event.button === 2) this.__rightButtonPressed = false;
     if (!this.isConnected()) return;
@@ -144,23 +139,10 @@ class Mouse {
     }
 
     const t = event.target as HTMLElement;
-    console.log('Mouse up target check:', {
-      isCanvas: t === window.gameClient.renderer.app.canvas,
-      hasSlotClass: t.className.includes("slot"),
-      isBody: t.className === "body",
-      hasClosestSlot: !!t.closest(".slot"),
-      targetTag: t.tagName,
-      targetClass: t.className
-    });
-    
     if (t === window.gameClient.renderer.app.canvas) {
-      console.log('Calling __handleCanvasMouseUp');
       this.__handleCanvasMouseUp(event);
     } else if (t.className.includes("slot") || t.className === "body" || t.closest(".slot")) {
-      console.log('Calling __handleSlotMouseUp');
       this.__handleSlotMouseUp(event);
-    } else {
-      console.log('No handler called for target');
     }
 
     this.__mouseDownObject = null;
@@ -302,25 +284,14 @@ class Mouse {
   }
 
   private __updateCursorMove(target: HTMLElement): void {
-    console.log('__updateCursorMove called with target:', target.tagName, target.className);
-    
     // Skip if multi-use or mouse down is active
     if (this.__multiUseObject !== null || this.__mouseDownObject !== null) {
-      console.log('Multi-use or mouse down active, skipping');
       return;
     }
     
-    // Simple check: if target has slot class or is inside a slot
+    // Check if hovering over a slot
     const slotElement = target.closest(".slot") as HTMLElement;
-    console.log('Slot check:', { 
-      target: target.tagName,
-      hasSlotClass: target.classList.contains('slot'),
-      foundSlotElement: !!slotElement,
-      slotIndex: slotElement?.getAttribute('slotIndex')
-    });
-    
     if (slotElement) {
-      console.log('SLOT DETECTED! Setting cursor to grab');
       this.setCursor("grab");
       return;
     }

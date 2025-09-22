@@ -107,7 +107,7 @@ export default class World {
     creature.moveTo(position, speed);
 
     if (creature === window.gameClient.player) {
-      window.gameClient.player!.setAmbientSound();
+      //window.gameClient.player!.setAmbientSound();
     }
 
     // Dispatch event for minimap and other systems that need to know about creature movement

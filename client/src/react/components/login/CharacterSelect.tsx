@@ -73,7 +73,7 @@ export default function CharacterSelect({ gc, onCharacterSelected }: CharacterSe
       
       if (loginInfo && loginInfo.token && loginInfo.gameHost) {
         // Close any open modals first (like the original system)
-        gc.interface.modalManager.close();
+        //gc.interface.modalManager.close();
         
         // Connect to game server with selected character
         gc.networkManager.connectGameServer(loginInfo.gameHost, loginInfo.token, selectedCharacter);

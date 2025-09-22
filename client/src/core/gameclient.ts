@@ -64,8 +64,6 @@ export default class GameClient {
       );
     }
 
-    this.interface.enableVersionFeatures(serverData.clientVersion);
-
     this.__setServerVersion(serverData.version);
     this.__setClientVersion(serverData.clientVersion);
 

@@ -1,0 +1,241 @@
+/* Move Item Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+.move-item-modal {
+  background: #2a2a2a;
+  border: 2px solid #555;
+  border-radius: 8px;
+  min-width: 400px;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  color: #fff;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #555;
+  background: #333;
+
+  h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #fff;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background: #444;
+      color: #fff;
+    }
+  }
+}
+
+.modal-content {
+  padding: 20px;
+}
+
+.move-item-preview {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #333;
+  border-radius: 6px;
+  border: 1px solid #555;
+
+.item-sprite-container {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-sprite {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.item-sprite-placeholder {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #666;
+  border-radius: 4px;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .item-sprite-icon {
+    font-size: 20px;
+    color: #ccc;
+  }
+}
+
+  .item-info {
+    flex: 1;
+
+    .item-count-display {
+      font-size: 14px;
+      color: #ccc;
+    }
+  }
+}
+
+.quantity-selector {
+  margin-bottom: 20px;
+
+  label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #ccc;
+  }
+
+  .quantity-slider {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #555;
+    outline: none;
+    margin-bottom: 10px;
+    cursor: pointer;
+
+    &::-webkit-slider-thumb {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #007acc;
+      cursor: pointer;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    &::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #007acc;
+      cursor: pointer;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  .quantity-input {
+    width: 80px;
+    padding: 8px 12px;
+    background: #333;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    text-align: center;
+
+    &:focus {
+      outline: none;
+      border-color: #007acc;
+      box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+    }
+  }
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &.btn-secondary {
+      background: #555;
+      color: #fff;
+
+      &:hover {
+        background: #666;
+      }
+    }
+
+    &.btn-primary {
+      background: #007acc;
+      color: #fff;
+
+      &:hover {
+        background: #005a99;
+      }
+
+      &:active {
+        background: #004477;
+      }
+    }
+
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.3);
+    }
+  }
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .move-item-modal {
+    min-width: 90vw;
+    margin: 20px;
+  }
+
+  .move-item-preview {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+
+    .btn {
+      width: 100%;
+    }
+  }
+}

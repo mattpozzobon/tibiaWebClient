@@ -1,5 +1,6 @@
 import { ItemLookPacket, ItemMovePacket, ItemUsePacket, ItemUseWithPacket } from "../core/protocol";
 import Container from "../game/container";
+import Item from "../game/item";
 import Tile from "../game/tile";
 
 
@@ -33,7 +34,11 @@ class Mouse {
   }
   
   sendItemMove(fromObject: any, toObject: any, count: number): void {
-    if (!fromObject || !toObject) return;
+    if (!fromObject || !toObject) {
+      console.error('sendItemMove: Missing fromObject or toObject', { fromObject, toObject });
+      return;
+    }
+    console.log('Sending item move:', { fromObject, toObject, count });
     window.gameClient.send(new ItemMovePacket(fromObject, toObject, count));
   }
 
@@ -213,11 +218,11 @@ class Mouse {
   
     // Delegate based on target element
     const target = event.target as HTMLElement;
-    // if (target === window.gameClient.renderer.screen.canvas) {
-    //   this.__handleCanvasMouseUp(event);
-    // } else if (target.className.includes("slot") || target.className === "body") {
-    //   this.__handleSlotMouseUp(event);
-    // }
+    if (target === window.gameClient.renderer.app.canvas) {
+      this.__handleCanvasMouseUp(event);
+    } else if (target.className.includes("slot") || target.className === "body") {
+      this.__handleSlotMouseUp(event);
+    }
   
     // Reset the selected object (if any)
     this.__mouseDownObject = null;
@@ -264,12 +269,35 @@ class Mouse {
   }
 
   private __bindMoveCallback(fromObject: any, toObject: any): void {
+    console.log('__bindMoveCallback called with:', { fromObject, toObject });
+    
     const item = fromObject.which.peekItem(fromObject.index);
-    if (!item) return this.sendItemMove(fromObject, toObject, 1);
-    if (!item.isMoveable()) return;
-    if (item.isStackable() && window.gameClient.keyboard.isShiftDown()) {
+    console.log('Item from peekItem:', item);
+    
+    if (!item) {
+      console.log('No item found, sending move with count 1');
       return this.sendItemMove(fromObject, toObject, 1);
     }
+    
+    if (!item.isMoveable()) {
+      console.log('Item is not moveable:', item);
+      return;
+    }
+    
+    // If item is stackable and has more than 1 count, open move item modal
+    if (item.isStackable() && item.count > 1 && !window.gameClient.keyboard.isShiftDown()) {
+      console.log('Opening move item modal for stackable item');
+      return this.__openMoveItemModal(fromObject, toObject, item);
+    }
+    
+    // If shift is held down with stackable items, move only 1
+    if (item.isStackable() && window.gameClient.keyboard.isShiftDown()) {
+      console.log('Moving 1 stackable item with shift');
+      return this.sendItemMove(fromObject, toObject, 1);
+    }
+    
+    // Move all items (non-stackable or single stackable items)
+    console.log('Moving all items:', item.count);
     return this.sendItemMove(fromObject, toObject, item.count);
   }
 
@@ -278,9 +306,27 @@ class Mouse {
     this.__multiUseObject = object;
   }
 
+  private __openMoveItemModal(fromObject: any, toObject: any, item: Item): void {
+      (window as any).reactUIManager.openModal('moveItem', {
+        fromObject,
+        toObject,
+        item: {
+          id: item.id,
+          count: item.count
+        },
+        onConfirm: (count: number) => { 
+          console.log('Move item confirmed with count:', count);
+          this.sendItemMove(fromObject, toObject, count);
+        }
+      });
+  }
+
   private __setSelectedObject(event: MouseEvent): void {
-    if (event.target === window.gameClient.renderer.app.canvas) {
+    const target = event.target as HTMLElement;
+    if (target === window.gameClient.renderer.app.canvas) {
       this.__mouseDownObject = this.getWorldObject(event);
+    } else if (target.className.includes("slot") || target.className === "body") {
+      this.__mouseDownObject = this.__getSlotObject(event);
     }
   }
 

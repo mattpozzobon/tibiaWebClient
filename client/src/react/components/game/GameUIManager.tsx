@@ -9,7 +9,7 @@ import FriendModal from './modals/FriendModal';
 // import MapModal from './modals/MapModal';
 import ChatModal from './modals/ChatModal';
 import ChangelogModal from '../ChangelogModal';
-// import MoveItemModal from './modals/MoveItemModal';
+import MoveItemModal from './modals/MoveItemModal';
 // import ConfirmModal from './modals/ConfirmModal';
 // import EnterNameModal from './modals/EnterNameModal';
 // import ReadableModal from './modals/ReadableModal';
@@ -17,6 +17,7 @@ import ChangelogModal from '../ChangelogModal';
 // import SpellbookModal from './modals/SpellbookModal';
 
 import ChatWindow from './hud/Chat';
+import ConfirmModal from './modals/ConfirmModal';
 // import FriendList from './FriendList';
 // import Hotbar from './Hotbar';
 // import PlayerStats from './PlayerStats';
@@ -41,8 +42,8 @@ export default function GameUIManager({ gc }: GameUIManagerProps) {
     changelog: { isOpen: false },
     // map: { isOpen: false },
     chat: { isOpen: false },
-    // moveItem: { isOpen: false },
-    // confirm: { isOpen: false },
+    moveItem: { isOpen: false },
+    confirm: { isOpen: false },
     // enterName: { isOpen: false },
     // readable: { isOpen: false },
     // offer: { isOpen: false },
@@ -170,20 +171,21 @@ export default function GameUIManager({ gc }: GameUIManagerProps) {
         gc={gc}
       />
       
-      {/* <MoveItemModal 
+      <MoveItemModal 
         isOpen={modals.moveItem.isOpen}
         onClose={() => closeModal('moveItem')}
         gc={gc}
         data={modals.moveItem.data}
       />
       
-      <ConfirmModal 
+       <ConfirmModal 
         isOpen={modals.confirm.isOpen}
         onClose={() => closeModal('confirm')}
         gc={gc}
         data={modals.confirm.data}
       />
       
+      {/*
       <EnterNameModal 
         isOpen={modals.enterName.isOpen}
         onClose={() => closeModal('enterName')}

@@ -1,7 +1,6 @@
 import HotbarManager from "./managers/hotbar-manager";
 import MenuManager from "./menu/menu-manager";
 import ModalManager from "./modals/modal-manager";
-import OutfitModal from "./modals/modal-outfit";
 import { KeyringOpenPacket, LogoutPacket } from "../core/protocol";
 import ScreenElementManager from "./screen-elements/screen-element-manager";
 import Settings from "./settings";
@@ -125,11 +124,6 @@ export default class Interface {
     window.gameClient.send(new KeyringOpenPacket());
   }
 
-  enableVersionFeatures(version: number): void {
-    if (version <= 1000) {
-      (this.modalManager.get("outfit-modal") as OutfitModal)?.disableAddons();
-    }
-  }
 
   getHexColor(index: number): string {
     return Interface.WEBCOLORS[index] || "#FFFFFF";

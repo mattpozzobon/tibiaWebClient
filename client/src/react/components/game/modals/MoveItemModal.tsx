@@ -29,19 +29,12 @@ export default function MoveItemModal({ isOpen, onClose, gc, data }: MoveItemMod
       setMaxCount(data.item.count);
       setCount(data.item.count);
       
-      // Try to get the item sprite
+      // Initial sprite render for default count
       try {
-        const dataObject = gc.dataObjects?.get(data.item.id);
-        if (dataObject && canvasRef.current) {
-          // Create a temporary item instance for rendering
+        if (canvasRef.current) {
           const tempItem = new Item(data.item.id, data.item.count);
-          const success = ItemRenderer.renderItemToCanvas(gc, tempItem, canvasRef.current, {
-            size: 32,
-            background: 'transparent'
-          });
-          if (success) {
-            setItemSprite(canvasRef.current.toDataURL());
-          }
+          const success = ItemRenderer.renderItemToCanvas(gc, tempItem, canvasRef.current, { size: 32, background: 'transparent' });
+          if (success) setItemSprite(canvasRef.current.toDataURL());
         }
       } catch (error) {
         console.error('Failed to render item sprite:', error);
@@ -53,6 +46,20 @@ export default function MoveItemModal({ isOpen, onClose, gc, data }: MoveItemMod
       }, 100);
     }
   }, [isOpen, data, gc]);
+
+  // Re-render sprite when selected count changes (for stackable items visual)
+  useEffect(() => {
+    if (!isOpen || !data) return;
+    try {
+      if (canvasRef.current) {
+        const tempItem = new Item(data.item.id, count);
+        const success = ItemRenderer.renderItemToCanvas(gc, tempItem, canvasRef.current, { size: 32, background: 'transparent' });
+        if (success) setItemSprite(canvasRef.current.toDataURL());
+      }
+    } catch (error) {
+      console.error('Failed to re-render item sprite for count:', count, error);
+    }
+  }, [count, isOpen, data, gc]);
 
   const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     let amount = parseInt(event.target.value);

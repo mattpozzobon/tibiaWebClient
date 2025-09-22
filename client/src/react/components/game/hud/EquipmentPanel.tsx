@@ -40,8 +40,6 @@ export default function EquipmentPanel({ gc, containerIndex }: EquipmentPanelPro
   const slotRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const canvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
 
-  // Ensure mouse.ts compatibility by setting custom attributes after mount
-
   useEffect(() => {
     if (!gc?.player?.equipment) return;
     const equipment = gc.player.equipment;
@@ -54,9 +52,27 @@ export default function EquipmentPanel({ gc, containerIndex }: EquipmentPanelPro
     // Map visual divs to legacy slot indices expected by the engine
     (Object.keys(LEGACY_INDEX) as Array<keyof typeof LEGACY_INDEX>).forEach((id) => {
       const el = slotRefs.current[id];
-      if (!el) return;
+      const canvas = canvasRefs.current[id];
+      console.log(`Setting up slot ${id}:`, { el: !!el, canvas: !!canvas });
+      if (!el || !canvas) {
+        console.log(`Missing refs for ${id}, retrying...`);
+        // Try again after a short delay
+        setTimeout(() => {
+          const retryEl = slotRefs.current[id];
+          const retryCanvas = canvasRefs.current[id];
+          if (retryEl && retryCanvas) {
+            const idx = LEGACY_INDEX[id];
+            retryEl.setAttribute('slotIndex', String(idx));
+            retryCanvas.setAttribute('slotIndex', String(idx));
+            console.log(`Set slotIndex ${idx} for ${id} on retry`);
+          }
+        }, 100);
+        return;
+      }
       const idx = LEGACY_INDEX[id];
       el.setAttribute('slotIndex', String(idx));
+      canvas.setAttribute('slotIndex', String(idx));
+      console.log(`Set slotIndex ${idx} for ${id}`);
       if (!el.className.includes('slot')) el.className += ' slot';
       if (equipment.slots[idx] && typeof equipment.slots[idx].setElement === 'function') {
         equipment.slots[idx].setElement(el);
@@ -100,20 +116,32 @@ export default function EquipmentPanel({ gc, containerIndex }: EquipmentPanelPro
       <div className="equipment-window-body">
         <div className="equipment-container" ref={containerRef}>
           <div className="equipment-slots">
-            {DISPLAY_ORDER.map((id) => (
-              <div
-                key={id}
-                id={id}
-                className={`slot slot-${id.replace('-slot','')}`}
-                ref={(el) => { slotRefs.current[id] = el; }}
-              >
-                <canvas
-                  width={32}
-                  height={32}
-                  ref={(el) => { canvasRefs.current[id] = el; }}
-                />
-              </div>
-            ))}
+            {DISPLAY_ORDER.map((id) => {
+              const slotIndex = LEGACY_INDEX[id];
+              return (
+                <div
+                  key={id}
+                  id={id}
+                  className={`slot slot-${id.replace('-slot','')}`}
+                  data-slot-index={slotIndex}
+                  ref={(el) => { 
+                    slotRefs.current[id] = el; 
+                    if (el) el.setAttribute('slotIndex', String(slotIndex));
+                  }}
+                >
+                  <canvas
+                    width={32}
+                    height={32}
+                    className={`slot slot-${id.replace('-slot','')}`}
+                    data-slot-index={slotIndex}
+                    ref={(el) => { 
+                      canvasRefs.current[id] = el; 
+                      if (el) el.setAttribute('slotIndex', String(slotIndex));
+                    }}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

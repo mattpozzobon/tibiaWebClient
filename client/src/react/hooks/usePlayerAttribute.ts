@@ -7,13 +7,7 @@ import type Position from '../../game/position';
 import type Equipment from '../../game/player/equipment/equipment';
 import type Item from '../../game/item';
 
-/**
- * Custom hook to safely access player attributes that may not be immediately available
- * 
- * @param gameClient - The game client instance
- * @param attributePath - The path to the player attribute (e.g., 'conditions', 'vitals', 'skills')
- * @returns The player attribute value, or null if not available
- */
+
 export function usePlayerAttribute<T>(
   gameClient: GameClient | null, 
   attributePath: keyof NonNullable<GameClient['player']>
@@ -53,9 +47,6 @@ export function usePlayerAttribute<T>(
   return attribute;
 }
 
-/**
- * Specialized hook for player conditions that tracks condition changes
- */
 export function usePlayerConditions(gameClient: GameClient | null): { conditions: ConditionManager | null; conditionIds: Set<number> } {
   const [conditionIds, setConditionIds] = useState<Set<number>>(new Set());
   const conditions = usePlayerAttribute<ConditionManager>(gameClient, 'conditions');
@@ -99,65 +90,62 @@ export function usePlayerConditions(gameClient: GameClient | null): { conditions
   return { conditions, conditionIds };
 }
 
-/**
- * Specialized hook for player vitals that tracks vital changes
- */
-export function usePlayerVitals(gameClient: GameClient | null): { vitals: Vitals | null; vitalValues: { health: number; maxHealth: number; mana: number; maxMana: number; energy: number; maxEnergy: number } } {
-  const [vitalValues, setVitalValues] = useState({ health: 0, maxHealth: 0, mana: 0, maxMana: 0, energy: 0, maxEnergy: 0 });
+export function usePlayerVitals(gameClient: GameClient | null) {
   const vitals = usePlayerAttribute<Vitals>(gameClient, 'vitals');
+
+  const [vitalValues, setVitalValues] = useState({
+    health: 0, maxHealth: 0,
+    mana: 0,   maxMana: 0,
+    energy: 0, maxEnergy: 0,
+    capacity: 0, maxCapacity: 0,
+  });
 
   useEffect(() => {
     if (!vitals) {
-      setVitalValues({ health: 0, maxHealth: 0, mana: 0, maxMana: 0, energy: 0, maxEnergy: 0 });
+      setVitalValues({
+        health: 0, maxHealth: 0,
+        mana: 0,   maxMana: 0,
+        energy: 0, maxEnergy: 0,
+        capacity: 0, maxCapacity: 0,
+      });
       return;
     }
 
-    const updateVitalValues = () => {
-      const current = {
-        health: vitals.state.health,
-        maxHealth: vitals.state.maxHealth,
-        mana: vitals.state.mana,
-        maxMana: vitals.state.maxMana,
-        energy: vitals.state.energy,
-        maxEnergy: vitals.state.maxEnergy
-      };
-      
-      // Only update if values actually changed
-      setVitalValues(prevValues => {
-        if (current.health !== prevValues.health ||
-            current.maxHealth !== prevValues.maxHealth ||
-            current.mana !== prevValues.mana ||
-            current.maxMana !== prevValues.maxMana ||
-            current.energy !== prevValues.energy ||
-            current.maxEnergy !== prevValues.maxEnergy) {
-          return current;
-        }
-        return prevValues;
-      });
-    };
+    // initial snapshot
+    setVitalValues({
+      health: vitals.state.health,
+      maxHealth: vitals.state.maxHealth,
+      mana: vitals.state.mana,
+      maxMana: vitals.state.maxMana,
+      energy: vitals.state.energy,
+      maxEnergy: vitals.state.maxEnergy,
+      capacity: vitals.state.capacity,
+      maxCapacity: vitals.state.maxCapacity,
+    });
 
-    // Initial update
-    updateVitalValues();
+    // subscribe to changes
+    const s = vitals.state;
+    const unsubs = [
+      s.on('health',      (v: number) => setVitalValues(p => ({ ...p, health: v }))),
+      s.on('maxHealth',   (v: number) => setVitalValues(p => ({ ...p, maxHealth: v }))),
+      s.on('mana',        (v: number) => setVitalValues(p => ({ ...p, mana: v }))),
+      s.on('maxMana',     (v: number) => setVitalValues(p => ({ ...p, maxMana: v }))),
+      s.on('energy',      (v: number) => setVitalValues(p => ({ ...p, energy: v }))),
+      s.on('maxEnergy',   (v: number) => setVitalValues(p => ({ ...p, maxEnergy: v }))),
+      s.on('capacity',    (v: number) => setVitalValues(p => ({ ...p, capacity: v }))),      // NEW
+      s.on('maxCapacity', (v: number) => setVitalValues(p => ({ ...p, maxCapacity: v }))),   // NEW
+    ];
 
-    // Poll for changes every 100ms
-    const interval = setInterval(updateVitalValues, 100);
-
-    return () => clearInterval(interval);
+    return () => unsubs.forEach(u => u && u());
   }, [vitals]);
 
   return { vitals, vitalValues };
 }
 
-/**
- * Specialized hook for player skills
- */
 export function usePlayerSkills(gameClient: GameClient | null): Skills | null {
   return usePlayerAttribute<Skills>(gameClient, 'skills');
 }
 
-/**
- * Hook that waits for the entire player object to be available
- */
 export function usePlayer(gameClient: GameClient | null) {
   const [player, setPlayer] = useState<NonNullable<GameClient['player']> | null>(null);
 
@@ -192,9 +180,6 @@ export function usePlayer(gameClient: GameClient | null) {
   return player;
 }
 
-/**
- * Hook that tracks player position changes including floor changes and teleportation
- */
 export function usePlayerPosition(gameClient: GameClient | null) {
   const [playerPosition, setPlayerPosition] = useState<{ position: Position; floor: number } | null>(null);
 
@@ -240,9 +225,6 @@ export function usePlayerPosition(gameClient: GameClient | null) {
   return playerPosition;
 }
 
-/**
- * Specialized hook for player equipment that tracks equipment changes
- */
 export function usePlayerEquipment(gameClient: GameClient | null): { 
   equipment: Equipment | null; 
   equipmentItems: (Item | null)[]; 

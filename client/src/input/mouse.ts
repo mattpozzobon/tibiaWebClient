@@ -215,6 +215,7 @@ class Mouse {
 
   private __setSelectedObject(event: MouseEvent): void {
     const t = event.target as HTMLElement;
+    
     if (t === window.gameClient.renderer.app.canvas) {
       this.__mouseDownObject = this.getWorldObject(event);
     } else if (t.className.includes("slot") || t.className === "body" || t.closest(".slot")) {
@@ -268,7 +269,10 @@ class Mouse {
     if (!this.__mouseDownObject?.which) return;
 
     const toObject = this.__getSlotObject(event);
-    if (!toObject) return;
+    if (!toObject) {
+      console.log('🔍 __handleSlotMouseUp: No toObject found');
+      return;
+    }
 
     if (this.__mouseDownObject.which.constructor.name === "Tile") {
       if (!this.__mouseDownObject.which.getPosition().besides(window.gameClient.player!.getPosition())) return;

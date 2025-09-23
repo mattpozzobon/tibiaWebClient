@@ -1,9 +1,10 @@
+// EquipmentPanel.tsx
 import React, { useEffect, useRef } from 'react';
 import './styles/EquipmentPanel.scss';
 import { ItemRenderer } from '../../../../utils/item-renderer';
 import Item from '../../../../game/item';
 import type GameClient from '../../../../core/gameclient';
-import Equipment, { EQUIPMENT_EVENTS } from '../../../../game/player/equipment/equipment';
+import { usePlayerEquipment } from '../../../hooks/usePlayerAttribute';
 
 interface EquipmentPanelProps {
   gc: GameClient;
@@ -11,15 +12,8 @@ interface EquipmentPanelProps {
 }
 
 const DISPLAY_ORDER = [
-  'shoulder-slot',
-  'head-slot',
-  'backpack-slot',
-  'left-slot',
-  'armor-slot',
-  'right-slot',
-  'ring-slot',
-  'boots-slot',
-  'quiver-slot'
+  'shoulder-slot','head-slot','backpack-slot','left-slot',
+  'armor-slot','right-slot','ring-slot','boots-slot','quiver-slot','legs-slot'
 ] as const;
 
 const LEGACY_INDEX: Record<string, number> = {
@@ -32,31 +26,28 @@ export default function EquipmentPanel({ gc }: EquipmentPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const slotDivRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const canvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
-  const unsubRef = useRef<(() => void)[]>([]);
+  
+  // Use the new hook for equipment data
+  const { equipment, equipmentItems, forceRender } = usePlayerEquipment(gc);
 
-  // Helper to draw one slot
-  const renderSlot = (slotIdx: number) => {
-    const id = Object.keys(LEGACY_INDEX).find(k => LEGACY_INDEX[k] === slotIdx);
-    if (!id) return;
+  const renderSlot = (id: string) => {
+    const slotIdx = LEGACY_INDEX[id];
+    if (slotIdx === undefined) return;
     const canvas = canvasRefs.current[id];
     const ctx = canvas?.getContext('2d');
-    const eq: Equipment | undefined = gc.player?.equipment as any;
-    if (!ctx || !eq) return;
+    if (!ctx || !canvas) return;
 
-    const itm: Item | null = eq.slots[slotIdx]?.item ?? null;
+    const itm: Item | null = equipmentItems[slotIdx] || null;
     if (itm) {
-      ItemRenderer.renderItemToCanvas(gc, itm, canvas!, { size: 32, background: 'transparent' });
+      ItemRenderer.renderItemToCanvas(gc, itm, canvas, { size: 32, background: 'transparent' });
     } else {
-      ctx.clearRect(0, 0, canvas!.width, canvas!.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
   };
 
-  // Initial DOM wiring for mouse.ts compatibility + slot mapping
+  // wire DOM once equipment exists (mouse.ts compat)
   useEffect(() => {
-    const eq: Equipment | undefined = gc?.player?.equipment as any;
-    if (!eq) return;
-
-    // mouse.ts expects equipment containerIndex=0
+    if (!equipment) return;
     containerRef.current?.setAttribute('containerIndex', '0');
 
     (Object.keys(LEGACY_INDEX) as Array<keyof typeof LEGACY_INDEX>).forEach((id) => {
@@ -64,42 +55,17 @@ export default function EquipmentPanel({ gc }: EquipmentPanelProps) {
       if (!div) return;
       const idx = LEGACY_INDEX[id];
       div.setAttribute('slotIndex', String(idx));
-      if (!div.className.includes('slot')) div.className += ' slot';
-      // Connect Slot <-> DOM (legacy)
-      if (eq.slots[idx] && typeof eq.slots[idx].setElement === 'function') {
-        eq.slots[idx].setElement(div);
-      }
+      if (!div.classList.contains('slot')) div.classList.add('slot');
+      equipment.slots[idx]?.setElement(div);
     });
-  }, [gc]);
+  }, [equipment]); // re-run when equipment becomes available
 
-  // Subscribe to equipment events and render on change
+  // Render all slots when equipment items change
   useEffect(() => {
-    const eq: Equipment | undefined = gc?.player?.equipment as any;
-    if (!eq) return;
-
-    // If the equipment is already ready, do a full initial paint
-    const paintAll = () => {
-      for (let i = 0; i < 10; i++) renderSlot(i);
-    };
-    if ((eq as any).isReady) {
-      paintAll();
-    }
-
-    // Listen for READY + CHANGED
-    const offReady = eq.on(EQUIPMENT_EVENTS.READY, paintAll);
-    const offChanged = eq.on(EQUIPMENT_EVENTS.CHANGED, (e: Event) => {
-      const detail = (e as CustomEvent).detail || {};
-      if (typeof detail.slot === 'number') renderSlot(detail.slot);
-      else paintAll();
+    DISPLAY_ORDER.forEach(id => {
+      renderSlot(id);
     });
-
-    unsubRef.current.push(offReady, offChanged);
-    return () => {
-      // cleanup listeners
-      unsubRef.current.forEach(fn => fn && fn());
-      unsubRef.current = [];
-    };
-  }, [gc]);
+  }, [equipmentItems, forceRender]); // Re-render when items change
 
   return (
     <div id="react-equipment" className="equipment-window">
@@ -115,7 +81,6 @@ export default function EquipmentPanel({ gc }: EquipmentPanelProps) {
                   id={id}
                   className={`slot slot-${id.replace('-slot','')}`}
                   ref={(el) => { slotDivRefs.current[id] = el; }}
-                  
                 >
                   <canvas
                     width={32}

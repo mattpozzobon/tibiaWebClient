@@ -1,24 +1,23 @@
+// Hud.tsx
 import React from 'react';
-import type GameClient from '../../../core/gameclient';
 import TopbarIsland from './hud/TopbarIsland';
 import Chat from './hud/Chat';
 import StatusBar from './hud/StatusBar';
 import PlayerBars from './hud/PlayerBars';
 import Minimap from './hud/Minimap';
+import { useGameClient } from '../../hooks/gameClientCtx';
 
-interface HudProps {
-  gameClient: GameClient;
-}
-
-const Hud: React.FC<HudProps> = ({ gameClient }) => {
+const Hud: React.FC = () => {
+  const gc = useGameClient();
+  if (!gc) return null; // <- guard until GameClient exists
 
   return (
     <>
-      <TopbarIsland gc={gameClient} />
-      <PlayerBars gameClient={gameClient} />
-      <Chat gc={gameClient} />
-      <StatusBar gameClient={gameClient} />
-      <Minimap gc={gameClient} />
+      <TopbarIsland gc={gc} />
+      <PlayerBars gameClient={gc} />
+      <Chat gc={gc} />
+      <StatusBar gameClient={gc} />
+      <Minimap gc={gc} />
     </>
   );
 };

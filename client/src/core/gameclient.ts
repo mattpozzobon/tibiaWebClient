@@ -13,11 +13,17 @@ import SpriteBuffer from "../renderer/sprite-buffer";
 import World from "../game/world";
 import Renderer from "../renderer/renderer";
 import ObjectBuffer from "./object-buffer";
+import { Emitter } from "../utils/event-emitter";
 
+type GCEvents = {
+  'gc:ready': GameClient;
+  'player:ready': Player;
+  'player:updated': Player;
+};
 
 export default class GameClient {
   SERVER_VERSION: string = "1098";
-
+  events: Emitter<GCEvents>;
   spriteBuffer: SpriteBuffer;
   dataObjects: ObjectBuffer;
   keyboard: Keyboard;
@@ -45,6 +51,9 @@ export default class GameClient {
     this.keyboard = new Keyboard();
     this.mouse = new Mouse();
     this.eventQueue = new EventQueue();
+    this.events = new Emitter<GCEvents>();
+
+    this.events.emit('gc:ready', this);
   }
 
   setServerData(packet: PacketReader): void {
@@ -140,7 +149,8 @@ export default class GameClient {
     //this.player.setAmbientSound();
     //this.renderer.minimap.setRenderLayer(this.player.getPosition().z);
 
-    this.gameLoop.init();
+    this.gameLoop.init(); 
+    this.events.emit('player:ready', this.player);
   }
 
   isConnected(): boolean {

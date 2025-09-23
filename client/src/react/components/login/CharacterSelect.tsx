@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import type GameClient from "../../../core/gameclient";
 import './styles/CharacterSelect.scss';
 
 interface CharacterSelectProps {
-  gc: GameClient;
+  gc: GameClient | null;
   onCharacterSelected: () => void;
 }
 
@@ -20,83 +20,67 @@ export default function CharacterSelect({ gc, onCharacterSelected }: CharacterSe
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Load characters once gc is available and the socket populated login info
   useEffect(() => {
-    // Load characters from the game client
-    loadCharacters();
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        setLoading(true);
+
+        if (!gc) {
+          // engine not ready yet, keep a small spinner
+          return;
+        }
+
+        const loginFlowManager = gc.interface.loginFlowManager;
+        // wait until server pushed login info
+        const waitForChars = () =>
+          new Promise<Character[]>((resolve) => {
+            const tick = () => {
+              const info = (loginFlowManager as any).loginInfo;
+              if (info?.characters?.length) return resolve(info.characters);
+              setTimeout(tick, 200);
+            };
+            tick();
+          });
+
+        const chars = await waitForChars();
+        if (!cancelled) {
+          setCharacters(chars.slice());
+          setError(null);
+        }
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message ?? 'Failed to load characters');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => { cancelled = true; };
   }, [gc]);
 
-  const loadCharacters = async () => {
-    try {
-      setLoading(true);
-      // Get characters from LoginFlowManager (populated by server handshake)
-      const loginFlowManager = gc.interface.loginFlowManager;
-      
-      // Wait for characters to be loaded from server
-      const waitForCharacters = () => {
-        return new Promise<Character[]>((resolve) => {
-          const checkForCharacters = () => {
-            // Access the private loginInfo through the interface
-            const loginInfo = (loginFlowManager as any).loginInfo;
-            if (loginInfo && loginInfo.characters && loginInfo.characters.length > 0) {
-              resolve(loginInfo.characters);
-            } else {
-              setTimeout(checkForCharacters, 500);
-            }
-          };
-          checkForCharacters();
-        });
-      };
-      
-      const serverCharacters = await waitForCharacters();
-      setCharacters([...serverCharacters]); // Force new array reference
-    } catch (err: any) {
-      console.error('❌ Error loading characters:', err);
-      setError("Failed to load characters: " + (err.message || "Unknown error"));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCharacterSelect = (characterId: number) => {
-    setSelectedCharacter(characterId);
-  };
-
   const handleEnterGame = async () => {
-    if (!selectedCharacter) return;
-
+    if (!selectedCharacter || !gc) return;
     try {
       setLoading(true);
-      
-      // Get login info from LoginFlowManager
-      const loginFlowManager = gc.interface.loginFlowManager;
-      const loginInfo = (loginFlowManager as any).loginInfo;
-      
-      if (loginInfo && loginInfo.token && loginInfo.gameHost) {
-        // Close any open modals first (like the original system)
-        //gc.interface.modalManager.close();
-        
-        // Connect to game server with selected character
-        gc.networkManager.connectGameServer(loginInfo.gameHost, loginInfo.token, selectedCharacter);
-        
-        // Call the callback to switch to game view (handles UI transition)
-        onCharacterSelected();
-      } else {
-        throw new Error("Missing login information - token or gameHost not found");
-      }
-    } catch (err: any) {
-      console.error('❌ Failed to enter game:', err);
-      setError("Failed to enter game: " + (err.message || "Unknown error"));
+      const info = (gc.interface.loginFlowManager as any).loginInfo;
+      if (!info?.token || !info?.gameHost) throw new Error('Missing login info');
+      gc.networkManager.connectGameServer(info.gameHost, info.token, selectedCharacter);
+      onCharacterSelected();
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to enter game');
     } finally {
       setLoading(false);
     }
   };
 
-
-  if (loading) {
+  if (!gc || loading) {
     return (
       <div className="character-select-loading">
         <div className="loading-spinner"></div>
-        <p>Loading characters...</p>
+        <p>{gc ? 'Loading characters…' : 'Starting engine…'}</p>
       </div>
     );
   }
@@ -105,44 +89,34 @@ export default function CharacterSelect({ gc, onCharacterSelected }: CharacterSe
     return (
       <div className="character-select-error">
         <p className="error-message">{error}</p>
-        <button onClick={loadCharacters} className="btn-primary">Retry</button>
+        <button onClick={() => window.location.reload()} className="btn-primary">Retry</button>
       </div>
     );
   }
 
   return (
     <div className="character-select-container">
-      <h2 className="character-select-title">
-        Select Character
-      </h2>
-      
+      <h2 className="character-select-title">Select Character</h2>
       <div className="character-grid">
-        {characters.map((character) => (
+        {characters.map((c) => (
           <div
-            key={`char-${character.id}`}
-            onClick={() => handleCharacterSelect(character.id)}
-            className={`character-card ${selectedCharacter === character.id ? 'selected' : ''}`}
+            key={c.id}
+            onClick={() => setSelectedCharacter(c.id)}
+            className={`character-card ${selectedCharacter === c.id ? 'selected' : ''}`}
           >
-            <div className="character-name">{character.name}</div>
+            <div className="character-name">{c.name}</div>
             <div className="character-level">Level 1</div>
             <div className="character-vocation">Knight</div>
           </div>
         ))}
       </div>
-      
-      <button 
+      <button
         onClick={handleEnterGame}
-        disabled={!selectedCharacter || loading}
+        disabled={!selectedCharacter}
         className={`character-select-button ${!selectedCharacter ? 'disabled' : ''}`}
       >
-        {loading ? "Entering..." : selectedCharacter ? "GO!" : "Select a character"}
+        {selectedCharacter ? 'GO!' : 'Select a character'}
       </button>
-      
-      {error && (
-        <div className="character-select-error">
-          {error}
-        </div>
-      )}
     </div>
   );
 }

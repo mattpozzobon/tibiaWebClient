@@ -4,6 +4,8 @@ import type ConditionManager from '../../game/condition';
 import type { Vitals } from '../../game/player/vitals/vitals';
 import type Skills from '../../game/player/skills/skills';
 import type Position from '../../game/position';
+import type Equipment from '../../game/player/equipment/equipment';
+import type Item from '../../game/item';
 
 /**
  * Custom hook to safely access player attributes that may not be immediately available
@@ -236,4 +238,74 @@ export function usePlayerPosition(gameClient: GameClient | null) {
   }, [gameClient]);
 
   return playerPosition;
+}
+
+/**
+ * Specialized hook for player equipment that tracks equipment changes
+ */
+export function usePlayerEquipment(gameClient: GameClient | null): { 
+  equipment: Equipment | null; 
+  equipmentItems: (Item | null)[]; 
+  forceRender: number;
+} {
+  const [equipmentItems, setEquipmentItems] = useState<(Item | null)[]>(new Array(10).fill(null));
+  const [forceRender, setForceRender] = useState(0);
+  const equipment = usePlayerAttribute<Equipment>(gameClient, 'equipment');
+
+  useEffect(() => {
+    if (!equipment) {
+      setEquipmentItems(new Array(10).fill(null));
+      return;
+    }
+
+    const updateEquipmentItems = () => {
+      // Get current equipment items from all slots
+      const currentItems = equipment.slots.map(slot => slot.item || null);
+      
+      // Only update if items actually changed
+      setEquipmentItems(prevItems => {
+        if (currentItems.length !== prevItems.length ||
+            currentItems.some((item, index) => {
+              const prevItem = prevItems[index];
+              if (!item && !prevItem) return false; // both null
+              if (!item || !prevItem) return true; // one null, one not
+              return item.id !== prevItem.id || item.count !== prevItem.count;
+            })) {
+          return currentItems;
+        }
+        return prevItems;
+      });
+    };
+
+    // Initial update
+    updateEquipmentItems();
+
+    // Listen to equipment events for instant updates
+    const unsubscribeReady = equipment.onReady(() => {
+      updateEquipmentItems();
+      setForceRender(prev => prev + 1);
+    });
+
+    const unsubscribeChanged = equipment.onChanged(({ slot }) => {
+      if (typeof slot === 'number') {
+        // Update specific slot
+        setEquipmentItems(prevItems => {
+          const newItems = [...prevItems];
+          newItems[slot] = equipment.slots[slot]?.item || null;
+          return newItems;
+        });
+      } else {
+        // Update all slots
+        updateEquipmentItems();
+      }
+      setForceRender(prev => prev + 1);
+    });
+
+    return () => {
+      unsubscribeReady();
+      unsubscribeChanged();
+    };
+  }, [equipment]);
+
+  return { equipment, equipmentItems, forceRender };
 }

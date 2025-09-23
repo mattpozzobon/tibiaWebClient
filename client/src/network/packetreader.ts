@@ -609,17 +609,12 @@ export default class PacketReader extends Packet {
     return itemInfo;
   }
   
-  public readEquipment(): Item[] {
-    /*
-     * Function PacketReader.readEquipment
-     * Reads the equipment from the packet which contains ten items
-     */
-  
-    let items: Item[] = [];
+  public readEquipment(): (Item | null)[] {
+    let items: (Item | null)[] = [];
   
     for (let i = 0; i < 10; i++) {
       let item = this.readItem();
-      if (item) items.push(item);
+      items[i] = item;
     }
   
     return items;
@@ -710,7 +705,7 @@ export default class PacketReader extends Packet {
     id: number;
     skills: any;
     attack: number;
-    equipment: Item[];
+    equipment: (Item | null)[];
     mounts: OutfitIdName[];
     outfits: OutfitIdName[];
     spellbook: number[];

@@ -19,21 +19,21 @@ import MoveItemModal from './modals/MoveItemModal';
 import ChatWindow from './hud/Chat';
 import ConfirmModal from './modals/ConfirmModal';
 import EquipmentPanel from './hud/EquipmentPanel';
+import { useGameClient } from '../../hooks/gameClientCtx';
 // import FriendList from './FriendList';
 // import Hotbar from './Hotbar';
 // import PlayerStats from './PlayerStats';
 // import InventoryPanel from './InventoryPanel';
 
-interface GameUIManagerProps {
-  gc: GameClient;
-}
 
 interface ModalState {
   isOpen: boolean;
   data?: any;
 }
 
-export default function GameUIManager({ gc }: GameUIManagerProps) {
+export default function GameUIManager() {
+  const gc = useGameClient();
+  if (!gc) return null;
   // Modal states
   const [modals, setModals] = useState<Record<string, ModalState>>({
     // settings: { isOpen: false },

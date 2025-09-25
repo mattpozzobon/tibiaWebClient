@@ -23,8 +23,8 @@
   "sounds/wind.ogg": "981f161f9e1a5749bf5da8e37c7f37b892afe7cc",
   "sounds/wood2.ogg": "fc987ecec7ea20b2e99caa5dc9834655fffaaf15",
   "sprites/constants.json": "990811e2b19d6244464d98a4976b71b788fa1dd5",
-  "sprites/Tibia.dat": "ac132192d720bd5e7760987a50c3833d61f047d6",
+  "sprites/Tibia.dat": "55464dd2b8bd78af2ca68e1c08211654f75a440d",
   "sprites/Tibia.otfi": "0f7eb1871ba52340d8b247fe3717e9a46fa23140",
-  "sprites/Tibia.spr": "e6f0be95aaf3061da4ca15be175d366e6ba5f09a",
-  "sprites/version.json": "e2820619fc0e510ccfbd53e380e3514d9e6b30f0"
+  "sprites/Tibia.spr": "8c2a9e21a40f3d7dfa89cfc0faf6ba21a5c6b0b0",
+  "sprites/version.json": "af5e054b39affbc47341fba86cff2f752501d686"
 }

@@ -356,7 +356,6 @@ export default function LoginIsland({ onLoggedIn, onShowChangelog }: { onLoggedI
         </div>
       </div>
 
-      {/* Build info */}
       <div className="build-info">
         Build: <span id="client-version"></span> <span id="data-assets">⚪</span>
       </div>

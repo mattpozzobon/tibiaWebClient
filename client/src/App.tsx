@@ -26,32 +26,23 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [characterChosen, setCharacterChosen] = useState(false);
 
-  // Initialize auth once (prevents login UI flashing)
   useEffect(() => {
     const token = !!localStorage.getItem('auth_token');
     setIsAuthenticated(token);
     setIsInitialized(true);
   }, []);
 
-  // Boot engine as soon as user is authenticated
   const shouldInitEngine = isInitialized && isAuthenticated;
   const { gc, status: engineStatus, error: engineError } = useGameClient(shouldInitEngine);
 
   const callbacks = useMemo(
     () => ({
-      onGameStart: () => setIsAuthenticated(true),     // token saved by LoginIsland
+      onGameStart: () => setIsAuthenticated(true),   
       onCharacterSelected: () => setCharacterChosen(true),
     }),
     []
   );
 
-  if (!isInitialized) {
-    return (
-      <div style={{display:'grid',placeItems:'center',height:'100vh',background:'#000',color:'#fff'}}>
-        Loading…
-      </div>
-    );
-  }
 
   return (
     <>

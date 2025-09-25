@@ -1,76 +1,235 @@
+// client/src/react/components/login/AssetDownload.tsx
 import React, { useEffect, useRef, useState } from "react";
 import type GameClient from "../../../core/gameclient";
 import SpriteBuffer from "../../../renderer/sprite-buffer";
 import "./styles/AssetDownload.scss";
 
+// Build-time injected (see webpack DefinePlugin)
+declare const __CDN_BASE__: string | undefined;
+
 interface AssetDownloadProps {
-  gc: GameClient | null | undefined;            // tolerate not-yet-ready gc
+  gc: GameClient | null | undefined;
   onDownloadComplete: () => void;
 }
 
 type UIState = {
-  progress: number;         // 0..100 overall
-  status: string;           // human readable
+  progress: number;
+  status: string;
   isComplete: boolean;
   currentFile: string;
   error?: string | null;
 };
 
 type GameAsset = { url: string; filename: string };
+type Progress = { loaded: number; total?: number };
+
+const CDN_BASE =
+  (typeof __CDN_BASE__ !== "undefined" && __CDN_BASE__) ||
+  (import.meta as any)?.env?.VITE_ASSET_BASE_URL ||
+  "";
 
 const ASSETS: GameAsset[] = [
-  { url: "/data/sprites/Tibia.spr", filename: "Tibia.spr" },
-  { url: "/data/sprites/Tibia.dat", filename: "Tibia.dat" },
+  { url: `${CDN_BASE}/sprites/Tibia.spr`, filename: "Tibia.spr" },
+  { url: `${CDN_BASE}/sprites/Tibia.dat`, filename: "Tibia.dat" },
 ];
 
-// small helper: fetch with progress, streaming if possible, with abort support
-async function fetchArrayBufferWithProgress(
-  input: RequestInfo,
-  onProgress: (loaded: number, total?: number) => void,
-  signal?: AbortSignal
-): Promise<ArrayBuffer> {
-  const res = await fetch(input, { signal });
-  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+const LANES = 8;
+const CHUNK_SIZE = 8 * 1024 * 1024; // 8MB
 
-  // If ReadableStream is available, stream it
-  const total = Number(res.headers.get("content-length") || 0) || undefined;
-  if (res.body && "getReader" in res.body) {
-    const reader = res.body.getReader();
-    const chunks: Uint8Array[] = [];
-    let loaded = 0;
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (value) {
-        chunks.push(value);
-        loaded += value.length;
-        onProgress(loaded, total);
-      }
-    }
-    const blob = new Blob(chunks);
-    return blob.arrayBuffer();
-  }
-
-  // Fallback: no stream available
-  const buf = await res.arrayBuffer();
-  onProgress(buf.byteLength, buf.byteLength);
-  return buf;
+async function headForMeta(url: string) {
+  const r = await fetch(url, { method: "HEAD" });
+  if (!r.ok) throw new Error(`HEAD ${r.status} ${r.statusText}`);
+  const len = Number(r.headers.get("content-length") || 0);
+  const ranges = (r.headers.get("accept-ranges") || "").toLowerCase().includes("bytes");
+  return { len, ranges };
 }
 
-// try HEAD to get sizes, but tolerate CORS
-async function tryHeadSize(url: string, signal?: AbortSignal): Promise<number | undefined> {
-  try {
-    const r = await fetch(url, { method: "HEAD", signal });
-    const len = r.headers.get("content-length");
-    return len ? Number(len) : undefined;
-  } catch {
-    return undefined;
+async function fetchRange(url: string, start: number, end: number) {
+  const r = await fetch(url, {
+    headers: { Range: `bytes=${start}-${end}` },
+  });
+  if (!(r.status === 206 || r.status === 200)) {
+    throw new Error(`Range fetch failed: ${r.status}`);
   }
+  return await r.arrayBuffer();
+}
+
+// Streaming fallback for when HEAD/ranges aren’t available
+async function streamDownload(
+  url: string,
+  onProgress: (loaded: number, total?: number) => void
+) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
+
+  const total = Number(resp.headers.get("content-length") || 0) || undefined;
+  const reader = resp.body?.getReader();
+
+  // No stream support → single shot
+  if (!reader) {
+    const buf = await resp.arrayBuffer();
+    onProgress(buf.byteLength, total ?? buf.byteLength);
+    return buf;
+  }
+
+  const chunks: Uint8Array[] = [];
+  let loaded = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (value) {
+      chunks.push(value);
+      loaded += value.byteLength;
+      onProgress(loaded, total);
+    }
+  }
+
+  const out = new Uint8Array(loaded);
+  let off = 0;
+  for (const c of chunks) {
+    out.set(c, off);
+    off += c.byteLength;
+  }
+  onProgress(loaded, total ?? loaded);
+  return out.buffer;
+}
+
+async function rangedDownload(
+  url: string,
+  onProgress: (loaded: number, total?: number) => void
+) {
+  let len = 0;
+  let ranges = false;
+
+  try {
+    const meta = await headForMeta(url);
+    len = meta.len;
+    ranges = meta.ranges;
+  } catch {
+    // HEAD may be blocked or stripped by CDN; fall back to streaming
+  }
+
+  if (!len || !ranges) {
+    // Streamed GET with incremental progress
+    return await streamDownload(url, onProgress);
+  }
+
+  const target = new Uint8Array(len);
+  const nChunks = Math.ceil(len / CHUNK_SIZE);
+  let nextChunk = 0;
+  let loaded = 0;
+  let lastTick = 0;
+
+  const writeChunk = (start: number, data: ArrayBuffer) => {
+    target.set(new Uint8Array(data), start);
+    loaded += data.byteLength;
+    const now = performance.now();
+    if (now - lastTick > 100) {
+      lastTick = now;
+      onProgress(loaded, len);
+    }
+  };
+
+  const worker = async () => {
+    while (true) {
+      const idx = nextChunk++;
+      if (idx >= nChunks) return;
+      const start = idx * CHUNK_SIZE;
+      const end = Math.min(len - 1, start + CHUNK_SIZE - 1);
+      const buf = await fetchRange(url, start, end);
+      writeChunk(start, buf);
+    }
+  };
+
+  await Promise.all(new Array(LANES).fill(0).map(worker));
+  onProgress(len, len);
+  return target.buffer;
+}
+
+class AssetLoader {
+  private inFlight = new Map<
+    string,
+    { promise: Promise<ArrayBuffer>; progress: Progress; listeners: Set<(p: Progress) => void> }
+  >();
+
+  private notify(filename: string) {
+    const row = this.inFlight.get(filename);
+    if (!row) return;
+    const snap = { ...row.progress };
+    row.listeners.forEach((l) => l(snap));
+  }
+
+  onProgress(filename: string, fn: (p: Progress) => void) {
+    const row = this.inFlight.get(filename);
+    if (!row) return () => {};
+    row.listeners.add(fn);
+    fn({ ...row.progress });
+    return () => row.listeners.delete(fn);
+  }
+
+  fetchOnce(url: string, filename: string): Promise<ArrayBuffer> {
+    const existing = this.inFlight.get(filename);
+    if (existing) return existing.promise;
+
+    const progress: Progress = { loaded: 0, total: undefined };
+    const listeners = new Set<(p: Progress) => void>();
+
+    // Batch listener updates on rAF (prevents React state thrash)
+    let rafId: number | null = null;
+    const schedule = () => {
+      if (rafId != null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        this.notify(filename);
+      });
+    };
+
+    const promise = (async () => {
+      const buf = await rangedDownload(url, (loaded, total) => {
+        progress.loaded = loaded;
+        progress.total = total;
+        schedule();
+      });
+      // Final notify
+      progress.loaded = progress.total ?? progress.loaded;
+      schedule();
+      return buf;
+    })();
+
+    this.inFlight.set(filename, { promise, progress, listeners });
+    promise.catch(() => this.inFlight.delete(filename));
+    return promise;
+  }
+
+  async fetchAllSequential(
+    assets: GameAsset[],
+    onAnyProgress: (name: string, p: Progress) => void
+  ) {
+    const out = new Map<string, ArrayBuffer>();
+    for (const a of assets) {
+      this.fetchOnce(a.url, a.filename);
+      const off = this.onProgress(a.filename, (p) => onAnyProgress(a.filename, p));
+      const buf = await this.fetchOnce(a.url, a.filename);
+      off();
+      out.set(a.filename, buf);
+    }
+    return out;
+  }
+}
+
+const loader = new AssetLoader();
+
+async function processDownloaded(gc: GameClient, buffers: Map<string, ArrayBuffer>) {
+  const dat = buffers.get("Tibia.dat");
+  const spr = buffers.get("Tibia.spr");
+  if (!dat || !spr) throw new Error("Missing required game assets");
+  gc.dataObjects.load("Tibia.dat", { target: { result: dat } } as unknown as ProgressEvent<FileReader>);
+  SpriteBuffer.load("Tibia.spr", { target: { result: spr } } as unknown as ProgressEvent<FileReader>);
 }
 
 export default function AssetDownload({ gc, onDownloadComplete }: AssetDownloadProps) {
-  const [state, setState] = useState<UIState>({
+  const [ui, setUi] = useState<UIState>({
     progress: 0,
     status: "Waiting for game engine…",
     isComplete: false,
@@ -78,170 +237,121 @@ export default function AssetDownload({ gc, onDownloadComplete }: AssetDownloadP
     error: null,
   });
 
-  const abortRef = useRef<AbortController | null>(null);
-  const mountedRef = useRef(true);
+  const fileProgressRef = useRef(new Map<string, Progress>());
+  const rafRef = useRef<number | null>(null);
+
+  // Bytes-based progress pump (works even if totals are unknown)
+  const pump = () => {
+    rafRef.current = null;
+
+    let totalLoaded = 0;
+    let totalSize = 0;
+    let label = "";
+
+    for (const a of ASSETS) {
+      const p = fileProgressRef.current.get(a.filename);
+      if (!p) continue;
+      totalLoaded += p.loaded || 0;
+      if (p.total) totalSize += p.total;
+
+      if (p.total) {
+        const pct = Math.max(0, Math.min(1, p.loaded / p.total));
+        label = `${a.filename} ${Math.round(pct * 100)}%`;
+      } else {
+        const mb = (p.loaded / (1024 * 1024)).toFixed(1);
+        label = `${a.filename} ${mb}MB`;
+      }
+    }
+
+    const progress =
+      totalSize > 0
+        ? Math.round((totalLoaded / totalSize) * 100)
+        : totalLoaded > 0
+        ? 1 // nudge the bar off 0% if we have bytes but no totals
+        : 0;
+
+    setUi((s) => ({ ...s, progress, currentFile: label }));
+  };
+
+  const schedulePump = () => {
+    if (rafRef.current == null) rafRef.current = requestAnimationFrame(pump);
+  };
 
   useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-      abortRef.current?.abort();
-    };
-  }, []);
-
-  // start only when gc is available
-  useEffect(() => {
+    let cancelled = false;
     if (!gc) return;
 
-    const run = async () => {
-      abortRef.current?.abort();
-      const controller = new AbortController();
-      abortRef.current = controller;
+    const app: any = (gc as any)?.renderer?.app;
+    const wasRunning = !!app?.ticker?.started;
+    app?.ticker?.stop?.();
 
-      const setSafe = (patch: Partial<UIState>) =>
-        mountedRef.current && setState((s) => ({ ...s, ...patch }));
+    const setSafe = (patch: Partial<UIState>) => !cancelled && setUi((s) => ({ ...s, ...patch }));
 
+    (async () => {
       try {
-        // 1) quick up-to-date check
+        if (!CDN_BASE) throw new Error("ASSET_BASE_URL is not defined. Set it and rebuild.");
+
         setSafe({ status: "Checking assets…", error: null });
+
         const upToDate = await gc.database.areAssetsUpToDate();
         if (upToDate) {
           setSafe({ progress: 100, status: "Assets up to date!", isComplete: true, currentFile: "" });
-          setTimeout(() => mountedRef.current && onDownloadComplete(), 600);
+          setTimeout(() => !cancelled && onDownloadComplete(), 200);
           return;
         }
 
-        // 2) total size (best-effort)
-        setSafe({ status: "Calculating download size…" });
-        const sizes = await Promise.all(
-          ASSETS.map((a) => tryHeadSize(a.url, controller.signal))
-        );
-        const totalBytesKnown = sizes.every((n) => typeof n === "number");
-        const totalBytes = totalBytesKnown
-          ? (sizes as number[]).reduce((acc, n) => acc + n, 0)
-          : undefined;
+        setSafe({ status: "Downloading assets…", progress: 0, currentFile: "" });
 
-        // 3) download sequentially (makes overall progress easier)
-        let overallLoaded = 0;
-        const buffers = new Map<string, ArrayBuffer>();
+        const buffers = await loader.fetchAllSequential(ASSETS, (name, p) => {
+          fileProgressRef.current.set(name, p);
+          schedulePump();
+        });
 
-        for (let i = 0; i < ASSETS.length; i++) {
-          const asset = ASSETS[i];
-          setSafe({ currentFile: asset.filename, status: `Downloading ${asset.filename}…` });
-
-          const buf = await fetchArrayBufferWithProgress(
-            asset.url,
-            (fileLoaded, fileTotal) => {
-              if (controller.signal.aborted) return;
-
-              // compute overall progress
-              let overall: number;
-              if (totalBytes && fileTotal) {
-                // precise byte-based
-                const prevLoaded = overallLoaded;
-                const currentWeighted = prevLoaded + fileLoaded;
-                overall = (currentWeighted / totalBytes) * 100;
-              } else {
-                // fallback equal weights
-                const fileRatio = fileTotal ? fileLoaded / fileTotal : 0;
-                const perFileWeight = 1 / ASSETS.length;
-                overall = ((i + fileRatio) * perFileWeight) * 100;
-              }
-
-              setSafe({
-                progress: Math.min(100, Math.max(0, Math.round(overall))),
-                status: `Downloading ${asset.filename}… ${fileTotal ? Math.round((fileLoaded / fileTotal) * 100) : 0}%`,
-              });
-            },
-            controller.signal
-          );
-
-          buffers.set(asset.filename, buf);
-          // finalize this file’s bytes for overall calculation
-          overallLoaded += sizes[i] ?? buf.byteLength;
-        }
-
-        // 4) process assets
         setSafe({ status: "Processing assets…" });
-        await processDownloadedAssets(gc, buffers);
+        await processDownloaded(gc, buffers);
 
-        // 5) done
-        setSafe({ progress: 100, status: "Download complete!", isComplete: true, currentFile: "" });
-        setTimeout(() => mountedRef.current && onDownloadComplete(), 600);
+        setSafe({ status: "Download complete!", progress: 100, isComplete: true, currentFile: "" });
+        setTimeout(() => !cancelled && onDownloadComplete(), 200);
       } catch (e: any) {
-        if (controller.signal.aborted) return;
-        console.error("❌ Asset download failed:", e);
         setSafe({
-          error: e?.message || "Download failed. Please try again.",
           status: "Download failed.",
+          error: e?.message || "Please try again.",
           isComplete: false,
           currentFile: "",
           progress: 0,
         });
-      }
-    };
-
-    run();
-  }, [gc, onDownloadComplete]);
-
-  const handleRetry = () => {
-    abortRef.current?.abort();
-    setState({
-      progress: 0,
-      status: "Retrying…",
-      isComplete: false,
-      currentFile: "",
-      error: null,
-    });
-    // retrigger effect
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    (async () => {
-      // small microtask to let state flush; effect depends on `gc` and will re-run
-      await Promise.resolve();
-      if (gc) {
-        // no-op; effect will run naturally because state changed and gc is stable
+      } finally {
+        if (wasRunning) app?.ticker?.start?.();
       }
     })();
-  };
 
-  // UI
-  const { progress, status, isComplete, currentFile, error } = state;
+    return () => {
+      cancelled = true;
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    };
+  }, [gc, onDownloadComplete]);
+
+  const { progress, status, isComplete, currentFile, error } = ui;
 
   return (
     <div className="asset-download-container">
       <h2 className="asset-download-title">Downloading Game Assets</h2>
-
       <div className="progress-section">
         <div className="progress-bar-container">
           <div className="progress-bar-fill" style={{ width: `${progress}%` }} />
         </div>
-
         <div className="progress-status">
           {status} {currentFile && <span>• {currentFile}</span>}
         </div>
-
-        <div className="progress-percentage">{Math.round(progress)}%</div>
+        <div className="progress-percentage">{progress}%</div>
       </div>
-
       {isComplete && <div className="download-complete">✅ Ready to play!</div>}
-
       {error && (
         <div className="download-error">
           <div className="error-text">{error}</div>
-          <button onClick={handleRetry} className="retry-button">Retry</button>
         </div>
       )}
-
-      <div className="download-note">This may take a few minutes depending on your connection speed.</div>
+      <div className="download-note">Large files; first launch can take a bit.</div>
     </div>
   );
-}
-
-async function processDownloadedAssets(gc: GameClient, results: Map<string, ArrayBuffer>): Promise<void> {
-  const datData = results.get("Tibia.dat");
-  const sprData = results.get("Tibia.spr");
-  if (!datData || !sprData) throw new Error("Missing required game assets");
-
-  // Match your existing loaders that expect a FileReader-like event
-  gc.dataObjects.load("Tibia.dat", { target: { result: datData } } as unknown as ProgressEvent<FileReader>);
-  SpriteBuffer.load("Tibia.spr", { target: { result: sprData } } as unknown as ProgressEvent<FileReader>);
 }

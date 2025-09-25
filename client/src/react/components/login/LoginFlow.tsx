@@ -9,9 +9,9 @@ import './styles/LoginFlow.scss';
 type LoginStep = "login" | "asset-download" | "character-select" | "game";
 
 interface LoginFlowProps {
-  gc: GameClient | null;          // provided by App once engine is up
+  gc: GameClient | null;          
   engineStatus?: string;
-  onGameStart: () => void;        // called after successful login (token stored)
+  onGameStart: () => void;        
   onCharacterSelected: () => void;
 }
 
@@ -22,22 +22,19 @@ export default function LoginFlow({ gc, engineStatus, onGameStart, onCharacterSe
   const [showChangelog, setShowChangelog] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Once we have gc and a token, open the game socket to fetch login info/characters.
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
     if (!gc || !token) return;
     try {
       gc.networkManager.openGameSocket(token);
-      // Stay on "asset-download" until assets done, then show CharacterSelect.
     } catch (e) {
       console.error("openGameSocket failed:", e);
     }
   }, [gc]);
 
   const handleLoginSuccess = () => {
-    // LoginIsland should have stored the token.
     setLoading(true);
-    onGameStart();           // App sets isAuthenticated -> GameLayout mounts -> engine starts -> gc flows in
+    onGameStart();    
     setStep("asset-download");
     setLoading(false);
   };
@@ -46,7 +43,7 @@ export default function LoginFlow({ gc, engineStatus, onGameStart, onCharacterSe
 
   const handleCharacterSelected = () => {
     setStep("game");
-    onCharacterSelected();   // App hides LoginFlow overlay
+    onCharacterSelected(); 
   };
 
   const handleLogout = () => {
@@ -66,16 +63,12 @@ export default function LoginFlow({ gc, engineStatus, onGameStart, onCharacterSe
   return (
     <>
       {step === "login" && (
-        <LoginIsland
-          onLoggedIn={handleLoginSuccess}
-          onShowChangelog={() => setShowChangelog(true)}
+        <LoginIsland onLoggedIn={handleLoginSuccess} onShowChangelog={() => setShowChangelog(true)}
         />
       )}
 
       {step === "asset-download" && (
-        <AssetDownload
-          gc={gc || undefined /* component can show a tiny spinner until gc */}
-          onDownloadComplete={handleAssetDownloadComplete}
+        <AssetDownload gc={gc || undefined} onDownloadComplete={handleAssetDownloadComplete}
         />
       )}
 
@@ -91,9 +84,7 @@ export default function LoginFlow({ gc, engineStatus, onGameStart, onCharacterSe
           </div>
 
           <div id="post-login-body" className="post-login-body">
-            <CharacterSelect
-              gc={gc || null}
-              onCharacterSelected={handleCharacterSelected}
+            <CharacterSelect gc={gc || null} onCharacterSelected={handleCharacterSelected}
             />
           </div>
         </div>

@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import LoginIsland from "../../LoginIsland";
+import AccountIsland from "./AccountIsland";
 import AssetDownload from "./AssetDownload";
 import CharacterSelect from "./CharacterSelect";
+import ChangelogSidebar from "./ChangelogSidebar";
 import ChangelogModal from "../ChangelogModal";
+import BuildInfo from "./BuildInfo";
 import type GameClient from "../../../core/gameclient";
 import './styles/LoginFlow.scss';
 
@@ -19,8 +22,9 @@ export default function LoginFlow({ gc, engineStatus, onGameStart, onCharacterSe
   const [step, setStep] = useState<LoginStep>(() =>
     localStorage.getItem("auth_token") ? "asset-download" : "login"
   );
-  const [showChangelog, setShowChangelog] = useState(false);
+
   const [loading, setLoading] = useState(false);
+  const [showChangelog, setShowChangelog] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
@@ -61,36 +65,30 @@ export default function LoginFlow({ gc, engineStatus, onGameStart, onCharacterSe
   }
 
   return (
-    <>
+    <div id="login-page-container">
       {step === "login" && (
-        <LoginIsland onLoggedIn={handleLoginSuccess} onShowChangelog={() => setShowChangelog(true)}
-        />
+        <>
+          <LoginIsland onLoggedIn={handleLoginSuccess} />
+          <ChangelogSidebar/>
+        </>
       )}
 
-      {step === "asset-download" && (
-        <AssetDownload gc={gc || undefined} onDownloadComplete={handleAssetDownloadComplete}
-        />
+      {(step === "asset-download" || step === "character-select") && (
+        <>
+          <AccountIsland 
+            step={step}
+            gc={gc}
+            onLogout={handleLogout}
+            onShowChangelog={() => setShowChangelog(true)}
+            onDownloadComplete={handleAssetDownloadComplete}
+            onCharacterSelected={handleCharacterSelected}
+          />
+          <ChangelogModal isVisible={showChangelog} onClose={() => setShowChangelog(false)} />
+        </>
+
       )}
 
-      {step === "character-select" && (
-        <div id="post-login-wrapper">
-          <div id="post-login-topbar" className="topbar">
-            <div className="topbar-center">
-              <button className="btn-border btn-gold" onClick={() => setShowChangelog(true)}>📋 Changelog</button>
-            </div>
-            <div className="topbar-right">
-              <button className="btn-border btn-white special" onClick={handleLogout}>Logout</button>
-            </div>
-          </div>
-
-          <div id="post-login-body" className="post-login-body">
-            <CharacterSelect gc={gc || null} onCharacterSelected={handleCharacterSelected}
-            />
-          </div>
-        </div>
-      )}
-
-      <ChangelogModal isVisible={showChangelog} onClose={() => setShowChangelog(false)} />
-    </>
+      <BuildInfo />
+    </div>
   );
 }

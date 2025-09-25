@@ -17,16 +17,33 @@
   z-index: 10000;
 }
 
-/* Fallback gradient if background image fails to load */
-#login-page-container::before {
-  content: '';
-  position: absolute;
+
+/* Login Base Container - Left side layout */
+#login-base-container {
+  position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(26, 26, 46, 0.8) 0%, rgba(22, 33, 62, 0.8) 50%, rgba(15, 52, 96, 0.8) 100%);
-  z-index: -1;
+  width: 400px;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  z-index: 10000;
+  overflow-y: auto;
+}
+
+.login-header {
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.login-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
 }
 
 #login-wrapper {
@@ -37,22 +54,21 @@
 
 .auth-banner {
   text-align: center;
-  margin-bottom: 30px;
 
   img {
-    max-width: 300px;
+    max-width: 200px;
     height: auto;
   }
 }
 
 #pre-login-wrapper,
 #post-login-wrapper {
-  background: rgba(0, 0, 0, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 15px;
-  padding: 30px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  backdrop-filter: none;
+  box-shadow: none;
 }
 
 #floater-enter {

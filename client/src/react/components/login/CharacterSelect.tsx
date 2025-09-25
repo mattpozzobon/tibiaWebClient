@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import type GameClient from "../../../core/gameclient";
+import ChangelogModal from "../ChangelogModal";
 import './styles/CharacterSelect.scss';
 
 interface CharacterSelectProps {
   gc: GameClient | null;
   onCharacterSelected: () => void;
+  onLogout?: () => void;
 }
 
 interface Character {
@@ -14,11 +16,12 @@ interface Character {
   role: number;
 }
 
-export default function CharacterSelect({ gc, onCharacterSelected }: CharacterSelectProps) {
+export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: CharacterSelectProps) {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showChangelog, setShowChangelog] = useState(false);
 
   // Load characters once gc is available and the socket populated login info
   useEffect(() => {
@@ -97,6 +100,8 @@ export default function CharacterSelect({ gc, onCharacterSelected }: CharacterSe
   return (
     <div className="character-select-container">
       <h2 className="character-select-title">Select Character</h2>
+      {loading && <div className="loading">Loading characters...</div>}
+      {error && <div className="error">{error}</div>}
       <div className="character-grid">
         {characters.map((c) => (
           <div
@@ -117,6 +122,8 @@ export default function CharacterSelect({ gc, onCharacterSelected }: CharacterSe
       >
         {selectedCharacter ? 'GO!' : 'Select a character'}
       </button>
+
+      <ChangelogModal isVisible={showChangelog} onClose={() => setShowChangelog(false)} />
     </div>
   );
 }

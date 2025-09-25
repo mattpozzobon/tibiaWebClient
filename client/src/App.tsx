@@ -54,12 +54,9 @@ const App: React.FC = () => {
 
 
       {!characterChosen && (
-        <div id="login-page-container">
           <LoginFlow gc={gc} engineStatus={engineStatus} onGameStart={callbacks.onGameStart} onCharacterSelected={callbacks.onCharacterSelected}/>
-        </div>
       )}
 
-      
     </>
   );
 };

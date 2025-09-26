@@ -53,37 +53,69 @@ function collectOutfitDrawPieces(
     }
   }
 
-  const hairObj = outfit.getHairDataObject ? outfit.getHairDataObject() : null;
-  if (hairObj) {
-    const hair = hairObj.getFrameGroup(animate ? 1 : 0);
-    if (hair) {
-      for (let y = 0; y < hair.height; y++) {
-        for (let x = 0; x < hair.width; x++) {
-          const baseId = hair.getSpriteId(frame, xPattern, 0, zPattern, 0, x, y);
-          if (!baseId) continue;
-          const key = (window as any).gameClient.spriteBuffer.constructor.getComposedKey(outfit, baseId, hair, frame, xPattern, 0, zPattern, x, y);
-          const hash = hashString(key);
-          if (!(gc.spriteBuffer.has(hash))) {
-            const maskId = hair.getSpriteId(frame, xPattern, 0, zPattern, 1, x, y);
-            gc.spriteBuffer.addComposedOutfit(key, outfit, baseId, maskId);
-          }
-          const tex: any = gc.spriteBuffer.get(hash);
-          const src = tex?.source?.resource as HTMLImageElement | HTMLCanvasElement | undefined;
-          const fr = tex?.frame as { x: number; y: number; width: number; height: number } | undefined;
-          if (!src || !fr) continue;
-          const dx = -x * fr.width;
-          const dy = -y * fr.height;
-          const dw = fr.width;
-          const dh = fr.height;
-          pieces.push({ src, sx: fr.x, sy: fr.y, sw: fr.width, sh: fr.height, dx, dy, dw, dh });
-          if (dx < left) left = dx;
-          if (dy < top) top = dy;
-          if (dx + dw > right) right = dx + dw;
-          if (dy + dh > bottom) bottom = dy + dh;
+  // Helper to compose and draw layered equipment objects using composed textures
+  function addLayerForObject(obj: any) {
+    if (!obj) return;
+    const fg = obj.getFrameGroup(animate ? 1 : 0);
+    if (!fg) return;
+    for (let y = 0; y < fg.height; y++) {
+      for (let x = 0; x < fg.width; x++) {
+        const baseId = fg.getSpriteId(frame, xPattern, 0, zPattern, 0, x, y);
+        if (!baseId) continue;
+        const key = (window as any).gameClient.spriteBuffer.constructor.getComposedKey(outfit, baseId, fg, frame, xPattern, 0, zPattern, x, y);
+        const hash = hashString(key);
+        if (!(gc.spriteBuffer.has(hash))) {
+          // Some layer sets (like items) may not have mask layer -> pass 0
+          const maskId = fg.getSpriteId ? fg.getSpriteId(frame, xPattern, 0, zPattern, 1, x, y) : 0;
+          gc.spriteBuffer.addComposedOutfit(key, outfit, baseId, maskId || 0);
         }
+        const tex: any = gc.spriteBuffer.get(hash);
+        const src = tex?.source?.resource as HTMLImageElement | HTMLCanvasElement | undefined;
+        const fr = tex?.frame as { x: number; y: number; width: number; height: number } | undefined;
+        if (!src || !fr) continue;
+        const dx = -x * fr.width;
+        const dy = -y * fr.height;
+        const dw = fr.width;
+        const dh = fr.height;
+        pieces.push({ src, sx: fr.x, sy: fr.y, sw: fr.width, sh: fr.height, dx, dy, dw, dh });
+        if (dx < left) left = dx;
+        if (dy < top) top = dy;
+        if (dx + dw > right) right = dx + dw;
+        if (dy + dh > bottom) bottom = dy + dh;
       }
     }
   }
+
+  // Hair vs Helmet (head). If hair present, don't draw helmet; otherwise draw helmet.
+  const eq: any = (outfit as any).equipment || {};
+  const hairId = typeof eq.hair === 'number' ? eq.hair : 0;
+  const headId = typeof eq.head === 'number' ? eq.head : 0;
+  const bodyId = typeof eq.body === 'number' ? eq.body : 0;
+  const legsId = typeof eq.legs === 'number' ? eq.legs : 0;
+  const feetId = typeof eq.feet === 'number' ? eq.feet : 0;
+  const leftId = typeof eq.lefthand === 'number' ? eq.lefthand : 0;
+  const rightId = typeof eq.righthand === 'number' ? eq.righthand : 0;
+
+  const hairObj = hairId > 0 && outfit.getHairDataObject ? outfit.getHairDataObject() : null;
+  if (hairObj) {
+    addLayerForObject(hairObj);
+  } else {
+    const headObj = headId > 0 && outfit.getHeadDataObject ? outfit.getHeadDataObject() : null;
+    addLayerForObject(headObj);
+  }
+  // Body/Legs/Feet equipment (armors etc.) - only if ids > 0
+  const bodyObj = bodyId > 0 && outfit.getBodyDataObject ? outfit.getBodyDataObject() : null;
+  const legsObj = legsId > 0 && outfit.getLegsDataObject ? outfit.getLegsDataObject() : null;
+  const feetObj = feetId > 0 && outfit.getFeetDataObject ? outfit.getFeetDataObject() : null;
+  addLayerForObject(bodyObj);
+  addLayerForObject(legsObj);
+  addLayerForObject(feetObj);
+  // Hands (weapons/shields) only if ids > 0
+  const leftObj = leftId > 0 && outfit.getLeftHandDataObject ? outfit.getLeftHandDataObject() : null;
+  const rightObj = rightId > 0 && outfit.getRightHandDataObject ? outfit.getRightHandDataObject() : null;
+  addLayerForObject(leftObj);
+  addLayerForObject(rightObj);
+  // Mount overlay (if set and mounted)
 
   if (!pieces.length) return null;
   return { pieces, bounds: { left, top, right, bottom } };

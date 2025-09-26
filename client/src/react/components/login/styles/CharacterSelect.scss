@@ -160,9 +160,17 @@
 }
 
 .character-gender {
-  color: #ff69b4;
   font-size: 11px;
   text-transform: uppercase;
+  text-align: center;
+}
+
+.character-gender.male {
+  color: #4aa3ff;
+}
+
+.character-gender.female {
+  color: #ff69b4;
 }
 
 /* Flip Card Styles */
@@ -252,7 +260,10 @@
 
 .character-info-bottom {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   margin-top: 8px;
   font-size: 12px;
 }

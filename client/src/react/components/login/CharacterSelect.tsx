@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import type GameClient from "../../../core/gameclient";
 import ChangelogModal from "../ChangelogModal";
 import { renderOutfitToCanvas } from "../../../utils/outfit-renderer";
+import Outfit from "../../../game/outfit";
 import './styles/CharacterSelect.scss';
 
 interface CharacterSelectProps {
@@ -57,7 +58,8 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
       if (!gc || !outfit || !canvasRef.current) return;
       // Best-effort render. The outfit object from server mirrors runtime outfit
       try {
-        renderOutfitToCanvas(gc, outfit as any, canvasRef.current, {
+        const normalized = outfit instanceof Object && (outfit as any).getHairDataObject ? (outfit as any) : new Outfit(outfit as any);
+        renderOutfitToCanvas(gc, normalized as any, canvasRef.current, {
           faceDirection: 2,
           animate: false,
           padding: 2,
@@ -248,7 +250,7 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
                     </div>
                     <div className="character-info character-info-bottom">
                       <div className="character-level">Level {character.level}</div>
-                      <div className="character-gender">{character.sex}</div>
+                      <div className={`character-gender ${character.sex}`}>{character.sex}</div>
                     </div>
                   </div>
                 ) : (

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import type GameClient from "../../../core/gameclient";
-import ChangelogModal from "../ChangelogModal";
+// Removed modal import as it's not used here anymore
 import { renderOutfitToCanvas } from "../../../utils/outfit-renderer";
 import Outfit from "../../../game/outfit";
 import './styles/CharacterSelect.scss';
@@ -46,7 +46,6 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
   const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showChangelog, setShowChangelog] = useState(false);
   const [createCharacterSlot, setCreateCharacterSlot] = useState<number | null>(null);
   const [createCharacterData, setCreateCharacterData] = useState({ name: '', sex: 'male' as 'male' | 'female' });
   const [creating, setCreating] = useState(false);
@@ -210,11 +209,9 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
 
   if (error) {
     return (
-      <div className="character-select-container">
-
+      <div className="character-select-loading">
         <p className="error-message">{error}</p>
         <button onClick={() => window.location.reload()} className="btn-primary">Retry</button>
-
       </div>
     );
   }
@@ -327,7 +324,6 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
         </button>
       )}
 
-      <ChangelogModal isVisible={showChangelog} onClose={() => setShowChangelog(false)} />
     </div>
   );
 }

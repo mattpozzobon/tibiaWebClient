@@ -334,24 +334,22 @@ export default function AssetDownload({ gc, onDownloadComplete }: AssetDownloadP
   const { progress, status, isComplete, currentFile, error } = ui;
 
   return (
-    <div className="asset-download-container">
-      <h2 className="asset-download-title">Downloading Game Assets</h2>
+    <div className="asset-download-mini">
       <div className="progress-section">
         <div className="progress-bar-container">
           <div className="progress-bar-fill" style={{ width: `${progress}%` }} />
         </div>
         <div className="progress-status">
-          {status} {currentFile && <span>• {currentFile}</span>}
+          {status}
         </div>
         <div className="progress-percentage">{progress}%</div>
       </div>
-      {isComplete && <div className="download-complete">✅ Ready to play!</div>}
+      {isComplete && <div className="download-complete">✅ Ready!</div>}
       {error && (
         <div className="download-error">
           <div className="error-text">{error}</div>
         </div>
       )}
-      <div className="download-note">Large files; first launch can take a bit.</div>
     </div>
   );
 }

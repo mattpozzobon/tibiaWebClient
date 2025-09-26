@@ -48,35 +48,6 @@
   100% { transform: rotate(360deg); }
 }
 
-.character-select-error {
-  text-align: center;
-  color: #ff6b6b;
-  padding: 40px 20px;
-
-  .error-message {
-    font-size: 16px;
-    margin-bottom: 20px;
-    color: #ff6b6b;
-  }
-
-  .retry-button {
-    background: linear-gradient(135deg, #0096ff 0%, #007acc 100%);
-    border: none;
-    border-radius: 8px;
-    color: white;
-    padding: 12px 24px;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-
-    &:hover {
-      background: linear-gradient(135deg, #00aaff 0%, #0088dd 100%);
-      transform: translateY(-1px);
-    }
-  }
-}
-
 .character-select-empty {
   text-align: center;
   color: rgba(255, 255, 255, 0.8);

@@ -75,14 +75,7 @@ export default function LoginFlow({ gc, engineStatus, onGameStart, onCharacterSe
 
       {(step === "asset-download" || step === "character-select") && (
         <>
-          <AccountIsland 
-            step={step}
-            gc={gc}
-            onLogout={handleLogout}
-            onShowChangelog={() => setShowChangelog(true)}
-            onDownloadComplete={handleAssetDownloadComplete}
-            onCharacterSelected={handleCharacterSelected}
-          />
+          <AccountIsland step={step} gc={gc} onLogout={handleLogout} onShowChangelog={() => setShowChangelog(true)} onDownloadComplete={handleAssetDownloadComplete} onCharacterSelected={handleCharacterSelected}/>
           <ChangelogModal isVisible={showChangelog} onClose={() => setShowChangelog(false)} />
         </>
 

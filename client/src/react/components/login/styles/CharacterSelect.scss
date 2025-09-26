@@ -95,6 +95,14 @@
   margin-bottom: 30px;
 }
 
+.character-grid-horizontal {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-bottom: 30px;
+  flex-wrap: nowrap;
+}
+
 .character-card {
   width: 150px;
   height: 180px;
@@ -143,6 +151,175 @@
   font-size: 12px;
   font-weight: bold;
   text-transform: uppercase;
+}
+
+.character-role {
+  color: #ffd700;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.character-gender {
+  color: #ff69b4;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+/* Flip Card Styles */
+.character-card-flip {
+  width: 180px;
+  height: 220px;
+  perspective: 1000px;
+  cursor: pointer;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.character-card-flip.flipped .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 10px;
+  border: 2px solid #666;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+.card-front {
+  background-color: rgba(50, 50, 50, 0.9);
+  color: white;
+  
+  .character-card-flip:hover & {
+    border-color: #0096ff;
+    background: rgba(0, 150, 255, 0.1);
+  }
+  
+  .character-card-flip.selected & {
+    background-color: rgba(0, 150, 255, 0.8);
+    border: 3px solid #0096ff;
+  }
+}
+
+.card-back {
+  background-color: rgba(30, 30, 30, 0.95);
+  color: white;
+  transform: rotateY(180deg);
+  border-color: #ffd700;
+}
+
+.create-character-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  cursor: pointer;
+}
+
+.create-character-icon {
+  font-size: 48px;
+  color: #0096ff;
+  margin-bottom: 10px;
+}
+
+.create-character-text {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+}
+
+.create-character-form {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  
+  h4 {
+    color: #ffd700;
+    margin: 0 0 15px 0;
+    font-size: 16px;
+  }
+}
+
+.form-group {
+  margin-bottom: 10px;
+}
+
+.form-input, .form-select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  font-size: 12px;
+  
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: #0096ff;
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: 5px;
+  margin-top: auto;
+}
+
+.btn-create, .btn-cancel {
+  flex: 1;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-create {
+  background: #00ff00;
+  color: black;
+  
+  &:hover:not(:disabled) {
+    background: #00cc00;
+  }
+  
+  &:disabled {
+    background: #666;
+    color: white;
+    cursor: not-allowed;
+  }
+}
+
+.btn-cancel {
+  background: #ff4444;
+  color: white;
+  
+  &:hover {
+    background: #cc0000;
+  }
 }
 
 .character-select-actions {

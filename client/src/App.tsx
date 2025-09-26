@@ -8,10 +8,6 @@ import { useGameClient } from './useGameClient';
 
 import '../css/critical.css';
 import '../css/base-components.css';
-import '../css/screen-element.css';
-import '../css/canvas.css';
-import '../css/new.css';
-import '../css/react-components.css';
 
 
 declare global {

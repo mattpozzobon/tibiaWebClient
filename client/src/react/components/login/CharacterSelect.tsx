@@ -14,6 +14,29 @@ interface Character {
   name: string;
   sex: 'male' | 'female';
   role: number;
+  level: number;
+  outfit: {
+    id: number;
+    addonOne: boolean;
+    addonTwo: boolean;
+    details: {
+      head: number;
+      body: number;
+      legs: number;
+      feet: number;
+    };
+    equipment: {
+      hair: number;
+      head: number;
+      body: number;
+      legs: number;
+      feet: number;
+      lefthand: number;
+      righthand: number;
+    };
+    mount: number;
+    mounted: boolean;
+  };
 }
 
 export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: CharacterSelectProps) {
@@ -22,45 +45,43 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showChangelog, setShowChangelog] = useState(false);
+  const [createCharacterSlot, setCreateCharacterSlot] = useState<number | null>(null);
+  const [createCharacterData, setCreateCharacterData] = useState({ name: '', sex: 'male' as 'male' | 'female' });
+  const [creating, setCreating] = useState(false);
 
-  // Load characters once gc is available and the socket populated login info
+  // Load characters from server
   useEffect(() => {
     let cancelled = false;
 
-    const load = async () => {
+    const loadCharacters = async () => {
       try {
         setLoading(true);
+        setError(null);
 
-        if (!gc) {
-          // engine not ready yet, keep a small spinner
-          return;
+        const token = localStorage.getItem("auth_token");
+        if (!token) {
+          throw new Error("No auth token found");
         }
 
-        const loginFlowManager = gc.interface.loginFlowManager;
-        // wait until server pushed login info
-        const waitForChars = () =>
-          new Promise<Character[]>((resolve) => {
-            const tick = () => {
-              const info = (loginFlowManager as any).loginInfo;
-              if (info?.characters?.length) return resolve(info.characters);
-              setTimeout(tick, 200);
-            };
-            tick();
-          });
-
-        const chars = await waitForChars();
-        if (!cancelled) {
-          setCharacters(chars.slice());
-          setError(null);
+        // Get login host from gc or use default
+        const loginHost = (gc?.interface?.loginFlowManager as any)?.loginInfo?.loginHost || "127.0.0.1:3000";
+        
+        const response = await fetch(`http://${loginHost}/characters?token=${encodeURIComponent(token)}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch characters: ${response.status}`);
         }
-      } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? 'Failed to load characters');
+
+        const chars = await response.json();
+        if (!cancelled) setCharacters(chars || []);
+      } catch (err: any) {
+        if (!cancelled) setError(err?.message || "Failed to load characters");
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
 
-    load();
+    loadCharacters();
     return () => { cancelled = true; };
   }, [gc]);
 
@@ -79,6 +100,54 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
     }
   };
 
+  const handleCreateCharacter = async () => {
+    if (!createCharacterData.name.trim()) return;
+    
+    try {
+      setCreating(true);
+      setError(null);
+
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        throw new Error("No auth token found");
+      }
+
+      const loginHost = (gc?.interface?.loginFlowManager as any)?.loginInfo?.loginHost || "127.0.0.1:3000";
+      
+      const response = await fetch(`http://${loginHost}/characters/create?token=${encodeURIComponent(token)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: createCharacterData.name.trim(),
+          sex: createCharacterData.sex
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create character: ${response.status}`);
+      }
+
+      // Refresh character list
+      const loadCharacters = async () => {
+        const response = await fetch(`http://${loginHost}/characters?token=${encodeURIComponent(token)}`);
+        if (response.ok) {
+          const chars = await response.json();
+          setCharacters(chars || []);
+        }
+      };
+      
+      await loadCharacters();
+      setCreateCharacterSlot(null);
+      setCreateCharacterData({ name: '', sex: 'male' });
+    } catch (err: any) {
+      setError(err?.message || "Failed to create character");
+    } finally {
+      setCreating(false);
+    }
+  };
+
   if (!gc || loading) {
     return (
       <div className="character-select-loading">
@@ -90,38 +159,115 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
 
   if (error) {
     return (
-      <div className="character-select-error">
+      <div className="character-select-container">
+
         <p className="error-message">{error}</p>
         <button onClick={() => window.location.reload()} className="btn-primary">Retry</button>
+
       </div>
     );
   }
+
+  // Create array of 5 slots, filling empty ones with null
+  const characterSlots = Array.from({ length: 5 }, (_, index) => characters[index] || null);
 
   return (
     <div className="character-select-container">
       <h2 className="character-select-title">Select Character</h2>
       {loading && <div className="loading">Loading characters...</div>}
       {error && <div className="error">{error}</div>}
-      <div className="character-grid">
-        {characters.map((c) => (
+      
+      <div className="character-grid-horizontal">
+        {characterSlots.map((character, index) => (
           <div
-            key={c.id}
-            onClick={() => setSelectedCharacter(c.id)}
-            className={`character-card ${selectedCharacter === c.id ? 'selected' : ''}`}
+            key={index}
+            className={`character-card-flip ${character && selectedCharacter === character.id ? 'selected' : ''} ${createCharacterSlot === index ? 'flipped' : ''}`}
+            onClick={() => {
+              if (character && createCharacterSlot !== index) {
+                setSelectedCharacter(character.id);
+              }
+            }}
           >
-            <div className="character-name">{c.name}</div>
-            <div className="character-level">Level 1</div>
-            <div className="character-vocation">Knight</div>
+            <div className="card-inner">
+              {/* Front side - Character display */}
+              <div className="card-front">
+                {character ? (
+                  <div className="character-info">
+                    <div className="character-name">{character.name}</div>
+                    <div className="character-level">Level {character.level}</div>
+                    <div className="character-role">Role {character.role}</div>
+                    <div className="character-gender">{character.sex}</div>
+                  </div>
+                ) : (
+                  <div className="create-character-card" onClick={() => setCreateCharacterSlot(index)}>
+                    <div className="create-character-icon">+</div>
+                    <div className="create-character-text">Create Character</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Back side - Create character form */}
+              <div className="card-back">
+                <div className="create-character-form">
+                  <h4>Create Character</h4>
+                  <div className="form-group">
+                    <input
+                      type="text"
+                      value={createCharacterData.name}
+                      onChange={(e) => setCreateCharacterData({...createCharacterData, name: e.target.value})}
+                      placeholder="Character name"
+                      maxLength={20}
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <select
+                      value={createCharacterData.sex}
+                      onChange={(e) => setCreateCharacterData({...createCharacterData, sex: e.target.value as 'male' | 'female'})}
+                      className="form-select"
+                    >
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
+                  </div>
+                  <div className="form-actions">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCreateCharacter();
+                      }}
+                      disabled={!createCharacterData.name.trim() || creating}
+                      className="btn-create"
+                    >
+                      {creating ? 'Creating...' : 'Create'}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCreateCharacterSlot(null);
+                        setCreateCharacterData({ name: '', sex: 'male' });
+                      }}
+                      className="btn-cancel"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         ))}
       </div>
-      <button
-        onClick={handleEnterGame}
-        disabled={!selectedCharacter}
-        className={`character-select-button ${!selectedCharacter ? 'disabled' : ''}`}
-      >
-        {selectedCharacter ? 'GO!' : 'Select a character'}
-      </button>
+
+      {selectedCharacter && (
+        <button
+          onClick={handleEnterGame}
+          disabled={loading}
+          className="character-select-button"
+        >
+          {loading ? 'Entering...' : 'GO!'}
+        </button>
+      )}
 
       <ChangelogModal isVisible={showChangelog} onClose={() => setShowChangelog(false)} />
     </div>

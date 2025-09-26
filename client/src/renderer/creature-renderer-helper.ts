@@ -10,6 +10,8 @@ export interface CharacterFrames {
   feetGroup?: any;     feetFrame?: number;
   leftHandGroup?: any; leftHandFrame?: number;
   rightHandGroup?: any; rightHandFrame?: number;
+  backpackGroup?: any; backpackFrame?: number;
+  beltGroup?: any;     beltFrame?: number;
   hairGroup?: any;     hairFrame?: number;
   headGroup?: any;     headFrame?: number;
   isMoving: boolean;
@@ -266,6 +268,30 @@ export default class CreatureRendererHelper {
       }
     }
 
+    // --- Backpack ---
+    let backpackGroup = null, backpackFrame = 0;
+    if (outfit.equipment?.backpack && outfit.equipment.backpack !== 0) {
+      const backpackObject = outfit.getBackpackDataObject && outfit.getBackpackDataObject();
+      if (backpackObject) {
+        backpackGroup = backpackObject.getFrameGroup(groupType);
+        backpackFrame = isMoving
+          ? this.__getWalkingFrame(backpackGroup)
+          : (backpackGroup.getAlwaysAnimatedFrame ? backpackGroup.getAlwaysAnimatedFrame() : 0);
+      }
+    }
+
+    // --- Belt ---
+    let beltGroup = null, beltFrame = 0;
+    if (outfit.equipment?.belt && outfit.equipment.belt !== 0) {
+      const beltObject = outfit.getBeltDataObject && outfit.getBeltDataObject();
+      if (beltObject) {
+        beltGroup = beltObject.getFrameGroup(groupType);
+        beltFrame = isMoving
+          ? this.__getWalkingFrame(beltGroup)
+          : (beltGroup.getAlwaysAnimatedFrame ? beltGroup.getAlwaysAnimatedFrame() : 0);
+      }
+    }
+
     // --- Head/helmet or hair ---
     let headGroup = null, headFrame = 0, hairGroup = null, hairFrame = 0;
     const hasHelmet = !!(outfit.equipment?.head && outfit.equipment.head !== 0);
@@ -297,6 +323,10 @@ export default class CreatureRendererHelper {
       leftHandFrame,
       rightHandGroup,
       rightHandFrame,
+      backpackGroup,
+      backpackFrame,
+      beltGroup,
+      beltFrame,
       headGroup,
       headFrame,
       hairGroup,

@@ -95,6 +95,16 @@ function collectOutfitDrawPieces(
   const feetId = typeof eq.feet === 'number' ? eq.feet : 0;
   const leftId = typeof eq.lefthand === 'number' ? eq.lefthand : 0;
   const rightId = typeof eq.righthand === 'number' ? eq.righthand : 0;
+  const backpackId = typeof eq.backpack === 'number' ? eq.backpack : 0;
+  const necklaceId = typeof eq.necklace === 'number' ? eq.necklace : 0;
+  const ringId = typeof eq.ring === 'number' ? eq.ring : 0;
+  const quiverId = typeof eq.quiver === 'number' ? eq.quiver : 0;
+  const ring2Id = typeof eq.ring2 === 'number' ? eq.ring2 : 0;
+  const ring3Id = typeof eq.ring3 === 'number' ? eq.ring3 : 0;
+  const ring4Id = typeof eq.ring4 === 'number' ? eq.ring4 : 0;
+  const ring5Id = typeof eq.ring5 === 'number' ? eq.ring5 : 0;
+  const beltId = typeof eq.belt === 'number' ? eq.belt : 0;
+  const mountId = typeof outfit.mount === 'number' ? outfit.mount : 0;
 
   const hairObj = hairId > 0 && outfit.getHairDataObject ? outfit.getHairDataObject() : null;
   if (hairObj) {
@@ -115,7 +125,18 @@ function collectOutfitDrawPieces(
   const rightObj = rightId > 0 && outfit.getRightHandDataObject ? outfit.getRightHandDataObject() : null;
   addLayerForObject(leftObj);
   addLayerForObject(rightObj);
+  
+  // Additional equipment slots - only if ids > 0
+  const backpackObj = backpackId > 0 && outfit.getBackpackDataObject ? outfit.getBackpackDataObject() : null;
+  const beltObj = beltId > 0 && outfit.getBeltDataObject ? outfit.getBeltDataObject() : null;
+  
+  addLayerForObject(backpackObj);
+  addLayerForObject(beltObj);
+  
   // Mount overlay (if set and mounted)
+  if (outfit.mounted && mountId > 0) {
+    addLayerForObject(outfit.getDataObjectMount ? outfit.getDataObjectMount() : null);
+  }
 
   if (!pieces.length) return null;
   return { pieces, bounds: { left, top, right, bottom } };

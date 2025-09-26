@@ -12,14 +12,18 @@ interface EquipmentPanelProps {
 }
 
 const DISPLAY_ORDER = [
-  'shoulder-slot','head-slot','backpack-slot','left-slot',
-  'armor-slot','right-slot','ring-slot','boots-slot','quiver-slot','legs-slot'
+  'necklace-slot', 'helmet-slot', 'backpack-slot', 
+  'left-slot', 'armor-slot', 'right-slot', 
+  'belt-slot', 'legs-slot', 'quiver-slot', 
+  'ring-slot', 'boots-slot', 'ring2-slot',
+  'ring3-slot', 'ring4-slot', 'ring5-slot'
 ] as const;
 
 const LEGACY_INDEX: Record<string, number> = {
-  'head-slot': 0, 'armor-slot': 1, 'legs-slot': 2, 'boots-slot': 3,
-  'right-slot': 4, 'left-slot': 5, 'backpack-slot': 6, 'shoulder-slot': 7,
-  'ring-slot': 8, 'quiver-slot': 9,
+  'helmet-slot': 0, 'armor-slot': 1, 'legs-slot': 2, 'boots-slot': 3,
+  'right-slot': 4, 'left-slot': 5, 'backpack-slot': 6, 'necklace-slot': 7,
+  'ring-slot': 8, 'quiver-slot': 9, 'ring2-slot': 10, 'ring3-slot': 11,
+  'ring4-slot': 12, 'ring5-slot': 13, 'belt-slot': 14,
 };
 
 export default function EquipmentPanel({ gc }: EquipmentPanelProps) {

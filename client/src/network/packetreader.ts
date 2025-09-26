@@ -478,6 +478,8 @@ export default class PacketReader extends Packet {
       feet: this.readUInt16(),
       lefthand: this.readUInt16(),
       righthand: this.readUInt16(),
+      backpack: this.readUInt16(),
+      belt: this.readUInt16(),
     };
   }
   
@@ -612,7 +614,7 @@ export default class PacketReader extends Packet {
   public readEquipment(): (Item | null)[] {
     let items: (Item | null)[] = [];
   
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 15; i++) {
       let item = this.readItem();
       items[i] = item;
     }

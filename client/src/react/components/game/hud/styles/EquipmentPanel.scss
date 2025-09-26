@@ -29,6 +29,8 @@
   grid-auto-rows: 48px;
   gap: 10px 14px;
   justify-content: center;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .slot {
@@ -49,16 +51,21 @@
 
 /* Background icons by slot type (placeholders, wire real assets as needed) */
 /* Use relative paths to the client/png folder */
-.slot-head { background-image: url('../../../../../../png/head.png'); }
+.slot-helmet { background-image: url('../../../../../../png/head.png'); }
 .slot-armor { background-image: url('../../../../../../png/armor.png'); }
 .slot-legs { background-image: url('../../../../../../png/legs.png'); }
 .slot-boots { background-image: url('../../../../../../png/boots.png'); }
 .slot-right { background-image: url('../../../../../../png/right.png'); }
 .slot-left { background-image: url('../../../../../../png/left.png'); }
 .slot-backpack { background-image: url('../../../../../../png/backpack.png'); }
-.slot-shoulder { background-image: url('../../../../../../png/shoulder.png'); }
+.slot-necklace { background-image: url('../../../../../../png/shoulder.png'); }
 .slot-ring { background-image: url('../../../../../../png/ring.png'); }
 .slot-quiver { background-image: url('../../../../../../png/quiver.png'); }
+.slot-ring2 { background-image: url('../../../../../../png/ring.png'); }
+.slot-ring3 { background-image: url('../../../../../../png/ring.png'); }
+.slot-ring4 { background-image: url('../../../../../../png/ring.png'); }
+.slot-ring5 { background-image: url('../../../../../../png/ring.png'); }
+.slot-belt { background-image: url('../../../../../../png/item.png'); }
 
 @media (max-width: 768px) {
   .equipment-window { left: 8px; right: auto; width: 200px; }

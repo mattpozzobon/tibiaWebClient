@@ -14,6 +14,8 @@ export interface OutfitEquipment {
     feet: number;
     lefthand: number;
     righthand: number;
+    backpack: number;
+    belt: number;
 }
 
 export default class Outfit {
@@ -100,7 +102,7 @@ export default class Outfit {
     
     toEquipmentString(): string {
       return [
-        `[Equipment]: (${this.equipment.hair}, (${this.equipment.head}, ${this.equipment.body}, ${this.equipment.legs}, ${this.equipment.feet}, ${this.equipment.lefthand}, ${this.equipment.righthand})`
+        `[Equipment]: (${this.equipment.hair}, ${this.equipment.head}, ${this.equipment.body}, ${this.equipment.legs}, ${this.equipment.feet}, ${this.equipment.lefthand}, ${this.equipment.righthand}, ${this.equipment.backpack}, ${this.equipment.belt})`
       ].join(" ");
     }
   
@@ -138,6 +140,14 @@ export default class Outfit {
   
     getFeetDataObject(): any {
       return window.gameClient.dataObjects.getOutfit(this.equipment.feet);
+    }
+  
+    getBackpackDataObject(): any {
+      return window.gameClient.dataObjects.getOutfit(this.equipment.backpack);
+    }
+  
+    getBeltDataObject(): any {
+      return window.gameClient.dataObjects.getOutfit(this.equipment.belt);
     }
   
     getDataObject(): any {

@@ -13,10 +13,12 @@ const RENDER_LAYERS = [
   { groupKey: "bodyGroup",  frameKey: "bodyFrame", hasMask: false },
   { groupKey: "legsGroup", frameKey: "legsFrame", hasMask: false },
   { groupKey: "feetGroup", frameKey: "feetFrame", hasMask: false },
+  { groupKey: "backpackGroup", frameKey: "backpackFrame", hasMask: false },
+  { groupKey: "beltGroup", frameKey: "beltFrame", hasMask: false },
+  { groupKey: "headGroup", frameKey: "headFrame", hasMask: false },
+  { groupKey: "hairGroup", frameKey: "hairFrame", hasMask: true, condition: "!frames.headGroup" },
   { groupKey: "leftHandGroup", frameKey: "leftHandFrame", hasMask: false },
   { groupKey: "rightHandGroup", frameKey: "rightHandFrame", hasMask: false },
-  { groupKey: "headGroup", frameKey: "headFrame", hasMask: false },
-  { groupKey: "hairGroup", frameKey: "hairFrame", hasMask: true, condition: "!frames.headGroup" }
 ];
 
 export default class CreatureRenderer {

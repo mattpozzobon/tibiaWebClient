@@ -15,20 +15,25 @@ export default class Equipment extends Container {
   private emitter = new Emitter<EquipmentEvents>();
 
   constructor(items: any) {
-    super({ id: 0, cid: 0, items: new Array<Item>(10) });
+    super({ id: 0, cid: 0, items: new Array<Item>(15) });
 
     // create slots and wrap setItem so *any* mutation emits
     this.slots = [
-      this.createSlot(0, "head-slot"),
-      this.createSlot(1, "armor-slot"),
-      this.createSlot(2, "legs-slot"),
-      this.createSlot(3, "boots-slot"),
-      this.createSlot(4, "right-slot"),
-      this.createSlot(5, "left-slot"),
-      this.createSlot(6, "backpack-slot"),
-      this.createSlot(7, "shoulder-slot"),
-      this.createSlot(8, "ring-slot"),
-      this.createSlot(9, "quiver-slot"),
+      this.createSlot(0, "helmet-slot"),      // HELMET
+      this.createSlot(1, "armor-slot"),       // ARMOR
+      this.createSlot(2, "legs-slot"),        // LEGS
+      this.createSlot(3, "boots-slot"),       // BOOTS
+      this.createSlot(4, "right-slot"),       // RIGHT
+      this.createSlot(5, "left-slot"),        // LEFT
+      this.createSlot(6, "backpack-slot"),    // BACKPACK
+      this.createSlot(7, "necklace-slot"),    // NECKLACE
+      this.createSlot(8, "ring-slot"),        // RING
+      this.createSlot(9, "quiver-slot"),      // QUIVER
+      this.createSlot(10, "ring2-slot"),      // RING2
+      this.createSlot(11, "ring3-slot"),      // RING3
+      this.createSlot(12, "ring4-slot"),      // RING4
+      this.createSlot(13, "ring5-slot"),      // RING5
+      this.createSlot(14, "belt-slot"),       // BELT
     ].map((slot, idx) => {
       const orig = slot.setItem.bind(slot);
       slot.setItem = (item: Item | null) => {
@@ -96,10 +101,10 @@ export default class Equipment extends Container {
   private normalize(input: any): any[] {
     if (Array.isArray(input)) return input;
     if (input && Array.isArray(input.items)) return input.items;
-    const arr = new Array(10).fill(null);
+    const arr = new Array(15).fill(null);
     Object.keys(input || {}).forEach((k) => {
       const i = Number(k);
-      if (!Number.isNaN(i) && i >= 0 && i < 10) arr[i] = input[k];
+      if (!Number.isNaN(i) && i >= 0 && i < 15) arr[i] = input[k];
     });
     return arr;
   }

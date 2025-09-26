@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import type GameClient from "../../../core/gameclient";
 import ChangelogModal from "../ChangelogModal";
+import { renderOutfitToCanvas } from "../../../utils/outfit-renderer";
 import './styles/CharacterSelect.scss';
 
 interface CharacterSelectProps {
@@ -48,6 +49,34 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
   const [createCharacterSlot, setCreateCharacterSlot] = useState<number | null>(null);
   const [createCharacterData, setCreateCharacterData] = useState({ name: '', sex: 'male' as 'male' | 'female' });
   const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+
+  function OutfitPreview({ outfit }: { outfit: Character['outfit'] }) {
+    const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
+    useEffect(() => {
+      if (!gc || !outfit || !canvasRef.current) return;
+      // Best-effort render. The outfit object from server mirrors runtime outfit
+      try {
+        renderOutfitToCanvas(gc, outfit as any, canvasRef.current, {
+          faceDirection: 2,
+          animate: false,
+          padding: 2,
+          background: "transparent",
+        });
+      } catch {
+        // ignore render errors in preview
+      }
+    }, [gc, outfit]);
+
+    return (
+      <canvas
+        ref={canvasRef}
+        width={256}
+        height={256}
+        className="outfit-preview-canvas"
+      />
+    );
+  }
 
   // Load characters from server
   useEffect(() => {
@@ -101,48 +130,68 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
   };
 
   const handleCreateCharacter = async () => {
-    if (!createCharacterData.name.trim()) return;
-    
+    // Client-side normalization and validation mirroring server rules
+    const rawName = createCharacterData.name ?? '';
+    const normalizedName = rawName.trim().replace(/\s+/g, ' ');
+    const sex = createCharacterData.sex;
+
+    // Reset create error
+    setCreateError(null);
+
+    if (!normalizedName || !sex || (sex !== 'male' && sex !== 'female')) {
+      setCreateError('Invalid character data');
+      return;
+    }
+    if (normalizedName.length > 20) {
+      setCreateError('Name too long (max 20)');
+      return;
+    }
+    if (!/^[A-Za-z ]+$/.test(normalizedName)) {
+      setCreateError('Invalid characters in name');
+      return;
+    }
+    if (!/[A-Za-z]/.test(normalizedName)) {
+      setCreateError('Name must contain letters');
+      return;
+    }
+
     try {
       setCreating(true);
       setError(null);
 
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem('auth_token');
       if (!token) {
-        throw new Error("No auth token found");
+        throw new Error('No auth token found');
       }
 
-      const loginHost = (gc?.interface?.loginFlowManager as any)?.loginInfo?.loginHost || "127.0.0.1:3000";
-      
+      const loginHost = (gc?.interface?.loginFlowManager as any)?.loginInfo?.loginHost || '127.0.0.1:3000';
+
       const response = await fetch(`http://${loginHost}/characters/create?token=${encodeURIComponent(token)}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: createCharacterData.name.trim(),
-          sex: createCharacterData.sex
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: normalizedName, sex })
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to create character: ${response.status}`);
+        // Prefer server-provided message
+        const serverText = await response.text().catch(() => '');
+        const message = serverText || `Failed to create character (${response.status})`;
+        setCreateError(message);
+        return;
       }
 
       // Refresh character list
-      const loadCharacters = async () => {
-        const response = await fetch(`http://${loginHost}/characters?token=${encodeURIComponent(token)}`);
-        if (response.ok) {
-          const chars = await response.json();
-          setCharacters(chars || []);
-        }
-      };
-      
-      await loadCharacters();
+      const listResponse = await fetch(`http://${loginHost}/characters?token=${encodeURIComponent(token)}`);
+      if (listResponse.ok) {
+        const chars = await listResponse.json();
+        setCharacters(chars || []);
+      }
+
       setCreateCharacterSlot(null);
       setCreateCharacterData({ name: '', sex: 'male' });
+      setCreateError(null);
     } catch (err: any) {
-      setError(err?.message || "Failed to create character");
+      setCreateError(err?.message || 'Failed to create character');
     } finally {
       setCreating(false);
     }
@@ -192,11 +241,15 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
               {/* Front side - Character display */}
               <div className="card-front">
                 {character ? (
-                  <div className="character-info">
-                    <div className="character-name">{character.name}</div>
-                    <div className="character-level">Level {character.level}</div>
-                    <div className="character-role">Role {character.role}</div>
-                    <div className="character-gender">{character.sex}</div>
+                  <div className="character-front">
+                    <div className="character-name character-name-top">{character.name}</div>
+                    <div className="character-visual">
+                      <OutfitPreview outfit={character.outfit} />
+                    </div>
+                    <div className="character-info character-info-bottom">
+                      <div className="character-level">Level {character.level}</div>
+                      <div className="character-gender">{character.sex}</div>
+                    </div>
                   </div>
                 ) : (
                   <div className="create-character-card" onClick={() => setCreateCharacterSlot(index)}>
@@ -210,6 +263,9 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
               <div className="card-back">
                 <div className="create-character-form">
                   <h4>Create Character</h4>
+                  {createError && (
+                    <div className="create-error" role="alert">{createError}</div>
+                  )}
                   <div className="form-group">
                     <input
                       type="text"

@@ -167,8 +167,8 @@
 
 /* Flip Card Styles */
 .character-card-flip {
-  width: 180px;
-  height: 220px;
+  width: 380px;
+  height: 300px;
   perspective: 1000px;
   cursor: pointer;
 }
@@ -216,6 +216,47 @@
   }
 }
 
+.character-front {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.character-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.outfit-preview-canvas {
+  width: 200px;
+  height: 200px;
+  image-rendering: pixelated;
+  transform: translate(-40px, -30px);
+}
+
+.character-name-top {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.character-info-bottom {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
 .card-back {
   background-color: rgba(30, 30, 30, 0.95);
   color: white;
@@ -256,6 +297,17 @@
     margin: 0 0 15px 0;
     font-size: 16px;
   }
+}
+
+.create-error {
+  background: rgba(255, 68, 68, 0.15);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 107, 107, 0.5);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 11px;
+  margin-bottom: 10px;
+  text-align: left;
 }
 
 .form-group {

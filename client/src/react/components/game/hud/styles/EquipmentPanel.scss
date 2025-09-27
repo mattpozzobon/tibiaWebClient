@@ -1,48 +1,35 @@
-.equipment-window {
-  position: fixed;
-  top: 80px;
-  left: 12px;
-  right: auto;
-  width: 220px;
-  background: rgba(20, 20, 20, 0.9);
-  border: 1px solid #333;
-  border-radius: 6px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-  color: #ddd;
-  z-index: 900;
-}
-
-.equipment-window-header {
-  padding: 8px 10px;
-  font-weight: 600;
-  background: linear-gradient(180deg, rgba(40,40,40,0.95), rgba(28,28,28,0.95));
-  border-bottom: 1px solid #2a2a2a;
-}
-
-.equipment-window-body {
-  padding: 10px;
-}
-
-.equipment-slots {
-  display: grid;
-  grid-template-columns: repeat(3, 32px);
-  grid-auto-rows: 32px;
-  gap: 10px 14px;
+.equipment-panel.equipment-container {
+  width: 112px;
+  height: 100%;
+  display: flex;
   justify-content: center;
-  max-height: 400px;
-  overflow-y: auto;
+  align-items: center;
+  padding: 5px;
+  box-sizing: border-box;
 }
 
-.slot {
+.equipment-panel.equipment-container .equipment-slots {
+  display: grid;
+  grid-template-columns: 32px 32px 32px;
+  grid-template-rows: repeat(5, 32px);
+  gap: 2px;
+  width: fit-content;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.equipment-panel.equipment-container .equipment-slots .slot {
   width: 32px;
   height: 32px;
+  position: relative;
   border: 1px solid transparent;
   background: transparent;
   background-position: center;
   background-repeat: no-repeat;
-  background-size: 32px 32px;
-  position: relative;
+  background-size: contain;
   transition: border-color 0.2s ease;
+  box-sizing: border-box;
+  display: block;
   
   &:hover {
     border-color: #fff;
@@ -53,31 +40,90 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    pointer-events: none;
+    width: 32px;
+    height: 32px;
+    z-index: 100;
   }
 }
 
-/* Background icons by slot type (placeholders, wire real assets as needed) */
-/* Use relative paths to the client/png folder */
-.slot-helmet { background-image: url('../../../../../../png/head.png'); }
-.slot-armor { background-image: url('../../../../../../png/armor.png'); }
-.slot-legs { background-image: url('../../../../../../png/legs.png'); }
-.slot-boots { background-image: url('../../../../../../png/boots.png'); }
-.slot-right { background-image: url('../../../../../../png/right.png'); }
-.slot-left { background-image: url('../../../../../../png/left.png'); }
-.slot-backpack { background-image: url('../../../../../../png/backpack.png'); }
-.slot-necklace { background-image: url('../../../../../../png/shoulder.png'); }
-.slot-ring { background-image: url('../../../../../../png/ring.png'); }
-.slot-quiver { background-image: url('../../../../../../png/quiver.png'); }
-.slot-ring2 { background-image: url('../../../../../../png/ring.png'); }
-.slot-ring3 { background-image: url('../../../../../../png/ring.png'); }
-.slot-ring4 { background-image: url('../../../../../../png/ring.png'); }
-.slot-ring5 { background-image: url('../../../../../../png/ring.png'); }
-.slot-belt { background-image: url('../../../../../../png/item.png'); }
-
-@media (max-width: 768px) {
-  .equipment-window { left: 8px; right: auto; width: 200px; }
-  .equipment-slots { gap: 6px; grid-template-columns: repeat(3, 28px); grid-auto-rows: 28px; }
-  .slot { width: 28px; height: 28px; background-size: 28px 28px; }
+// Manual grid positioning for each slot
+.equipment-panel.equipment-container .equipment-slots .slot-necklace { 
+  background-image: url('../../../../../../png/shoulder.png');
+  grid-column: 1;
+  grid-row: 1;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-helmet { 
+  background-image: url('../../../../../../png/head.png');
+  grid-column: 2;
+  grid-row: 1;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-backpack { 
+  background-image: url('../../../../../../png/backpack.png');
+  grid-column: 3;
+  grid-row: 1;
 }
 
+.equipment-panel.equipment-container .equipment-slots .slot-left { 
+  background-image: url('../../../../../../png/left.png');
+  grid-column: 1;
+  grid-row: 2;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-armor { 
+  background-image: url('../../../../../../png/armor.png');
+  grid-column: 2;
+  grid-row: 2;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-right { 
+  background-image: url('../../../../../../png/right.png');
+  grid-column: 3;
+  grid-row: 2;
+}
 
+.equipment-panel.equipment-container .equipment-slots .slot-belt { 
+  background-image: url('../../../../../../png/item.png');
+  grid-column: 1;
+  grid-row: 3;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-legs { 
+  background-image: url('../../../../../../png/legs.png');
+  grid-column: 2;
+  grid-row: 3;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-quiver { 
+  background-image: url('../../../../../../png/quiver.png');
+  grid-column: 3;
+  grid-row: 3;
+}
+
+.equipment-panel.equipment-container .equipment-slots .slot-ring { 
+  background-image: url('../../../../../../png/ring.png');
+  grid-column: 1;
+  grid-row: 4;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-boots { 
+  background-image: url('../../../../../../png/boots.png');
+  grid-column: 2;
+  grid-row: 4;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-ring2 { 
+  background-image: url('../../../../../../png/ring.png');
+  grid-column: 3;
+  grid-row: 4;
+}
+
+.equipment-panel.equipment-container .equipment-slots .slot-ring3 { 
+  background-image: url('../../../../../../png/ring.png');
+  grid-column: 1;
+  grid-row: 5;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-ring4 { 
+  background-image: url('../../../../../../png/ring.png');
+  grid-column: 2;
+  grid-row: 5;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-ring5 { 
+  background-image: url('../../../../../../png/ring.png');
+  grid-column: 3;
+  grid-row: 5;
+}

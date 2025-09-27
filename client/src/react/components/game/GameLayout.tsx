@@ -1,12 +1,12 @@
 // GameLayout.tsx
 import React from 'react';
 import AudioManager from './AudioManager';
-import GameWindows from './GameWindows';
 import './styles/GameLayout.scss';
 import GameUIManager from './GameUIManager';
 import Hud from './HudComponents';
 import NotificationManager from './NotificationManager';
 import { useGameClient } from '../../hooks/gameClientCtx';
+import { WindowManager, WindowInitializer } from './windows';
 
 
 const GameLayout: React.FC = () => {
@@ -24,7 +24,9 @@ const GameLayout: React.FC = () => {
         <>
           <Hud />
           <GameUIManager />
-          {/* <GameWindows .../> when you hook your layout state back in */}
+          <WindowManager>
+            <WindowInitializer gc={gc} />
+          </WindowManager>
         </>
       )}
     </>

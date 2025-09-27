@@ -18,7 +18,6 @@ import MoveItemModal from './modals/MoveItemModal';
 
 import ChatWindow from './hud/Chat';
 import ConfirmModal from './modals/ConfirmModal';
-import EquipmentPanel from './hud/EquipmentPanel';
 import { useGameClient } from '../../hooks/gameClientCtx';
 // import FriendList from './FriendList';
 // import Hotbar from './Hotbar';
@@ -111,8 +110,6 @@ export default function GameUIManager() {
 
   return (
     <div className="game-ui-manager">
-      {/* React Equipment Panel - provides DOM-compatible slots for mouse.ts */}
-      <EquipmentPanel gc={gc} containerIndex={0} />
       
       {/* {showInventory && (
         <InventoryPanel 

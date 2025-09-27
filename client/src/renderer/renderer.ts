@@ -116,9 +116,13 @@ export default class Renderer {
     const baseWidth = baseCols * tileSize;
     const baseHeight = baseRows * tileSize;
 
-    const viewport = window.visualViewport ?? { width: window.innerWidth, height: window.innerHeight };
-    const scaleX = viewport.width / baseWidth;
-    const scaleY = viewport.height / baseHeight;
+    // Use the game container dimensions for initial sizing
+    const gameContainer = document.getElementById("game-container");
+    const containerWidth = gameContainer ? gameContainer.clientWidth : window.innerWidth;
+    const containerHeight = gameContainer ? gameContainer.clientHeight : window.innerHeight;
+    
+    const scaleX = containerWidth / baseWidth;
+    const scaleY = containerHeight / baseHeight;
     const scale = Math.floor(Math.min(scaleX, scaleY) * 100) / 100;
 
     const width = Math.floor(baseWidth * scale);
@@ -176,8 +180,10 @@ export default class Renderer {
     const baseWidth = baseCols * tileSize;
     const baseHeight = baseRows * tileSize;
 
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    // Use the game container dimensions instead of window dimensions
+    const gameContainer = document.getElementById("game-container");
+    const viewportWidth = gameContainer ? gameContainer.clientWidth : window.innerWidth;
+    const viewportHeight = gameContainer ? gameContainer.clientHeight : window.innerHeight;
 
     const aspectRatio = baseWidth / baseHeight;
     const viewportRatio = viewportWidth / viewportHeight;

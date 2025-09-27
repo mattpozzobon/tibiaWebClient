@@ -1,4 +1,5 @@
 html, body {
+  width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
@@ -6,12 +7,25 @@ html, body {
   color: white;
   font-family: Verdana, "Sans-Serif";
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 #game-container {
-  height: 100%;
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+#game-container, #game-container canvas {
   width: 100%;
-  position: relative;
+  height: 100%;
+}
+#game-container canvas {
+  display: block;         /* removes default inline gap */
+  image-rendering: pixelated;
 }
 
 #debug-statistics {
@@ -35,5 +49,4 @@ html, body {
 
 #root img, #root svg, #root canvas {
   -webkit-user-drag: none;
-  user-drag: none;
 }

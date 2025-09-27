@@ -25,8 +25,8 @@
 
 .equipment-slots {
   display: grid;
-  grid-template-columns: repeat(3, 48px);
-  grid-auto-rows: 48px;
+  grid-template-columns: repeat(3, 32px);
+  grid-auto-rows: 32px;
   gap: 10px 14px;
   justify-content: center;
   max-height: 400px;
@@ -34,18 +34,25 @@
 }
 
 .slot {
-  width: 48px;
-  height: 48px;
-  border: 1px solid #444;
-  border-radius: 4px;
-  background: #000;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  background: transparent;
   background-position: center;
   background-repeat: no-repeat;
   background-size: 32px 32px;
+  position: relative;
   transition: border-color 0.2s ease;
   
   &:hover {
     border-color: #fff;
+  }
+  
+  canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 }
 
@@ -69,8 +76,8 @@
 
 @media (max-width: 768px) {
   .equipment-window { left: 8px; right: auto; width: 200px; }
-  .equipment-slots { gap: 6px; grid-template-columns: repeat(3, 40px); grid-auto-rows: 40px; }
-  .slot { width: 40px; height: 40px; background-size: 28px 28px; }
+  .equipment-slots { gap: 6px; grid-template-columns: repeat(3, 28px); grid-auto-rows: 28px; }
+  .slot { width: 28px; height: 28px; background-size: 28px 28px; }
 }
 
 

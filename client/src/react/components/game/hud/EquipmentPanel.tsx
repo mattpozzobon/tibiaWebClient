@@ -38,13 +38,32 @@ export default function EquipmentPanel({ gc }: EquipmentPanelProps) {
     const slotIdx = LEGACY_INDEX[id];
     if (slotIdx === undefined) return;
     const canvas = canvasRefs.current[id];
+    const slotDiv = slotDivRefs.current[id];
     const ctx = canvas?.getContext('2d');
-    if (!ctx || !canvas) return;
+    if (!ctx || !canvas || !slotDiv) return;
 
     const itm: Item | null = equipmentItems[slotIdx] || null;
+    
+    // Update slot background based on whether item is equipped
     if (itm) {
+      // Item is equipped - use item.png background
+      slotDiv.style.backgroundImage = "url('../../../../../../png/item.png')";
       ItemRenderer.renderItemToCanvas(gc, itm, canvas, { size: 32, background: 'transparent' });
     } else {
+      // No item - use default slot background
+      const slotType = id.replace('-slot', '');
+      let backgroundImage = '';
+      
+      // Handle special cases for slot backgrounds
+      if (slotType === 'necklace') {
+        backgroundImage = 'shoulder.png';
+      } else if (slotType.startsWith('ring')) {
+        backgroundImage = 'ring.png';
+      } else {
+        backgroundImage = `${slotType}.png`;
+      }
+      
+      slotDiv.style.backgroundImage = `url('../../../../../../png/${backgroundImage}')`;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
   };
@@ -78,14 +97,8 @@ export default function EquipmentPanel({ gc }: EquipmentPanelProps) {
         <div className="equipment-container" ref={containerRef}>
           <div className="equipment-slots">
             {DISPLAY_ORDER.map((id) => {
-              const slotIndex = LEGACY_INDEX[id];
               return (
-                <div
-                  key={id}
-                  id={id}
-                  className={`slot slot-${id.replace('-slot','')}`}
-                  ref={(el) => { slotDivRefs.current[id] = el; }}
-                >
+                <div key={id} id={id} className={`slot slot-${id.replace('-slot','')}`} ref={(el) => { slotDivRefs.current[id] = el; }}>
                   <canvas
                     width={32}
                     height={32}

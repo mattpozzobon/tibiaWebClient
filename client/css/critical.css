@@ -22,3 +22,18 @@ html, body {
   left: 0px;
   top: 0px;
 }
+
+#root, #root * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+  caret-color: transparent;
+}
+
+#root img, #root svg, #root canvas {
+  -webkit-user-drag: none;
+  user-drag: none;
+}

@@ -10,16 +10,56 @@ import Interface from "../ui/interface";
 
 const RENDER_LAYERS = [
   { groupKey: "characterGroup", frameKey: "characterFrame", hasMask: false },
-  { groupKey: "bodyGroup",  frameKey: "bodyFrame", hasMask: false },
-  { groupKey: "legsGroup", frameKey: "legsFrame", hasMask: false },
-  { groupKey: "feetGroup", frameKey: "feetFrame", hasMask: false },
-  { groupKey: "backpackGroup", frameKey: "backpackFrame", hasMask: false },
-  { groupKey: "beltGroup", frameKey: "beltFrame", hasMask: false },
-  { groupKey: "headGroup", frameKey: "headFrame", hasMask: false },
-  { groupKey: "hairGroup", frameKey: "hairFrame", hasMask: true, condition: "!frames.headGroup" },
-  { groupKey: "leftHandGroup", frameKey: "leftHandFrame", hasMask: false },
+  { groupKey: "bodyGroup",      frameKey: "bodyFrame",      hasMask: false },
+  { groupKey: "legsGroup",      frameKey: "legsFrame",      hasMask: false },
+  { groupKey: "feetGroup",      frameKey: "feetFrame",      hasMask: false },
+  { groupKey: "backpackGroup",  frameKey: "backpackFrame",  hasMask: false },
+  { groupKey: "beltGroup",      frameKey: "beltFrame",      hasMask: false },
+  { groupKey: "headGroup",      frameKey: "headFrame",      hasMask: false },
+  { groupKey: "hairGroup",      frameKey: "hairFrame",      hasMask: true,  condition: "!frames.headGroup" },
+  { groupKey: "leftHandGroup",  frameKey: "leftHandFrame",  hasMask: false },
   { groupKey: "rightHandGroup", frameKey: "rightHandFrame", hasMask: false },
 ];
+
+// Preserve original order for non-special layers
+const BASE_ORDER_INDEX: Record<string, number> = Object.fromEntries(
+  RENDER_LAYERS.map((l, i) => [l.groupKey, i])
+);
+
+function isNorthWestSide(dir: number): boolean {
+  return (
+    dir === CONST.DIRECTION.NORTH ||
+    dir === CONST.DIRECTION.WEST ||
+    dir === CONST.DIRECTION.NORTHWEST ||
+    dir === CONST.DIRECTION.SOUTHWEST
+  );
+}
+
+function isSouthEastSide(dir: number): boolean {
+  return (
+    dir === CONST.DIRECTION.SOUTH ||
+    dir === CONST.DIRECTION.EAST ||
+    dir === CONST.DIRECTION.NORTHEAST ||
+    dir === CONST.DIRECTION.SOUTHEAST
+  );
+}
+
+// Absolute rank: lower = drawn earlier (further back)
+function layerPriorityForDirection(groupKey: string, dir: number): number {
+  if (isNorthWestSide(dir)) {
+    if (groupKey === "leftHandGroup" || groupKey === "rightHandGroup" || groupKey === "beltGroup") return 1;
+    if (groupKey === "backpackGroup") return 2;
+    if (groupKey === "headGroup")     return 3;
+    return 0; // default
+  }
+  if (isSouthEastSide(dir)) {
+    if (groupKey === "backpackGroup") return 1;
+    if (groupKey === "headGroup")     return 2;
+    if (groupKey === "leftHandGroup" || groupKey === "rightHandGroup") return 3;
+    return 0;
+  }
+  return 0;
+}
 
 export default class CreatureRenderer {
   private textureCache: Map<number, Texture | null> = new Map();
@@ -50,7 +90,13 @@ export default class CreatureRenderer {
     return Math.abs(hash);
   }
 
-  public collectSprites(creature: Creature, position: Position, batcher: SpriteBatcher, size: number = Interface.TILE_SIZE, offset: number = 0.0): void {
+  public collectSprites(
+    creature: Creature,
+    position: Position,
+    batcher: SpriteBatcher,
+    size: number = Interface.TILE_SIZE,
+    offset: number = 0.0
+  ): void {
     const frames: CharacterFrames | null = creature.renderer.getCharacterFrames();
     if (!frames) return;
 
@@ -66,21 +112,40 @@ export default class CreatureRenderer {
     const zPattern = frames.characterGroup.pattern.z > 1 && creature.isMounted() ? 1 : 0;
     const drawPosition = new Position(position.x - offset, position.y - offset, 0);
 
-    for (const layer of RENDER_LAYERS) {
+    // Sort layers with absolute rank first, then fallback to original index
+    const orderedLayers = [...RENDER_LAYERS].sort((a, b) => {
+      const ra = layerPriorityForDirection(a.groupKey, direction);
+      const rb = layerPriorityForDirection(b.groupKey, direction);
+      if (ra !== rb) return ra - rb;
+      return BASE_ORDER_INDEX[a.groupKey] - BASE_ORDER_INDEX[b.groupKey];
+    });
+
+    for (const layer of orderedLayers) {
       const group = frames[layer.groupKey as keyof CharacterFrames];
       const frame = frames[layer.frameKey as keyof CharacterFrames];
       if (!group || frame === undefined) continue;
       if (layer.condition && layer.condition === "!frames.headGroup" && frames.headGroup) continue;
 
-      this.collectLayerSprites(group, frame, xPattern, zPattern, drawPosition, size, batcher, layer.hasMask, creature);
+      this.collectLayerSprites(
+        group, frame, xPattern, zPattern, drawPosition,
+        size, batcher, layer.hasMask, creature
+      );
     }
   }
 
-  public collectAnimationSpritesAbove(creature: Creature, batcher: SpriteBatcher, getCreatureScreenPosition?: (creature: Creature) => Position): void {
+  public collectAnimationSpritesAbove(
+    creature: Creature,
+    batcher: SpriteBatcher,
+    getCreatureScreenPosition?: (creature: Creature) => Position
+  ): void {
     this.animationRenderer.renderCreatureAnimationsAbove(creature, batcher, getCreatureScreenPosition);
   }
 
-  public collectAnimationSpritesBelow(creature: Creature, batcher: SpriteBatcher, getCreatureScreenPosition?: (creature: Creature) => Position): void {
+  public collectAnimationSpritesBelow(
+    creature: Creature,
+    batcher: SpriteBatcher,
+    getCreatureScreenPosition?: (creature: Creature) => Position
+  ): void {
     this.animationRenderer.renderCreatureAnimationsBelow(creature, batcher, getCreatureScreenPosition);
   }
 
@@ -132,14 +197,26 @@ export default class CreatureRenderer {
       if (tileFromWorld) {
         const screenPos = window.gameClient.renderer.getCreatureScreenPosition(creature);
         this.collectSprites(creature, screenPos, batcher, Interface.TILE_SIZE, 0.0);
-        this.collectAnimationSpritesBelow(creature, batcher, window.gameClient.renderer.getCreatureScreenPosition.bind(window.gameClient.renderer));
-        this.collectAnimationSpritesAbove(creature, batcher, window.gameClient.renderer.getCreatureScreenPosition.bind(window.gameClient.renderer));
+        this.collectAnimationSpritesBelow(creature, batcher,
+          window.gameClient.renderer.getCreatureScreenPosition.bind(window.gameClient.renderer));
+        this.collectAnimationSpritesAbove(creature, batcher,
+          window.gameClient.renderer.getCreatureScreenPosition.bind(window.gameClient.renderer));
       }
     }, this);
     tile.__deferredCreatures.clear();
   }
 
-  private collectLayerSprites(group: any, frame: number, xPattern: number, zPattern: number, position: Position, size: number, batcher: SpriteBatcher, hasMask: boolean = false, creature?: Creature): void {
+  private collectLayerSprites(
+    group: any,
+    frame: number,
+    xPattern: number,
+    zPattern: number,
+    position: Position,
+    size: number,
+    batcher: SpriteBatcher,
+    hasMask: boolean = false,
+    creature?: Creature
+  ): void {
     for (let x = 0; x < group.width; x++) {
       for (let y = 0; y < group.height; y++) {
         const spriteId = group.getSpriteId(frame, xPattern, 0, zPattern, 0, x, y);
@@ -147,11 +224,15 @@ export default class CreatureRenderer {
 
         let texture: Texture | null = null;
         if (hasMask && creature) {
-          const composedKey = SpriteBuffer.getComposedKey(creature.outfit, spriteId, group, frame, xPattern, 0, zPattern, x, y);
+          const composedKey = SpriteBuffer.getComposedKey(
+            creature.outfit, spriteId, group, frame, xPattern, 0, zPattern, x, y
+          );
           const hashKey = this.hashString(composedKey);
           if (!window.gameClient.spriteBuffer.has(hashKey)) {
             const maskId = group.getSpriteId(frame, xPattern, 0, zPattern, 1, x, y);
-            window.gameClient.spriteBuffer.addComposedOutfit(composedKey, creature.outfit, spriteId, maskId);
+            window.gameClient.spriteBuffer.addComposedOutfit(
+              composedKey, creature.outfit, spriteId, maskId
+            );
           }
           texture = window.gameClient.spriteBuffer.get(hashKey);
         } else {

@@ -1,7 +1,7 @@
 // PlayerBars.scss - Health, Mana, Energy bars styling
 
 .player-bars-container {
-  position: fixed;
+  position: absolute;
   bottom: 5px; // Position at the bottom, closest to screen edge
   left: 50%;
   transform: translateX(-50%);

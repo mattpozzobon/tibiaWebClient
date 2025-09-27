@@ -1,13 +1,13 @@
 .window-manager {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   pointer-events: none;
   z-index: 1000;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   margin: 0;
   padding: 0;
@@ -16,8 +16,8 @@
 
 .window-columns {
   display: flex;
-  height: 100vh;
-  width: 100vw;
+  height: 100%;
+  width: 100%;
   gap: 0;
   justify-content: space-between;
   overflow: hidden;
@@ -32,10 +32,10 @@
   flex-direction: column;
   align-items: center;
   pointer-events: none;
-  height: 100vh;
+  height: 100%;
   justify-content: flex-start;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(2px);
+  background: transparent;
+  backdrop-filter: none;
   position: relative;
   z-index: 1;
   overflow: hidden;
@@ -53,13 +53,13 @@
 }
 
 .window-column.drag-over {
-  background-color: rgba(255, 255, 255, 0.1);
-  border: 2px dashed rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
 }
 
 .window-column.drag-active {
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
 }
 
 .window-column > * {

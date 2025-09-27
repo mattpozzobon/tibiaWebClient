@@ -1,7 +1,7 @@
 // StatusBar.scss - Bottom screen status bar styling
 
 .status-bar {
-  position: fixed;
+  position: absolute;
   bottom: 100px; // Position above the player bars
   left: 50%;
   transform: translateX(-50%);

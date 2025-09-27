@@ -21,13 +21,15 @@ const GameLayout: React.FC = () => {
       <div id="achievement" className="canvas-notification hidden"></div>
 
       {gc && (
-        <>
-          <Hud />
-          <GameUIManager />
+        <div className="game-layout">
+          <div className="game-content">
+            <Hud />
+            <GameUIManager />
+          </div>
           <WindowManager>
             <WindowInitializer gc={gc} />
           </WindowManager>
-        </>
+        </div>
       )}
     </>
   );

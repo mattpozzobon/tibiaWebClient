@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import type GameClient from '../../../../core/gameclient';
 import Position from '../../../../game/position';
 import Canvas from '../../../../renderer/canvas';
@@ -702,15 +703,6 @@ export default function Minimap({ gc }: MinimapProps) {
             onDoubleClick={handleDoubleClick}
           />
 
-          {hoveredMarker && hoveredMarker.description && hoveredMarker.description.trim() && (
-            <div className="marker-tooltip">{hoveredMarker.description}</div>
-          )}
-
-          {magnifier.visible && (
-            <div className="minimap-magnifier" style={{ left: magnifier.displayX, top: magnifier.displayY }}>
-              <canvas ref={magnifierCanvasRef} width="120" height="120" />
-            </div>
-          )}
 
           {/* Zoom controls inside minimap */}
           <div className="minimap-zoom-controls">
@@ -719,6 +711,11 @@ export default function Minimap({ gc }: MinimapProps) {
           </div>
         </div>
 
+
+      </div>
+
+      {/* Render context menu as portal to document.body to escape window constraints */}
+      {createPortal(
         <ContextMenu
           visible={contextMenu.visible}
           x={contextMenu.x}
@@ -735,8 +732,12 @@ export default function Minimap({ gc }: MinimapProps) {
             { label: 'Create Marker', onClick: () => setCreateMarkerModal(prev => ({ ...prev, visible: true })) }
           ]}
           onClose={() => setContextMenu({ visible: false, x: 0, y: 0 })}
-        />
+        />,
+        document.body
+      )}
 
+      {/* Render modals as portals to document.body to escape window constraints */}
+      {createPortal(
         <CreateMarkerModal
           visible={createMarkerModal.visible}
           x={createMarkerModal.x}
@@ -744,16 +745,51 @@ export default function Minimap({ gc }: MinimapProps) {
           floor={createMarkerModal.floor}
           onClose={() => setCreateMarkerModal({ visible: false, x: 0, y: 0, floor: 0 })}
           onCreate={handleCreateMarker}
-        />
+        />,
+        document.body
+      )}
 
+      {createPortal(
         <EditMarkerModal
           visible={editMarkerModal.visible}
           marker={editMarkerModal.marker}
           onClose={() => setEditMarkerModal({ visible: false, marker: null })}
           onUpdate={handleUpdateMarker}
           onDelete={handleDeleteMarker}
-        />
-      </div>
+        />,
+        document.body
+      )}
+
+      {/* Render magnifier as portal to document.body to escape window constraints */}
+      {createPortal(
+        magnifier.visible && (
+          <div 
+            className="minimap-magnifier" 
+            style={{ left: magnifier.displayX, top: magnifier.displayY }}
+            data-minimap-portal="magnifier"
+          >
+            <canvas ref={magnifierCanvasRef} width="120" height="120" />
+          </div>
+        ),
+        document.body
+      )}
+
+      {/* Render marker tooltip as portal to document.body to escape window constraints */}
+      {createPortal(
+        hoveredMarker && hoveredMarker.description && hoveredMarker.description.trim() && magnifier.visible && (
+          <div 
+            className="marker-tooltip marker-tooltip-portal"
+            style={{ 
+              left: magnifier.displayX, // Position to the right of magnifier center
+              top: magnifier.displayY   // Position above magnifier
+            }}
+            data-minimap-portal="tooltip"
+          >
+            {hoveredMarker.description}
+          </div>
+        ),
+        document.body
+      )}
     </MinimapErrorBoundary>
   );
 }

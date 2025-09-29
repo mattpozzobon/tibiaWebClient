@@ -99,15 +99,17 @@
   /* Square minimap sizing inside window (fits 170px column) */
   .minimap-window .minimap-canvas-container,
   .minimap-window-content .minimap-canvas-container {
-    position: absolute;
-    inset: 0;           /* no padding/margins, fill parent */
-    width: 100%;
-    height: 100%;
-    margin: 0;
+    position: relative;
+    width: 152px;  /* Match canvas width to eliminate side gaps */
+    height: 140px; /* Height minus top padding and extra margin */
+    margin: 0 auto; /* Center the container within window content */
+    padding: 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: visible;  /* Allow tooltip to extend outside container */
+    overflow: hidden;  /* Prevent breakout */
+    box-sizing: border-box;
+    max-height: 140px !important;
   }
 
 .minimap-canvas {
@@ -126,8 +128,16 @@
 .minimap-window-content .minimap-canvas {
   border-radius: 0;
   clip-path: none;
-  width: 100%;
-  height: 100%;
+  width: 100% !important;  /* Fill entire container width */
+  height: 100% !important; /* Fill entire container height */
+  max-width: 152px !important;
+  max-height: 140px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box;
+  object-fit: cover; /* Cover the entire container */
+  display: block !important;
+  background: transparent !important; /* Remove black background */
 }
 
 .minimap-loading {
@@ -169,6 +179,24 @@
   right: 180px; 
   margin-top: -160px; 
   left: auto;
+}
+
+/* Portal tooltip positioning - optimized with cached column detection */
+.marker-tooltip-portal {
+  /* Base positioning handled by JavaScript */
+  max-width: 200px;
+  word-wrap: break-word;
+}
+
+/* Hide minimap portals when minimap window is minimized */
+.window.minimap-window.minimized ~ * [data-minimap-portal],
+.window.minimap-window.minimized [data-minimap-portal] {
+  display: none !important;
+}
+
+/* Global rule to hide minimap portals when any minimap window is minimized */
+body.minimap-minimized [data-minimap-portal] {
+  display: none !important;
 }
 
 /* Magnifier styles */

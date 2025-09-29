@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, createContext, useContext } from 'react';
+import React, { useState, useRef, useCallback, createContext, useContext, useEffect } from 'react';
 import './styles/WindowManager.scss';
 import { Window, EquipmentWindow, MinimapWindow } from './index';
 import type GameClient from '../../../../core/gameclient';
@@ -7,6 +7,15 @@ export interface WindowData {
   id: string;
   title: string;
   component: React.ReactNode;
+  column: 'left' | 'right';
+  order: number;
+  className?: string;
+  pinned?: boolean;
+}
+
+export interface SerializableWindowData {
+  id: string;
+  title: string;
   column: 'left' | 'right';
   order: number;
   className?: string;
@@ -36,11 +45,67 @@ interface WindowManagerProps {
   gc?: GameClient;
 }
 
+const WINDOW_STATE_KEY = 'tibia-window-state';
+
 export default function WindowManager({ children, gc }: WindowManagerProps) {
   const [windows, setWindows] = useState<WindowData[]>([]);
   const [draggedWindow, setDraggedWindow] = useState<string | null>(null);
   const leftColumnRef = useRef<HTMLDivElement>(null);
   const rightColumnRef = useRef<HTMLDivElement>(null);
+
+  // Load window state from localStorage on mount
+  useEffect(() => {
+    if (!gc) return; // Wait for game client to be available
+    
+    try {
+      const savedState = localStorage.getItem(WINDOW_STATE_KEY);
+      if (savedState) {
+        const parsedWindows: SerializableWindowData[] = JSON.parse(savedState);
+        if (Array.isArray(parsedWindows)) {
+          // Recreate windows with components
+          const restoredWindows: WindowData[] = parsedWindows.map(windowConfig => {
+            let component: React.ReactNode;
+            
+            if (windowConfig.id === 'equipment') {
+              component = <EquipmentWindow gc={gc} containerIndex={0} />;
+            } else if (windowConfig.id === 'minimap') {
+              component = <MinimapWindow gc={gc} />;
+            } else {
+              component = null; // Unknown window type
+            }
+            
+            return {
+              ...windowConfig,
+              component
+            };
+          }).filter(window => window.component !== null); // Remove windows with unknown types
+          
+          setWindows(restoredWindows);
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load window state from localStorage:', error);
+    }
+  }, [gc]);
+
+  // Save window state to localStorage whenever windows change
+  useEffect(() => {
+    try {
+      // Convert to serializable format (without React components)
+      const serializableWindows: SerializableWindowData[] = windows.map(window => ({
+        id: window.id,
+        title: window.title,
+        column: window.column,
+        order: window.order,
+        className: window.className,
+        pinned: window.pinned
+      }));
+      
+      localStorage.setItem(WINDOW_STATE_KEY, JSON.stringify(serializableWindows));
+    } catch (error) {
+      console.warn('Failed to save window state to localStorage:', error);
+    }
+  }, [windows]);
 
   const addWindow = useCallback((windowData: WindowData) => {
     setWindows(prev => {
@@ -122,8 +187,14 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
   const toggleWindow = useCallback((windowId: string, column: 'left' | 'right') => {
     const existingWindow = windows.find(w => w.id === windowId);
     if (existingWindow) {
-      // Window exists, remove it
-      removeWindow(windowId);
+      // Window exists, check if it's in the same column
+      if (existingWindow.column === column) {
+        // Same column, remove it (toggle off)
+        removeWindow(windowId);
+      } else {
+        // Different column, move it to the clicked column
+        moveWindow(windowId, column);
+      }
     } else {
       // Window doesn't exist, add it
       if (windowId === 'equipment' && gc) {
@@ -148,7 +219,7 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
         });
       }
     }
-  }, [windows, addWindow, removeWindow, gc]);
+  }, [windows, addWindow, removeWindow, moveWindow, gc]);
 
   const leftWindows = windows.filter(w => w.column === 'left' && !w.pinned)
     .sort((a, b) => a.order - b.order);
@@ -183,14 +254,14 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
           {/* Left column header with icons */}
           <div className="window-column-header">
             <button 
-              className={`window-icon ${leftWindows.find(w => w.id === 'equipment') ? 'active' : ''}`}
+              className={`window-icon ${(leftWindows.find(w => w.id === 'equipment') || leftPinnedWindows.find(w => w.id === 'equipment')) ? 'active' : ''}`}
               onClick={() => toggleWindow('equipment', 'left')}
               title="Equipment"
             >
               🧥
             </button>
             <button 
-              className={`window-icon ${leftWindows.find(w => w.id === 'minimap') ? 'active' : ''}`}
+              className={`window-icon ${(leftWindows.find(w => w.id === 'minimap') || leftPinnedWindows.find(w => w.id === 'minimap')) ? 'active' : ''}`}
               onClick={() => toggleWindow('minimap', 'left')}
               title="Minimap"
             >
@@ -248,14 +319,14 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
             {/* Right column header with icons */}
             <div className="window-column-header">
               <button 
-                className={`window-icon ${rightWindows.find(w => w.id === 'equipment') ? 'active' : ''}`}
+                className={`window-icon ${(rightWindows.find(w => w.id === 'equipment') || rightPinnedWindows.find(w => w.id === 'equipment')) ? 'active' : ''}`}
                 onClick={() => toggleWindow('equipment', 'right')}
                 title="Equipment"
               >
                 🧥
               </button>
               <button 
-                className={`window-icon ${rightWindows.find(w => w.id === 'minimap') ? 'active' : ''}`}
+                className={`window-icon ${(rightWindows.find(w => w.id === 'minimap') || rightPinnedWindows.find(w => w.id === 'minimap')) ? 'active' : ''}`}
                 onClick={() => toggleWindow('minimap', 'right')}
                 title="Minimap"
               >

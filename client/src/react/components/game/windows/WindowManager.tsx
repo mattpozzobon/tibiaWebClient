@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, createContext, useContext } from 'react';
 import './styles/WindowManager.scss';
-import { Window } from './index';
+import { Window, EquipmentWindow, MinimapWindow } from './index';
+import type GameClient from '../../../../core/gameclient';
 
 export interface WindowData {
   id: string;
@@ -30,9 +31,10 @@ export const useWindowManager = () => {
 
 interface WindowManagerProps {
   children?: React.ReactNode;
+  gc?: GameClient;
 }
 
-export default function WindowManager({ children }: WindowManagerProps) {
+export default function WindowManager({ children, gc }: WindowManagerProps) {
   const [windows, setWindows] = useState<WindowData[]>([]);
   const [draggedWindow, setDraggedWindow] = useState<string | null>(null);
   const leftColumnRef = useRef<HTMLDivElement>(null);
@@ -107,8 +109,36 @@ export default function WindowManager({ children }: WindowManagerProps) {
     e.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const leftWindows = windows
-    .filter(w => w.column === 'left')
+  const toggleWindow = useCallback((windowId: string, column: 'left' | 'right') => {
+    const existingWindow = windows.find(w => w.id === windowId);
+    if (existingWindow) {
+      // Window exists, remove it
+      removeWindow(windowId);
+    } else {
+      // Window doesn't exist, add it
+      if (windowId === 'equipment' && gc) {
+        addWindow({
+          id: 'equipment',
+          title: 'Equipment',
+          component: <EquipmentWindow gc={gc} containerIndex={0} />,
+          column,
+          order: 0,
+          className: 'equipment-window'
+        });
+      } else if (windowId === 'minimap' && gc) {
+        addWindow({
+          id: 'minimap',
+          title: 'Minimap',
+          component: <MinimapWindow gc={gc} />,
+          column,
+          order: 0,
+          className: 'minimap-window'
+        });
+      }
+    }
+  }, [windows, addWindow, removeWindow, gc]);
+
+  const leftWindows = windows.filter(w => w.column === 'left')
     .sort((a, b) => a.order - b.order);
 
   const rightWindows = windows
@@ -132,6 +162,24 @@ export default function WindowManager({ children }: WindowManagerProps) {
           onDrop={(e) => handleColumnDrop(e, 'left')}
           onDragOver={handleDragOver}
         >
+          {/* Left column header with icons */}
+          <div className="window-column-header">
+            <button 
+              className={`window-icon ${leftWindows.find(w => w.id === 'equipment') ? 'active' : ''}`}
+              onClick={() => toggleWindow('equipment', 'left')}
+              title="Equipment"
+            >
+              🧥
+            </button>
+            <button 
+              className={`window-icon ${leftWindows.find(w => w.id === 'minimap') ? 'active' : ''}`}
+              onClick={() => toggleWindow('minimap', 'left')}
+              title="Minimap"
+            >
+              🗺️
+            </button>
+          </div>
+          
             {leftWindows.map((window) => (
               <Window
                 key={window.id}
@@ -154,6 +202,24 @@ export default function WindowManager({ children }: WindowManagerProps) {
             onDrop={(e) => handleColumnDrop(e, 'right')}
             onDragOver={handleDragOver}
           >
+            {/* Right column header with icons */}
+            <div className="window-column-header">
+              <button 
+                className={`window-icon ${rightWindows.find(w => w.id === 'equipment') ? 'active' : ''}`}
+                onClick={() => toggleWindow('equipment', 'right')}
+                title="Equipment"
+              >
+                🧥
+              </button>
+              <button 
+                className={`window-icon ${rightWindows.find(w => w.id === 'minimap') ? 'active' : ''}`}
+                onClick={() => toggleWindow('minimap', 'right')}
+                title="Minimap"
+              >
+                🗺️
+              </button>
+            </div>
+            
             {rightWindows.map((window) => (
               <Window
                 key={window.id}

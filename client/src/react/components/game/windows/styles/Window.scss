@@ -1,9 +1,9 @@
 .window {
   background: rgba(20, 20, 20, 0.95);
   border: 1px solid #333;
-  border-radius: 6px;
+  border-radius: 0;
   box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-  margin-bottom: 10px;
+  margin-bottom: 0;
   width: 100%;
   max-width: 170px;
   min-width: 0;
@@ -28,10 +28,10 @@
 }
 
 .window-header {
-  padding: 8px 12px;
-  background: linear-gradient(180deg, rgba(40,40,40,0.95), rgba(28,28,28,0.95));
-  border-bottom: 1px solid #2a2a2a;
-  border-radius: 6px 6px 0 0;
+  padding: 4px 8px;
+  background: rgba(30, 30, 30, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
   cursor: grab;
   user-select: none !important;
   -webkit-user-select: none !important;
@@ -45,6 +45,7 @@
   position: relative;
   z-index: 10;
   box-sizing: border-box;
+  min-height: 24px;
   
   &:active {
     cursor: grabbing;
@@ -56,9 +57,9 @@
 }
 
 .window-title {
-  font-weight: 600;
-  color: #ddd;
-  font-size: 14px;
+  font-weight: 500;
+  color: #ccc;
+  font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -68,18 +69,18 @@
 
 .window-controls {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   flex-shrink: 0;
 }
 
 .window-control {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   border: none;
-  border-radius: 3px;
-  background: rgba(60, 60, 60, 0.8);
-  color: #ddd;
-  font-size: 12px;
+  border-radius: 2px;
+  background: rgba(50, 50, 50, 0.6);
+  color: #bbb;
+  font-size: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;

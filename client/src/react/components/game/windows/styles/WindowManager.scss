@@ -70,6 +70,50 @@
   pointer-events: auto;
 }
 
+/* Column header with icons */
+.window-column-header {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  padding: 5px;
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  min-height: 20px;
+}
+
+.window-icon {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.6);
+  
+  &:hover {
+    color: rgba(255, 255, 255, 0.8);
+    transform: scale(1.05);
+  }
+  
+  &.active {
+    color: #007acc;
+    text-shadow: 0 0 8px rgba(0, 122, 204, 0.6);
+  }
+  
+  &.active:hover {
+    color: #0099ff;
+    text-shadow: 0 0 12px rgba(0, 122, 204, 0.8);
+  }
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .window-columns {

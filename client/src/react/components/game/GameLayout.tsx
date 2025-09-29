@@ -26,7 +26,7 @@ const GameLayout: React.FC = () => {
             <Hud />
             <GameUIManager />
           </div>
-          <WindowManager>
+          <WindowManager gc={gc}>
             <WindowInitializer gc={gc} />
           </WindowManager>
         </div>

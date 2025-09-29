@@ -7,6 +7,7 @@ import AnimationRenderer from "./animation-renderer";
 import { CONST } from "../helper/appContext";
 import SpriteBatcher from "./sprite-batcher";
 import Interface from "../ui/interface";
+import LightRenderer from "./light-renderer";
 
 const RENDER_LAYERS = [
   { groupKey: "characterGroup", frameKey: "characterFrame", hasMask: false },
@@ -64,9 +65,11 @@ function layerPriorityForDirection(groupKey: string, dir: number): number {
 export default class CreatureRenderer {
   private textureCache: Map<number, Texture | null> = new Map();
   private animationRenderer: AnimationRenderer;
+  private light: LightRenderer;
 
-  constructor(animationRenderer: AnimationRenderer) {
+  constructor(animationRenderer: AnimationRenderer, light: LightRenderer) {
     this.animationRenderer = animationRenderer;
+    this.light = light;
   }
 
   private getCachedTexture(spriteId: number): Texture | null {
@@ -111,6 +114,44 @@ export default class CreatureRenderer {
     }
     const zPattern = frames.characterGroup.pattern.z > 1 && creature.isMounted() ? 1 : 0;
     const drawPosition = new Position(position.x - offset, position.y - offset, 0);
+
+    // Collect light bubbles from equipped items (similar to item light bubbles)
+    try {
+      const floorZ = creature.getPosition().z;
+      const outfit: any = creature.outfit;
+      const lightDataObjects: any[] = [];
+
+      // Character base object can theoretically emit light
+      const charObj = outfit.getDataObject && outfit.getDataObject();
+      if (charObj?.properties?.light) lightDataObjects.push(charObj);
+
+      // Helper to push if slot equipped and has light property
+      const maybePushLight = (getterName: string, equipped: any) => {
+        if (!equipped) return;
+        const fn = (outfit as any)[getterName];
+        if (typeof fn === 'function') {
+          const obj = fn.call(outfit);
+          if (obj?.properties?.light) lightDataObjects.push(obj);
+        }
+      };
+
+      // Check common equipment slots
+      maybePushLight('getHeadDataObject', outfit.equipment?.head && outfit.equipment.head !== 0);
+      maybePushLight('getBodyDataObject', outfit.equipment?.body && outfit.equipment.body !== 0);
+      maybePushLight('getLegsDataObject', outfit.equipment?.legs && outfit.equipment.legs !== 0);
+      maybePushLight('getFeetDataObject', outfit.equipment?.feet && outfit.equipment.feet !== 0);
+      maybePushLight('getLeftHandDataObject', outfit.equipment?.lefthand && outfit.equipment.lefthand !== 0);
+      maybePushLight('getRightHandDataObject', outfit.equipment?.righthand && outfit.equipment.righthand !== 0);
+      maybePushLight('getBackpackDataObject', outfit.equipment?.backpack && outfit.equipment.backpack !== 0);
+      maybePushLight('getBeltDataObject', outfit.equipment?.belt && outfit.equipment.belt !== 0);
+
+      for (const obj of lightDataObjects) {
+        const info = obj.properties.light;
+        this.light.addLightBubble(position.x, position.y, info.level, info.color, floorZ);
+      }
+    } catch (_) {
+      // Fail-safe: do not break rendering if outfit API differs
+    }
 
     // Sort layers with absolute rank first, then fallback to original index
     const orderedLayers = [...RENDER_LAYERS].sort((a, b) => {

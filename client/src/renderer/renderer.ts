@@ -104,7 +104,7 @@ export default class Renderer {
 
     this.animationRenderer = new AnimationRenderer();
     this.tileRenderer = new TileRenderer(this.animationRenderer, this.light);
-    this.creatureRenderer = new CreatureRenderer(this.animationRenderer);
+    this.creatureRenderer = new CreatureRenderer(this.animationRenderer, this.light);
     this.itemRenderer = new ItemRenderer(this.light);
     this.positionHelper = new PositionHelper(this.app, this.scalingContainer);
   }

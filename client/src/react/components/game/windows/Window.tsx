@@ -8,7 +8,9 @@ export interface WindowProps {
   onClose?: () => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
+  onPin?: (pinned: boolean) => void;
   isDragging?: boolean;
+  isPinned?: boolean;
   className?: string;
 }
 
@@ -19,7 +21,9 @@ export default function Window({
   onClose, 
   onDragStart, 
   onDragEnd, 
+  onPin,
   isDragging = false,
+  isPinned = false,
   className = ''
 }: WindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
@@ -49,7 +53,7 @@ export default function Window({
   return (
     <div 
       ref={windowRef}
-      className={`window ${isDragging ? 'dragging' : ''} ${isMinimized ? 'minimized' : ''} ${className}`}
+      className={`window ${isDragging ? 'dragging' : ''} ${isMinimized ? 'minimized' : ''} ${isPinned ? 'pinned' : ''} ${className}`}
     >
       <div 
         ref={headerRef}
@@ -63,6 +67,15 @@ export default function Window({
       >
         <span className="window-title">{title}</span>
         <div className="window-controls">
+          {onPin && (
+            <button 
+              className={`window-control pin ${isPinned ? 'active' : ''}`}
+              onClick={() => onPin(!isPinned)}
+              title={isPinned ? 'Unpin from bottom' : 'Pin to bottom'}
+            >
+              📌
+            </button>
+          )}
           <button 
             className="window-control minimize"
             onClick={() => setIsMinimized(!isMinimized)}

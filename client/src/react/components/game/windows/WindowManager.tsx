@@ -10,12 +10,14 @@ export interface WindowData {
   column: 'left' | 'right';
   order: number;
   className?: string;
+  pinned?: boolean;
 }
 
 interface WindowManagerContextType {
   addWindow: (windowData: WindowData) => void;
   removeWindow: (windowId: string) => void;
   moveWindow: (windowId: string, newColumn: 'left' | 'right') => void;
+  togglePin: (windowId: string) => void;
   windows: WindowData[];
 }
 
@@ -85,6 +87,14 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
     });
   }, []);
 
+  const togglePin = useCallback((windowId: string) => {
+    setWindows(prev => prev.map(w => 
+      w.id === windowId 
+        ? { ...w, pinned: !w.pinned }
+        : w
+    ));
+  }, []);
+
   const handleDragStart = useCallback((windowId: string) => {
     setDraggedWindow(windowId);
   }, []);
@@ -123,7 +133,8 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
           component: <EquipmentWindow gc={gc} containerIndex={0} />,
           column,
           order: 0,
-          className: 'equipment-window'
+          className: 'equipment-window',
+          pinned: false
         });
       } else if (windowId === 'minimap' && gc) {
         addWindow({
@@ -132,23 +143,30 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
           component: <MinimapWindow gc={gc} />,
           column,
           order: 0,
-          className: 'minimap-window'
+          className: 'minimap-window',
+          pinned: false
         });
       }
     }
   }, [windows, addWindow, removeWindow, gc]);
 
-  const leftWindows = windows.filter(w => w.column === 'left')
+  const leftWindows = windows.filter(w => w.column === 'left' && !w.pinned)
     .sort((a, b) => a.order - b.order);
 
-  const rightWindows = windows
-    .filter(w => w.column === 'right')
+  const leftPinnedWindows = windows.filter(w => w.column === 'left' && w.pinned)
+    .sort((a, b) => a.order - b.order);
+
+  const rightWindows = windows.filter(w => w.column === 'right' && !w.pinned)
+    .sort((a, b) => a.order - b.order);
+
+  const rightPinnedWindows = windows.filter(w => w.column === 'right' && w.pinned)
     .sort((a, b) => a.order - b.order);
 
   const contextValue: WindowManagerContextType = {
     addWindow,
     removeWindow,
     moveWindow,
+    togglePin,
     windows
   };
 
@@ -180,20 +198,45 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
             </button>
           </div>
           
-            {leftWindows.map((window) => (
-              <Window
-                key={window.id}
-                id={window.id}
-                title={window.title}
-                onClose={() => removeWindow(window.id)}
-                onDragStart={() => handleDragStart(window.id)}
-                onDragEnd={handleDragEnd}
-                isDragging={draggedWindow === window.id}
-                className={window.className}
-              >
-                {window.component}
-              </Window>
-            ))}
+            <div className="window-group-top">
+              {/* Unpinned windows */}
+              {leftWindows.map((window) => (
+                <Window
+                  key={`${window.id}-unpinned`}
+                  id={window.id}
+                  title={window.title}
+                  onClose={() => removeWindow(window.id)}
+                  onDragStart={() => handleDragStart(window.id)}
+                  onDragEnd={handleDragEnd}
+                  onPin={(pinned) => togglePin(window.id)}
+                  isDragging={draggedWindow === window.id}
+                  isPinned={false}
+                  className={window.className}
+                >
+                  {window.component}
+                </Window>
+              ))}
+            </div>
+            
+            <div className="window-group-bottom">
+              {/* Pinned windows at bottom */}
+              {leftPinnedWindows.map((window) => (
+                <Window
+                  key={`${window.id}-pinned`}
+                  id={window.id}
+                  title={window.title}
+                  onClose={() => removeWindow(window.id)}
+                  onDragStart={() => handleDragStart(window.id)}
+                  onDragEnd={handleDragEnd}
+                  onPin={(pinned) => togglePin(window.id)}
+                  isDragging={draggedWindow === window.id}
+                  isPinned={true}
+                  className={window.className}
+                >
+                  {window.component}
+                </Window>
+              ))}
+            </div>
           </div>
 
           <div 
@@ -220,20 +263,45 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
               </button>
             </div>
             
-            {rightWindows.map((window) => (
-              <Window
-                key={window.id}
-                id={window.id}
-                title={window.title}
-                onClose={() => removeWindow(window.id)}
-                onDragStart={() => handleDragStart(window.id)}
-                onDragEnd={handleDragEnd}
-                isDragging={draggedWindow === window.id}
-                className={window.className}
-              >
-                {window.component}
-              </Window>
-            ))}
+            <div className="window-group-top">
+              {/* Unpinned windows */}
+              {rightWindows.map((window) => (
+                <Window
+                  key={`${window.id}-unpinned`}
+                  id={window.id}
+                  title={window.title}
+                  onClose={() => removeWindow(window.id)}
+                  onDragStart={() => handleDragStart(window.id)}
+                  onDragEnd={handleDragEnd}
+                  onPin={(pinned) => togglePin(window.id)}
+                  isDragging={draggedWindow === window.id}
+                  isPinned={false}
+                  className={window.className}
+                >
+                  {window.component}
+                </Window>
+              ))}
+            </div>
+            
+            <div className="window-group-bottom">
+              {/* Pinned windows at bottom */}
+              {rightPinnedWindows.map((window) => (
+                <Window
+                  key={`${window.id}-pinned`}
+                  id={window.id}
+                  title={window.title}
+                  onClose={() => removeWindow(window.id)}
+                  onDragStart={() => handleDragStart(window.id)}
+                  onDragEnd={handleDragEnd}
+                  onPin={(pinned) => togglePin(window.id)}
+                  isDragging={draggedWindow === window.id}
+                  isPinned={true}
+                  className={window.className}
+                >
+                  {window.component}
+                </Window>
+              ))}
+            </div>
           </div>
         </div>
 

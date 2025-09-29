@@ -1,17 +1,23 @@
 .window {
-  background: rgba(20, 20, 20, 0.95);
-  border: 1px solid #333;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0;
   box-shadow: 0 8px 20px rgba(0,0,0,0.4);
   margin-bottom: 0;
   width: 100%;
   max-width: 170px;
   min-width: 0;
+  flex-shrink: 0;
   transition: all 0.2s ease;
   opacity: 1;
   position: relative;
   z-index: 5;
   box-sizing: border-box;
+  
+  &.pinned {
+    margin-bottom: 0;
+  }
   
   &.dragging {
     opacity: 0.8;
@@ -39,13 +45,14 @@
   -ms-user-select: none !important;
   -webkit-user-drag: auto !important;
   -webkit-touch-callout: none !important;
-  display: flex;
+  display: none;
   justify-content: space-between;
   align-items: center;
   position: relative;
   z-index: 10;
   box-sizing: border-box;
   min-height: 24px;
+  height: 24px;
   
   &:active {
     cursor: grabbing;
@@ -54,6 +61,11 @@
   &[draggable="true"] {
     -webkit-user-drag: element !important;
   }
+}
+
+.window:hover .window-header,
+.window.minimized .window-header {
+  display: flex;
 }
 
 .window-title {
@@ -99,6 +111,21 @@
   &.minimize:hover {
     background: rgba(60, 120, 60, 0.9);
   }
+  
+  &.pin {
+    font-size: 8px;
+    
+    &.active {
+      background: rgba(0, 122, 204, 0.3);
+      color: #007acc;
+      border-color: #007acc;
+    }
+    
+    &:hover {
+      background: rgba(0, 122, 204, 0.2);
+      color: #007acc;
+    }
+  }
 }
 
 .window-content {
@@ -123,9 +150,14 @@
 
 // Minimap window specific styles
 .window.minimap-window {
+  height: 164px; /* 170px - 6px padding */
+  width: 164px; /* 170px - 6px padding */
+  
   .window-content {
     padding: 0;
     display: block;
     overflow: visible; /* allow tooltip to extend outside */
+    height: 164px; /* Fixed height for minimap */
+    width: 164px;
   }
 }

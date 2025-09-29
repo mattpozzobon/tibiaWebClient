@@ -4,7 +4,7 @@ import Position from '../../../../game/position';
 import Canvas from '../../../../renderer/canvas';
 import { usePlayer } from '../../../hooks/usePlayerAttribute';
 import { MapMarker } from '../../../../types/map-marker';
-import { MINIMAP_CONFIG, MINIMAP_COLORS_EARTHY } from '../../../../config/minimap-config';
+import { MINIMAP_CONFIG, MINIMAP_COLORS_EARTHY, MINIMAP_COLORS } from '../../../../config/minimap-config';
 import { ImageLoader } from '../../../../utils/image-loader';
 import { MarkerSpatialIndex } from '../../../../utils/spatial-index';
 import { MemoryManager } from '../../../../utils/memory-manager';
@@ -56,8 +56,11 @@ export default function Minimap({ gc }: MinimapProps) {
   );
 
   const [zoomLevel, setZoomLevel] = useState<number>(MINIMAP_CONFIG.ZOOM_LEVEL);
-  const handleZoomIn = useCallback(() => setZoomLevel(prev => Math.min(prev + 1, 8)), []);
-  const handleZoomOut = useCallback(() => setZoomLevel(prev => Math.max(prev - 1, 1)), []);
+  const baseZoom = MINIMAP_CONFIG.ZOOM_LEVEL;
+  const maxZoom = baseZoom; // default starts at max
+  const minZoom = Math.max(1, baseZoom - 3); // allow 3 steps out
+  const handleZoomIn = useCallback(() => setZoomLevel(prev => Math.min(prev + 1, maxZoom)), [maxZoom]);
+  const handleZoomOut = useCallback(() => setZoomLevel(prev => Math.max(prev - 1, minZoom)), [minZoom]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -148,7 +151,7 @@ export default function Minimap({ gc }: MinimapProps) {
           ((tile.getPosition().y % MINIMAP_CONFIG.MINIMAP_CHUNK_SIZE) * MINIMAP_CONFIG.MINIMAP_CHUNK_SIZE);
         const DEFAULT_COLOR = 0xFF000000;
         const idx = (color ?? -1) | 0;
-        const colorValue = MINIMAP_COLORS_EARTHY[idx] ?? DEFAULT_COLOR;
+        const colorValue = MINIMAP_COLORS[idx] ?? DEFAULT_COLOR;
         buffer.view[index] = colorValue;
         modified.add(chunkId);
       });
@@ -207,24 +210,30 @@ export default function Minimap({ gc }: MinimapProps) {
 
   const drawMarkersOnFinalCanvas = useCallback((ctx: CanvasRenderingContext2D) => {
     const minX = 0, minY = 0, maxX = MINIMAP_CONFIG.CANVAS_SIZE, maxY = MINIMAP_CONFIG.CANVAS_SIZE;
+    const baseZoom = MINIMAP_CONFIG.ZOOM_LEVEL;
+    const zoomScale = Math.max(0.5, Math.min(2.5, zoomLevel / baseZoom));
+    const markerScale = 1.6 * zoomScale; // slightly larger baseline so markers are readable
 
     for (const m of markers) {
       const { cx, cy } = worldTileCenterToFinal(m.x, m.y);
       if (cx < minX - 64 || cx > maxX + 64 || cy < minY - 64 || cy > maxY + 64) continue;
       const img = markerImages[m.icon];
       if (img && img.complete && img.naturalWidth > 0) {
-        const halfW = img.naturalWidth / 2;
-        const halfH = img.naturalHeight / 2;
-        ctx.drawImage(img, cx - halfW, cy - halfH);
+        const w = img.naturalWidth * markerScale;
+        const h = img.naturalHeight * markerScale;
+        ctx.drawImage(img, cx - w / 2, cy - h / 2, w, h);
       } else {
         ctx.fillStyle = '#FFD700';
         ctx.beginPath();
-        ctx.arc(cx, cy, Math.max(3, zoomLevel * 0.5), 0, 2 * Math.PI);
+        ctx.arc(cx, cy, Math.max(4, 4 * markerScale), 0, 2 * Math.PI);
         ctx.fill();
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 1;
         ctx.stroke();
       }
+
+      // DOM tooltip positioning data via CSS class; the element is rendered below
+      // Positioning handled purely in CSS relative to the canvas container
     }
   }, [markers, markerImages, worldTileCenterToFinal, zoomLevel]);
 
@@ -441,8 +450,12 @@ export default function Minimap({ gc }: MinimapProps) {
     if (!player) return;
 
     const rect = (event.currentTarget as HTMLCanvasElement).getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const rawX = event.clientX - rect.left;
+    const rawY = event.clientY - rect.top;
+    const scaleX = MINIMAP_CONFIG.CANVAS_SIZE / rect.width;
+    const scaleY = MINIMAP_CONFIG.CANVAS_SIZE / rect.height;
+    const x = rawX * scaleX;
+    const y = rawY * scaleY;
 
     const { tileX, tileY } = finalCanvasToTile(x, y);
 
@@ -481,14 +494,32 @@ export default function Minimap({ gc }: MinimapProps) {
 
   const handleCanvasMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = (event.currentTarget as HTMLCanvasElement).getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const rawX = event.clientX - rect.left;
+    const rawY = event.clientY - rect.top;
+    const scaleX = MINIMAP_CONFIG.CANVAS_SIZE / rect.width;
+    const scaleY = MINIMAP_CONFIG.CANVAS_SIZE / rect.height;
+    const x = rawX * scaleX;
+    const y = rawY * scaleY;
 
-    const magnifierSize = 120;
-    let displayX = rect.right - 40;
-    if (displayX + magnifierSize > window.innerWidth - 10) displayX = rect.left - magnifierSize + 40;
-    let displayY = rect.bottom - 20;
-    if (displayY + magnifierSize > window.innerHeight - 10) displayY = rect.top - magnifierSize + 20;
+    const magnifierSize = MINIMAP_CONFIG.MAGNIFIER_SIZE;
+    const gap = 10;
+    // Anchor magnifier to the outside edge of the minimap based on which window column it's in
+    const canvasEl = event.currentTarget as HTMLCanvasElement;
+    const inRightColumn = !!(canvasEl.closest && canvasEl.closest('.window-column-right'));
+    const inLeftColumn = !!(canvasEl.closest && canvasEl.closest('.window-column-left'));
+    // If in right column -> show magnifier on left side of minimap; if in left column -> on right side
+    let displayX = inRightColumn
+      ? rect.left - magnifierSize - gap
+      : rect.right + gap;
+    // Fallback: if neither matched, position relative to cursor but clamp
+    if (!inRightColumn && !inLeftColumn) {
+      displayX = event.clientX + gap;
+    }
+    // Fix vertical position: center to minimap vertically, do not follow cursor
+    let displayY = rect.top + (rect.height / 2) - (magnifierSize / 2);
+    displayY = Math.max(10, Math.min(displayY, window.innerHeight - magnifierSize - 10));
+    // Clamp X within viewport
+    displayX = Math.max(10, Math.min(displayX, window.innerWidth - magnifierSize - 10));
 
     setMagnifier({ visible: true, x, y, mouseX: event.clientX, mouseY: event.clientY, displayX, displayY });
 
@@ -543,8 +574,12 @@ export default function Minimap({ gc }: MinimapProps) {
     if (!player || !markers.length) return;
 
     const rect = (event.currentTarget as HTMLCanvasElement).getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const rawX = event.clientX - rect.left;
+    const rawY = event.clientY - rect.top;
+    const scaleX = MINIMAP_CONFIG.CANVAS_SIZE / rect.width;
+    const scaleY = MINIMAP_CONFIG.CANVAS_SIZE / rect.height;
+    const x = rawX * scaleX;
+    const y = rawY * scaleY;
 
     const { tileX, tileY } = finalCanvasToTile(x, y);
 
@@ -574,8 +609,12 @@ export default function Minimap({ gc }: MinimapProps) {
 
   const handleDoubleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = (event.currentTarget as HTMLCanvasElement).getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const rawX = event.clientX - rect.left;
+    const rawY = event.clientY - rect.top;
+    const scaleX = MINIMAP_CONFIG.CANVAS_SIZE / rect.width;
+    const scaleY = MINIMAP_CONFIG.CANVAS_SIZE / rect.height;
+    const x = rawX * scaleX;
+    const y = rawY * scaleY;
     const { worldX, worldY } = finalCanvasToWorld(x, y);
     setViewCenter(worldX, worldY, currentFloorRef.current);
     setIsFollowingPlayer(false);
@@ -590,10 +629,13 @@ export default function Minimap({ gc }: MinimapProps) {
     const ctx = mcv.getContext('2d');
     if (!ctx) return;
     ctx.clearRect(0, 0, MINIMAP_CONFIG.MAGNIFIER_SIZE, MINIMAP_CONFIG.MAGNIFIER_SIZE);
-    const sourceSize = MINIMAP_CONFIG.MAGNIFIER_SOURCE_SIZE;
-    const sx = Math.max(0, Math.min(MINIMAP_CONFIG.CANVAS_SIZE - sourceSize, magnifier.x - sourceSize / 2));
-    const sy = Math.max(0, Math.min(MINIMAP_CONFIG.CANVAS_SIZE - sourceSize, magnifier.y - sourceSize / 2));
-    ctx.drawImage(main, sx, sy, sourceSize, sourceSize, 0, 0, MINIMAP_CONFIG.MAGNIFIER_SIZE, MINIMAP_CONFIG.MAGNIFIER_SIZE);
+    const sourceSize = MINIMAP_CONFIG.MAGNIFIER_SOURCE_SIZE; // in logical canvas units
+    // Convert logical canvas units to backing-store pixels using DPR scale
+    const dprScale = main.width / MINIMAP_CONFIG.CANVAS_SIZE;
+    const srcSizePx = sourceSize * dprScale;
+    const sx = Math.max(0, Math.min(main.width  - srcSizePx, magnifier.x * dprScale - srcSizePx / 2));
+    const sy = Math.max(0, Math.min(main.height - srcSizePx, magnifier.y * dprScale - srcSizePx / 2));
+    ctx.drawImage(main, sx, sy, srcSizePx, srcSizePx, 0, 0, MINIMAP_CONFIG.MAGNIFIER_SIZE, MINIMAP_CONFIG.MAGNIFIER_SIZE);
     ctx.strokeStyle = '#FF0000';
     ctx.lineWidth = 1;
     ctx.setLineDash([2, 2]);
@@ -660,7 +702,9 @@ export default function Minimap({ gc }: MinimapProps) {
             onDoubleClick={handleDoubleClick}
           />
 
-          {hoveredMarker && <div className="marker-tooltip">{hoveredMarker.description}</div>}
+          {hoveredMarker && hoveredMarker.description && hoveredMarker.description.trim() && (
+            <div className="marker-tooltip">{hoveredMarker.description}</div>
+          )}
 
           {magnifier.visible && (
             <div className="minimap-magnifier" style={{ left: magnifier.displayX, top: magnifier.displayY }}>

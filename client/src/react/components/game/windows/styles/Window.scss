@@ -119,3 +119,12 @@
     align-items: center;
   }
 }
+
+// Minimap window specific styles
+.window.minimap-window {
+  .window-content {
+    padding: 0;
+    display: block;
+    overflow: visible; /* allow tooltip to extend outside */
+  }
+}

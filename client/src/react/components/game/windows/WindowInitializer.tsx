@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useWindowManager, EquipmentWindow } from './index';
+import { useWindowManager, EquipmentWindow, MinimapWindow } from './index';
 import type GameClient from '../../../../core/gameclient';
 
 interface WindowInitializerProps {
@@ -10,9 +10,10 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
   const { addWindow, removeWindow } = useWindowManager();
 
   useEffect(() => {
-    // Clean up any existing equipment window first
+    // Clean up existing windows to avoid duplicates
     removeWindow('equipment');
-    
+    removeWindow('minimap');
+
     // Add the equipment window
     addWindow({
       id: 'equipment',
@@ -21,6 +22,16 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
       column: 'left',
       order: 0,
       className: 'equipment-window'
+    });
+
+    // Add the minimap window
+    addWindow({
+      id: 'minimap',
+      title: 'Minimap',
+      component: <MinimapWindow gc={gc} />,
+      column: 'right',
+      order: 0,
+      className: 'minimap-window'
     });
   }, []); // Run only once on mount
 

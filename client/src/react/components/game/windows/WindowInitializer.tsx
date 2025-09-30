@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useWindowManager, EquipmentWindow, MinimapWindow } from './index';
+import { useWindowManager, EquipmentWindow, MinimapWindow, ContainerWindow } from './index';
 import type GameClient from '../../../../core/gameclient';
 
 interface WindowInitializerProps {
@@ -33,7 +33,42 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
       order: 0,
       className: 'minimap-window'
     });
-  }, []); // Run only once on mount
+
+    // Listen for container open events
+    const handleContainerOpen = (event: CustomEvent) => {
+      const { containerId, title } = event.detail;
+      const windowId = `container-${containerId}`;
+      
+      // Remove existing window if it exists
+      removeWindow(windowId);
+      
+      // Add new container window
+      addWindow({
+        id: windowId,
+        title: title,
+        component: <ContainerWindow gc={gc} containerId={containerId} />,
+        column: 'right', // Default to right column
+        order: 0,
+        className: 'container-window'
+      });
+    };
+
+    // Listen for container close events
+    const handleContainerClose = (event: CustomEvent) => {
+      const { containerId } = event.detail;
+      const windowId = `container-${containerId}`;
+      removeWindow(windowId);
+    };
+
+    window.addEventListener('containerOpen', handleContainerOpen as EventListener);
+    window.addEventListener('containerClose', handleContainerClose as EventListener);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('containerOpen', handleContainerOpen as EventListener);
+      window.removeEventListener('containerClose', handleContainerClose as EventListener);
+    };
+  }, [gc, addWindow, removeWindow]); // Include dependencies
 
   return null;
 }

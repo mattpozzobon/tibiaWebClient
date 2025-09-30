@@ -1,0 +1,71 @@
+.container-panel.container-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.container-panel.container-container .container-slots {
+  display: grid;
+  grid-template-columns: repeat(5, 32px);
+  gap: 1px;
+  width: fit-content;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.container-panel.container-container .container-slots .slot {
+  width: 32px;
+  height: 32px;
+  position: relative;
+  border: 1px solid transparent;
+  background: transparent;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+  display: block;
+  
+  &:hover {
+    border-color: #fff;
+  }
+  
+  canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    width: 32px;
+    height: 32px;
+    z-index: 100;
+  }
+}
+
+.container-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+  color: #ccc;
+  font-size: 14px;
+}
+
+// Container window specific styles
+.window.container-window {
+  .window-content {
+    padding: 8px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 80vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+}

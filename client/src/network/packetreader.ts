@@ -390,11 +390,11 @@ export default class PacketReader extends Packet {
   
   public readThing(id: number, count: number): Item {
     let thing = new Thing(id);
-  
+
     if (thing.isFluidContainer() || thing.isSplash()) {
       return new FluidThing(id, count) as Item;
     }
-  
+
     return new Item(id, count);
   }
 
@@ -417,17 +417,21 @@ export default class PacketReader extends Packet {
   public readItems(): Item[] {
     /*
      * Function PacketReader.readItems
-     * Reads a consecutive number of items
+     * Reads items for all container slots
      */
-  
+
     let size = this.readUInt8();
-    let items: Item[] = [];
-  
+    let items: Item[] = new Array(size);
+
     for (let i = 0; i < size; i++) {
       let item = this.readItem();
-      if (item) items.push(item);
+      if (item === null) {
+        items[i] = new Item(0, 0); 
+      } else {
+        items[i] = item;
+      }
     }
-  
+
     return items;
   }
 

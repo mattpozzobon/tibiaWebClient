@@ -496,10 +496,14 @@ class PacketHandler {
   }
 
   handleContainerOpen(packet: any): void {
+    console.log('handleContainerOpen: ', packet);
+  
     let container = new Container(packet);
-    container.createDOM(packet.equipped ? `${packet.title}[E]` : packet.title, packet.items);
-    //window.gameClient.interface.windowManager.register(container.window);
+    // Add container to player's container list
     window.gameClient.player!.openContainer(container);
+    
+    // Create DOM for the container (this will dispatch the open event)
+    container.createDOM(packet.equipped ? `${packet.title}[E]` : packet.title, packet.items);
   }
 
   handleContainerClose(id: number): void {

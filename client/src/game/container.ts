@@ -2,24 +2,24 @@ import InteractiveWindow from "../ui/window/window";
 import Item from "./item";
 import Slot from "./slot";
 
-
 export default class Container extends Item {
-    private __containerId: number;
+    public __containerId: number;
     size: number;
     slots: Slot[];
     window!: InteractiveWindow;
   
-    constructor(properties: { id: number; cid: number; items: Item[] }) {
+    constructor(properties: { id: number; cid: number; items: Item[]; size?: number }) {
       /*
        * Class Container
        * Wrapper for a container on the DOM
        */
-  
+
       super( properties.id, 0);
       // The number of slots in the container and its identifier
       this.__containerId = properties.cid;
+      // Use provided size or fall back to number of items
       this.size = properties.items.length;
-  
+
       // Create the slots for items to be added
       this.slots = [];
     }
@@ -36,20 +36,9 @@ export default class Container extends Item {
       
       // Add the items to the slots
       this.addItems(items);
-    }
-  
-    private createElement(index: number): HTMLElement {
-      /*
-       * Function Container.createElement
-       * Creates a copy of the container prototype
-       */
-  
-      let element = document.getElementById("container-prototype")!.cloneNode(true) as HTMLElement;
-      element.style.display = "flex";
-      element.setAttribute("containerIndex", index.toString());
-      element.style.minHeight = "90px";
-  
-      return element;
+      
+      // Dispatch container open event for UI
+      this.dispatchContainerOpen(title);
     }
   
     close(): void {
@@ -57,7 +46,10 @@ export default class Container extends Item {
        * Function Container.close
        * Callback fired when the container is closed
        */
-  
+
+      // Dispatch close event first
+      this.dispatchContainerClose();
+      
       window.gameClient.player!.closeContainer(this);
     }
   
@@ -87,12 +79,15 @@ export default class Container extends Item {
        * Function createBodyContent
        * Creates the model for the body that contains slots
        */
-  
+
+      // Ensure slots array is properly sized
+      this.slots = new Array(size);
+      
       // React components handle DOM creation
       for (let i = 0; i < size; i++) {
         let slot = new Slot();
         slot.slotIndex = i;
-        this.slots.push(slot);
+        this.slots[i] = slot; // Use direct assignment instead of push
       }
     }
   
@@ -101,8 +96,13 @@ export default class Container extends Item {
        * Function Container.addItems
        * Adds an array of items to the container
        */
-  
-      items.forEach(this.addItem.bind(this));
+
+      // Add items to their respective slots
+      items.forEach((item, index) => {
+        if (item && index < this.size) {
+          this.addItem(item, index);
+        }
+      });
     }
   
     addItem(item: Item | null, slot: number): void {
@@ -110,13 +110,15 @@ export default class Container extends Item {
        * Function Container.addItem
        * Adds a single item to the container at a particular slot
        */
-  
+
       if (!item) return;
-  
+
       item.__parent = this;
-  
+
       this.__setItem(slot, item);
-      this.__render();
+      
+      // Dispatch event for UI updates
+      this.dispatchItemChanged();
     }
   
     private __setItem(slot: number, item: Item | null): void {
@@ -133,9 +135,12 @@ export default class Container extends Item {
        * Function Container.clearSlot
        * Clears a particular slot in the container
        */
-  
+
       this.__setItem(slot, null);
       this.getSlot(slot).render();
+      
+      // Dispatch event for UI updates
+      this.dispatchItemChanged();
     }
   
     removeItem(slot: number, count: number): void {
@@ -143,18 +148,21 @@ export default class Container extends Item {
        * Function Container.removeItem
        * Removes an item (optional count) from the given slot in the container
        */
-  
+
       if (!this.slots[slot].item!.isStackable() || count === 0) {
         return this.clearSlot(slot);
       }
-  
+
       this.slots[slot].item!.count -= count;
-  
+
       if (this.slots[slot].item!.count === 0) {
         return this.clearSlot(slot);
       }
-  
+
       this.getSlot(slot).render();
+      
+      // Dispatch event for UI updates
+      this.dispatchItemChanged();
     }
   
     private __renderAnimated(): void {
@@ -162,15 +170,41 @@ export default class Container extends Item {
         slot.__renderAnimated();
       });
     }
-  
-    private __render(): void {
+
+    private dispatchItemChanged(): void {
       /*
-       * Function Container.__render
-       * Draws the container - React components handle visual rendering
+       * Function Container.dispatchItemChanged
+       * Dispatches event when container items change
        */
-  
-      // React components handle all visual rendering
-      // This method is kept for compatibility but does nothing
+      
+      window.dispatchEvent(new CustomEvent('containerItemChanged', {
+        detail: { containerId: this.__containerId }
+      }));
+    }
+
+    private dispatchContainerOpen(title: string): void {
+      /*
+       * Function Container.dispatchContainerOpen
+       * Dispatches event when container is opened
+       */
+      
+      window.dispatchEvent(new CustomEvent('containerOpen', {
+        detail: {
+          containerId: this.__containerId,
+          title: title
+        }
+      }));
+    }
+
+    dispatchContainerClose(): void {
+      /*
+       * Function Container.dispatchContainerClose
+       * Dispatches event when container is closed
+       */
+      
+      window.dispatchEvent(new CustomEvent('containerClose', {
+        detail: { containerId: this.__containerId }
+      }));
     }
   }
   

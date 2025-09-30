@@ -365,15 +365,10 @@ export default class Renderer {
   public __renderOther(): void {
     //ndow.gameClient.player!.equipment.render();
    // window.gameClient.interface.modalManager.render();
-    this.__renderContainers();
     window.gameClient.world.clock.updateClockDOM();
     window.gameClient.interface.screenElementManager.render();
     // window.gameClient.interface.hotbarManager.render();
     this.debugger.renderStatistics();
-  }
-
-  public __renderContainers(): void {
-    window.gameClient.player!.__openedContainers.forEach((container: any) => container.__renderAnimated());
   }
 
   public __handleVisibiliyChange(_event: Event): void {

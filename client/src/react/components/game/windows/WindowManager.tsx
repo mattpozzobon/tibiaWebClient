@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, createContext, useContext, useEffect } from 'react';
 import './styles/WindowManager.scss';
-import { Window, EquipmentWindow, MinimapWindow } from './index';
+import { Window, EquipmentWindow, MinimapWindow, ContainerWindow } from './index';
 import type GameClient from '../../../../core/gameclient';
 
 export interface WindowData {
@@ -70,6 +70,10 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
               component = <EquipmentWindow gc={gc} containerIndex={0} />;
             } else if (windowConfig.id === 'minimap') {
               component = <MinimapWindow gc={gc} />;
+            } else if (windowConfig.id.startsWith('container-')) {
+              // Container windows have IDs like 'container-1', 'container-2', etc.
+              const containerId = parseInt(windowConfig.id.replace('container-', ''));
+              component = <ContainerWindow gc={gc} containerId={containerId} />;
             } else {
               component = null; // Unknown window type
             }

@@ -86,35 +86,13 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
     };
   }, [equippedBackpack]);
 
-  const handleToggleBackpack = useCallback(() => {
-    if (!gc) return;
-    // If no backpack equipped, do nothing
-    if (!equippedBackpack) return;
+  // Check which column the backpack is open in
+  const isBackpackOpenInColumn = (column: 'left' | 'right') => {
+    if (!isBackpackOpen) return false;
+    const backpackWindow = windows.find(w => w.id === 'container-3');
+    return backpackWindow?.column === column;
+  };
 
-    // If backpack container is currently open, close it
-    if (isBackpackOpen) {
-      try {
-        const containers = window.gameClient?.player?.containers?.getAllContainers?.() || [];
-        const bpContainer = containers.find((c: any) => c?.id === equippedBackpack.id);
-        if (bpContainer) {
-          window.gameClient.player!.closeContainer(bpContainer);
-        }
-      } catch (e) {
-        // noop
-      }
-      return;
-    }
-
-    // Otherwise, open the backpack by using the item in equipment container slot
-    try {
-      const equipmentContainer = window.gameClient.player!.getContainer(0);
-      if (!equipmentContainer) return;
-      const thing = { which: equipmentContainer, index: BACKPACK_SLOT_INDEX } as any;
-      window.gameClient.send(new ItemUsePacket(thing));
-    } catch (e) {
-      // noop
-    }
-  }, [gc, equippedBackpack, isBackpackOpen]);
 
   // Load window state from localStorage on mount
   useEffect(() => {
@@ -225,6 +203,52 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
     ));
   }, []);
 
+  const handleToggleBackpack = useCallback((column: 'left' | 'right') => {
+    if (!gc) return;
+    // If no backpack equipped, do nothing
+    if (!equippedBackpack) return;
+
+    // If backpack container is currently open
+    if (isBackpackOpen) {
+      const backpackWindow = windows.find(w => w.id === 'container-3');
+      
+      // If it's open in the same column, close it
+      if (backpackWindow?.column === column) {
+        try {
+          const containers = window.gameClient?.player?.containers?.getAllContainers?.() || [];
+          const bpContainer = containers.find((c: any) => c?.id === equippedBackpack.id);
+          if (bpContainer) {
+            window.gameClient.player!.closeContainer(bpContainer);
+          }
+        } catch (e) {
+          // noop
+        }
+        return;
+      }
+      
+      // If it's open in the other column, move it to the clicked column
+      if (backpackWindow) {
+        moveWindow('container-3', column);
+        return;
+      }
+    }
+
+    // Store the column preference for when the container opens
+    try {
+      localStorage.setItem('tibia-backpack-column', column);
+    } catch (_) {}
+
+    // Otherwise, open the backpack by using the item in equipment container slot
+    try {
+      const equipmentContainer = window.gameClient.player!.getContainer(0);
+      if (!equipmentContainer) return;
+      const thing = { which: equipmentContainer, index: BACKPACK_SLOT_INDEX } as any;
+      window.gameClient.send(new ItemUsePacket(thing));
+    } catch (e) {
+      // noop
+    }
+  }, [gc, equippedBackpack, isBackpackOpen, windows, moveWindow]);
+
   const handleDragStart = useCallback((windowId: string) => {
     setDraggedWindow(windowId);
   }, []);
@@ -333,9 +357,9 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
               🗺️
             </button>
             <button 
-              className={`window-icon ${isBackpackOpen ? 'active' : ''} ${!equippedBackpack ? 'disabled' : ''}`}
-              onClick={handleToggleBackpack}
-              title={equippedBackpack ? (isBackpackOpen ? 'Close backpack' : 'Open backpack') : 'No backpack equipped'}
+              className={`window-icon ${isBackpackOpenInColumn('left') ? 'active' : ''} ${!equippedBackpack ? 'disabled' : ''}`}
+              onClick={() => handleToggleBackpack('left')}
+              title={equippedBackpack ? (isBackpackOpenInColumn('left') ? 'Close backpack' : 'Open backpack') : 'No backpack equipped'}
             >
               🎒
             </button>
@@ -405,9 +429,9 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
                 🗺️
               </button>
               <button 
-                className={`window-icon ${isBackpackOpen ? 'active' : ''} ${!equippedBackpack ? 'disabled' : ''}`}
-                onClick={handleToggleBackpack}
-                title={equippedBackpack ? (isBackpackOpen ? 'Close backpack' : 'Open backpack') : 'No backpack equipped'}
+                className={`window-icon ${isBackpackOpenInColumn('right') ? 'active' : ''} ${!equippedBackpack ? 'disabled' : ''}`}
+                onClick={() => handleToggleBackpack('right')}
+                title={equippedBackpack ? (isBackpackOpenInColumn('right') ? 'Close backpack' : 'Open backpack') : 'No backpack equipped'}
               >
                 🎒
               </button>

@@ -48,12 +48,37 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
       // Remove existing window if it exists
       removeWindow(windowId);
       
-      // Add new container window
+      // Add new container window in the saved column (or default right)
+      let targetColumn: 'left' | 'right' = 'right';
+      if (containerId === 3) {
+        // Check for stored column preference first, then saved state
+        try {
+          const storedColumn = localStorage.getItem('tibia-backpack-column');
+          if (storedColumn === 'left' || storedColumn === 'right') {
+            targetColumn = storedColumn;
+          } else {
+            // Fallback to saved window state column
+            try {
+              const savedState = localStorage.getItem('tibia-window-state');
+              if (savedState) {
+                const parsed = JSON.parse(savedState);
+                if (Array.isArray(parsed)) {
+                  const backpackWindow = parsed.find((w: any) => w && typeof w.id === 'string' && w.id === 'container-3');
+                  if (backpackWindow && backpackWindow.column) {
+                    targetColumn = backpackWindow.column;
+                  }
+                }
+              }
+            } catch (_) {}
+          }
+        } catch (_) {}
+      }
+      
       addWindow({
         id: windowId,
         title: title,
         component: <ContainerWindow gc={gc} containerId={containerId} />,
-        column: 'right', // Default to right column
+        column: targetColumn,
         order: 0,
         className: 'container-window'
       });
@@ -92,6 +117,7 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
 
     // Prefer durable flag; fallback to saved window state
     let shouldOpenBackpack = false;
+    let savedColumn: 'left' | 'right' = 'right'; // default
     try {
       const flag = localStorage.getItem('tibia-main-backpack-open');
       if (flag === '1') shouldOpenBackpack = true;
@@ -102,7 +128,11 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
         if (savedState) {
           const parsed = JSON.parse(savedState);
           if (Array.isArray(parsed)) {
-            shouldOpenBackpack = parsed.some((w: any) => w && typeof w.id === 'string' && w.id === 'container-3');
+            const backpackWindow = parsed.find((w: any) => w && typeof w.id === 'string' && w.id === 'container-3');
+            if (backpackWindow) {
+              shouldOpenBackpack = true;
+              savedColumn = backpackWindow.column || 'right';
+            }
           }
         }
       } catch (_) {}

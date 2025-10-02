@@ -2,6 +2,8 @@ import React, { useState, useRef, useCallback, createContext, useContext, useEff
 import './styles/WindowManager.scss';
 import { Window, EquipmentWindow, MinimapWindow, ContainerWindow } from './index';
 import type GameClient from '../../../../core/gameclient';
+import { ItemUsePacket } from '../../../../core/protocol';
+import { usePlayerEquipment } from '../../../hooks/usePlayerAttribute';
 
 export interface WindowData {
   id: string;
@@ -52,6 +54,67 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
   const [draggedWindow, setDraggedWindow] = useState<string | null>(null);
   const leftColumnRef = useRef<HTMLDivElement>(null);
   const rightColumnRef = useRef<HTMLDivElement>(null);
+  const { equipmentItems } = usePlayerEquipment(gc || null);
+  const BACKPACK_SLOT_INDEX = 6; // matches legacy index for backpack-slot
+  const equippedBackpack = equipmentItems?.[BACKPACK_SLOT_INDEX] || null;
+  const [isBackpackOpen, setIsBackpackOpen] = useState<boolean>(false);
+
+  // Track open/close of containers to know if the equipped backpack is open
+  useEffect(() => {
+    const updateBackpackOpenFromContainers = () => {
+      try {
+        const containers = window.gameClient?.player?.containers?.getAllContainers?.() || [];
+        const open = !!(equippedBackpack && containers.find((c: any) => c?.id === equippedBackpack.id));
+        setIsBackpackOpen(open);
+      } catch (e) {
+        // noop
+      }
+    };
+
+    updateBackpackOpenFromContainers();
+
+    const onOpen = () => updateBackpackOpenFromContainers();
+    const onClose = () => updateBackpackOpenFromContainers();
+
+    window.addEventListener('containerOpen', onOpen as EventListener);
+    window.addEventListener('containerClose', onClose as EventListener);
+    const interval = window.setInterval(updateBackpackOpenFromContainers, 1000);
+    return () => {
+      window.removeEventListener('containerOpen', onOpen as EventListener);
+      window.removeEventListener('containerClose', onClose as EventListener);
+      window.clearInterval(interval);
+    };
+  }, [equippedBackpack]);
+
+  const handleToggleBackpack = useCallback(() => {
+    if (!gc) return;
+    // If no backpack equipped, do nothing
+    if (!equippedBackpack) return;
+
+    // If backpack container is currently open, close it
+    if (isBackpackOpen) {
+      try {
+        const containers = window.gameClient?.player?.containers?.getAllContainers?.() || [];
+        const bpContainer = containers.find((c: any) => c?.id === equippedBackpack.id);
+        if (bpContainer) {
+          window.gameClient.player!.closeContainer(bpContainer);
+        }
+      } catch (e) {
+        // noop
+      }
+      return;
+    }
+
+    // Otherwise, open the backpack by using the item in equipment container slot
+    try {
+      const equipmentContainer = window.gameClient.player!.getContainer(0);
+      if (!equipmentContainer) return;
+      const thing = { which: equipmentContainer, index: BACKPACK_SLOT_INDEX } as any;
+      window.gameClient.send(new ItemUsePacket(thing));
+    } catch (e) {
+      // noop
+    }
+  }, [gc, equippedBackpack, isBackpackOpen]);
 
   // Load window state from localStorage on mount
   useEffect(() => {
@@ -271,6 +334,13 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
             >
               🗺️
             </button>
+            <button 
+              className={`window-icon ${isBackpackOpen ? 'active' : ''} ${!equippedBackpack ? 'disabled' : ''}`}
+              onClick={handleToggleBackpack}
+              title={equippedBackpack ? (isBackpackOpen ? 'Close backpack' : 'Open backpack') : 'No backpack equipped'}
+            >
+              🎒
+            </button>
           </div>
           
             <div className="window-group-top">
@@ -335,6 +405,13 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
                 title="Minimap"
               >
                 🗺️
+              </button>
+              <button 
+                className={`window-icon ${isBackpackOpen ? 'active' : ''} ${!equippedBackpack ? 'disabled' : ''}`}
+                onClick={handleToggleBackpack}
+                title={equippedBackpack ? (isBackpackOpen ? 'Close backpack' : 'Open backpack') : 'No backpack equipped'}
+              >
+                🎒
               </button>
             </div>
             

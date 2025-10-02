@@ -1,6 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useWindowManager, EquipmentWindow, MinimapWindow, ContainerWindow } from './index';
 import type GameClient from '../../../../core/gameclient';
+import { usePlayerEquipment } from '../../../hooks/usePlayerAttribute';
+import { ItemUsePacket } from '../../../../core/protocol';
 
 interface WindowInitializerProps {
   gc: GameClient;
@@ -8,6 +10,10 @@ interface WindowInitializerProps {
 
 export default function WindowInitializer({ gc }: WindowInitializerProps) {
   const { addWindow, removeWindow } = useWindowManager();
+  const { equipmentItems } = usePlayerEquipment(gc || null);
+  const BACKPACK_SLOT_INDEX = 6;
+  const equippedBackpack = equipmentItems?.[BACKPACK_SLOT_INDEX] || null;
+  const [attemptedBackpackAutoOpen, setAttemptedBackpackAutoOpen] = useState(false);
 
   useEffect(() => {
     // Clean up existing windows to avoid duplicates

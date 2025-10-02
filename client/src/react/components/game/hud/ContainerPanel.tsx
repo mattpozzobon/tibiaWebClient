@@ -45,6 +45,8 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
         return 'url(/assets/knife.png)';
       case 5:
         return 'url(/assets/fishing.png)';
+      case 6:
+        return 'url(/assets/potion.png)';
       default:
         return 'url(/assets/item.png)';
     }
@@ -196,35 +198,80 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
   const rows = Math.ceil(container.size / 5); // 5 items per row
   const gridTemplateRows = `repeat(${rows}, 32px)`;
 
+  // Separate special slots from normal slots
+  const specialSlots: number[] = [];
+  const normalSlots: number[] = [];
+  
+  for (let i = 0; i < container.size; i++) {
+    if (container.slotTypes && container.slotTypes[i] > 0) {
+      specialSlots.push(i);
+    } else {
+      normalSlots.push(i);
+    }
+  }
+
   return (
     <div 
       ref={containerRef}
       className="container-panel container-container"
       data-container-id={containerId}
     >
-      <div 
-        className="container-slots"
-        style={{ gridTemplateRows }}
-      >
-        {Array.from({ length: container.size }, (_, index) => (
-          <div
-            key={index}
-            ref={(el) => {
-              if (el) slotDivRefs.current[`slot-${index}`] = el;
-            }}
-            className={`slot slot-${index}`}
-            data-slot-index={index}
-          >
-            <canvas 
-              width="32" 
-              height="32" 
-              ref={(el) => {
-                if (el) canvasRefs.current[`slot-${index}`] = el;
-              }}
-            />
+      {/* Special slots section */}
+      {specialSlots.length > 0 && (
+        <div className="special-slots-section">
+          <div className="container-slots special-slots">
+            {specialSlots.map((index) => (
+              <div
+                key={`special-${index}`}
+                ref={(el) => {
+                  if (el) slotDivRefs.current[`slot-${index}`] = el;
+                }}
+                className={`slot slot-${index}`}
+                data-slot-index={index}
+              >
+                <canvas 
+                  width="32" 
+                  height="32" 
+                  ref={(el) => {
+                    if (el) canvasRefs.current[`slot-${index}`] = el;
+                  }}
+                />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+      
+      {/* Spacer between special and normal slots */}
+      {specialSlots.length > 0 && normalSlots.length > 0 && (
+        <div className="slots-spacer"></div>
+      )}
+      
+      {/* Normal slots section */}
+      {normalSlots.length > 0 && (
+        <div className="normal-slots-section">
+          <div className="container-slots normal-slots">
+            {normalSlots.map((index) => (
+              <div
+                key={`normal-${index}`}
+                ref={(el) => {
+                  if (el) slotDivRefs.current[`slot-${index}`] = el;
+                }}
+                className={`slot slot-${index}`}
+                data-slot-index={index}
+              >
+                <canvas 
+                  width="32" 
+                  height="32" 
+                  ref={(el) => {
+                    if (el) canvasRefs.current[`slot-${index}`] = el;
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

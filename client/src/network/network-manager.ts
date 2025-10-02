@@ -180,11 +180,9 @@ class NetworkManager {
     const loginHostPort = this.getConnectionSettings();
     const httpProtocol = location.protocol === "https:" ? "https:" : "http:";
     const handshakeUrl = `${httpProtocol}//${loginHostPort}/?token=${encodeURIComponent(idToken)}`;
-    console.log("Handshake URL:", handshakeUrl);
   
     fetch(handshakeUrl, { method: "GET" })
       .then(response => {
-        console.log("Handshake status:", response.status);
         if (!response.ok) throw new Error(`Login handshake failed: ${response.status}`);
         return response.json();
       })

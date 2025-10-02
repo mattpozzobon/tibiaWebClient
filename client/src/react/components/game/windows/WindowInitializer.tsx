@@ -12,8 +12,14 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
   const { addWindow, removeWindow } = useWindowManager();
   const { equipmentItems } = usePlayerEquipment(gc || null);
   const BACKPACK_SLOT_INDEX = 6;
+  const BELT_SLOT_INDEX = 14;
   const equippedBackpack = equipmentItems?.[BACKPACK_SLOT_INDEX] || null;
+  const equippedBelt = equipmentItems?.[BELT_SLOT_INDEX] || null;
   const [attemptedBackpackAutoOpen, setAttemptedBackpackAutoOpen] = useState(false);
+  const [attemptedBeltAutoOpen, setAttemptedBeltAutoOpen] = useState(false);
+  const [isOpeningBackpack, setIsOpeningBackpack] = useState(false);
+  const [isOpeningBelt, setIsOpeningBelt] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     // Clean up existing windows to avoid duplicates
@@ -42,11 +48,8 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
 
     // Listen for container open events
     const handleContainerOpen = (event: CustomEvent) => {
-      console.log('WindowInitializer received containerOpen event:', event.detail);
       const { containerId, title } = event.detail;
       const windowId = `container-${containerId}`;
-      
-      console.log('Creating window with ID:', windowId, 'title:', title);
       
       // Remove existing window if it exists
       removeWindow(windowId);
@@ -90,6 +93,11 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
       if (containerId === 3) {
         try { localStorage.setItem('tibia-main-backpack-open', '1'); } catch (_) {}
       }
+      
+      // Track main belt open state separately (id 4)
+      if (containerId === 4) {
+        try { localStorage.setItem('tibia-main-belt-open', '1'); } catch (_) {}
+      }
     };
 
     // Listen for container close events
@@ -100,6 +108,10 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
 
       if (containerId === 3) {
         try { localStorage.setItem('tibia-main-backpack-open', '0'); } catch (_) {}
+      }
+      
+      if (containerId === 4) {
+        try { localStorage.setItem('tibia-main-belt-open', '0'); } catch (_) {}
       }
     };
 
@@ -113,10 +125,36 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
     };
   }, [gc, addWindow, removeWindow]); // Include dependencies
 
+  // Track connection status
+  useEffect(() => {
+    if (!gc) return;
+    
+    const checkConnection = () => {
+      const gameClient = (window as any).gameClient;
+      const connected = !!gameClient?.networkManager?.isConnected?.();
+      setIsConnected(connected);
+    };
+    
+    // Check immediately
+    checkConnection();
+    
+    // Check periodically
+    const interval = setInterval(checkConnection, 1000);
+    
+    return () => clearInterval(interval);
+  }, [gc]);
+
   // Re-open the main backpack (container-3) after login if it was previously open
   useEffect(() => {
     if (!gc) return;
     if (attemptedBackpackAutoOpen) return;
+    if (isOpeningBackpack) return;
+    
+    // Only run when connected to the game
+    if (!isConnected) {
+      return;
+    }
+    
 
     // Prefer durable flag; fallback to saved window state
     let shouldOpenBackpack = false;
@@ -131,7 +169,11 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
         if (savedState) {
           const parsed = JSON.parse(savedState);
           if (Array.isArray(parsed)) {
-            const backpackWindow = parsed.find((w: any) => w && typeof w.id === 'string' && w.id === 'container-3');
+            // Check for GUID-based window ID (container-3)
+            const backpackWindow = parsed.find((w: any) => {
+              if (!w || typeof w.id !== 'string') return false;
+              return w.id === 'container-3';
+            });
             if (backpackWindow) {
               shouldOpenBackpack = true;
               savedColumn = backpackWindow.column || 'right';
@@ -140,7 +182,6 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
         }
       } catch (_) {}
     }
-    console.log('[BackpackAutoOpen] was container-3 open last session?', shouldOpenBackpack);
 
     if (!shouldOpenBackpack) return;
 
@@ -156,7 +197,8 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
       const equipmentContainer = gameClient?.player?.getContainer?.(0);
       const containers = gameClient?.player?.containers?.getAllContainers?.() || [];
       const runtimeEquippedBackpack = gameClient?.player?.equipment?.slots?.[BACKPACK_SLOT_INDEX]?.item || equippedBackpack;
-      const alreadyOpen = runtimeEquippedBackpack ? containers.some((c: any) => c?.id === runtimeEquippedBackpack.id) : false;
+      const alreadyOpen = containers.some((c: any) => c?.id === 3); // Check for container with GUID 3 (main backpack)
+
 
       if (!runtimeEquippedBackpack || !isConnected || !equipmentContainer || alreadyOpen) {
         if (alreadyOpen || attempts > 100) {
@@ -167,9 +209,17 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
       }
 
       try {
+        setIsOpeningBackpack(true);
         const thing = { which: equipmentContainer, index: BACKPACK_SLOT_INDEX } as any;
         gameClient.send(new ItemUsePacket(thing));
-      } catch (_) {}
+        
+        // Reset the opening flag after a delay
+        setTimeout(() => {
+          setIsOpeningBackpack(false);
+        }, 2000);
+      } catch (error) {
+        setIsOpeningBackpack(false);
+      }
     };
 
     const timer = setInterval(tryOpen, 300);
@@ -179,7 +229,94 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
       cancelled = true;
       clearInterval(timer);
     };
-  }, [gc, equippedBackpack, attemptedBackpackAutoOpen]);
+  }, [gc, equippedBackpack, attemptedBackpackAutoOpen, isOpeningBackpack, isConnected]);
+
+  // Re-open the main belt (container-4) after login if it was previously open
+  useEffect(() => {
+    if (!gc) return;
+    if (attemptedBeltAutoOpen) return;
+    if (isOpeningBelt) return;
+    
+    // Only run when connected to the game
+    if (!isConnected) {
+      return;
+    }
+    
+
+    // Prefer durable flag; fallback to saved window state
+    let shouldOpenBelt = false;
+    let savedColumn: 'left' | 'right' = 'right'; // default
+    try {
+      const flag = localStorage.getItem('tibia-main-belt-open');
+      if (flag === '1') shouldOpenBelt = true;
+    } catch (_) {}
+    if (!shouldOpenBelt) {
+      try {
+        const savedState = localStorage.getItem('tibia-window-state');
+        if (savedState) {
+          const parsed = JSON.parse(savedState);
+          if (Array.isArray(parsed)) {
+            // Check for GUID-based window ID (container-4)
+            const beltWindow = parsed.find((w: any) => {
+              if (!w || typeof w.id !== 'string') return false;
+              return w.id === 'container-4';
+            });
+            if (beltWindow) {
+              shouldOpenBelt = true;
+              savedColumn = beltWindow.column || 'right';
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (!shouldOpenBelt) return;
+
+    let cancelled = false;
+    let attempts = 0;
+
+    const tryOpen = () => {
+      if (cancelled) return;
+      attempts++;
+
+      const gameClient = (window as any).gameClient;
+      const isConnected = !!gameClient?.networkManager?.isConnected?.();
+      const equipmentContainer = gameClient?.player?.getContainer?.(0);
+      const containers = gameClient?.player?.containers?.getAllContainers?.() || [];
+      const runtimeEquippedBelt = gameClient?.player?.equipment?.slots?.[BELT_SLOT_INDEX]?.item || equippedBelt;
+      const alreadyOpen = containers.some((c: any) => c?.id === 4); // Check for container with GUID 4 (main belt)
+
+
+      if (!runtimeEquippedBelt || !isConnected || !equipmentContainer || alreadyOpen) {
+        if (alreadyOpen || attempts > 100) {
+          setAttemptedBeltAutoOpen(true);
+          clearInterval(timer);
+        }
+        return;
+      }
+
+      try {
+        setIsOpeningBelt(true);
+        const thing = { which: equipmentContainer, index: BELT_SLOT_INDEX } as any;
+        gameClient.send(new ItemUsePacket(thing));
+        
+        // Reset the opening flag after a delay
+        setTimeout(() => {
+          setIsOpeningBelt(false);
+        }, 2000);
+      } catch (error) {
+        setIsOpeningBelt(false);
+      }
+    };
+
+    const timer = setInterval(tryOpen, 300);
+    tryOpen();
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [gc, equippedBelt, attemptedBeltAutoOpen, isOpeningBelt, isConnected]);
 
   return null;
 }

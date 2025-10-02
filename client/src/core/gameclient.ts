@@ -71,8 +71,6 @@ export default class GameClient {
     this.__setServerVersion(serverData.version);
     this.__setClientVersion(serverData.clientVersion);
 
-    console.log('serverData', serverData);
-
     Chunk.WIDTH = serverData.chunk.width;
     Chunk.HEIGHT = serverData.chunk.height;
     Chunk.DEPTH = serverData.chunk.depth;

@@ -54,12 +54,9 @@ export default class Equipment extends Container {
 
   // lifecycle / mutations
   public setItems(items: any): void {
-    console.log('🔧 Equipment.setItems called with:', items);
     const list = this.normalize(items);
-    console.log('🔧 Normalized list:', list);
     for (let i = 0; i < this.slots.length; i++) {
       const item = this.coerceItem(list[i] ?? null);
-      console.log(`🔧 Setting slot ${i} with item:`, item);
       this.slots[i].setItem(item); // will emit CHANGED per slot
     }
     requestAnimationFrame(() => this.emitter.emit("READY", undefined));

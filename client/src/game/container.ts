@@ -164,7 +164,6 @@ export default class Container extends Item {
        */
 
       if (slot < 0 || slot >= this.slots.length) {
-        console.warn('Attempted to clear invalid slot:', slot);
         return;
       }
 
@@ -215,7 +214,7 @@ export default class Container extends Item {
        */
       
       window.dispatchEvent(new CustomEvent('containerItemChanged', {
-        detail: { containerId: this.__containerId }
+        detail: { containerId: this.id } // Use GUID instead of client ID
       }));
     }
 
@@ -225,14 +224,9 @@ export default class Container extends Item {
        * Dispatches event when container is opened
        */
       
-      console.log('Dispatching containerOpen event:', {
-        containerId: this.__containerId,
-        title: title
-      });
-      
       window.dispatchEvent(new CustomEvent('containerOpen', {
         detail: {
-          containerId: this.__containerId,
+          containerId: this.id, // Use GUID instead of client ID
           title: title
         }
       }));
@@ -245,7 +239,7 @@ export default class Container extends Item {
        */
       
       window.dispatchEvent(new CustomEvent('containerClose', {
-        detail: { containerId: this.__containerId }
+        detail: { containerId: this.id } // Use GUID instead of client ID
       }));
     }
   }

@@ -243,13 +243,6 @@ class Mouse {
       (target.closest(".equipment-container") as HTMLElement | null) ||
       (target.closest(".container") as HTMLElement | null);
 
-    console.log('🔍 __getSlotObject debug:', {
-      target: target.tagName,
-      targetClass: target.className,
-      slotEl: slotEl ? { tagName: slotEl.tagName, slotIndex: slotEl.getAttribute('slotIndex') } : null,
-      containerEl: containerEl ? { tagName: containerEl.tagName, containerIndex: containerEl.getAttribute('containerIndex') } : null
-    });
-
     if (!slotEl || !containerEl) return null;
 
     let slotIndex =
@@ -276,10 +269,6 @@ class Mouse {
     if (!this.__mouseDownObject?.which) return;
 
     const toObject = this.__getSlotObject(event);
-    if (!toObject) {
-      console.log('🔍 __handleSlotMouseUp: No toObject found');
-      return;
-    }
 
     if (this.__mouseDownObject.which.constructor.name === "Tile") {
       if (!this.__mouseDownObject.which.getPosition().besides(window.gameClient.player!.getPosition())) return;

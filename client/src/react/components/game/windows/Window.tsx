@@ -9,6 +9,8 @@ export interface WindowProps {
   onDragStart?: () => void;
   onDragEnd?: () => void;
   onPin?: (pinned: boolean) => void;
+  onDrop?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
   isDragging?: boolean;
   isPinned?: boolean;
   className?: string;
@@ -22,6 +24,8 @@ export default function Window({
   onDragStart, 
   onDragEnd, 
   onPin,
+  onDrop,
+  onDragOver,
   isDragging = false,
   isPinned = false,
   className = ''
@@ -42,10 +46,24 @@ export default function Window({
     onDragEnd?.();
   };
 
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDrop?.(e);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDragOver?.(e);
+  };
+
   return (
     <div 
       ref={windowRef}
       className={`window ${isDragging ? 'dragging' : ''} ${isMinimized ? 'minimized' : ''} ${isPinned ? 'pinned' : ''} ${className}`}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
     >
       <div 
         ref={headerRef}

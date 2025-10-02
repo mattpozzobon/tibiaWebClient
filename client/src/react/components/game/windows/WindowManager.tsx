@@ -258,15 +258,73 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
   }, []);
 
   const handleColumnDrop = useCallback((e: React.DragEvent, column: 'left' | 'right') => {
-    console.log('Column drop:', column);
     e.preventDefault();
     const windowId = e.dataTransfer.getData('text/plain');
-    console.log('Window ID from drop:', windowId);
     if (windowId) {
       moveWindow(windowId, column);
       setDraggedWindow(null);
     }
   }, [moveWindow]);
+
+  const handleWindowDrop = useCallback((e: React.DragEvent, targetWindowId: string) => {
+    e.preventDefault();
+    const draggedWindowId = e.dataTransfer.getData('text/plain');
+    
+    if (draggedWindowId && draggedWindowId !== targetWindowId) {
+      const draggedWindow = windows.find(w => w.id === draggedWindowId);
+      const targetWindow = windows.find(w => w.id === targetWindowId);
+      
+      if (draggedWindow && targetWindow) {
+        // Move the dragged window to the same column as the target
+        const targetColumn = targetWindow.column;
+        
+        // Calculate the new order based on drop position
+        const rect = e.currentTarget.getBoundingClientRect();
+        const dropY = e.clientY - rect.top;
+        const isAbove = dropY < rect.height / 2;
+        
+        // Get all windows in the target column, excluding the dragged window
+        const columnWindows = windows
+          .filter(w => w.column === targetColumn && w.id !== draggedWindowId)
+          .sort((a, b) => a.order - b.order);
+        
+        let newOrder: number;
+        
+        if (isAbove) {
+          // Place above the target window
+          const targetIndex = columnWindows.findIndex(w => w.id === targetWindowId);
+          if (targetIndex === 0) {
+            // Place at the beginning
+            newOrder = Math.max(0, targetWindow.order - 1);
+          } else {
+            // Place between the previous window and target
+            const prevWindow = columnWindows[targetIndex - 1];
+            newOrder = (prevWindow.order + targetWindow.order) / 2;
+          }
+        } else {
+          // Place below the target window
+          const targetIndex = columnWindows.findIndex(w => w.id === targetWindowId);
+          if (targetIndex === columnWindows.length - 1) {
+            // Place at the end
+            newOrder = targetWindow.order + 1;
+          } else {
+            // Place between target and next window
+            const nextWindow = columnWindows[targetIndex + 1];
+            newOrder = (targetWindow.order + nextWindow.order) / 2;
+          }
+        }
+        
+        // Update the window position
+        setWindows(prev => prev.map(w => 
+          w.id === draggedWindowId 
+            ? { ...w, column: targetColumn, order: newOrder }
+            : w
+        ));
+      }
+    }
+    
+    setDraggedWindow(null);
+  }, [windows]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -376,6 +434,8 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
                   onDragStart={() => handleDragStart(window.id)}
                   onDragEnd={handleDragEnd}
                   onPin={(pinned) => togglePin(window.id)}
+                  onDrop={(e) => handleWindowDrop(e, window.id)}
+                  onDragOver={handleDragOver}
                   isDragging={draggedWindow === window.id}
                   isPinned={false}
                   className={window.className}
@@ -396,6 +456,8 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
                   onDragStart={() => handleDragStart(window.id)}
                   onDragEnd={handleDragEnd}
                   onPin={(pinned) => togglePin(window.id)}
+                  onDrop={(e) => handleWindowDrop(e, window.id)}
+                  onDragOver={handleDragOver}
                   isDragging={draggedWindow === window.id}
                   isPinned={true}
                   className={window.className}
@@ -448,6 +510,8 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
                   onDragStart={() => handleDragStart(window.id)}
                   onDragEnd={handleDragEnd}
                   onPin={(pinned) => togglePin(window.id)}
+                  onDrop={(e) => handleWindowDrop(e, window.id)}
+                  onDragOver={handleDragOver}
                   isDragging={draggedWindow === window.id}
                   isPinned={false}
                   className={window.className}
@@ -468,6 +532,8 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
                   onDragStart={() => handleDragStart(window.id)}
                   onDragEnd={handleDragEnd}
                   onPin={(pinned) => togglePin(window.id)}
+                  onDrop={(e) => handleWindowDrop(e, window.id)}
+                  onDragOver={handleDragOver}
                   isDragging={draggedWindow === window.id}
                   isPinned={true}
                   className={window.className}

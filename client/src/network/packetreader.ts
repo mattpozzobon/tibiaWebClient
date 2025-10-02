@@ -301,6 +301,38 @@ export default class PacketReader extends Packet {
       items: this.readItems(),
     };
   }
+
+  public readOpenContainer2(): {
+    guid: number;
+    cid: number;
+    title: string;
+    size: number;
+    slotTypes: number[];  
+    items: (Item | null)[];
+  } {
+    const guid = this.readUInt32();
+    const cid  = this.readUInt16();
+    const title = this.readString();
+    const size = this.readUInt8();
+  
+    const hasExclusive = this.readUInt8() === 1;
+    const slotTypes: number[] = new Array(hasExclusive ? size : 0);
+    if (hasExclusive) {
+      for (let i = 0; i < size; i++) slotTypes[i] = this.readUInt8();
+    }
+  
+    const items = this.readItemsWithKnownSize(size);
+    return { guid, cid, title, size, slotTypes, items };
+  }
+
+  public readItemsWithKnownSize(size: number): (Item | null)[] {
+    const items: (Item | null)[] = new Array(size);
+    for (let i = 0; i < size; i++) {
+      const item = this.readItem(); // returns Item | null
+      items[i] = item === null ? null : item;
+    }
+    return items;
+  }  
   
   public readUInt8(): number {
     /*
@@ -389,7 +421,14 @@ export default class PacketReader extends Packet {
   }
   
   public readThing(id: number, count: number): Item {
-    let thing = new Thing(id);
+    // Try to create a Thing to check if it's a fluid container, but handle sprite data errors
+    let thing;
+    try {
+      thing = new Thing(id);
+    } catch (error) {
+      // If sprite data isn't available, just create a regular Item
+      return new Item(id, count);
+    }
 
     if (thing.isFluidContainer() || thing.isSplash()) {
       return new FluidThing(id, count) as Item;

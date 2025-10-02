@@ -42,8 +42,11 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
 
     // Listen for container open events
     const handleContainerOpen = (event: CustomEvent) => {
+      console.log('WindowInitializer received containerOpen event:', event.detail);
       const { containerId, title } = event.detail;
       const windowId = `container-${containerId}`;
+      
+      console.log('Creating window with ID:', windowId, 'title:', title);
       
       // Remove existing window if it exists
       removeWindow(windowId);

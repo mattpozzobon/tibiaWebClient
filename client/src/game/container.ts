@@ -6,9 +6,10 @@ export default class Container extends Item {
     public __containerId: number;
     size: number;
     slots: Slot[];
+    slotTypes: number[];
     window!: InteractiveWindow;
   
-    constructor(properties: { id: number; cid: number; items: Item[]; size?: number }) {
+    constructor(properties: { id: number; cid: number; items: Item[]; size: number; slotTypes?: number[] }) {
       /*
        * Class Container
        * Wrapper for a container on the DOM
@@ -18,10 +19,32 @@ export default class Container extends Item {
       // The number of slots in the container and its identifier
       this.__containerId = properties.cid;
       // Use provided size or fall back to number of items
-      this.size = properties.items.length;
+      this.size = properties.size;
+      // Store slot types for exclusive slots
+      this.slotTypes = properties.slotTypes || [];
 
       // Create the slots for items to be added
       this.slots = [];
+    }
+
+    // Override methods that require sprite data to avoid errors
+    getFrameGroup(group: number): any {
+      // Containers don't have frame groups, return a safe default
+      return { animationLength: 1, animationLengths: [{ min: 500, max: 500 }] };
+    }
+
+    isAnimated(): boolean {
+      // Containers are not animated
+      return false;
+    }
+
+    getDataObject(): any {
+      // Return a safe default data object for containers
+      return {
+        frameGroups: [{ animationLength: 1, animationLengths: [{ min: 500, max: 500 }] }],
+        flags: new Map(),
+        properties: {}
+      };
     }
   
     createDOM(title: string, items: Item[]): void {
@@ -91,18 +114,22 @@ export default class Container extends Item {
       }
     }
   
-    addItems(items: Item[]): void {
+    addItems(items: (Item | null)[]): void {
       /*
        * Function Container.addItems
        * Adds an array of items to the container
        */
 
-      // Add items to their respective slots
-      items.forEach((item, index) => {
-        if (item && index < this.size) {
-          this.addItem(item, index);
+      // Process all slots, including empty ones
+      for (let i = 0; i < this.size; i++) {
+        const item = items[i];
+        if (item) {
+          this.addItem(item, i);
+        } else {
+          // Clear the slot if item is null
+          this.clearSlot(i);
         }
-      });
+      }
     }
   
     addItem(item: Item | null, slot: number): void {
@@ -136,8 +163,18 @@ export default class Container extends Item {
        * Clears a particular slot in the container
        */
 
+      if (slot < 0 || slot >= this.slots.length) {
+        console.warn('Attempted to clear invalid slot:', slot);
+        return;
+      }
+
       this.__setItem(slot, null);
-      this.getSlot(slot).render();
+      
+      // Only render if slot exists
+      const slotObj = this.getSlot(slot);
+      if (slotObj) {
+        slotObj.render();
+      }
       
       // Dispatch event for UI updates
       this.dispatchItemChanged();
@@ -187,6 +224,11 @@ export default class Container extends Item {
        * Function Container.dispatchContainerOpen
        * Dispatches event when container is opened
        */
+      
+      console.log('Dispatching containerOpen event:', {
+        containerId: this.__containerId,
+        title: title
+      });
       
       window.dispatchEvent(new CustomEvent('containerOpen', {
         detail: {

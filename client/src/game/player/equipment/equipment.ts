@@ -15,7 +15,7 @@ export default class Equipment extends Container {
   private emitter = new Emitter<EquipmentEvents>();
 
   constructor(items: any) {
-    super({ id: 0, cid: 0, items: new Array<Item>(15) });
+    super({ id: 0, cid: 0, items: new Array<Item>(15), size: 15 });
 
     // create slots and wrap setItem so *any* mutation emits
     this.slots = [

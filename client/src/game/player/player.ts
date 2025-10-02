@@ -151,7 +151,7 @@ export default class Player extends Creature {
   }
 
   public removeContainer(container: any): void {
-    this.containers.removeContainer(container.__containerId);
+    this.containers.removeContainer(container.id);
     if (container.window) {
       container.window.remove();
     }

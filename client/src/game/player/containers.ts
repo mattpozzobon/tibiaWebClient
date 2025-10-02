@@ -18,22 +18,36 @@ export default class Containers {
   }
 
   /**
-   * Remove a container from the containers map
+   * Remove a container from the containers map by GUID
    */
-  removeContainer(containerId: number): void {
-    const container = this.containers.get(containerId);
-    if (container) {
-      // Dispatch close event
-      container.dispatchContainerClose();
-      this.containers.delete(containerId);
+  removeContainer(containerGuid: number): void {
+    // Find container by GUID
+    for (const [clientId, container] of this.containers.entries()) {
+      if (container.id === containerGuid) {
+        // Dispatch close event
+        container.dispatchContainerClose();
+        this.containers.delete(clientId);
+        break;
+      }
     }
   }
 
   /**
-   * Get a container by ID
+   * Get a container by ID (client ID or GUID)
    */
   getContainer(containerId: number): Container | null {
-    return this.containers.get(containerId) || null;
+    // First try to find by client ID (legacy behavior)
+    let container = this.containers.get(containerId);
+    if (container) return container;
+    
+    // If not found, search by GUID
+    for (const c of this.containers.values()) {
+      if (c.id === containerId) {
+        return c;
+      }
+    }
+    
+    return null;
   }
 
   /**

@@ -243,6 +243,13 @@ class Mouse {
       (target.closest(".equipment-container") as HTMLElement | null) ||
       (target.closest(".container") as HTMLElement | null);
 
+    console.log('🔍 __getSlotObject debug:', {
+      target: target.tagName,
+      targetClass: target.className,
+      slotEl: slotEl ? { tagName: slotEl.tagName, slotIndex: slotEl.getAttribute('slotIndex') } : null,
+      containerEl: containerEl ? { tagName: containerEl.tagName, containerIndex: containerEl.getAttribute('containerIndex') } : null
+    });
+
     if (!slotEl || !containerEl) return null;
 
     let slotIndex =

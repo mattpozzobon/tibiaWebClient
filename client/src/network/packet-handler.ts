@@ -490,6 +490,7 @@ class PacketHandler {
   }
 
   handleContainerAddItem(packet: { containerId: number; itemId: number; count: number; slot: number }): void {
+    console.log('handleContainerAddItem: ', packet);
     let container = window.gameClient.player!.getContainer(packet.containerId);
     if (!container) return;
     container.addItem(new Item(packet.itemId, packet.count), packet.slot);
@@ -498,12 +499,32 @@ class PacketHandler {
   handleContainerOpen(packet: any): void {
     console.log('handleContainerOpen: ', packet);
   
-    let container = new Container(packet);
+    // Map the packet properties to Container constructor parameters
+    const containerData = {
+      id: packet.guid,        // guid from packet
+      cid: packet.cid,        // client ID from packet
+      items: packet.items,    // items array from packet
+      size: packet.size,      // container size from packet
+      slotTypes: packet.slotTypes // slot types for exclusive slots
+    };
+    
+    console.log('Creating container with data:', containerData);
+    let container;
+    try {
+      container = new Container(containerData);
+      console.log('Container created:', container);
+    } catch (error) {
+      console.error('Error creating container:', error);
+      return;
+    }
+    
     // Add container to player's container list
     window.gameClient.player!.openContainer(container);
+    console.log('Container added to player');
     
     // Create DOM for the container (this will dispatch the open event)
-    container.createDOM(packet.equipped ? `${packet.title}[E]` : packet.title, packet.items);
+    container.createDOM(packet.title, packet.items);
+    console.log('Container DOM created');
   }
 
   handleContainerClose(id: number): void {

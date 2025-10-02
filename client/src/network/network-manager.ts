@@ -104,7 +104,7 @@ class NetworkManager {
       case CONST.PROTOCOL.SERVER.ITEM_ADD:
         return this.packetHandler.handleItemAdd(packet.readTileItemAdd());
       case CONST.PROTOCOL.SERVER.CONTAINER_OPEN:
-        return this.packetHandler.handleContainerOpen(packet.readOpenContainer());
+        return this.packetHandler.handleContainerOpen(packet.readOpenContainer2());
       case CONST.PROTOCOL.SERVER.CONTAINER_ADD:
         return this.packetHandler.handleContainerAddItem(packet.readContainerItemAdd());
       case CONST.PROTOCOL.SERVER.STATE_PLAYER:

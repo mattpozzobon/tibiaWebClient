@@ -27,6 +27,29 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
     }
   }, [gc, containerId, forceRender]);
 
+  // Get background image based on slot type
+  const getSlotBackgroundImage = (slotIndex: number): string => {
+    if (!container?.slotTypes || slotIndex >= container.slotTypes.length) {
+      return 'url(/assets/item.png)';
+    }
+    
+    const slotType = container.slotTypes[slotIndex];
+    switch (slotType) {
+      case 1:
+        return 'url(/assets/rope.png)';
+      case 2:
+        return 'url(/assets/shovel.png)';
+      case 3:
+        return 'url(/assets/pick.png)';
+      case 4:
+        return 'url(/assets/knife.png)';
+      case 5:
+        return 'url(/assets/fishing.png)';
+      default:
+        return 'url(/assets/item.png)';
+    }
+  };
+
   // Render individual slot
   const renderSlot = (slot: Slot, index: number) => {
     const div = slotDivRefs.current[`slot-${index}`];
@@ -40,8 +63,8 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
     // Clear the canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Always set item.png background for the slot
-    div.style.backgroundImage = 'url(/assets/item.png)';
+    // Set background based on slot type
+    div.style.backgroundImage = getSlotBackgroundImage(index);
     div.style.backgroundSize = 'contain';
     div.style.backgroundRepeat = 'no-repeat';
     div.style.backgroundPosition = 'center';
@@ -78,8 +101,8 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
       if (div.dataset.bound !== '1' && slot) {
         div.setAttribute('slotIndex', i.toString());
         if (!div.classList.contains('slot')) div.classList.add('slot');
-        // Always set item.png background for slots
-        div.style.backgroundImage = 'url(/assets/item.png)';
+        // Set background based on slot type
+        div.style.backgroundImage = getSlotBackgroundImage(i);
         div.style.backgroundSize = 'contain';
         div.style.backgroundRepeat = 'no-repeat';
         div.style.backgroundPosition = 'center';
@@ -99,8 +122,8 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
             ctx.clearRect(0, 0, canvas.width, canvas.height);
           }
         }
-        // Always set item.png background for empty slots
-        div.style.backgroundImage = 'url(/assets/item.png)';
+        // Set background based on slot type for empty slots
+        div.style.backgroundImage = getSlotBackgroundImage(i);
         div.style.backgroundSize = 'contain';
         div.style.backgroundRepeat = 'no-repeat';
         div.style.backgroundPosition = 'center';
@@ -136,8 +159,8 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
               ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
           }
-          // Always set item.png background for empty slots
-          div.style.backgroundImage = 'url(/assets/item.png)';
+          // Set background based on slot type for empty slots
+          div.style.backgroundImage = getSlotBackgroundImage(i);
           div.style.backgroundSize = 'contain';
           div.style.backgroundRepeat = 'no-repeat';
           div.style.backgroundPosition = 'center';

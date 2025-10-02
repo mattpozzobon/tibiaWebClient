@@ -29,23 +29,15 @@ export default function Window({
   const windowRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isDraggingWindow, setIsDraggingWindow] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    console.log('Mouse down on header:', id);
-    // Don't prevent default - let the browser handle drag
-  };
 
   const handleDragStart = (e: React.DragEvent) => {
-    console.log('Drag start:', id);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', id);
     onDragStart?.();
   };
 
   const handleDragEnd = (e: React.DragEvent) => {
-    console.log('Drag end:', id);
     e.preventDefault();
     onDragEnd?.();
   };
@@ -59,7 +51,6 @@ export default function Window({
         ref={headerRef}
         className="window-header"
         draggable={true}
-        onMouseDown={handleMouseDown}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         style={{ cursor: 'grab' }}

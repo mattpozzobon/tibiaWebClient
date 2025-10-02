@@ -28,6 +28,9 @@
   }
   
   &.minimized {
+    /* Reserve space so the header doesn't overlap the next window */
+    padding-top: 18px; /* equals header height */
+    z-index: 100; // keep header above neighboring windows
     .window-content {
       display: none;
     }
@@ -57,8 +60,9 @@
   box-sizing: border-box;
   min-height: 18px;
   height: 18px;
-  transform: translateY(-100%);
+  transform: translateY(-95%);
   opacity: 0;
+  pointer-events: none; // prevent intercepting clicks when hidden above
   transition: transform 0.2s ease, opacity 0.2s ease;
   
   &:active {
@@ -74,6 +78,8 @@
 .window.minimized .window-header {
   transform: translateY(0);
   opacity: 1;
+  pointer-events: auto; // re-enable interactions when visible
+  z-index: 101; // ensure header sits above adjacent windows
 }
 
 .window-title {
@@ -143,7 +149,7 @@
   width: 100%;
   box-sizing: border-box;
   pointer-events: auto;
-  padding-top: 12px;
+  padding-top: 12px; /* base reveal space */
 }
 
 // Equipment window specific styles

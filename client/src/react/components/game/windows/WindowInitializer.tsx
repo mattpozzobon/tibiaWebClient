@@ -57,6 +57,11 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
         order: 0,
         className: 'container-window'
       });
+
+      // Track main backpack open state separately (id 3)
+      if (containerId === 3) {
+        try { localStorage.setItem('tibia-main-backpack-open', '1'); } catch (_) {}
+      }
     };
 
     // Listen for container close events
@@ -64,6 +69,10 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
       const { containerId } = event.detail;
       const windowId = `container-${containerId}`;
       removeWindow(windowId);
+
+      if (containerId === 3) {
+        try { localStorage.setItem('tibia-main-backpack-open', '0'); } catch (_) {}
+      }
     };
 
     window.addEventListener('containerOpen', handleContainerOpen as EventListener);
@@ -75,6 +84,69 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
       window.removeEventListener('containerClose', handleContainerClose as EventListener);
     };
   }, [gc, addWindow, removeWindow]); // Include dependencies
+
+  // Re-open the main backpack (container-3) after login if it was previously open
+  useEffect(() => {
+    if (!gc) return;
+    if (attemptedBackpackAutoOpen) return;
+
+    // Prefer durable flag; fallback to saved window state
+    let shouldOpenBackpack = false;
+    try {
+      const flag = localStorage.getItem('tibia-main-backpack-open');
+      if (flag === '1') shouldOpenBackpack = true;
+    } catch (_) {}
+    if (!shouldOpenBackpack) {
+      try {
+        const savedState = localStorage.getItem('tibia-window-state');
+        if (savedState) {
+          const parsed = JSON.parse(savedState);
+          if (Array.isArray(parsed)) {
+            shouldOpenBackpack = parsed.some((w: any) => w && typeof w.id === 'string' && w.id === 'container-3');
+          }
+        }
+      } catch (_) {}
+    }
+    console.log('[BackpackAutoOpen] was container-3 open last session?', shouldOpenBackpack);
+
+    if (!shouldOpenBackpack) return;
+
+    let cancelled = false;
+    let attempts = 0;
+
+    const tryOpen = () => {
+      if (cancelled) return;
+      attempts++;
+
+      const gameClient = (window as any).gameClient;
+      const isConnected = !!gameClient?.networkManager?.isConnected?.();
+      const equipmentContainer = gameClient?.player?.getContainer?.(0);
+      const containers = gameClient?.player?.containers?.getAllContainers?.() || [];
+      const runtimeEquippedBackpack = gameClient?.player?.equipment?.slots?.[BACKPACK_SLOT_INDEX]?.item || equippedBackpack;
+      const alreadyOpen = runtimeEquippedBackpack ? containers.some((c: any) => c?.id === runtimeEquippedBackpack.id) : false;
+
+      if (!runtimeEquippedBackpack || !isConnected || !equipmentContainer || alreadyOpen) {
+        if (alreadyOpen || attempts > 100) {
+          setAttemptedBackpackAutoOpen(true);
+          clearInterval(timer);
+        }
+        return;
+      }
+
+      try {
+        const thing = { which: equipmentContainer, index: BACKPACK_SLOT_INDEX } as any;
+        gameClient.send(new ItemUsePacket(thing));
+      } catch (_) {}
+    };
+
+    const timer = setInterval(tryOpen, 300);
+    tryOpen();
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [gc, equippedBackpack, attemptedBackpackAutoOpen]);
 
   return null;
 }

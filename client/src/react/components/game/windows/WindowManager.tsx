@@ -133,10 +133,6 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
               component = <EquipmentWindow gc={gc} containerIndex={0} />;
             } else if (windowConfig.id === 'minimap') {
               component = <MinimapWindow gc={gc} />;
-            } else if (windowConfig.id.startsWith('container-')) {
-              // Container windows have IDs like 'container-1', 'container-2', etc.
-              const containerId = parseInt(windowConfig.id.replace('container-', ''));
-              component = <ContainerWindow gc={gc} containerId={containerId} />;
             } else {
               component = null; // Unknown window type
             }
@@ -145,7 +141,7 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
               ...windowConfig,
               component
             };
-          }).filter(window => window.component !== null); // Remove windows with unknown types
+          }).filter(window => window.component !== null); // Remove windows we chose not to restore
           
           setWindows(restoredWindows);
         }
@@ -158,15 +154,17 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
   // Save window state to localStorage whenever windows change
   useEffect(() => {
     try {
-      // Convert to serializable format (without React components)
-      const serializableWindows: SerializableWindowData[] = windows.map(window => ({
-        id: window.id,
-        title: window.title,
-        column: window.column,
-        order: window.order,
-        className: window.className,
-        pinned: window.pinned
-      }));
+      // Persist only non-container windows and the main backpack (container-3)
+      const serializableWindows: SerializableWindowData[] = windows
+        .filter(w => !w.id.startsWith('container-') || w.id === 'container-3')
+        .map(window => ({
+          id: window.id,
+          title: window.title,
+          column: window.column,
+          order: window.order,
+          className: window.className,
+          pinned: window.pinned
+        }));
       
       localStorage.setItem(WINDOW_STATE_KEY, JSON.stringify(serializableWindows));
     } catch (error) {

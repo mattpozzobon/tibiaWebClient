@@ -19,8 +19,12 @@ interface Character {
   level: number;
   outfit: {
     id: number;
-    addonOne: boolean;
-    addonTwo: boolean;
+    addons: {
+      healthPotion: number;
+      manaPotion: number;
+      energyPotion: number;
+      bag: number;
+    };
     details: {
       head: number;
       body: number;

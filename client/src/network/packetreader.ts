@@ -509,7 +509,17 @@ export default class PacketReader extends Packet {
       mounted: this.readBoolean(),
       addonOne: this.readBoolean(),
       addonTwo: this.readBoolean(),
+      addons: this.readOutfitAddons(),
     });
+  }
+
+  public readOutfitAddons(): { healthPotion: number; manaPotion: number; energyPotion: number; bag: number } {
+    return {
+      healthPotion: this.readUInt8(),
+      manaPotion: this.readUInt8(),
+      energyPotion: this.readUInt8(),
+      bag: this.readUInt8(),
+    };
   }
 
   readOutfitEquipment(): OutfitEquipment {

@@ -13,8 +13,10 @@ class OutfitChangePacket extends PacketWriter {
     this.writeUInt8(outfit.details.feet);
     this.writeUInt16(outfit.mount);
     this.writeBoolean(outfit.mounted);
-    this.writeBoolean(outfit.addonOne);
-    this.writeBoolean(outfit.addonTwo);
+    // this.writeUInt8(outfit.addons.healthPotion);
+    // this.writeUInt8(outfit.addons.manaPotion);
+    // this.writeUInt8(outfit.addons.energyPotion);
+    // this.writeUInt8(outfit.addons.bag);
   }
 }
 

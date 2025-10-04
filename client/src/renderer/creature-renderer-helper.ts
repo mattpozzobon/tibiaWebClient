@@ -14,6 +14,10 @@ export interface CharacterFrames {
   beltGroup?: any;     beltFrame?: number;
   hairGroup?: any;     hairFrame?: number;
   headGroup?: any;     headFrame?: number;
+  healthPotionGroup?: any; healthPotionFrame?: number;
+  manaPotionGroup?: any;   manaPotionFrame?: number;
+  energyPotionGroup?: any; energyPotionFrame?: number;
+  bagGroup?: any;          bagFrame?: number;
   isMoving: boolean;
 }
 
@@ -310,6 +314,51 @@ export default class CreatureRendererHelper {
       }
     }
 
+    // --- Addons ---
+    let healthPotionGroup = null, healthPotionFrame = 0;
+    if (outfit.addons?.healthPotion && outfit.addons.healthPotion !== 0) {
+      const healthPotionObject = window.gameClient.dataObjects.getOutfit(800);
+      if (healthPotionObject) {
+        healthPotionGroup = healthPotionObject.getFrameGroup(groupType);
+        healthPotionFrame = isMoving
+          ? this.__getWalkingFrame(healthPotionGroup)
+          : (healthPotionGroup.getAlwaysAnimatedFrame ? healthPotionGroup.getAlwaysAnimatedFrame() : 0);
+      }
+    }
+
+    let manaPotionGroup = null, manaPotionFrame = 0;
+    if (outfit.addons?.manaPotion && outfit.addons.manaPotion !== 0) {
+      const manaPotionObject = window.gameClient.dataObjects.getOutfit(801);
+      if (manaPotionObject) {
+        manaPotionGroup = manaPotionObject.getFrameGroup(groupType);
+        manaPotionFrame = isMoving
+          ? this.__getWalkingFrame(manaPotionGroup)
+          : (manaPotionGroup.getAlwaysAnimatedFrame ? manaPotionGroup.getAlwaysAnimatedFrame() : 0);
+      }
+    }
+
+    let energyPotionGroup = null, energyPotionFrame = 0;
+    if (outfit.addons?.energyPotion && outfit.addons.energyPotion !== 0) {
+      const energyPotionObject = window.gameClient.dataObjects.getOutfit(802);
+      if (energyPotionObject) {
+        energyPotionGroup = energyPotionObject.getFrameGroup(groupType);
+        energyPotionFrame = isMoving
+          ? this.__getWalkingFrame(energyPotionGroup)
+          : (energyPotionGroup.getAlwaysAnimatedFrame ? energyPotionGroup.getAlwaysAnimatedFrame() : 0);
+      }
+    }
+
+    let bagGroup = null, bagFrame = 0;
+    if (outfit.addons?.bag && outfit.addons.bag !== 0) {
+      const bagObject = window.gameClient.dataObjects.getOutfit(803);
+      if (bagObject) {
+        bagGroup = bagObject.getFrameGroup(groupType);
+        bagFrame = isMoving
+          ? this.__getWalkingFrame(bagGroup)
+          : (bagGroup.getAlwaysAnimatedFrame ? bagGroup.getAlwaysAnimatedFrame() : 0);
+      }
+    }
+
     return {
       characterGroup,
       characterFrame,
@@ -331,6 +380,14 @@ export default class CreatureRendererHelper {
       headFrame,
       hairGroup,
       hairFrame,
+      healthPotionGroup,
+      healthPotionFrame,
+      manaPotionGroup,
+      manaPotionFrame,
+      energyPotionGroup,
+      energyPotionFrame,
+      bagGroup,
+      bagFrame,
       isMoving,
     };
   }

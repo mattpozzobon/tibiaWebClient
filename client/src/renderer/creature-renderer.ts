@@ -20,6 +20,10 @@ const RENDER_LAYERS = [
   { groupKey: "hairGroup",      frameKey: "hairFrame",      hasMask: true,  condition: "!frames.headGroup" },
   { groupKey: "leftHandGroup",  frameKey: "leftHandFrame",  hasMask: false },
   { groupKey: "rightHandGroup", frameKey: "rightHandFrame", hasMask: false },
+  { groupKey: "healthPotionGroup", frameKey: "healthPotionFrame", hasMask: false },
+  { groupKey: "manaPotionGroup",   frameKey: "manaPotionFrame",   hasMask: false },
+  { groupKey: "energyPotionGroup", frameKey: "energyPotionFrame", hasMask: false },
+  { groupKey: "bagGroup",          frameKey: "bagFrame",          hasMask: false },
 ];
 
 // Preserve original order for non-special layers

@@ -18,6 +18,13 @@ export interface OutfitEquipment {
     belt: number;
 }
 
+export interface OutfitAddons {
+    healthPotion: number;
+    manaPotion: number;
+    energyPotion: number;
+    bag: number;
+}
+
 export default class Outfit {
     id: number;
     details: OutfitDetails;
@@ -26,6 +33,7 @@ export default class Outfit {
     mounted: boolean;
     addonOne: boolean;
     addonTwo: boolean;
+    addons: OutfitAddons;
   
     static colors: number[] = [
       0xFFFFFF, 0xBFD4FF, 0xBFE9FF, 0xBFFFFF, 0xBFFFE9, 0xBFFFD4, 0xBFFFBF,
@@ -58,6 +66,7 @@ export default class Outfit {
         mounted: boolean;
         addonOne: boolean;
         addonTwo: boolean;
+        addons: OutfitAddons;
     }) {
       
       this.id = outfit.id;
@@ -67,6 +76,7 @@ export default class Outfit {
       this.mounted = outfit.mounted;
       this.addonOne = outfit.addonOne;
       this.addonTwo = outfit.addonTwo;
+      this.addons = outfit.addons;
     }
   
     equals(other: Outfit): boolean {
@@ -90,6 +100,7 @@ export default class Outfit {
         mounted: this.mounted,
         addonOne: this.addonOne,
         addonTwo: this.addonTwo,
+        addons: { ...this.addons },
       };
     }
   

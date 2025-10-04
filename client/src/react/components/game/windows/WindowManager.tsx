@@ -59,19 +59,23 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
   const equippedBackpack = equipmentItems?.[BACKPACK_SLOT_INDEX] || null;
   const [isBackpackOpen, setIsBackpackOpen] = useState<boolean>(false);
 
-  // Track open/close of containers to know if the equipped backpack is open
+  // Track open/close of containers to know if any container is open
   useEffect(() => {
     const updateBackpackOpenFromContainers = () => {
       try {
         const containers = window.gameClient?.player?.containers?.getAllContainers?.() || [];
-        const open = !!(equippedBackpack && containers.find((c: any) => c?.id === equippedBackpack.id));
+        // Check if any container is actually open (has a window)
+        const open = containers.some((c: any) => c.window && c.window.isVisible?.());
         setIsBackpackOpen(open);
       } catch (e) {
         // noop
       }
     };
 
-    updateBackpackOpenFromContainers();
+    // Don't check immediately on mount, wait a bit for initialization
+    const initialTimer = setTimeout(() => {
+      updateBackpackOpenFromContainers();
+    }, 500);
 
     const onOpen = () => updateBackpackOpenFromContainers();
     const onClose = () => updateBackpackOpenFromContainers();
@@ -80,17 +84,20 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
     window.addEventListener('containerClose', onClose as EventListener);
     const interval = window.setInterval(updateBackpackOpenFromContainers, 1000);
     return () => {
+      clearTimeout(initialTimer);
       window.removeEventListener('containerOpen', onOpen as EventListener);
       window.removeEventListener('containerClose', onClose as EventListener);
       window.clearInterval(interval);
     };
-  }, [equippedBackpack]);
+  }, []);
 
-  // Check which column the backpack is open in
+  // Check which column any container is open in
   const isBackpackOpenInColumn = (column: 'left' | 'right') => {
-    if (!isBackpackOpen) return false;
-    const backpackWindow = windows.find(w => w.id === 'container-3');
-    return backpackWindow?.column === column;
+    // Find any container window that's open in the specified column
+    const containerWindow = windows.find(w => 
+      w.id.startsWith('container-') && w.column === column
+    );
+    return !!containerWindow;
   };
 
 
@@ -111,9 +118,7 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
               component = <EquipmentWindow gc={gc} containerIndex={0} />;
             } else if (windowConfig.id === 'minimap') {
               component = <MinimapWindow gc={gc} />;
-            } else {
-              component = null; // Unknown window type
-            }
+            } 
             
             return {
               ...windowConfig,
@@ -132,9 +137,8 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
   // Save window state to localStorage whenever windows change
   useEffect(() => {
     try {
-      // Persist only non-container windows and the main backpack (container-3)
+      // Persist all windows (equipment, minimap, and containers)
       const serializableWindows: SerializableWindowData[] = windows
-        .filter(w => !w.id.startsWith('container-') || w.id === 'container-3')
         .map(window => ({
           id: window.id,
           title: window.title,

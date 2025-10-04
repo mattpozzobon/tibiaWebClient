@@ -4,9 +4,6 @@ import { ContainerClosePacket } from "../../core/protocol";
 import Skills from "./skills/skills";
 import Spellbook from "./spellbook/spellbook";
 import Creature, { CreatureData } from "../creature";
-import ConditionManager from "../condition";
-import SkillModal from "../../ui/modals/modal-skills";
-import BattleWindow from "../../ui/window/window-battle";
 import CharacterPixiElement from "../../ui/screen-elements/screen-element-character";
 import Containers from "./containers";
 
@@ -15,8 +12,7 @@ export interface PlayerData extends CreatureData {
   spellbook: any;
   friendlist: any;
   skills: any;
-  mounts: any;
-  outfits: any;
+  hairs: any;
   vitals: any;
 }
 
@@ -27,8 +23,7 @@ export default class Player extends Creature {
   public containers: Containers;
 
   public skills: Skills;
-  public mounts: any;
-  public outfits: any;
+  public hairs: any;
 
   // Private state for the player
   __movementEvent: any = null;
@@ -43,8 +38,7 @@ export default class Player extends Creature {
     this.spellbook = new Spellbook(data.spellbook);
     this.friendlist = new Friendlist(data.friendlist.friends, data.friendlist.friendRequests);
     this.containers = new Containers();
-    this.mounts = data.mounts;
-    this.outfits = data.outfits;
+    this.hairs = data.hairs;
   }
 
   static create(data: PlayerData): Player {

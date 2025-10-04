@@ -76,7 +76,7 @@ export default class CreatureRenderer {
 
     const direction = creature.getLookDirection();
     const xPattern = DIRECTION_PATTERNS.get(direction) ?? (direction % 4);
-    const zPattern = frames.characterGroup.pattern.z > 1 && creature.isMounted() ? 1 : 0;
+    const zPattern = 0;
     const drawPosition = new Position(position.x - offset, position.y - offset, 0);
 
     // Collect light bubbles from equipped items (similar to item light bubbles)

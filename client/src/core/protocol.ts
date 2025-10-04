@@ -5,14 +5,15 @@ import PacketWriter from "../network/packetwriter";
 class OutfitChangePacket extends PacketWriter {
   constructor(outfit: Outfit) {
     super(CONST.PROTOCOL.CLIENT.OUTFIT, 13);
-    this.writeUInt16(outfit.id);
+    //this.writeUInt16(outfit.id);
     this.writeUInt16(outfit.equipment.hair);
     this.writeUInt8(outfit.details.head);
-    this.writeUInt8(outfit.details.body);
-    this.writeUInt8(outfit.details.legs);
-    this.writeUInt8(outfit.details.feet);
-    this.writeUInt16(outfit.mount);
-    this.writeBoolean(outfit.mounted);
+    this.writeBoolean(outfit.renderHelmet);
+    //this.writeUInt8(outfit.details.body);
+    //this.writeUInt8(outfit.details.legs);
+    //this.writeUInt8(outfit.details.feet);
+    //this.writeUInt16(outfit.mount);
+    //this.writeBoolean(outfit.mounted);
     // this.writeUInt8(outfit.addons.healthPotion);
     // this.writeUInt8(outfit.addons.manaPotion);
     // this.writeUInt8(outfit.addons.energyPotion);

@@ -27,12 +27,9 @@ export interface OutfitAddons {
 
 export default class Outfit {
     id: number;
+    renderHelmet: boolean;
     details: OutfitDetails;
     equipment: OutfitEquipment;
-    mount: number;
-    mounted: boolean;
-    addonOne: boolean;
-    addonTwo: boolean;
     addons: OutfitAddons;
   
     static colors: number[] = [
@@ -60,22 +57,15 @@ export default class Outfit {
     constructor(
       outfit: {
         id: number;
+        renderHelmet: boolean;
         details: OutfitDetails;
         equipment: OutfitEquipment;
-        mount: number;
-        mounted: boolean;
-        addonOne: boolean;
-        addonTwo: boolean;
         addons: OutfitAddons;
     }) {
-      
       this.id = outfit.id;
+      this.renderHelmet = outfit.renderHelmet;
       this.details = outfit.details;
       this.equipment = outfit.equipment;
-      this.mount = outfit.mount;
-      this.mounted = outfit.mounted;
-      this.addonOne = outfit.addonOne;
-      this.addonTwo = outfit.addonTwo;
       this.addons = outfit.addons;
     }
   
@@ -94,12 +84,9 @@ export default class Outfit {
     serialize() {
       return {
         id: this.id,
+        renderHelmet: this.renderHelmet,
         details: { ...this.details },
         equipment: { ...this.equipment },
-        mount: this.mount,
-        mounted: this.mounted,
-        addonOne: this.addonOne,
-        addonTwo: this.addonTwo,
         addons: { ...this.addons },
       };
     }
@@ -119,10 +106,6 @@ export default class Outfit {
   
     getSpriteBufferSize(object: any): number {
       return Math.ceil(Math.sqrt(object.frameGroups.reduce((a: number, b: any) => a + 4 * b.width * b.height * b.animationLength, 0)));
-    }
-  
-    getDataObjectMount(): any {
-      return window.gameClient.dataObjects.getOutfit(this.mount);
     }
   
     getLeftHandDataObject(): any {

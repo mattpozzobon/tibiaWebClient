@@ -265,9 +265,9 @@ export default class CreatureRendererHelper {
 
     // Handle head/hair (special case)
     const hasHelmet = !!(outfit.equipment?.head && outfit.equipment.head !== 0);
-    if (hasHelmet) {
+    if (hasHelmet && outfit.renderHelmet) {
       groups.headGroup = getGroup(() => outfit.getHeadDataObject?.());
-    } else {
+    } else if (outfit.equipment?.hair && outfit.equipment.hair !== 0) {
       groups.hairGroup = getGroup(() => outfit.getHairDataObject?.());
     }
 

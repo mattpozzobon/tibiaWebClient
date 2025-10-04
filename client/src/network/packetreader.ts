@@ -503,12 +503,9 @@ export default class PacketReader extends Packet {
   public readOutfit(): Outfit {
     return new Outfit({
       id: this.readUInt16(),
+      renderHelmet: this.readBoolean(),
       details: this.readOutfitDetails(),
       equipment: this.readOutfitEquipment(),
-      mount: this.readUInt16(),
-      mounted: this.readBoolean(),
-      addonOne: this.readBoolean(),
-      addonTwo: this.readBoolean(),
       addons: this.readOutfitAddons(),
     });
   }
@@ -761,8 +758,7 @@ export default class PacketReader extends Packet {
     skills: any;
     attack: number;
     equipment: (Item | null)[];
-    mounts: OutfitIdName[];
-    outfits: OutfitIdName[];
+    hairs: OutfitIdName[];
     spellbook: number[];
     friendlist: { friends: Array<{ name: string; online: boolean }>; friendRequests: string[] };
     outfit: Outfit;
@@ -774,8 +770,7 @@ export default class PacketReader extends Packet {
       skills: this.readSkills(),
       attack: this.readUInt8(),
       equipment: this.readEquipment(),
-      mounts: this.readOutfits(),
-      outfits: this.readOutfits(),
+      hairs: this.readOutfits(),
       spellbook: this.readArray(),
       friendlist: {
         friends: this.readFriendlist(),

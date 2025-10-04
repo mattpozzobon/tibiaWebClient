@@ -28,14 +28,13 @@ function collectOutfitDrawPieces(
 
   const xPattern = faceDirection % 4;
   const frame = animate ? base.getAlwaysAnimatedFrame() : 0;
-  const zPattern = base.pattern?.z > 1 && outfit.mounted ? 1 : 0;
 
   const pieces: DrawPiece[] = [];
   let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
 
   for (let y = 0; y < base.height; y++) {
     for (let x = 0; x < base.width; x++) {
-      const id = base.getSpriteId(frame, xPattern, 0, zPattern, 0, x, y);
+      const id = base.getSpriteId(frame, xPattern, 0, 0, 0, x, y);
       if (!id) continue;
       const tex: any = gc.spriteBuffer.get(id);
       const src = tex?.source?.resource as HTMLImageElement | HTMLCanvasElement | undefined;
@@ -60,13 +59,13 @@ function collectOutfitDrawPieces(
     if (!fg) return;
     for (let y = 0; y < fg.height; y++) {
       for (let x = 0; x < fg.width; x++) {
-        const baseId = fg.getSpriteId(frame, xPattern, 0, zPattern, 0, x, y);
+        const baseId = fg.getSpriteId(frame, xPattern, 0, 0, 0, x, y);
         if (!baseId) continue;
-        const key = (window as any).gameClient.spriteBuffer.constructor.getComposedKey(outfit, baseId, fg, frame, xPattern, 0, zPattern, x, y);
+        const key = (window as any).gameClient.spriteBuffer.constructor.getComposedKey(outfit, baseId, fg, frame, xPattern, 0, 0, x, y);
         const hash = hashString(key);
         if (!(gc.spriteBuffer.has(hash))) {
           // Some layer sets (like items) may not have mask layer -> pass 0
-          const maskId = fg.getSpriteId ? fg.getSpriteId(frame, xPattern, 0, zPattern, 1, x, y) : 0;
+          const maskId = fg.getSpriteId ? fg.getSpriteId(frame, xPattern, 0, 0, 1, x, y) : 0;
           gc.spriteBuffer.addComposedOutfit(key, outfit, baseId, maskId || 0);
         }
         const tex: any = gc.spriteBuffer.get(hash);
@@ -96,22 +95,11 @@ function collectOutfitDrawPieces(
   const leftId = typeof eq.lefthand === 'number' ? eq.lefthand : 0;
   const rightId = typeof eq.righthand === 'number' ? eq.righthand : 0;
   const backpackId = typeof eq.backpack === 'number' ? eq.backpack : 0;
-  const necklaceId = typeof eq.necklace === 'number' ? eq.necklace : 0;
-  const ringId = typeof eq.ring === 'number' ? eq.ring : 0;
-  const quiverId = typeof eq.quiver === 'number' ? eq.quiver : 0;
-  const ring2Id = typeof eq.ring2 === 'number' ? eq.ring2 : 0;
-  const ring3Id = typeof eq.ring3 === 'number' ? eq.ring3 : 0;
-  const ring4Id = typeof eq.ring4 === 'number' ? eq.ring4 : 0;
-  const ring5Id = typeof eq.ring5 === 'number' ? eq.ring5 : 0;
   const beltId = typeof eq.belt === 'number' ? eq.belt : 0;
-  const mountId = typeof outfit.mount === 'number' ? outfit.mount : 0;
 
   const hairObj = hairId > 0 && outfit.getHairDataObject ? outfit.getHairDataObject() : null;
   if (hairObj) {
     addLayerForObject(hairObj);
-  } else {
-    const headObj = headId > 0 && outfit.getHeadDataObject ? outfit.getHeadDataObject() : null;
-    addLayerForObject(headObj);
   }
   // Body/Legs/Feet equipment (armors etc.) - only if ids > 0
   const bodyObj = bodyId > 0 && outfit.getBodyDataObject ? outfit.getBodyDataObject() : null;
@@ -132,11 +120,6 @@ function collectOutfitDrawPieces(
   
   addLayerForObject(backpackObj);
   addLayerForObject(beltObj);
-  
-  // Mount overlay (if set and mounted)
-  if (outfit.mounted && mountId > 0) {
-    addLayerForObject(outfit.getDataObjectMount ? outfit.getDataObjectMount() : null);
-  }
 
   if (!pieces.length) return null;
   return { pieces, bounds: { left, top, right, bottom } };

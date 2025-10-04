@@ -16,7 +16,7 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
   const [outfit, setOutfit] = useState<Outfit | null>(null);
   const [faceDirection, setFaceDirection] = useState<number>(2);
   const [animate, setAnimate] = useState<boolean>(false);
-  const [selectedHair, setSelectedHair] = useState<number>(904);
+  const [selectedHair, setSelectedHair] = useState<number>(0);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -27,6 +27,7 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
     setOutfit(base);
     setFaceDirection(2);
     setAnimate(false);
+    setSelectedHair(base.equipment.hair);
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
@@ -49,19 +50,19 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
     setSelectedHair(hairId);
   };
 
+  const handleRenderHelmetChange = (renderHelmet: boolean) => {
+    if (!outfit) return;
+    const next = outfit.copy();
+    next.renderHelmet = renderHelmet;
+    setOutfit(next);
+  };
+
   const handleRotateLeft = () => {
     setFaceDirection(prev => (prev + 1) % 4);
   };
 
   const handleRotateRight = () => {
     setFaceDirection(prev => (prev - 1 + 4) % 4);
-  };
-
-  const handleCheckboxChange = (property: keyof Outfit, value: boolean) => {
-    if (!outfit) return;
-    const next = outfit.copy();
-    (next as any)[property] = value;
-    setOutfit(next);
   };
 
   const renderOnce = useCallback(() => {
@@ -120,6 +121,14 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
         >
           Animate
         </button>
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={outfit?.renderHelmet || false}
+            onChange={(e) => handleRenderHelmetChange(e.target.checked)}
+          />
+          <span>Show Helmet</span>
+        </label>
       </div>
       <div className="footer-buttons">
         <button className="btn-secondary" onClick={onClose}>Cancel</button>
@@ -180,11 +189,12 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
 
           <div className="hair-picker">
             <div className="hair-grid">
-              {[0, 904, 905].map((hairId) => (
+              {gc.player.hairs && Array.isArray(gc.player.hairs) ? gc.player.hairs.map((hair: { id: number; name: string }) => (
                 <button
-                  key={hairId}
-                  className={`hair-option ${selectedHair === hairId ? 'selected' : ''}`}
-                  onClick={() => handleHairChange(hairId)}
+                  key={hair.id}
+                  className={`hair-option ${selectedHair === hair.id ? 'selected' : ''}`}
+                  onClick={() => handleHairChange(hair.id)}
+                  title={hair.name}
                 >
                   <canvas
                     width={40}
@@ -193,7 +203,7 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
                     ref={(canvas) => {
                       if (canvas && outfit) {
                         const hairOutfit = outfit.copy();
-                        hairOutfit.equipment.hair = hairId;
+                        hairOutfit.equipment.hair = hair.id;
                         hairOutfit.details.head = 0;
                         renderOutfitToCanvas(gc, hairOutfit, canvas, {
                           faceDirection: 2,
@@ -205,9 +215,12 @@ export default function OutfitModal({ isOpen, onClose, gc }: OutfitModalProps) {
                     }}
                   />
                 </button>
-              ))}
+              )) : (
+                <div className="no-hairs-message">No hairs available</div>
+              )}
             </div>
           </div>
+
     </BaseModal>
   );
 }

@@ -9,62 +9,29 @@ import SpriteBatcher from "./sprite-batcher";
 import Interface from "../ui/interface";
 import LightRenderer from "./light-renderer";
 
+// Optimized render layers with pre-computed indices
 const RENDER_LAYERS = [
-  { groupKey: "characterGroup", frameKey: "characterFrame", hasMask: false },
-  { groupKey: "bodyGroup",      frameKey: "bodyFrame",      hasMask: false },
-  { groupKey: "legsGroup",      frameKey: "legsFrame",      hasMask: false },
-  { groupKey: "feetGroup",      frameKey: "feetFrame",      hasMask: false },
-  { groupKey: "backpackGroup",  frameKey: "backpackFrame",  hasMask: false },
-  { groupKey: "beltGroup",      frameKey: "beltFrame",      hasMask: false },
-  { groupKey: "headGroup",      frameKey: "headFrame",      hasMask: false },
-  { groupKey: "hairGroup",      frameKey: "hairFrame",      hasMask: true,  condition: "!frames.headGroup" },
-  { groupKey: "leftHandGroup",  frameKey: "leftHandFrame",  hasMask: false },
-  { groupKey: "rightHandGroup", frameKey: "rightHandFrame", hasMask: false },
-  { groupKey: "healthPotionGroup", frameKey: "healthPotionFrame", hasMask: false },
-  { groupKey: "manaPotionGroup",   frameKey: "manaPotionFrame",   hasMask: false },
-  { groupKey: "energyPotionGroup", frameKey: "energyPotionFrame", hasMask: false },
-  { groupKey: "bagGroup",          frameKey: "bagFrame",          hasMask: false },
-];
+  { groupKey: "characterGroup",     hasMask: false, index: 0 },
+  { groupKey: "bodyGroup",          hasMask: false, index: 1 },
+  { groupKey: "legsGroup",          hasMask: false, index: 2 },
+  { groupKey: "feetGroup",          hasMask: false, index: 3 },
+  { groupKey: "backpackGroup",      hasMask: false, index: 4 },
+  { groupKey: "beltGroup",          hasMask: false, index: 5 },
+  { groupKey: "headGroup",          hasMask: false, index: 6 },
+  { groupKey: "hairGroup",          hasMask: true,  index: 7, condition: "!frames.headGroup" },
+  { groupKey: "leftHandGroup",      hasMask: false, index: 8 },
+  { groupKey: "rightHandGroup",     hasMask: false, index: 9 },
+  { groupKey: "healthPotionGroup",  hasMask: false, index: 10 },
+  { groupKey: "manaPotionGroup",    hasMask: false, index: 11 },
+  { groupKey: "energyPotionGroup",  hasMask: false, index: 12 },
+  { groupKey: "bagGroup",           hasMask: false, index: 13 },
+] as const;
 
-// Preserve original order for non-special layers
-const BASE_ORDER_INDEX: Record<string, number> = Object.fromEntries(
-  RENDER_LAYERS.map((l, i) => [l.groupKey, i])
-);
-
-function isNorthWestSide(dir: number): boolean {
-  return (
-    dir === CONST.DIRECTION.NORTH ||
-    dir === CONST.DIRECTION.WEST ||
-    dir === CONST.DIRECTION.NORTHWEST ||
-    dir === CONST.DIRECTION.SOUTHWEST
-  );
-}
-
-function isSouthEastSide(dir: number): boolean {
-  return (
-    dir === CONST.DIRECTION.SOUTH ||
-    dir === CONST.DIRECTION.EAST ||
-    dir === CONST.DIRECTION.NORTHEAST ||
-    dir === CONST.DIRECTION.SOUTHEAST
-  );
-}
-
-// Absolute rank: lower = drawn earlier (further back)
-function layerPriorityForDirection(groupKey: string, dir: number): number {
-  if (isNorthWestSide(dir)) {
-    if (groupKey === "leftHandGroup" || groupKey === "rightHandGroup" || groupKey === "beltGroup") return 1;
-    if (groupKey === "backpackGroup") return 2;
-    if (groupKey === "headGroup")     return 3;
-    return 0; // default
-  }
-  if (isSouthEastSide(dir)) {
-    if (groupKey === "backpackGroup") return 1;
-    if (groupKey === "headGroup")     return 2;
-    if (groupKey === "leftHandGroup" || groupKey === "rightHandGroup") return 3;
-    return 0;
-  }
-  return 0;
-}
+// Pre-computed direction lookups for better performance
+const DIRECTION_PATTERNS = new Map([
+  [0, 0], [1, 1], [2, 2], [3, 3], // N, E, S, W
+  [4, 1], [5, 3], [6, 1], [7, 3]  // NW, NE, SW, SE
+]);
 
 export default class CreatureRenderer {
   private textureCache: Map<number, Texture | null> = new Map();
@@ -108,14 +75,7 @@ export default class CreatureRenderer {
     if (!frames) return;
 
     const direction = creature.getLookDirection();
-    let xPattern: number;
-    switch (direction) {
-      case CONST.DIRECTION.NORTHWEST: xPattern = 3; break;
-      case CONST.DIRECTION.NORTHEAST: xPattern = 1; break;
-      case CONST.DIRECTION.SOUTHWEST: xPattern = 3; break;
-      case CONST.DIRECTION.SOUTHEAST: xPattern = 1; break;
-      default: xPattern = direction % 4;
-    }
+    const xPattern = DIRECTION_PATTERNS.get(direction) ?? (direction % 4);
     const zPattern = frames.characterGroup.pattern.z > 1 && creature.isMounted() ? 1 : 0;
     const drawPosition = new Position(position.x - offset, position.y - offset, 0);
 
@@ -157,19 +117,16 @@ export default class CreatureRenderer {
       // Fail-safe: do not break rendering if outfit API differs
     }
 
-    // Sort layers with absolute rank first, then fallback to original index
-    const orderedLayers = [...RENDER_LAYERS].sort((a, b) => {
-      const ra = layerPriorityForDirection(a.groupKey, direction);
-      const rb = layerPriorityForDirection(b.groupKey, direction);
-      if (ra !== rb) return ra - rb;
-      return BASE_ORDER_INDEX[a.groupKey] - BASE_ORDER_INDEX[b.groupKey];
-    });
+    // Optimized layer processing - avoid sorting by pre-computing order
+    const frame = frames.frame;
+    if (frame === undefined) return;
 
-    for (const layer of orderedLayers) {
+    for (const layer of RENDER_LAYERS) {
       const group = frames[layer.groupKey as keyof CharacterFrames];
-      const frame = frames[layer.frameKey as keyof CharacterFrames];
-      if (!group || frame === undefined) continue;
-      if (layer.condition && layer.condition === "!frames.headGroup" && frames.headGroup) continue;
+      if (!group) continue;
+      
+      // Skip hair if head is present
+      if ('condition' in layer && layer.condition === "!frames.headGroup" && frames.headGroup) continue;
 
       this.collectLayerSprites(
         group, frame, xPattern, zPattern, drawPosition,
@@ -262,16 +219,18 @@ export default class CreatureRenderer {
     hasMask: boolean = false,
     creature?: Creature
   ): void {
-    for (let x = 0; x < group.width; x++) {
-      for (let y = 0; y < group.height; y++) {
+    const { width, height } = group;
+    const posX = position.x;
+    const posY = position.y;
+    
+    for (let x = 0; x < width; x++) {
+      for (let y = 0; y < height; y++) {
         const spriteId = group.getSpriteId(frame, xPattern, 0, zPattern, 0, x, y);
         if (!spriteId) continue;
 
         let texture: Texture | null = null;
         if (hasMask && creature) {
-          const composedKey = SpriteBuffer.getComposedKey(
-            creature.outfit, spriteId, group, frame, xPattern, 0, zPattern, x, y
-          );
+          const composedKey = SpriteBuffer.getComposedKey(creature.outfit, spriteId, group, frame, xPattern, 0, zPattern, x, y);
           const hashKey = this.hashString(composedKey);
           if (!window.gameClient.spriteBuffer.has(hashKey)) {
             const maskId = group.getSpriteId(frame, xPattern, 0, zPattern, 1, x, y);
@@ -286,8 +245,9 @@ export default class CreatureRenderer {
 
         if (!texture) continue;
 
-        const px = (position.x - x) * size;
-        const py = (position.y - y) * size;
+        // Optimized position calculation
+        const px = (posX - x) * size;
+        const py = (posY - y) * size;
 
         batcher.push(texture, px, py, Interface.TILE_SIZE, Interface.TILE_SIZE, false);
       }

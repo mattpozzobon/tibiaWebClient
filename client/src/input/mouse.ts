@@ -45,7 +45,6 @@ class Mouse {
   }
 
   sendItemMove(fromObject: any, toObject: any, count: number): void {
-    console.log('sendItemMove', fromObject, toObject);
     if (!fromObject || !toObject) return;
     const safe = Math.max(1, (count | 0));
     window.gameClient.send(new ItemMovePacket(fromObject, toObject, safe));
@@ -153,22 +152,12 @@ class Mouse {
   private __handleCanvasMouseUp(event: MouseEvent): any {
     if (!this.__mouseDownObject?.which) return;
 
-    console.log('__handleCanvasMouseUp - mouseDownObject:', {
-      which: this.__mouseDownObject.which.constructor.name,
-      index: this.__mouseDownObject.index,
-      id: this.__mouseDownObject.which.id || 'N/A'
-    });
 
     if (this.__multiUseObject !== null) {
       return this.__handleItemUseWith(this.__multiUseObject, this.__mouseDownObject);
     }
 
     const toObject = this.getWorldObject(event);
-    console.log('__handleCanvasMouseUp - toObject:', {
-      which: toObject.which.constructor.name,
-      index: toObject.index,
-      position: toObject.which.getPosition ? toObject.which.getPosition() : 'N/A'
-    });
 
     if (this.__mouseDownObject.which.constructor.name === "Tile") {
       if (this.__mouseDownObject.which === toObject.which) return this.__handleMouseClick(event);
@@ -189,26 +178,12 @@ class Mouse {
   private __bindMoveCallback(fromObject: any, toObject: any): void {
     if (!fromObject?.which) return;
 
-    console.log('__bindMoveCallback:', {
-      fromObject: {
-        which: fromObject.which.constructor.name,
-        index: fromObject.index,
-        id: fromObject.which.id || 'N/A'
-      },
-      toObject: {
-        which: toObject.which.constructor.name,
-        index: toObject.index,
-        id: toObject.which.id || 'N/A'
-      }
-    });
 
     const item = fromObject.which.peekItem(fromObject.index);
     if (!item) {
-      console.log('No item found at index:', fromObject.index);
       return this.sendItemMove(fromObject, toObject, 1);
     }
     if (!item.isMoveable()) {
-      console.log('Item is not moveable:', item.id);
       return;
     }
 

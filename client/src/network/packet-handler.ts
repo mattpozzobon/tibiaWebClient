@@ -508,28 +508,22 @@ class PacketHandler {
       slotTypes: packet.slotTypes // slot types for exclusive slots
     };
     
-    console.log('Creating container with data:', containerData);
     let container;
     try {
       container = new Container(containerData);
-      console.log('Container created:', container);
     } catch (error) {
-      console.error('Error creating container:', error);
       return;
     }
     
     // Add container to player's container list
     window.gameClient.player!.openContainer(container);
-    console.log('Container added to player');
     
     // Create DOM for the container (this will dispatch the open event)
     container.createDOM(packet.title, packet.items);
-    console.log('Container DOM created');
   }
 
   handleContainerClose(id: number): void {
     let container = window.gameClient.player!.getContainer(id);
-    if (!container) return;
     window.gameClient.player!.removeContainer(container);
   }
 

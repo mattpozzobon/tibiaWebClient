@@ -29,9 +29,65 @@ const RENDER_LAYERS = [
 
 // Pre-computed direction lookups for better performance
 const DIRECTION_PATTERNS = new Map([
-  [0, 0], [1, 1], [2, 2], [3, 3], // N, E, S, W
-  [4, 1], [5, 3], [6, 1], [7, 3]  // NW, NE, SW, SE
+  [CONST.DIRECTION.NORTH, 0],
+  [CONST.DIRECTION.EAST,  1],
+  [CONST.DIRECTION.SOUTH, 2],
+  [CONST.DIRECTION.WEST,  3],
+  [CONST.DIRECTION.NORTHWEST, 3],
+  [CONST.DIRECTION.NORTHEAST, 1],
+  [CONST.DIRECTION.SOUTHWEST, 3],
+  [CONST.DIRECTION.SOUTHEAST, 1],
 ]);
+
+// ---- Direction-aware ordering (hands vs backpack/bag) ----
+const BASE_ORDER_INDEX: Record<string, number> = Object.fromEntries(
+  RENDER_LAYERS.map((l, i) => [l.groupKey, i])
+);
+
+function facesNorthOrWest(dir: number): boolean {
+  return (
+    dir === CONST.DIRECTION.NORTH ||
+    dir === CONST.DIRECTION.WEST ||
+    dir === CONST.DIRECTION.NORTHWEST ||
+    dir === CONST.DIRECTION.SOUTHWEST
+  );
+}
+
+function facesSouthOrEast(dir: number): boolean {
+  return (
+    dir === CONST.DIRECTION.SOUTH ||
+    dir === CONST.DIRECTION.EAST ||
+    dir === CONST.DIRECTION.NORTHEAST ||
+    dir === CONST.DIRECTION.SOUTHEAST
+  );
+}
+
+/**
+ * Absolute rank for special groups. Lower = drawn earlier (behind).
+ * We only force order between hands and backpack/bag; others keep base order.
+ */
+function rankFor(dir: number, groupKey: string): number {
+  const isHand = groupKey === "leftHandGroup" || groupKey === "rightHandGroup";
+  const isBack = groupKey === "backpackGroup" || groupKey === "bagGroup";
+  const isHeadOrHair = groupKey === "headGroup" || groupKey === "hairGroup";
+
+  if (facesNorthOrWest(dir)) {
+    if (isHand) return 1;        // hands behind back
+    if (isBack) return 2;        // back behind head/hair
+    if (isHeadOrHair) return 3;  // head/hair always above back
+    return 0;
+  }
+
+  if (facesSouthOrEast(dir)) {
+    if (isBack) return 1;        // back behind head/hair
+    if (isHeadOrHair) return 2;  // head/hair above back
+    if (isHand) return 3;        // hands on top
+    return 0;
+  }
+
+  return 0;
+}
+// ---------------------------------------------------------
 
 export default class CreatureRenderer {
   private textureCache: Map<number, Texture | null> = new Map();
@@ -85,11 +141,9 @@ export default class CreatureRenderer {
       const outfit: any = creature.outfit;
       const lightDataObjects: any[] = [];
 
-      // Character base object can theoretically emit light
       const charObj = outfit.getDataObject && outfit.getDataObject();
       if (charObj?.properties?.light) lightDataObjects.push(charObj);
 
-      // Helper to push if slot equipped and has light property
       const maybePushLight = (getterName: string, equipped: any) => {
         if (!equipped) return;
         const fn = (outfit as any)[getterName];
@@ -99,7 +153,6 @@ export default class CreatureRenderer {
         }
       };
 
-      // Check common equipment slots
       maybePushLight('getHeadDataObject', outfit.equipment?.head && outfit.equipment.head !== 0);
       maybePushLight('getBodyDataObject', outfit.equipment?.body && outfit.equipment.body !== 0);
       maybePushLight('getLegsDataObject', outfit.equipment?.legs && outfit.equipment.legs !== 0);
@@ -114,22 +167,37 @@ export default class CreatureRenderer {
         this.light.addLightBubble(position.x, position.y, info.level, info.color, floorZ);
       }
     } catch (_) {
-      // Fail-safe: do not break rendering if outfit API differs
+      // fail-safe
     }
 
-    // Optimized layer processing - avoid sorting by pre-computing order
     const frame = frames.frame;
     if (frame === undefined) return;
 
-    for (const layer of RENDER_LAYERS) {
+    // Direction-aware ordering between hands and backpack/bag
+    const orderedLayers = [...RENDER_LAYERS].sort((a, b) => {
+      const ra = rankFor(direction, a.groupKey);
+      const rb = rankFor(direction, b.groupKey);
+      if (ra !== rb) return ra - rb;
+      return BASE_ORDER_INDEX[a.groupKey] - BASE_ORDER_INDEX[b.groupKey];
+    });
+
+    for (const layer of orderedLayers) {
       const group = frames[layer.groupKey as keyof CharacterFrames];
       if (!group) continue;
-      
+
       // Skip hair if head is present
       if ('condition' in layer && layer.condition === "!frames.headGroup" && frames.headGroup) continue;
 
+      // Use individual frames for hand groups
+      let currentFrame = frame;
+      if (layer.groupKey === "leftHandGroup" && frames.leftHandFrame !== undefined) {
+        currentFrame = frames.leftHandFrame;
+      } else if (layer.groupKey === "rightHandGroup" && frames.rightHandFrame !== undefined) {
+        currentFrame = frames.rightHandFrame;
+      }
+
       this.collectLayerSprites(
-        group, frame, xPattern, zPattern, drawPosition,
+        group, currentFrame, xPattern, zPattern, drawPosition,
         size, batcher, layer.hasMask, creature
       );
     }
@@ -222,7 +290,7 @@ export default class CreatureRenderer {
     const { width, height } = group;
     const posX = position.x;
     const posY = position.y;
-    
+
     for (let x = 0; x < width; x++) {
       for (let y = 0; y < height; y++) {
         const spriteId = group.getSpriteId(frame, xPattern, 0, zPattern, 0, x, y);
@@ -245,7 +313,6 @@ export default class CreatureRenderer {
 
         if (!texture) continue;
 
-        // Optimized position calculation
         const px = (posX - x) * size;
         const py = (posY - y) * size;
 

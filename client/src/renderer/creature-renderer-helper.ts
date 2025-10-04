@@ -18,7 +18,9 @@ export interface CharacterFrames {
   manaPotionGroup?: any;
   energyPotionGroup?: any;
   bagGroup?: any;
-  frame: number; // Single frame for all groups
+  frame: number; // Single frame for most groups
+  leftHandFrame?: number; // Individual frame for left hand
+  rightHandFrame?: number; // Individual frame for right hand
   isMoving: boolean;
 }
 
@@ -227,15 +229,34 @@ export default class CreatureRendererHelper {
       return null;
     };
 
+    // Helper function for hand groups that need their own frames
+    const getHandGroup = (getterFn: () => any) => {
+      const object = getterFn();
+      if (object) {
+        const group = object.getFrameGroup(groupType);
+        if (group) {
+          const handFrame = isMoving 
+            ? this.__getWalkingFrame(group) 
+            : ((object.frameGroups.length === 1 && !object.isAlwaysAnimated()) ? 0 : group.getAlwaysAnimatedFrame());
+          return { group, frame: handFrame };
+        }
+      }
+      return null;
+    };
+
     // Equipment configuration
     const equipmentConfig = [
       { key: 'bodyGroup', condition: outfit.equipment?.body, getter: () => outfit.getBodyDataObject?.() },
       { key: 'legsGroup', condition: outfit.equipment?.legs, getter: () => outfit.getLegsDataObject?.() },
       { key: 'feetGroup', condition: outfit.equipment?.feet, getter: () => outfit.getFeetDataObject?.() },
-      { key: 'leftHandGroup', condition: outfit.equipment?.lefthand, getter: () => outfit.getLeftHandDataObject?.() },
-      { key: 'rightHandGroup', condition: outfit.equipment?.righthand, getter: () => outfit.getRightHandDataObject?.() },
       { key: 'backpackGroup', condition: outfit.equipment?.backpack, getter: () => outfit.getBackpackDataObject?.() },
       { key: 'beltGroup', condition: outfit.equipment?.belt, getter: () => outfit.getBeltDataObject?.() },
+    ];
+
+    // Hand groups configuration (need their own frames)
+    const handConfig = [
+      { key: 'leftHandGroup', condition: outfit.equipment?.lefthand, getter: () => outfit.getLeftHandDataObject?.() },
+      { key: 'rightHandGroup', condition: outfit.equipment?.righthand, getter: () => outfit.getRightHandDataObject?.() },
     ];
 
     // Addon configuration
@@ -248,11 +269,19 @@ export default class CreatureRendererHelper {
 
     // Initialize all groups
     const groups: Record<string, any> = {};
+    const handGroups: Record<string, any> = {};
     
     // Process equipment
     equipmentConfig.forEach(({ key, condition, getter }) => {
       if (condition && condition !== 0) {
         groups[key] = getGroup(getter);
+      }
+    });
+
+    // Process hand groups (with their own frames)
+    handConfig.forEach(({ key, condition, getter }) => {
+      if (condition && condition !== 0) {
+        handGroups[key] = getHandGroup(getter);
       }
     });
 
@@ -276,8 +305,8 @@ export default class CreatureRendererHelper {
       bodyGroup: groups.bodyGroup,
       legsGroup: groups.legsGroup,
       feetGroup: groups.feetGroup,
-      leftHandGroup: groups.leftHandGroup,
-      rightHandGroup: groups.rightHandGroup,
+      leftHandGroup: handGroups.leftHandGroup?.group,
+      rightHandGroup: handGroups.rightHandGroup?.group,
       backpackGroup: groups.backpackGroup,
       beltGroup: groups.beltGroup,
       headGroup: groups.headGroup,
@@ -286,7 +315,9 @@ export default class CreatureRendererHelper {
       manaPotionGroup: groups.manaPotionGroup,
       energyPotionGroup: groups.energyPotionGroup,
       bagGroup: groups.bagGroup,
-      frame: sharedFrame, // Single frame for all groups
+      frame: sharedFrame, // Single frame for most groups
+      leftHandFrame: handGroups.leftHandGroup?.frame, // Individual frame for left hand
+      rightHandFrame: handGroups.rightHandGroup?.frame, // Individual frame for right hand
       isMoving,
     };
   }

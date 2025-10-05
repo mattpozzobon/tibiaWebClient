@@ -1,6 +1,7 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { useWindowManager, EquipmentWindow, MinimapWindow, ContainerWindow } from './index';
 import type GameClient from '../../../../core/gameclient';
+import { useGameClientInitialized } from '../../../hooks/useGameClientInitialized';
 
 interface WindowInitializerProps {
   gc: GameClient;
@@ -8,12 +9,7 @@ interface WindowInitializerProps {
 
 export default function WindowInitializer({ gc }: WindowInitializerProps) {
   const { addWindow, removeWindow } = useWindowManager();
-  const [isGameInitialized, setIsGameInitialized] = useState(false);
-
-
-
-
-
+  const { isInitialized: isGameInitialized } = useGameClientInitialized(gc);
 
 
   useEffect(() => {
@@ -66,15 +62,6 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
 
     return () => clearTimeout(timer);
   }, [gc, addWindow, removeWindow]);
-
-  // Set game as initialized after a delay to prevent auto-opening containers on game entry
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsGameInitialized(true);
-    }, 2000); // Wait 2 seconds after component mount
-
-    return () => clearTimeout(timer);
-  }, []);
 
   // Set up container event listeners
   useEffect(() => {

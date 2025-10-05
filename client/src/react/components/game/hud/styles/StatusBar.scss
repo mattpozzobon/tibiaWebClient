@@ -1,10 +1,7 @@
 // StatusBar.scss - Bottom screen status bar styling
 
 .status-bar {
-  position: absolute;
-  bottom: 100px; // Position above the player bars
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative; // Changed from absolute to relative
   display: flex;
   gap: 8px;
   padding: 8px 16px;
@@ -88,7 +85,6 @@
   
   // Responsive adjustments
   @media (max-width: 768px) {
-    bottom: 70px;
     padding: 6px 12px;
     gap: 6px;
     
@@ -99,7 +95,6 @@
   }
   
   @media (max-width: 480px) {
-    bottom: 60px;
     padding: 4px 8px;
     gap: 4px;
     

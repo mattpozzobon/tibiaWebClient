@@ -1,0 +1,73 @@
+// BottomHudContainer.scss - Container for bottom HUD elements
+
+.bottom-hud-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  z-index: 1000;
+  pointer-events: none; // Allow clicks to pass through to game
+  
+  // Enable pointer events for child elements
+  > * {
+    pointer-events: auto;
+  }
+}
+
+.bottom-hud-top-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: center;
+  width: 100%;
+  max-width: 1200px; // Prevent elements from spreading too wide on large screens
+  margin-bottom: 8px;
+}
+
+.bottom-hud-bottom-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 1200px;
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .bottom-hud-container {
+    gap: 6px;
+    padding: 6px;
+  }
+  
+  .bottom-hud-top-row {
+    gap: 12px;
+    max-width: 100%;
+    margin-bottom: 6px;
+  }
+  
+  .bottom-hud-bottom-row {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .bottom-hud-container {
+    gap: 4px;
+    padding: 4px;
+  }
+  
+  .bottom-hud-top-row {
+    gap: 8px;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  
+  .bottom-hud-bottom-row {
+    max-width: 100%;
+  }
+}

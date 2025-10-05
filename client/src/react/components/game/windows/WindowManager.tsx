@@ -110,21 +110,23 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
       if (savedState) {
         const parsedWindows: SerializableWindowData[] = JSON.parse(savedState);
         if (Array.isArray(parsedWindows)) {
-          // Recreate windows with components
-          const restoredWindows: WindowData[] = parsedWindows.map(windowConfig => {
-            let component: React.ReactNode;
-            
-            if (windowConfig.id === 'equipment') {
-              component = <EquipmentWindow gc={gc} containerIndex={0} />;
-            } else if (windowConfig.id === 'minimap') {
-              component = <MinimapWindow gc={gc} />;
-            } 
-            
-            return {
-              ...windowConfig,
-              component
-            };
-          }).filter(window => window.component !== null); // Remove windows we chose not to restore
+          // Recreate windows with components (only equipment and minimap)
+          const restoredWindows: WindowData[] = parsedWindows
+            .filter(windowConfig => !windowConfig.id.startsWith('container-')) // Explicitly exclude containers
+            .map(windowConfig => {
+              let component: React.ReactNode;
+              
+              if (windowConfig.id === 'equipment') {
+                component = <EquipmentWindow gc={gc} containerIndex={0} />;
+              } else if (windowConfig.id === 'minimap') {
+                component = <MinimapWindow gc={gc} />;
+              } 
+              
+              return {
+                ...windowConfig,
+                component
+              };
+            }).filter(window => window.component !== null); // Remove windows we chose not to restore
           
           setWindows(restoredWindows);
         }
@@ -137,8 +139,9 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
   // Save window state to localStorage whenever windows change
   useEffect(() => {
     try {
-      // Persist all windows (equipment, minimap, and containers)
+      // Persist only equipment and minimap windows (NOT containers)
       const serializableWindows: SerializableWindowData[] = windows
+        .filter(window => !window.id.startsWith('container-'))
         .map(window => ({
           id: window.id,
           title: window.title,

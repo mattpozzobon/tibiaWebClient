@@ -29,7 +29,7 @@
   
   &.minimized {
     /* Reserve space so the header doesn't overlap the next window */
-    padding-top: 18px; /* equals header height */
+    padding-top: 12px; /* equals header height */
     z-index: 100; // keep header above neighboring windows
     .window-content {
       display: none;
@@ -38,7 +38,7 @@
 }
 
 .window-header {
-  padding: 2px 6px;
+  padding: 1px 3px;
   background: rgba(30, 30, 30, 0.9);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0;
@@ -58,8 +58,8 @@
   right: 0;
   z-index: 10;
   box-sizing: border-box;
-  min-height: 18px;
-  height: 18px;
+  min-height: 12px;
+  height: 12px;
   transform: translateY(-95%);
   opacity: 0;
   pointer-events: none; // prevent intercepting clicks when hidden above
@@ -85,7 +85,7 @@
 .window-title {
   font-weight: 500;
   color: #ccc;
-  font-size: 12px;
+  font-size: 10px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -100,13 +100,13 @@
 }
 
 .window-control {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   border: none;
   border-radius: 2px;
   background: rgba(50, 50, 50, 0.6);
   color: #bbb;
-  font-size: 10px;
+  font-size: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -149,19 +149,26 @@
   width: 100%;
   box-sizing: border-box;
   pointer-events: auto;
-  padding-top: 12px; /* base reveal space */
+  padding-top: 15px; /* base reveal space */
 }
 
 // Equipment window specific styles
 .window.equipment-window {
   .window-content {
     padding: 8px;
-    padding-top: 20px; // 12px base + 8px equipment padding
+    padding-top: 12px; // Reduced equipment padding
     overflow: visible;
     max-height: none;
     display: flex;
     justify-content: center;
     align-items: center;
+  }
+}
+
+// Container window specific styles
+.window.container-window {
+  .window-content {
+    padding-top: 12px !important; // Extra padding for container windows
   }
 }
 
@@ -172,10 +179,10 @@
   
   .window-content {
     padding: 0;
-    padding-top: 12px; // Add top padding for header space
+    padding-top: 15px; // Add top padding for header space
     display: block;
     overflow: hidden; /* Prevent any breakout */
-    height: 152px; /* Height minus top padding */
+    height: 149px; /* Height minus top padding */
     width: 164px;
     pointer-events: auto;
     box-sizing: border-box;

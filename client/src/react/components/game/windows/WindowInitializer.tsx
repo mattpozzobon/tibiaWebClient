@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { useWindowManager, EquipmentWindow, MinimapWindow, ContainerWindow } from './index';
+import { LOCALSTORAGE_KEYS, WINDOW_TYPES, COLUMN_TYPES, type ColumnType } from './constants';
 import type GameClient from '../../../../core/gameclient';
 import { useGameClientInitialized } from '../../../hooks/useGameClientInitialized';
 import { ItemUsePacket } from '../../../../core/protocol';
@@ -89,23 +90,14 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
       removeWindow(windowId);
       
       // Determine which column to open the container in based on auto-open settings
-      let column: 'left' | 'right' | 'left-sub' | 'right-sub' = 'right';
+      let column: ColumnType = COLUMN_TYPES.RIGHT;
       
       // Check auto-open container settings
       try {
-        const autoOpenLeft = localStorage.getItem('tibia-auto-open-containers-left') === 'true';
-        const autoOpenRight = localStorage.getItem('tibia-auto-open-containers-right') === 'true';
-        const autoOpenLeftSub = localStorage.getItem('tibia-auto-open-containers-left-sub') === 'true';
-        const autoOpenRightSub = localStorage.getItem('tibia-auto-open-containers-right-sub') === 'true';
+        const autoOpenColumn = localStorage.getItem(LOCALSTORAGE_KEYS.AUTO_OPEN_CONTAINERS_COLUMN);
         
-        if (autoOpenLeft) {
-          column = 'left';
-        } else if (autoOpenRight) {
-          column = 'right';
-        } else if (autoOpenLeftSub) {
-          column = 'left-sub';
-        } else if (autoOpenRightSub) {
-          column = 'right-sub';
+        if (autoOpenColumn && Object.values(COLUMN_TYPES).includes(autoOpenColumn as ColumnType)) {
+          column = autoOpenColumn as ColumnType;
         } else {
           // No auto-open toggle is active, use default behavior
           // Check if this is the backpack container and get its preferred column
@@ -114,7 +106,7 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
              gc.player.equipment.slots[6].item.id === containerId);
           
           if (isBackpackContainer) {
-            const savedColumn = localStorage.getItem('tibia-backpack-column') as 'left' | 'right';
+            const savedColumn = localStorage.getItem(LOCALSTORAGE_KEYS.BACKPACK_COLUMN) as 'left' | 'right';
             if (savedColumn === 'left' || savedColumn === 'right') {
               column = savedColumn;
               console.log('Opening backpack container in saved column:', column);

@@ -1,14 +1,17 @@
-import React, { useState, useRef, useCallback, createContext, useContext, useEffect } from 'react';
+import React, { useState, useRef, useCallback, createContext, useContext, useEffect, useMemo } from 'react';
 import './styles/WindowManager.scss';
 import { Window, EquipmentWindow, MinimapWindow, ContainerWindow } from './index';
+import WindowColumn from './components/WindowColumn';
+import WindowColumnRenderer from './components/WindowColumnRenderer';
+import { LOCALSTORAGE_KEYS, COLUMN_TYPES, WINDOW_TYPES, WINDOW_CLASSES, type ColumnType } from './constants';
+import { useLocalStorage, useLocalStorageString } from './hooks/useLocalStorage';
 import type GameClient from '../../../../core/gameclient';
-import { ItemUsePacket } from '../../../../core/protocol';
 
 export interface WindowData {
   id: string;
   title: string;
   component: React.ReactNode;
-  column: 'left' | 'right' | 'left-sub' | 'right-sub';
+  column: ColumnType;
   order: number;
   className?: string;
   pinned?: boolean;
@@ -17,7 +20,7 @@ export interface WindowData {
 export interface SerializableWindowData {
   id: string;
   title: string;
-  column: 'left' | 'right' | 'left-sub' | 'right-sub';
+  column: ColumnType;
   order: number;
   className?: string;
   pinned?: boolean;
@@ -26,7 +29,7 @@ export interface SerializableWindowData {
 interface WindowManagerContextType {
   addWindow: (windowData: WindowData) => void;
   removeWindow: (windowId: string) => void;
-  moveWindow: (windowId: string, newColumn: 'left' | 'right' | 'left-sub' | 'right-sub') => void;
+  moveWindow: (windowId: string, newColumn: ColumnType) => void;
   togglePin: (windowId: string) => void;
   windows: WindowData[];
 }
@@ -46,140 +49,66 @@ interface WindowManagerProps {
   gc?: GameClient;
 }
 
-const WINDOW_STATE_KEY = 'tibia-window-state';
 
 export default function WindowManager({ children, gc }: WindowManagerProps) {
   const [windows, setWindows] = useState<WindowData[]>([]);
   const [draggedWindow, setDraggedWindow] = useState<string | null>(null);
-  const [autoOpenContainersLeft, setAutoOpenContainersLeft] = useState<boolean>(false);
-  const [autoOpenContainersRight, setAutoOpenContainersRight] = useState<boolean>(false);
-  const [autoOpenContainersLeftSub, setAutoOpenContainersLeftSub] = useState<boolean>(false);
-  const [autoOpenContainersRightSub, setAutoOpenContainersRightSub] = useState<boolean>(false);
-  const [showLeftSubPanel, setShowLeftSubPanel] = useState<boolean>(false);
-  const [showRightSubPanel, setShowRightSubPanel] = useState<boolean>(false);
-  const leftColumnRef = useRef<HTMLDivElement>(null);
-  const rightColumnRef = useRef<HTMLDivElement>(null);
-  const leftSubPanelRef = useRef<HTMLDivElement>(null);
-  const rightSubPanelRef = useRef<HTMLDivElement>(null);
-
-  // Load auto-open container settings and sub-panel settings from localStorage on mount
-  useEffect(() => {
-    try {
-      const savedLeft = localStorage.getItem('tibia-auto-open-containers-left');
-      const savedRight = localStorage.getItem('tibia-auto-open-containers-right');
-      const savedLeftSub = localStorage.getItem('tibia-auto-open-containers-left-sub');
-      const savedRightSub = localStorage.getItem('tibia-auto-open-containers-right-sub');
-      const savedLeftSubPanel = localStorage.getItem('tibia-show-left-sub-panel');
-      const savedRightSubPanel = localStorage.getItem('tibia-show-right-sub-panel');
-      
-      if (savedLeft !== null) {
-        setAutoOpenContainersLeft(JSON.parse(savedLeft));
-      }
-      if (savedRight !== null) {
-        setAutoOpenContainersRight(JSON.parse(savedRight));
-      }
-      if (savedLeftSub !== null) {
-        setAutoOpenContainersLeftSub(JSON.parse(savedLeftSub));
-      }
-      if (savedRightSub !== null) {
-        setAutoOpenContainersRightSub(JSON.parse(savedRightSub));
-      }
-      if (savedLeftSubPanel !== null) {
-        setShowLeftSubPanel(JSON.parse(savedLeftSubPanel));
-      }
-      if (savedRightSubPanel !== null) {
-        setShowRightSubPanel(JSON.parse(savedRightSubPanel));
-      }
-    } catch (error) {
-      console.warn('Failed to load panel settings:', error);
+  
+  // Use custom localStorage hooks for better performance and cleaner code
+  const [autoOpenContainersColumnRaw, setAutoOpenContainersColumnRaw] = useLocalStorageString(LOCALSTORAGE_KEYS.AUTO_OPEN_CONTAINERS_COLUMN, null);
+  
+  // Ensure the column value is properly typed
+  const autoOpenContainersColumn: ColumnType | null = autoOpenContainersColumnRaw && Object.values(COLUMN_TYPES).includes(autoOpenContainersColumnRaw as ColumnType) 
+    ? (autoOpenContainersColumnRaw as ColumnType) 
+    : null;
+  
+  const setAutoOpenContainersColumn = useCallback((value: ColumnType | null | ((prev: ColumnType | null) => ColumnType | null)) => {
+    if (typeof value === 'function') {
+      setAutoOpenContainersColumnRaw((prev) => {
+        const newValue = value(prev && Object.values(COLUMN_TYPES).includes(prev as ColumnType) ? (prev as ColumnType) : null);
+        return newValue;
+      });
+    } else {
+      setAutoOpenContainersColumnRaw(value);
     }
-  }, []);
-
-  // Save auto-open container settings to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem('tibia-auto-open-containers-left', JSON.stringify(autoOpenContainersLeft));
-    } catch (error) {
-      console.warn('Failed to save auto-open containers left setting:', error);
-    }
-  }, [autoOpenContainersLeft]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('tibia-auto-open-containers-right', JSON.stringify(autoOpenContainersRight));
-    } catch (error) {
-      console.warn('Failed to save auto-open containers right setting:', error);
-    }
-  }, [autoOpenContainersRight]);
-
-  // Save sub-panel settings to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem('tibia-show-left-sub-panel', JSON.stringify(showLeftSubPanel));
-    } catch (error) {
-      console.warn('Failed to save left sub-panel setting:', error);
-    }
-  }, [showLeftSubPanel]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('tibia-show-right-sub-panel', JSON.stringify(showRightSubPanel));
-    } catch (error) {
-      console.warn('Failed to save right sub-panel setting:', error);
-    }
-  }, [showRightSubPanel]);
-
-  // Save sub-panel auto-open settings to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem('tibia-auto-open-containers-left-sub', JSON.stringify(autoOpenContainersLeftSub));
-    } catch (error) {
-      console.warn('Failed to save left sub-panel auto-open setting:', error);
-    }
-  }, [autoOpenContainersLeftSub]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('tibia-auto-open-containers-right-sub', JSON.stringify(autoOpenContainersRightSub));
-    } catch (error) {
-      console.warn('Failed to save right sub-panel auto-open setting:', error);
-    }
-  }, [autoOpenContainersRightSub]);
+  }, [setAutoOpenContainersColumnRaw]);
+  
+  const [showLeftSubPanel, setShowLeftSubPanel] = useLocalStorage(LOCALSTORAGE_KEYS.SHOW_LEFT_SUB_PANEL, false);
+  const [showRightSubPanel, setShowRightSubPanel] = useLocalStorage(LOCALSTORAGE_KEYS.SHOW_RIGHT_SUB_PANEL, false);
+  
+  const leftColumnRef = useRef<HTMLDivElement | null>(null);
+  const rightColumnRef = useRef<HTMLDivElement | null>(null);
+  const leftSubPanelRef = useRef<HTMLDivElement | null>(null);
+  const rightSubPanelRef = useRef<HTMLDivElement | null>(null);
 
 
-  const toggleAutoOpenContainers = useCallback((column: 'left' | 'right' | 'left-sub' | 'right-sub') => {
-    const newValue = true; // Always enable the clicked column
-    
-    // Disable all other columns
-    setAutoOpenContainersLeft(false);
-    setAutoOpenContainersRight(false);
-    setAutoOpenContainersLeftSub(false);
-    setAutoOpenContainersRightSub(false);
-    
-    // Enable the selected column
-    switch (column) {
-      case 'left':
-        setAutoOpenContainersLeft(newValue);
-        break;
-      case 'right':
-        setAutoOpenContainersRight(newValue);
-        break;
-      case 'left-sub':
-        setAutoOpenContainersLeftSub(newValue);
-        break;
-      case 'right-sub':
-        setAutoOpenContainersRightSub(newValue);
-        break;
-    }
-  }, []);
+
+  const toggleAutoOpenContainers = useCallback((column: ColumnType) => {
+    // If the same column is clicked, toggle it off; otherwise set it as active
+    setAutoOpenContainersColumn(prev => prev === column ? null : column);
+  }, [setAutoOpenContainersColumn]);
 
   const toggleSubPanel = useCallback((panel: 'left' | 'right') => {
     if (panel === 'left') {
-      setShowLeftSubPanel(prev => !prev);
+      setShowLeftSubPanel(prev => {
+        const newValue = !prev;
+        // If hiding the left sub-panel and it has auto-open enabled, transfer to left main panel
+        if (!newValue && autoOpenContainersColumn === COLUMN_TYPES.LEFT_SUB) {
+          setAutoOpenContainersColumn(COLUMN_TYPES.LEFT);
+        }
+        return newValue;
+      });
     } else {
-      setShowRightSubPanel(prev => !prev);
+      setShowRightSubPanel(prev => {
+        const newValue = !prev;
+        // If hiding the right sub-panel and it has auto-open enabled, transfer to right main panel
+        if (!newValue && autoOpenContainersColumn === COLUMN_TYPES.RIGHT_SUB) {
+          setAutoOpenContainersColumn(COLUMN_TYPES.RIGHT);
+        }
+        return newValue;
+      });
     }
-  }, []);
+  }, [autoOpenContainersColumn]);
 
 
   // Load window state from localStorage on mount
@@ -187,19 +116,19 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
     if (!gc) return; // Wait for game client to be available
     
     try {
-      const savedState = localStorage.getItem(WINDOW_STATE_KEY);
+      const savedState = localStorage.getItem(LOCALSTORAGE_KEYS.WINDOW_STATE);
       if (savedState) {
         const parsedWindows: SerializableWindowData[] = JSON.parse(savedState);
         if (Array.isArray(parsedWindows)) {
           // Recreate windows with components (only equipment and minimap)
           const restoredWindows: WindowData[] = parsedWindows
-            .filter(windowConfig => !windowConfig.id.startsWith('container-')) // Explicitly exclude containers
+            .filter(windowConfig => !windowConfig.id.startsWith(WINDOW_TYPES.CONTAINER + '-')) // Explicitly exclude containers
             .map(windowConfig => {
               let component: React.ReactNode;
               
-              if (windowConfig.id === 'equipment') {
+              if (windowConfig.id === WINDOW_TYPES.EQUIPMENT) {
                 component = <EquipmentWindow gc={gc} containerIndex={0} />;
-              } else if (windowConfig.id === 'minimap') {
+              } else if (windowConfig.id === WINDOW_TYPES.MINIMAP) {
                 component = <MinimapWindow gc={gc} />;
               } 
               
@@ -222,7 +151,7 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
     try {
       // Persist only equipment and minimap windows (NOT containers)
       const serializableWindows: SerializableWindowData[] = windows
-        .filter(window => !window.id.startsWith('container-'))
+        .filter(window => !window.id.startsWith(WINDOW_TYPES.CONTAINER + '-'))
         .map(window => ({
           id: window.id,
           title: window.title,
@@ -232,7 +161,7 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
           pinned: window.pinned
         }));
       
-      localStorage.setItem(WINDOW_STATE_KEY, JSON.stringify(serializableWindows));
+      localStorage.setItem(LOCALSTORAGE_KEYS.WINDOW_STATE, JSON.stringify(serializableWindows));
     } catch (error) {
       console.warn('Failed to save window state to localStorage:', error);
     }
@@ -262,7 +191,7 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
     setWindows(prev => prev.filter(w => w.id !== windowId));
   }, []);
 
-  const moveWindow = useCallback((windowId: string, newColumn: 'left' | 'right' | 'left-sub' | 'right-sub') => {
+  const moveWindow = useCallback((windowId: string, newColumn: ColumnType) => {
     setWindows(prev => {
       const window = prev.find(w => w.id === windowId);
       if (!window) return prev;
@@ -298,8 +227,8 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
 
   const handleWindowClose = useCallback((windowId: string) => {
     // Check if this is a container window
-    if (windowId.startsWith('container-')) {
-      const containerId = parseInt(windowId.replace('container-', ''));
+    if (windowId.startsWith(WINDOW_TYPES.CONTAINER + '-')) {
+      const containerId = parseInt(windowId.replace(WINDOW_TYPES.CONTAINER + '-', ''));
       
       // Send close packet to server
       const container = window.gameClient?.player?.getContainer(containerId);
@@ -316,7 +245,7 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
     setDraggedWindow(null);
   }, []);
 
-  const handleColumnDrop = useCallback((e: React.DragEvent, column: 'left' | 'right' | 'left-sub' | 'right-sub') => {
+  const handleColumnDrop = useCallback((e: React.DragEvent, column: ColumnType) => {
     e.preventDefault();
     const windowId = e.dataTransfer.getData('text/plain');
     if (windowId) {
@@ -390,7 +319,37 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
     e.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const toggleWindow = useCallback((windowId: string, column: 'left' | 'right' | 'left-sub' | 'right-sub') => {
+  // Factory function to create window data
+  const createWindowData = useCallback((windowId: string, column: ColumnType): WindowData | null => {
+    if (!gc) return null;
+
+    switch (windowId) {
+      case WINDOW_TYPES.EQUIPMENT:
+        return {
+          id: WINDOW_TYPES.EQUIPMENT,
+          title: 'Equipment',
+          component: <EquipmentWindow gc={gc} containerIndex={0} />,
+          column,
+          order: 0,
+          className: WINDOW_CLASSES.EQUIPMENT,
+          pinned: false
+        };
+      case WINDOW_TYPES.MINIMAP:
+        return {
+          id: WINDOW_TYPES.MINIMAP,
+          title: 'Minimap',
+          component: <MinimapWindow gc={gc} />,
+          column,
+          order: 0,
+          className: WINDOW_CLASSES.MINIMAP,
+          pinned: false
+        };
+      default:
+        return null;
+    }
+  }, [gc]);
+
+  const toggleWindow = useCallback((windowId: string, column: ColumnType) => {
     const existingWindow = windows.find(w => w.id === windowId);
     if (existingWindow) {
       // Window exists, check if it's in the same column
@@ -402,62 +361,93 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
         moveWindow(windowId, column);
       }
     } else {
-      // Window doesn't exist, add it
-      if (windowId === 'equipment' && gc) {
-        addWindow({
-          id: 'equipment',
-          title: 'Equipment',
-          component: <EquipmentWindow gc={gc} containerIndex={0} />,
-          column,
-          order: 0,
-          className: 'equipment-window',
-          pinned: false
-        });
-      } else if (windowId === 'minimap' && gc) {
-        addWindow({
-          id: 'minimap',
-          title: 'Minimap',
-          component: <MinimapWindow gc={gc} />,
-          column,
-          order: 0,
-          className: 'minimap-window',
-          pinned: false
-        });
+      // Window doesn't exist, create and add it
+      const windowData = createWindowData(windowId, column);
+      if (windowData) {
+        addWindow(windowData);
       }
     }
-  }, [windows, addWindow, removeWindow, moveWindow, gc]);
+  }, [windows, addWindow, removeWindow, moveWindow, createWindowData]);
 
-  const leftWindows = windows.filter(w => w.column === 'left' && !w.pinned)
-    .sort((a, b) => a.order - b.order);
+  // Memoized window filtering for better performance
+  const windowGroups = useMemo(() => {
+    const leftWindows = windows.filter(w => w.column === COLUMN_TYPES.LEFT && !w.pinned)
+      .sort((a, b) => a.order - b.order);
+    const leftPinnedWindows = windows.filter(w => w.column === COLUMN_TYPES.LEFT && w.pinned)
+      .sort((a, b) => a.order - b.order);
+    const leftSubWindows = windows.filter(w => w.column === COLUMN_TYPES.LEFT_SUB && !w.pinned)
+      .sort((a, b) => a.order - b.order);
+    const leftSubPinnedWindows = windows.filter(w => w.column === COLUMN_TYPES.LEFT_SUB && w.pinned)
+      .sort((a, b) => a.order - b.order);
+    const rightWindows = windows.filter(w => w.column === COLUMN_TYPES.RIGHT && !w.pinned)
+      .sort((a, b) => a.order - b.order);
+    const rightPinnedWindows = windows.filter(w => w.column === COLUMN_TYPES.RIGHT && w.pinned)
+      .sort((a, b) => a.order - b.order);
+    const rightSubWindows = windows.filter(w => w.column === COLUMN_TYPES.RIGHT_SUB && !w.pinned)
+      .sort((a, b) => a.order - b.order);
+    const rightSubPinnedWindows = windows.filter(w => w.column === COLUMN_TYPES.RIGHT_SUB && w.pinned)
+      .sort((a, b) => a.order - b.order);
 
-  const leftPinnedWindows = windows.filter(w => w.column === 'left' && w.pinned)
-    .sort((a, b) => a.order - b.order);
+    return {
+      leftWindows,
+      leftPinnedWindows,
+      leftSubWindows,
+      leftSubPinnedWindows,
+      rightWindows,
+      rightPinnedWindows,
+      rightSubWindows,
+      rightSubPinnedWindows,
+    };
+  }, [windows]);
 
-  const leftSubWindows = windows.filter(w => w.column === 'left-sub' && !w.pinned)
-    .sort((a, b) => a.order - b.order);
+  // Helper function to check if a column has auto-open enabled
+  const isAutoOpenEnabled = useCallback((column: ColumnType) => autoOpenContainersColumn === column, [autoOpenContainersColumn]);
 
-  const leftSubPinnedWindows = windows.filter(w => w.column === 'left-sub' && w.pinned)
-    .sort((a, b) => a.order - b.order);
+  // Column configuration for cleaner JSX
+  const columnConfigs = useMemo(() => [
+    {
+      column: COLUMN_TYPES.LEFT,
+      windows: windowGroups.leftWindows,
+      pinnedWindows: windowGroups.leftPinnedWindows,
+      showSubPanel: showLeftSubPanel,
+      columnRef: leftColumnRef,
+      hasSubPanel: true,
+    },
+    {
+      column: COLUMN_TYPES.LEFT_SUB,
+      windows: windowGroups.leftSubWindows,
+      pinnedWindows: windowGroups.leftSubPinnedWindows,
+      showSubPanel: undefined,
+      columnRef: leftSubPanelRef,
+      hasSubPanel: false,
+      condition: showLeftSubPanel,
+    },
+    {
+      column: COLUMN_TYPES.RIGHT_SUB,
+      windows: windowGroups.rightSubWindows,
+      pinnedWindows: windowGroups.rightSubPinnedWindows,
+      showSubPanel: undefined,
+      columnRef: rightSubPanelRef,
+      hasSubPanel: false,
+      condition: showRightSubPanel,
+    },
+    {
+      column: COLUMN_TYPES.RIGHT,
+      windows: windowGroups.rightWindows,
+      pinnedWindows: windowGroups.rightPinnedWindows,
+      showSubPanel: showRightSubPanel,
+      columnRef: rightColumnRef,
+      hasSubPanel: true,
+    },
+  ], [windowGroups, showLeftSubPanel, showRightSubPanel]);
 
-  const rightWindows = windows.filter(w => w.column === 'right' && !w.pinned)
-    .sort((a, b) => a.order - b.order);
-
-  const rightPinnedWindows = windows.filter(w => w.column === 'right' && w.pinned)
-    .sort((a, b) => a.order - b.order);
-
-  const rightSubWindows = windows.filter(w => w.column === 'right-sub' && !w.pinned)
-    .sort((a, b) => a.order - b.order);
-
-  const rightSubPinnedWindows = windows.filter(w => w.column === 'right-sub' && w.pinned)
-    .sort((a, b) => a.order - b.order);
-
-  const contextValue: WindowManagerContextType = {
+  const contextValue: WindowManagerContextType = useMemo(() => ({
     addWindow,
     removeWindow,
     moveWindow,
     togglePin,
     windows
-  };
+  }), [addWindow, removeWindow, moveWindow, togglePin, windows]);
 
   return (
     <WindowManagerContext.Provider value={contextValue}>
@@ -465,332 +455,46 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
         <div className="window-columns">
           {/* Left Panel Group */}
           <div className="window-panel-group window-panel-group-left">
-            <div 
-              className={`window-column window-column-left ${draggedWindow ? 'drag-active' : ''}`}
-              ref={leftColumnRef}
-              onDrop={(e) => handleColumnDrop(e, 'left')}
-              onDragOver={handleDragOver}
-            >
-          {/* Left column header with icons */}
-          <div className="window-column-header">
-            <button 
-              className={`window-icon ${(leftWindows.find(w => w.id === 'equipment') || leftPinnedWindows.find(w => w.id === 'equipment')) ? 'active' : ''}`}
-              onClick={() => toggleWindow('equipment', 'left')}
-              title="Equipment"
-            >
-              🧥
-            </button>
-            <button 
-              className={`window-icon ${(leftWindows.find(w => w.id === 'minimap') || leftPinnedWindows.find(w => w.id === 'minimap')) ? 'active' : ''}`}
-              onClick={() => toggleWindow('minimap', 'left')}
-              title="Minimap"
-            >
-              🗺️
-            </button>
-            <button 
-              className={`window-icon ${autoOpenContainersLeft ? 'active' : ''}`}
-              onClick={() => toggleAutoOpenContainers('left')}
-              title={autoOpenContainersLeft ? 'Auto-open containers: ON' : 'Auto-open containers: OFF'}
-            >
-              📦
-            </button>
-            <button 
-              className={`window-icon ${showLeftSubPanel ? 'active' : ''}`}
-              onClick={() => toggleSubPanel('left')}
-              title={showLeftSubPanel ? 'Hide right sub-panel' : 'Show right sub-panel'}
-            >
-              ➡️
-            </button>
-          </div>
-          
-            <div className="window-group-top">
-              {/* Unpinned windows */}
-              {leftWindows.map((window) => (
-                <Window
-                  key={`${window.id}-unpinned`}
-                  id={window.id}
-                  title={window.title}
-                  onClose={() => handleWindowClose(window.id)}
-                  onDragStart={() => handleDragStart(window.id)}
-                  onDragEnd={handleDragEnd}
-                  onPin={(pinned) => togglePin(window.id)}
-                  onDrop={(e) => handleWindowDrop(e, window.id)}
-                  onDragOver={handleDragOver}
-                  isDragging={draggedWindow === window.id}
-                  isPinned={false}
-                  className={window.className}
-                >
-                  {window.component}
-                </Window>
-              ))}
-            </div>
-            
-            <div className="window-group-bottom">
-              {/* Pinned windows at bottom */}
-              {leftPinnedWindows.map((window) => (
-                <Window
-                  key={`${window.id}-pinned`}
-                  id={window.id}
-                  title={window.title}
-                  onClose={() => handleWindowClose(window.id)}
-                  onDragStart={() => handleDragStart(window.id)}
-                  onDragEnd={handleDragEnd}
-                  onPin={(pinned) => togglePin(window.id)}
-                  onDrop={(e) => handleWindowDrop(e, window.id)}
-                  onDragOver={handleDragOver}
-                  isDragging={draggedWindow === window.id}
-                  isPinned={true}
-                  className={window.className}
-                >
-                  {window.component}
-                </Window>
-              ))}
-            </div>
-          </div>
-
-          {/* Left Sub-Panel (appears to the right of left column) */}
-          {showLeftSubPanel && (
-            <div 
-              className={`window-column window-column-left-sub ${draggedWindow ? 'drag-active' : ''}`}
-              ref={leftSubPanelRef}
-              onDrop={(e) => handleColumnDrop(e, 'left-sub')}
-              onDragOver={handleDragOver}
-            >
-              {/* Left Sub-Panel header with icons */}
-              <div className="window-column-header">
-                <button 
-                  className={`window-icon ${(leftSubWindows.find(w => w.id === 'equipment') || leftSubPinnedWindows.find(w => w.id === 'equipment')) ? 'active' : ''}`}
-                  onClick={() => toggleWindow('equipment', 'left-sub')}
-                  title="Equipment"
-                >
-                  🧥
-                </button>
-                <button 
-                  className={`window-icon ${(leftSubWindows.find(w => w.id === 'minimap') || leftSubPinnedWindows.find(w => w.id === 'minimap')) ? 'active' : ''}`}
-                  onClick={() => toggleWindow('minimap', 'left-sub')}
-                  title="Minimap"
-                >
-                  🗺️
-                </button>
-                <button 
-                  className={`window-icon ${autoOpenContainersLeftSub ? 'active' : ''}`}
-                  onClick={() => toggleAutoOpenContainers('left-sub')}
-                  title={autoOpenContainersLeftSub ? 'Auto-open containers: ON' : 'Auto-open containers: OFF'}
-                >
-                  📦
-                </button>
-              </div>
-              
-              <div className="window-group-top">
-                {/* Unpinned windows */}
-                {leftSubWindows.map((window) => (
-                  <Window
-                    key={`${window.id}-unpinned`}
-                    id={window.id}
-                    title={window.title}
-                    onClose={() => handleWindowClose(window.id)}
-                    onDragStart={() => handleDragStart(window.id)}
-                    onDragEnd={handleDragEnd}
-                    onPin={(pinned) => togglePin(window.id)}
-                    onDrop={(e) => handleWindowDrop(e, window.id)}
-                    onDragOver={handleDragOver}
-                    isDragging={draggedWindow === window.id}
-                    isPinned={false}
-                    className={window.className}
-                  >
-                    {window.component}
-                  </Window>
-                ))}
-              </div>
-              
-              <div className="window-group-bottom">
-                {/* Pinned windows at bottom */}
-                {leftSubPinnedWindows.map((window) => (
-                  <Window
-                    key={`${window.id}-pinned`}
-                    id={window.id}
-                    title={window.title}
-                    onClose={() => handleWindowClose(window.id)}
-                    onDragStart={() => handleDragStart(window.id)}
-                    onDragEnd={handleDragEnd}
-                    onPin={(pinned) => togglePin(window.id)}
-                    onDrop={(e) => handleWindowDrop(e, window.id)}
-                    onDragOver={handleDragOver}
-                    isDragging={draggedWindow === window.id}
-                    isPinned={true}
-                    className={window.className}
-                  >
-                    {window.component}
-                  </Window>
-                ))}
-              </div>
-            </div>
-          )}
+            {columnConfigs.slice(0, 2).map((config) => (
+              <WindowColumnRenderer
+                key={config.column}
+                config={config}
+                autoOpenContainers={isAutoOpenEnabled(config.column)}
+                draggedWindow={draggedWindow}
+                onToggleWindow={toggleWindow}
+                onToggleAutoOpenContainers={toggleAutoOpenContainers}
+                onToggleSubPanel={toggleSubPanel}
+                onWindowClose={handleWindowClose}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onTogglePin={togglePin}
+                onColumnDrop={handleColumnDrop}
+                onWindowDrop={handleWindowDrop}
+                onDragOver={handleDragOver}
+              />
+            ))}
           </div>
 
           {/* Right Panel Group */}
           <div className="window-panel-group window-panel-group-right">
-            {/* Right Sub-Panel (appears to the left of right column) */}
-            {showRightSubPanel && (
-              <div 
-                className={`window-column window-column-right-sub ${draggedWindow ? 'drag-active' : ''}`}
-                ref={rightSubPanelRef}
-                onDrop={(e) => handleColumnDrop(e, 'right-sub')}
+            {columnConfigs.slice(2, 4).map((config) => (
+              <WindowColumnRenderer
+                key={config.column}
+                config={config}
+                autoOpenContainers={isAutoOpenEnabled(config.column)}
+                draggedWindow={draggedWindow}
+                onToggleWindow={toggleWindow}
+                onToggleAutoOpenContainers={toggleAutoOpenContainers}
+                onToggleSubPanel={toggleSubPanel}
+                onWindowClose={handleWindowClose}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onTogglePin={togglePin}
+                onColumnDrop={handleColumnDrop}
+                onWindowDrop={handleWindowDrop}
                 onDragOver={handleDragOver}
-              >
-                {/* Right Sub-Panel header with icons */}
-                <div className="window-column-header">
-                  <button 
-                    className={`window-icon ${(rightSubWindows.find(w => w.id === 'equipment') || rightSubPinnedWindows.find(w => w.id === 'equipment')) ? 'active' : ''}`}
-                    onClick={() => toggleWindow('equipment', 'right-sub')}
-                    title="Equipment"
-                  >
-                    🧥
-                  </button>
-                  <button 
-                    className={`window-icon ${(rightSubWindows.find(w => w.id === 'minimap') || rightSubPinnedWindows.find(w => w.id === 'minimap')) ? 'active' : ''}`}
-                    onClick={() => toggleWindow('minimap', 'right-sub')}
-                    title="Minimap"
-                  >
-                    🗺️
-                  </button>
-                  <button 
-                    className={`window-icon ${autoOpenContainersRightSub ? 'active' : ''}`}
-                    onClick={() => toggleAutoOpenContainers('right-sub')}
-                    title={autoOpenContainersRightSub ? 'Auto-open containers: ON' : 'Auto-open containers: OFF'}
-                  >
-                    📦
-                  </button>
-                </div>
-                
-                <div className="window-group-top">
-                  {/* Unpinned windows */}
-                  {rightSubWindows.map((window) => (
-                    <Window
-                      key={`${window.id}-unpinned`}
-                      id={window.id}
-                      title={window.title}
-                      onClose={() => handleWindowClose(window.id)}
-                      onDragStart={() => handleDragStart(window.id)}
-                      onDragEnd={handleDragEnd}
-                      onPin={(pinned) => togglePin(window.id)}
-                      onDrop={(e) => handleWindowDrop(e, window.id)}
-                      onDragOver={handleDragOver}
-                      isDragging={draggedWindow === window.id}
-                      isPinned={false}
-                      className={window.className}
-                    >
-                      {window.component}
-                    </Window>
-                  ))}
-                </div>
-                
-                <div className="window-group-bottom">
-                  {/* Pinned windows at bottom */}
-                  {rightSubPinnedWindows.map((window) => (
-                    <Window
-                      key={`${window.id}-pinned`}
-                      id={window.id}
-                      title={window.title}
-                      onClose={() => handleWindowClose(window.id)}
-                      onDragStart={() => handleDragStart(window.id)}
-                      onDragEnd={handleDragEnd}
-                      onPin={(pinned) => togglePin(window.id)}
-                      onDrop={(e) => handleWindowDrop(e, window.id)}
-                      onDragOver={handleDragOver}
-                      isDragging={draggedWindow === window.id}
-                      isPinned={true}
-                      className={window.className}
-                    >
-                      {window.component}
-                    </Window>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div 
-              className={`window-column window-column-right ${draggedWindow ? 'drag-active' : ''}`}
-              ref={rightColumnRef}
-              onDrop={(e) => handleColumnDrop(e, 'right')}
-              onDragOver={handleDragOver}
-            >
-            {/* Right column header with icons */}
-            <div className="window-column-header">
-              <button 
-                className={`window-icon ${(rightWindows.find(w => w.id === 'equipment') || rightPinnedWindows.find(w => w.id === 'equipment')) ? 'active' : ''}`}
-                onClick={() => toggleWindow('equipment', 'right')}
-                title="Equipment"
-              >
-                🧥
-              </button>
-              <button 
-                className={`window-icon ${(rightWindows.find(w => w.id === 'minimap') || rightPinnedWindows.find(w => w.id === 'minimap')) ? 'active' : ''}`}
-                onClick={() => toggleWindow('minimap', 'right')}
-                title="Minimap"
-              >
-                🗺️
-              </button>
-              <button 
-                className={`window-icon ${autoOpenContainersRight ? 'active' : ''}`}
-                onClick={() => toggleAutoOpenContainers('right')}
-                title={autoOpenContainersRight ? 'Auto-open containers: ON' : 'Auto-open containers: OFF'}
-              >
-                📦
-              </button>
-              <button 
-                className={`window-icon ${showRightSubPanel ? 'active' : ''}`}
-                onClick={() => toggleSubPanel('right')}
-                title={showRightSubPanel ? 'Hide left sub-panel' : 'Show left sub-panel'}
-              >
-                ⬅️
-              </button>
-            </div>
-            
-            <div className="window-group-top">
-              {/* Unpinned windows */}
-              {rightWindows.map((window) => (
-                <Window
-                  key={`${window.id}-unpinned`}
-                  id={window.id}
-                  title={window.title}
-                  onClose={() => handleWindowClose(window.id)}
-                  onDragStart={() => handleDragStart(window.id)}
-                  onDragEnd={handleDragEnd}
-                  onPin={(pinned) => togglePin(window.id)}
-                  onDrop={(e) => handleWindowDrop(e, window.id)}
-                  onDragOver={handleDragOver}
-                  isDragging={draggedWindow === window.id}
-                  isPinned={false}
-                  className={window.className}
-                >
-                  {window.component}
-                </Window>
-              ))}
-            </div>
-            
-            <div className="window-group-bottom">
-              {/* Pinned windows at bottom */}
-              {rightPinnedWindows.map((window) => (
-                <Window
-                  key={`${window.id}-pinned`}
-                  id={window.id}
-                  title={window.title}
-                  onClose={() => handleWindowClose(window.id)}
-                  onDragStart={() => handleDragStart(window.id)}
-                  onDragEnd={handleDragEnd}
-                  onPin={(pinned) => togglePin(window.id)}
-                  onDrop={(e) => handleWindowDrop(e, window.id)}
-                  onDragOver={handleDragOver}
-                  isDragging={draggedWindow === window.id}
-                  isPinned={true}
-                  className={window.className}
-                >
-                  {window.component}
-                </Window>
-              ))}
-            </div>
-          </div>
+              />
+            ))}
           </div>
         </div>
 

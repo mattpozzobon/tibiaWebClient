@@ -70,7 +70,6 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
   // Set game as initialized after a delay to prevent auto-opening containers on game entry
   useEffect(() => {
     const timer = setTimeout(() => {
-      console.log('Game initialized - container windows can now be created');
       setIsGameInitialized(true);
     }, 2000); // Wait 2 seconds after component mount
 
@@ -82,25 +81,18 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
     // Listen for container open events
     const handleContainerOpen = (event: CustomEvent) => {
       // Only create container windows if game is fully initialized
-      if (!isGameInitialized) {
-        console.log('Ignoring container open event - game not initialized yet');
-        return;
-      }
+      if (!isGameInitialized) return;
       
       const { containerId, title } = event.detail;
       const windowId = `container-${containerId}`;
       
-      console.log('Creating container window:', windowId, title);
-      
       removeWindow(windowId);
-      
-      const targetColumn = 'right';
       
       addWindow({
         id: windowId,
         title: title,
         component: <ContainerWindow gc={gc} containerId={containerId} />,
-        column: targetColumn,
+        column: 'right',
         order: 0,
         className: 'container-window'
       });

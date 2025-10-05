@@ -152,6 +152,7 @@ export default class Player extends Creature {
   }
 
   public closeContainer(container: any): void {
-    window.gameClient.send(new ContainerClosePacket(container.__containerId));
+    this.containers.removeContainer(container.id);
+    window.gameClient.send(new ContainerClosePacket(container.id));
   }
 }

@@ -260,6 +260,22 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
     setDraggedWindow(windowId);
   }, []);
 
+  const handleWindowClose = useCallback((windowId: string) => {
+    // Check if this is a container window
+    if (windowId.startsWith('container-')) {
+      const containerId = parseInt(windowId.replace('container-', ''));
+      
+      // Send close packet to server
+      const container = window.gameClient?.player?.getContainer(containerId);
+      if (container) {
+        window.gameClient?.player?.closeContainer(container);
+      }
+    }
+    
+    // Remove the window from the UI
+    removeWindow(windowId);
+  }, [removeWindow]);
+
   const handleDragEnd = useCallback(() => {
     setDraggedWindow(null);
   }, []);
@@ -437,7 +453,7 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
                   key={`${window.id}-unpinned`}
                   id={window.id}
                   title={window.title}
-                  onClose={() => removeWindow(window.id)}
+                  onClose={() => handleWindowClose(window.id)}
                   onDragStart={() => handleDragStart(window.id)}
                   onDragEnd={handleDragEnd}
                   onPin={(pinned) => togglePin(window.id)}
@@ -459,7 +475,7 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
                   key={`${window.id}-pinned`}
                   id={window.id}
                   title={window.title}
-                  onClose={() => removeWindow(window.id)}
+                  onClose={() => handleWindowClose(window.id)}
                   onDragStart={() => handleDragStart(window.id)}
                   onDragEnd={handleDragEnd}
                   onPin={(pinned) => togglePin(window.id)}
@@ -513,7 +529,7 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
                   key={`${window.id}-unpinned`}
                   id={window.id}
                   title={window.title}
-                  onClose={() => removeWindow(window.id)}
+                  onClose={() => handleWindowClose(window.id)}
                   onDragStart={() => handleDragStart(window.id)}
                   onDragEnd={handleDragEnd}
                   onPin={(pinned) => togglePin(window.id)}
@@ -535,7 +551,7 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
                   key={`${window.id}-pinned`}
                   id={window.id}
                   title={window.title}
-                  onClose={() => removeWindow(window.id)}
+                  onClose={() => handleWindowClose(window.id)}
                   onDragStart={() => handleDragStart(window.id)}
                   onDragEnd={handleDragEnd}
                   onPin={(pinned) => togglePin(window.id)}

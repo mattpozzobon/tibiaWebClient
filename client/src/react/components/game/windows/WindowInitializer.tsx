@@ -2,6 +2,7 @@ import React, { useEffect, useCallback, useState } from 'react';
 import { useWindowManager, EquipmentWindow, MinimapWindow, ContainerWindow } from './index';
 import type GameClient from '../../../../core/gameclient';
 import { useGameClientInitialized } from '../../../hooks/useGameClientInitialized';
+import { ItemUsePacket } from '../../../../core/protocol';
 
 interface WindowInitializerProps {
   gc: GameClient;
@@ -9,8 +10,20 @@ interface WindowInitializerProps {
 
 export default function WindowInitializer({ gc }: WindowInitializerProps) {
   const { addWindow, removeWindow } = useWindowManager();
-  const { isInitialized: isGameInitialized } = useGameClientInitialized(gc);
+  const { isInitialized: isGameInitialized, hasEquipment } = useGameClientInitialized(gc);
 
+  // Log when equipment is fully initialized
+  useEffect(() => {
+    if (hasEquipment && gc?.player?.equipment) {
+      const equipmentContainer = window.gameClient.player!.getContainer(0);
+      if (!equipmentContainer) return;
+      const thing2 = { which: equipmentContainer, index: 14 } as any;
+      window.gameClient.send(new ItemUsePacket(thing2));
+
+      const thing = { which: equipmentContainer, index: 6 } as any;
+      window.gameClient.send(new ItemUsePacket(thing));
+    }
+  }, [hasEquipment, gc]);
 
   useEffect(() => {
     // Wait a bit to ensure WindowManager has loaded saved state first
@@ -75,11 +88,45 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
       
       removeWindow(windowId);
       
+      // Determine which column to open the container in based on auto-open settings
+      let column: 'left' | 'right' | 'left-sub' | 'right-sub' = 'right';
+      
+      // Check auto-open container settings
+      try {
+        const autoOpenLeft = localStorage.getItem('tibia-auto-open-containers-left') === 'true';
+        const autoOpenRight = localStorage.getItem('tibia-auto-open-containers-right') === 'true';
+        
+        if (autoOpenLeft && !autoOpenRight) {
+          column = 'left';
+        } else if (autoOpenRight && !autoOpenLeft) {
+          column = 'right';
+        } else if (autoOpenLeft && autoOpenRight) {
+          // If both are enabled, prefer left (or could be random)
+          column = 'left';
+        } else {
+          // Neither auto-open is enabled, use default behavior
+          // Check if this is the backpack container and get its preferred column
+          const isBackpackContainer = title === 'backpack' || 
+            (gc?.player?.equipment?.slots?.[6]?.item && 
+             gc.player.equipment.slots[6].item.id === containerId);
+          
+          if (isBackpackContainer) {
+            const savedColumn = localStorage.getItem('tibia-backpack-column') as 'left' | 'right';
+            if (savedColumn === 'left' || savedColumn === 'right') {
+              column = savedColumn;
+              console.log('Opening backpack container in saved column:', column);
+            }
+          }
+        }
+      } catch (_) {
+        // Use default 'right' if localStorage fails
+      }
+      
       addWindow({
         id: windowId,
         title: title,
         component: <ContainerWindow gc={gc} containerId={containerId} />,
-        column: 'right',
+        column: column,
         order: 0,
         className: 'container-window'
       });

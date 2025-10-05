@@ -26,6 +26,20 @@
   box-sizing: border-box;
 }
 
+.window-panel-group {
+  display: flex;
+  height: 100%;
+  gap: 0;
+}
+
+.window-panel-group-left {
+  justify-content: flex-start;
+}
+
+.window-panel-group-right {
+  justify-content: flex-end;
+}
+
 .window-column {
   width: 170px;
   max-width: 170px;
@@ -51,6 +65,14 @@
 }
 
 .window-column-right {
+  align-items: stretch;
+}
+
+.window-column-left-sub {
+  align-items: stretch;
+}
+
+.window-column-right-sub {
   align-items: stretch;
 }
 
@@ -150,7 +172,9 @@
   }
   
   .window-column-left,
-  .window-column-right {
+  .window-column-right,
+  .window-column-left-sub,
+  .window-column-right-sub {
     align-items: center;
   }
 }

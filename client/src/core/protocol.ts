@@ -154,4 +154,13 @@ class LatencyPacket extends PacketWriter {
   }
 }
 
-export { OutfitChangePacket, ContainerClosePacket, ChannelMessagePacket, ChannelJoinPacket, ChannelLeavePacket, ChannelPrivatePacket, MovementPacket, PlayerTurnPacket, ItemMovePacket, ItemLookPacket, ItemUsePacket, ItemUseWithPacket, TargetPacket, LogoutPacket, KeyringOpenPacket, FriendRemovePacket, FriendAddPacket, OfferBuyPacket, SpellCastPacket, LatencyPacket };
+class UseBeltPotionPacket extends PacketWriter {
+  constructor(potionType: 'health' | 'mana' | 'energy') {
+    super(CONST.PROTOCOL.CLIENT.USE_BELT_POTION, 1);
+    // Convert potion type to numeric value
+    const potionTypeValue = potionType === 'health' ? 0 : potionType === 'mana' ? 1 : 2;
+    this.writeUInt8(potionTypeValue);
+  }
+}
+
+export { OutfitChangePacket, ContainerClosePacket, ChannelMessagePacket, ChannelJoinPacket, ChannelLeavePacket, ChannelPrivatePacket, MovementPacket, PlayerTurnPacket, ItemMovePacket, ItemLookPacket, ItemUsePacket, ItemUseWithPacket, TargetPacket, LogoutPacket, KeyringOpenPacket, FriendRemovePacket, FriendAddPacket, OfferBuyPacket, SpellCastPacket, LatencyPacket, UseBeltPotionPacket };

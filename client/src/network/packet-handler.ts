@@ -84,8 +84,10 @@ class PacketHandler {
     if (!creature) return;
 
     if (packet.toggle) {
+      console.log('handleCondition: add condition', packet.cid);
       creature.addCondition(packet.cid);
     } else {
+      console.log('handleCondition: remove condition', packet.cid);
       creature.removeCondition(packet.cid);
     }
   }

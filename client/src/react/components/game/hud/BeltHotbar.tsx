@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { usePlayerEquipment } from '../../../hooks/usePlayerAttribute';
 import { ItemRenderer } from '../../../../utils/item-renderer';
-import { ItemUsePacket } from '../../../../core/protocol';
+import { UseBeltPotionPacket } from '../../../../core/protocol';
 import type GameClient from '../../../../core/gameclient';
 import type Item from '../../../../game/item';
 import './styles/BeltHotbar.scss';
@@ -112,11 +112,13 @@ export default function BeltHotbar({ gc }: BeltHotbarProps) {
                       (index === 2 && addonState.energyPotion > 0);
       
       if (isActive) {
-        // For now, just log the potion type - you can implement actual potion usage later
-        console.log(`Using ${potionType} potion`);
+        // Send the belt potion packet to the server
+        const packet = new UseBeltPotionPacket(potionType);
+        gc.send(packet);
+        console.log(`Using ${potionType} potion via belt hotbar`);
       }
     }
-  }, [getPotionType, addonState]);
+  }, [getPotionType, addonState, gc]);
 
   // Handle keyboard shortcuts
   useEffect(() => {

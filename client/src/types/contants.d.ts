@@ -37,6 +37,7 @@ export interface Constants {
         OPEN_KEYRING: number;
         CLIENT_USE_TILE: number;
         TARGET_CANCEL: number;
+        USE_BELT_POTION: number;
         REMOVE_FRIEND: number;
         ADD_FRIEND: number;
       };
@@ -208,8 +209,8 @@ export interface Constants {
       ELECTRIFIED: number;
       INVISIBLE: number;
       PROTECTION_ZONE: number;
+      COMBAT_LOCK: number;
       SUPPRESS_DRUNK: number;
-      LIGHT: number;
       HEALING: number;
       REGENERATION: number;
       MORPH: number;
@@ -218,6 +219,9 @@ export interface Constants {
       SATED: number;
       HASTE: number;
       ARENA: number;
+      HEALTH_HEALING: number;
+      MANA_HEALING: number;
+      ENERGY_HEALING: number;
     };
     BLOODTYPE: {
       BLOOD: number;

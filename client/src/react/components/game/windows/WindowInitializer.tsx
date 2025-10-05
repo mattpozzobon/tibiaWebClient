@@ -95,16 +95,19 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
       try {
         const autoOpenLeft = localStorage.getItem('tibia-auto-open-containers-left') === 'true';
         const autoOpenRight = localStorage.getItem('tibia-auto-open-containers-right') === 'true';
+        const autoOpenLeftSub = localStorage.getItem('tibia-auto-open-containers-left-sub') === 'true';
+        const autoOpenRightSub = localStorage.getItem('tibia-auto-open-containers-right-sub') === 'true';
         
-        if (autoOpenLeft && !autoOpenRight) {
+        if (autoOpenLeft) {
           column = 'left';
-        } else if (autoOpenRight && !autoOpenLeft) {
+        } else if (autoOpenRight) {
           column = 'right';
-        } else if (autoOpenLeft && autoOpenRight) {
-          // If both are enabled, prefer left (or could be random)
-          column = 'left';
+        } else if (autoOpenLeftSub) {
+          column = 'left-sub';
+        } else if (autoOpenRightSub) {
+          column = 'right-sub';
         } else {
-          // Neither auto-open is enabled, use default behavior
+          // No auto-open toggle is active, use default behavior
           // Check if this is the backpack container and get its preferred column
           const isBackpackContainer = title === 'backpack' || 
             (gc?.player?.equipment?.slots?.[6]?.item && 

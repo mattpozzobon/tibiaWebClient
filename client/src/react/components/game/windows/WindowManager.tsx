@@ -53,6 +53,8 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
   const [draggedWindow, setDraggedWindow] = useState<string | null>(null);
   const [autoOpenContainersLeft, setAutoOpenContainersLeft] = useState<boolean>(false);
   const [autoOpenContainersRight, setAutoOpenContainersRight] = useState<boolean>(false);
+  const [autoOpenContainersLeftSub, setAutoOpenContainersLeftSub] = useState<boolean>(false);
+  const [autoOpenContainersRightSub, setAutoOpenContainersRightSub] = useState<boolean>(false);
   const [showLeftSubPanel, setShowLeftSubPanel] = useState<boolean>(false);
   const [showRightSubPanel, setShowRightSubPanel] = useState<boolean>(false);
   const leftColumnRef = useRef<HTMLDivElement>(null);
@@ -65,6 +67,8 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
     try {
       const savedLeft = localStorage.getItem('tibia-auto-open-containers-left');
       const savedRight = localStorage.getItem('tibia-auto-open-containers-right');
+      const savedLeftSub = localStorage.getItem('tibia-auto-open-containers-left-sub');
+      const savedRightSub = localStorage.getItem('tibia-auto-open-containers-right-sub');
       const savedLeftSubPanel = localStorage.getItem('tibia-show-left-sub-panel');
       const savedRightSubPanel = localStorage.getItem('tibia-show-right-sub-panel');
       
@@ -73,6 +77,12 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
       }
       if (savedRight !== null) {
         setAutoOpenContainersRight(JSON.parse(savedRight));
+      }
+      if (savedLeftSub !== null) {
+        setAutoOpenContainersLeftSub(JSON.parse(savedLeftSub));
+      }
+      if (savedRightSub !== null) {
+        setAutoOpenContainersRightSub(JSON.parse(savedRightSub));
       }
       if (savedLeftSubPanel !== null) {
         setShowLeftSubPanel(JSON.parse(savedLeftSubPanel));
@@ -119,55 +129,49 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
     }
   }, [showRightSubPanel]);
 
-  // Function to open all available containers in the specified column
-  const openAllContainers = useCallback((column: 'left' | 'right') => {
-    if (!gc?.player) return;
-
+  // Save sub-panel auto-open settings to localStorage
+  useEffect(() => {
     try {
-      const equipmentContainer = gc.player.getContainer(0);
-      if (!equipmentContainer) return;
-
-      // Open backpack (slot 6)
-      const backpackThing = { which: equipmentContainer, index: 6 } as any;
-      window.gameClient.send(new ItemUsePacket(backpackThing));
-
-      // Open other common container slots if they exist
-      // You can add more container slots here as needed
-      const containerSlots = [14]; // Add more slots as needed
-      
-      containerSlots.forEach(slotIndex => {
-        const item = equipmentContainer.getSlotItem(slotIndex);
-        if (item && item.isContainer && item.isContainer()) {
-          const thing = { which: equipmentContainer, index: slotIndex } as any;
-          window.gameClient.send(new ItemUsePacket(thing));
-        }
-      });
-    } catch (e) {
-      console.warn('Failed to open containers:', e);
+      localStorage.setItem('tibia-auto-open-containers-left-sub', JSON.stringify(autoOpenContainersLeftSub));
+    } catch (error) {
+      console.warn('Failed to save left sub-panel auto-open setting:', error);
     }
-  }, [gc]);
+  }, [autoOpenContainersLeftSub]);
 
-  const toggleAutoOpenContainers = useCallback((column: 'left' | 'right') => {
-    if (column === 'left') {
-      setAutoOpenContainersLeft(prev => {
-        const newValue = !prev;
-        // If turning on auto-open, open all containers
-        if (newValue) {
-          setTimeout(() => openAllContainers('left'), 100);
-        }
-        return newValue;
-      });
-    } else {
-      setAutoOpenContainersRight(prev => {
-        const newValue = !prev;
-        // If turning on auto-open, open all containers
-        if (newValue) {
-          setTimeout(() => openAllContainers('right'), 100);
-        }
-        return newValue;
-      });
+  useEffect(() => {
+    try {
+      localStorage.setItem('tibia-auto-open-containers-right-sub', JSON.stringify(autoOpenContainersRightSub));
+    } catch (error) {
+      console.warn('Failed to save right sub-panel auto-open setting:', error);
     }
-  }, [openAllContainers]);
+  }, [autoOpenContainersRightSub]);
+
+
+  const toggleAutoOpenContainers = useCallback((column: 'left' | 'right' | 'left-sub' | 'right-sub') => {
+    const newValue = true; // Always enable the clicked column
+    
+    // Disable all other columns
+    setAutoOpenContainersLeft(false);
+    setAutoOpenContainersRight(false);
+    setAutoOpenContainersLeftSub(false);
+    setAutoOpenContainersRightSub(false);
+    
+    // Enable the selected column
+    switch (column) {
+      case 'left':
+        setAutoOpenContainersLeft(newValue);
+        break;
+      case 'right':
+        setAutoOpenContainersRight(newValue);
+        break;
+      case 'left-sub':
+        setAutoOpenContainersLeftSub(newValue);
+        break;
+      case 'right-sub':
+        setAutoOpenContainersRightSub(newValue);
+        break;
+    }
+  }, []);
 
   const toggleSubPanel = useCallback((panel: 'left' | 'right') => {
     if (panel === 'left') {
@@ -177,44 +181,6 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
     }
   }, []);
 
-  // Effect to automatically open new containers when auto-open is enabled
-  useEffect(() => {
-    if (!gc?.player) return;
-
-    const checkAndOpenNewContainers = () => {
-      try {
-        const equipmentContainer = gc.player!.getContainer(0);
-        if (!equipmentContainer) return;
-
-        // Check if auto-open is enabled for either column
-        const shouldAutoOpen = autoOpenContainersLeft || autoOpenContainersRight;
-        if (!shouldAutoOpen) return;
-
-        // Check all equipment slots for containers that aren't already open
-        const containerSlots = [6, 14]; // backpack and other container slots
-        
-        containerSlots.forEach(slotIndex => {
-          const item = equipmentContainer.getSlotItem(slotIndex);
-          if (item && item.isContainer && item.isContainer()) {
-            // Check if this container is already open
-            const isAlreadyOpen = windows.some(w => w.id.startsWith('container-'));
-            
-            if (!isAlreadyOpen) {
-              const thing = { which: equipmentContainer, index: slotIndex } as any;
-              window.gameClient.send(new ItemUsePacket(thing));
-            }
-          }
-        });
-      } catch (e) {
-        console.warn('Failed to check for new containers:', e);
-      }
-    };
-
-    // Check periodically for new containers
-    const interval = setInterval(checkAndOpenNewContainers, 2000);
-
-    return () => clearInterval(interval);
-  }, [gc, autoOpenContainersLeft, autoOpenContainersRight, windows]);
 
   // Load window state from localStorage on mount
   useEffect(() => {
@@ -606,6 +572,13 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
                 >
                   🗺️
                 </button>
+                <button 
+                  className={`window-icon ${autoOpenContainersLeftSub ? 'active' : ''}`}
+                  onClick={() => toggleAutoOpenContainers('left-sub')}
+                  title={autoOpenContainersLeftSub ? 'Auto-open containers: ON' : 'Auto-open containers: OFF'}
+                >
+                  📦
+                </button>
               </div>
               
               <div className="window-group-top">
@@ -680,6 +653,13 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
                     title="Minimap"
                   >
                     🗺️
+                  </button>
+                  <button 
+                    className={`window-icon ${autoOpenContainersRightSub ? 'active' : ''}`}
+                    onClick={() => toggleAutoOpenContainers('right-sub')}
+                    title={autoOpenContainersRightSub ? 'Auto-open containers: ON' : 'Auto-open containers: OFF'}
+                  >
+                    📦
                   </button>
                 </div>
                 

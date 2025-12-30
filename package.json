@@ -1,16 +1,28 @@
 {
   "scripts": {
-    "build": "webpack --config webpack.config.js",
+    "build": "webpack --config webpack.config.js --mode production",
+    "build:dev": "webpack --config webpack.config.js --mode development",
+    "watch": "webpack --config webpack.config.js --mode development --watch",
+    "start:all": "concurrently \"npm run watch\" \"py client-server.py\"",
+    "start": "npm run dev",
     "upload:data": "node scripts/upload-data.mjs"
   },
   "devDependencies": {
     "@babel/core": "^7.26.9",
     "@babel/preset-env": "^7.26.9",
     "@types/node": "^22.13.5",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
     "@types/webpack": "^5.28.5",
     "babel-loader": "^9.2.1",
+    "concurrently": "^9.2.1",
+    "css-loader": "^7.1.2",
     "dotenv-webpack": "^8.1.0",
     "html-loader": "^5.1.0",
+    "nodemon": "^3.1.10",
+    "sass": "^1.92.1",
+    "sass-loader": "^16.0.5",
+    "style-loader": "^4.0.0",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
@@ -22,6 +34,9 @@
     "events": "^3.3.0",
     "firebase": "^11.9.1",
     "pixi-filters": "^6.1.4",
-    "pixi.js": "^8.11.0"
+    "pixi.js": "^8.11.0",
+    "preact": "^10.27.1",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
   }
 }

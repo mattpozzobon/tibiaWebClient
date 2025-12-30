@@ -11,6 +11,8 @@ import Tile from "../game/tile";
 import { CONST } from "../helper/appContext";
 import Interface from "../ui/interface";
 import BattleWindow from "../ui/window/window-battle";
+import { reactChannelManager } from "../react/services/ReactChannelManager";
+import { reactNotificationManager } from "../react/services/ReactNotificationManager";
 
 
 class PacketHandler {
@@ -82,14 +84,16 @@ class PacketHandler {
     if (!creature) return;
 
     if (packet.toggle) {
+      console.log('handleCondition: add condition', packet.cid);
       creature.addCondition(packet.cid);
     } else {
+      console.log('handleCondition: remove condition', packet.cid);
       creature.removeCondition(packet.cid);
     }
   }
 
   handleTradeOffer(packet: any): void {
-    window.gameClient.interface.modalManager.open("offer-modal", packet);
+    //window.gameClient.interface.modalManager.open("offer-modal", packet);
   }
 
   handlePlayerStatistics(packet: {
@@ -107,7 +111,8 @@ class PacketHandler {
   }
 
   handleOpenChannel(packet: any): void {
-    window.gameClient.interface.channelManager.handleOpenChannel(packet);
+    // TODO: Handle channel opening with ReactChannelManager
+    // window.gameClient.interface.channelManager.handleOpenChannel(packet);
   }
 
   handleAddAchievement(packet: { title: string; description: string }): void {
@@ -147,14 +152,14 @@ class PacketHandler {
   }
 
   handleCancelMessage(packet: any): void {
-    window.gameClient.interface.notificationManager.setCancelMessage(packet);
+    reactNotificationManager.addCancelMessage(packet);
   }
 
   handleServerData(packet: any): void {
     window.gameClient.setServerData(packet);
   }
 
-  handleEmote(packet: { id: number; message: string; color: number }): void {
+  handleEmote(packet: { id: number; type: number; message: string; color: number }): void {
     const creature = window.gameClient.world.getCreature(packet.id);
     if (!creature) return;
     window.gameClient.interface.screenElementManager.createFloatingElement(creature, packet.message, packet.color);
@@ -176,7 +181,7 @@ class PacketHandler {
     );
 
     if (window.gameClient.player === sourceCreature) {
-      window.gameClient.interface.channelManager.addConsoleMessage(
+      reactChannelManager.addConsoleMessage(
         `You heal for ${health} health.`,
         Interface.COLORS.WHITE
       );
@@ -190,10 +195,10 @@ class PacketHandler {
     ambient: { r: number; g: number; b: number; a: number };
     music: string;
   }): void {
-    window.gameClient.interface.notificationManager.setZoneMessage(packet.name, packet.title);
+    reactNotificationManager.addZoneMessage(packet.name, packet.title);
     //window.gameClient.renderer.weatherCanvas.setWeather(packet.weather);
     //window.gameClient.renderer.setAmbientColor(packet.ambient.r, packet.ambient.g, packet.ambient.b, packet.ambient.a);
-    window.gameClient.interface.soundManager.setAmbientTrace(packet.music);
+    //window.gameClient.interface.soundManager.setAmbientTrace(packet.music);
   }
 
   handleLatency(): void {
@@ -221,11 +226,11 @@ class PacketHandler {
   }
 
   handleServerError(message: string): void {
-    window.gameClient.interface.modalManager.open("floater-connecting", { message });
+    //window.gameClient.interface.modalManager.open("floater-connecting", { message });
   }
 
   handleServerMessage(string: string): void {
-    window.gameClient.interface.notificationManager.setServerMessage(string, Interface.COLORS.RED);
+    reactNotificationManager.addServerMessage(string, Interface.COLORS.RED);
   }
 
   
@@ -316,12 +321,12 @@ class PacketHandler {
     targetCreature.increaseHealth(-packet.damage);
 
     if (window.gameClient.player === targetCreature) {
-      window.gameClient.interface.channelManager.addConsoleMessage(
+      reactChannelManager.addConsoleMessage(
         `You lose ${packet.damage} health to a ${sourceCreature.vitals.name}.`,
         Interface.COLORS.WHITE
       );
     } else if (window.gameClient.player === sourceCreature) {
-      window.gameClient.interface.channelManager.addConsoleMessage(
+      reactChannelManager.addConsoleMessage(
         `You deal ${packet.damage} damage to a ${targetCreature.vitals.name}.`,
         Interface.COLORS.WHITE
       );
@@ -337,6 +342,7 @@ class PacketHandler {
   handleChangeOutfit(packet: { id: number; outfit: any }): void {
     let creature = window.gameClient.world.getCreature(packet.id);
     if (!creature) return;
+    console.log('handleChangeOutfit: ', packet.outfit);
     creature.serverSetOutfit(packet.outfit);
   }
 
@@ -414,8 +420,8 @@ class PacketHandler {
     const gender = packet.gender === 0 ? "He" : "She";
     const message = `You see ${packet.name}. ${gender} is level ${packet.level}.`;
 
-    window.gameClient.interface.notificationManager.setServerMessage(message, Interface.COLORS.LIGHTGREEN);
-    window.gameClient.interface.channelManager.addConsoleMessage(message, Interface.COLORS.LIGHTGREEN);
+    reactNotificationManager.addServerMessage(message, Interface.COLORS.LIGHTGREEN);
+    reactChannelManager.addConsoleMessage(message, Interface.COLORS.LIGHTGREEN);
   }
 
   handleItemInformation(packet: any): void {
@@ -455,11 +461,13 @@ class PacketHandler {
       message += ` (X: ${packet.x}, Y: ${packet.y}, Z: ${packet.z})`;
     }
 
-    window.gameClient.interface.notificationManager.setServerMessage(message, Interface.COLORS.LIGHTGREEN);
-    window.gameClient.interface.channelManager.addConsoleMessage(message, Interface.COLORS.LIGHTGREEN);
+    // Use simplified React notification system
+    reactNotificationManager.addServerMessage(message, Interface.COLORS.LIGHTGREEN);
+    reactChannelManager.addConsoleMessage(message, Interface.COLORS.LIGHTGREEN);
   }
 
   handleEntityRemove(id: number): void {
+    console.log('handleEntityRemove: ', id);
     let creature = window.gameClient.world.getCreature(id);
     if (!creature || window.gameClient.isSelf(creature)) return;
 
@@ -473,7 +481,8 @@ class PacketHandler {
 
     creature.remove();
     delete window.gameClient.world.activeCreatures[id];
-    (window.gameClient.interface.windowManager.getWindow("battle-window") as BattleWindow).removeCreature(id);
+    creature.remove();
+    //(window.gameClient.interface.windowManager.getWindow("battle-window") as BattleWindow).removeCreature(id);
   }
 
   handleContainerItemRemove(packet: { containerIndex: number; slotIndex: number; count: number }): void {
@@ -483,36 +492,68 @@ class PacketHandler {
   }
 
   handleContainerAddItem(packet: { containerId: number; itemId: number; count: number; slot: number }): void {
+    console.log('handleContainerAddItem: ', packet);
     let container = window.gameClient.player!.getContainer(packet.containerId);
     if (!container) return;
     container.addItem(new Item(packet.itemId, packet.count), packet.slot);
   }
 
   handleContainerOpen(packet: any): void {
-    let container = new Container(packet);
-    container.createDOM(packet.equipped ? `${packet.title}[E]` : packet.title, packet.items);
-    window.gameClient.interface.windowManager.register(container.window);
+    console.log('handleContainerOpen: ', packet);
+  
+    // Map the packet properties to Container constructor parameters
+    const containerData = {
+      id: packet.guid,        // guid from packet
+      cid: packet.cid,        // client ID from packet
+      items: packet.items,    // items array from packet
+      size: packet.size,      // container size from packet
+      slotTypes: packet.slotTypes // slot types for exclusive slots
+    };
+    
+    let container;
+    try {
+      container = new Container(containerData);
+    } catch (error) {
+      return;
+    }
+    
+    // Add container to player's container list
     window.gameClient.player!.openContainer(container);
+    
+    // Create DOM for the container (this will dispatch the open event)
+    container.createDOM(packet.title, packet.items);
   }
 
   handleContainerClose(id: number): void {
     let container = window.gameClient.player!.getContainer(id);
-    if (!container) return;
     window.gameClient.player!.removeContainer(container);
   }
 
   handlePlayerDisconnect(name: string): void {
-    window.gameClient.player!.friendlist.setOnlineStatus(name, false);
+    window.dispatchEvent(new CustomEvent('playerDisconnect', { detail: { name } }));
   }
 
   handlePlayerConnect(name: string): void {
-    window.gameClient.player!.friendlist.setOnlineStatus(name, true);
+    window.dispatchEvent(new CustomEvent('playerConnect', { detail: { name } }));
+  }
+
+  handleFriendUpdate(friendUpdateData: { friends: any[]; friendRequests: string[] }): void {
+    const { friends, friendRequests } = friendUpdateData;
+    
+    // Update the player's friendlist with new data
+    if (window.gameClient.player?.friendlist) {
+      window.gameClient.player.friendlist.updateFromServer(friends, friendRequests);
+    }
   }
 
   handleCreatureServerMove(packet: { id: number; position: Position; speed: number }): void {
-    console.log('Server stepDuration: ', packet.speed, 'ticks');
     let entity = window.gameClient.world.getCreature(packet.id);
     if (!entity) return;
+
+    // Dispatch event for server-confirmed movement (for minimap and other systems)
+    window.dispatchEvent(new CustomEvent('creatureServerMove', {
+      detail: { id: packet.id, position: packet.position, speed: packet.speed }
+    }));
 
     // Pass the speed as stepDuration to the creature movement system
     window.gameClient.world.__handleCreatureMove(packet.id, packet.position, packet.speed);
@@ -525,19 +566,43 @@ class PacketHandler {
   }
 
   handleReadText(packet: any): void {
-    window.gameClient.interface.modalManager.open("readable-modal", packet);
+    console.log('handleReadText: ', packet);
+    //window.gameClient.interface.modalManager.open("readable-modal", packet);
   }
 
   handleChannelMessage(packet: { id: number; message: string; name: string; color: number }): void {
-    let channel = window.gameClient.interface.channelManager.getChannelById(packet.id);
-    if (!channel) return;
-    channel.addMessage(packet.message, 0, packet.name, packet.color);
+    // Dispatch event for React chat to handle
+    const event = new CustomEvent('channel-message', {
+      detail: {
+        channelId: packet.id,
+        message: packet.message,
+        name: packet.name,
+        color: packet.color
+      }
+    });
+    window.dispatchEvent(event);
   }
 
-  handleDefaultMessage(packet: { id: number }): void {
+  handleDefaultMessage(packet: { id: number; type: number; message: string; color: number }): void {
+    console.log('handleDefaultMessage: ', packet);
     let entity = window.gameClient.world.getCreature(packet.id);
     if (!entity || !window.gameClient.player!.canSeeSmall(entity)) return;
+    
+    // Display message above creature in game world
     entity.say(packet);
+    
+    // Dispatch event for chat systems to listen to
+    const event = new CustomEvent('creature-speech', {
+      detail: {
+        creatureId: packet.id,
+        creatureName: entity.vitals.name,
+        message: packet.message,
+        type: packet.type,
+        color: packet.color,
+        channelId: 0x00 // Default channel for creature speech
+      }
+    });
+    window.dispatchEvent(event);
   }
 
   handleEntityTeleport(packet: { id: number; position: Position }): void {
@@ -589,11 +654,13 @@ class PacketHandler {
   }
 
   handleReceivePrivateMessage(packet: { message: string; name: string }): void {
-    let channel = window.gameClient.interface.channelManager.getChannel(packet.name);
-    if (!channel) {
-      channel = window.gameClient.interface.channelManager.getChannel("Default");
-    }
-    channel!.addPrivateMessage(packet.message, packet.name);
+    const event = new CustomEvent('private-message', {
+      detail: {
+        message: packet.message,
+        name: packet.name
+      }
+    });
+    window.dispatchEvent(event);
   }
 
   handleGainExperience(packet: { id: number; experience: number }): void {
@@ -610,7 +677,7 @@ class PacketHandler {
 
     if (window.gameClient.player !== creature) return;
 
-    window.gameClient.interface.channelManager.addConsoleMessage(
+    reactChannelManager.addConsoleMessage(
       `You gain ${packet.experience} experience.`,
       Interface.COLORS.WHITE
     );
@@ -639,7 +706,7 @@ class PacketHandler {
       color
     );
 
-    window.gameClient.interface.channelManager.addConsoleMessage(
+    reactChannelManager.addConsoleMessage(
       `You lose ${damage} health.`,
       Interface.COLORS.WHITE
     );

@@ -1,50 +1,42 @@
-export  default class State {
-  private __state: Record<string, any>;
+// core/state.ts
+export type Listener<T = any> = (value: T) => void;
 
-  constructor() {
-    /*
-     * Class State
-     * Wrapper that contains properties for state variables with optional callbacks after getting/setting the property
-     * For example: updating the DOM after a creature's health is changed
-     */
-    this.__state = {};
-  }
+export default class State {
+  private __state: Record<string, any> = {};
+  private __listeners = new Map<string, Set<Listener>>();
+
+  // 👇 allow dynamic keys like state.health, state.mana, etc.
+  [key: string]: any;
 
   add<T>(key: string, callback?: (value: T) => void): void {
-    /*
-     * Function State.add
-     * Creates a new property in the state variable
-     */
-
-    // Initialize the state variable
     this.__state[key] = null;
 
-    // Define the getter & setter dynamically
-    Object.defineProperty(this, key, this.__createPattern<T>(key, callback));
-  }
-
-  private __createPattern<T>(key: string, callback?: (value: T) => void): PropertyDescriptor {
-    /*
-     * Function State.__createPattern
-     * Creates a new setter and getter pattern for a property
-     */
-
-    return {
+    Object.defineProperty(this, key, {
       get: (): T => this.__state[key],
-
       set: (value: T): void => {
         this.__state[key] = value;
 
-        // If a callback was supplied, execute it with the set value
         if (callback) {
-          callback(value);
+          try { callback(value); } catch {}
         }
+
+        const set = this.__listeners.get(key);
+        if (set) for (const fn of set) try { (fn as Listener<T>)(value); } catch {}
       },
       enumerable: true,
       configurable: true,
-    };
+    });
   }
 
-  // Index signature to allow dynamic properties
-  [key: string]: any;
+  on<T = any>(key: string, fn: Listener<T>): () => void {
+    const set = this.__listeners.get(key) ?? new Set<Listener>();
+    set.add(fn as Listener);
+    this.__listeners.set(key, set);
+    return () => {
+      const s = this.__listeners.get(key);
+      if (!s) return;
+      s.delete(fn as Listener);
+      if (s.size === 0) this.__listeners.delete(key);
+    };
+  }
 }

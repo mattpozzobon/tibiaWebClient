@@ -181,7 +181,6 @@ class Keyboard {
   private __move(direction: number, position: any): void {
     if (!window.gameClient.networkManager.packetHandler.handlePlayerMove(position)) return;
     window.gameClient.renderer.tileRenderer.refreshVisibleTiles();
-    window.gameClient.interface.modalManager.close();
     window.gameClient.player!.__serverWalkConfirmation = false;
     window.gameClient.send(new MovementPacket(direction));
   }
@@ -192,45 +191,26 @@ class Keyboard {
     window.gameClient.send(new PlayerTurnPacket(direction));
   }
 
-  private __setChatOpacity(value: number): void {
-    const wrapper = document.querySelector(".chatbox-wrapper") as HTMLElement;
-    if (wrapper) wrapper.style.opacity = `${value}`;
-  }
   
   private __handleReturnKey(): void {
-    const modalManager = window.gameClient.interface.modalManager;
-    const input = window.gameClient.interface.channelManager;
+
   
-    // if (!modalManager.isOpened() && !window.gameClient.isConnected()) {
-      //window.gameClient.interface.enterGame();
-    //   return;
-    // }
-  
-    if (modalManager.isOpened()) {
-      modalManager.handleConfirm();
-      return;
+    // Call React chat's handleEnterKey method directly
+    if ((window as any).reactChatWindow && (window as any).reactChatWindow.handleEnterKey) {
+      (window as any).reactChatWindow.handleEnterKey();
     }
-  
-    const chatInput = document.getElementById("chat-input") as HTMLInputElement;
-  
-    if (input.isDisabled()) {
-      input.toggleInputLock();
-      this.__setChatOpacity(1); // fully visible when active
-      return;
-    }
-  
-    // Send message, then lock input again
-    input.handleMessageSend();
-    input.toggleInputLock();
-    this.__setChatOpacity(0.6); // fade out when not typing
   }
 
   private __handleEscapeKey(): void {
-    if (window.gameClient.interface.modalManager.isOpened()) {
-      window.gameClient.interface.modalManager.handleEscape();
-    } else if (window.gameClient.interface.menuManager.isOpened()) {
-      window.gameClient.interface.menuManager.close();
-    } else if (window.gameClient.player && window.gameClient.player.hasTarget()) {
+    // Check if chat is active first
+    const reactChatInput = document.querySelector(".chat-window .chat-input") as HTMLInputElement;
+    if (reactChatInput && document.activeElement === reactChatInput) {
+      // Chat is focused - let React chat handle Escape
+      reactChatInput.blur();
+      return;
+    }
+    
+    if (window.gameClient.player && window.gameClient.player.hasTarget()) {
       window.gameClient.player.setTarget(null);
       window.gameClient.send(new TargetPacket(0));
     }
@@ -239,13 +219,26 @@ class Keyboard {
 
   private __handleKeyType(key: string): void {
     if (this.isShiftDown() && key === Keyboard.KEYS.UP_ARROW) {
-      window.gameClient.interface.channelManager.suggestPrevious();
+      // Message history - let React chat handle this if it's focused
+      const reactChatInput = document.querySelector(".chat-window .chat-input") as HTMLInputElement;
+      if (reactChatInput && document.activeElement === reactChatInput) {
+        // React chat handles message history in its own component
+        return;
+      }
+      // Fallback for other inputs
+      // Use ReactChannelManager for channel suggestions
+      if ((window as any).reactChannelManager) {
+        (window as any).reactChannelManager.suggestPrevious();
+      }
     }
   }
+
 
   private __keyDown = (event: KeyboardEvent): void => {
     // convert event.key to lower case for consistency
     //event.preventDefault();
+    if (!event.key) return; // Skip if key is undefined/null
+    
     const lowerKey = event.key.toLowerCase();
 
     if (!this.__isConfigured(lowerKey)) return;
@@ -258,25 +251,9 @@ class Keyboard {
     }
 
     if (window.gameClient.isConnected()) {
-      if (lowerKey === Keyboard.KEYS.KEY_G && this.isControlDown()) {
-        event.preventDefault();
-        return window.gameClient.interface.sendLogout();
-      }
 
-      if (lowerKey === Keyboard.KEYS.KEY_O && this.isControlDown()) {
-        event.preventDefault();
-        return window.gameClient.interface.openOptions();
-      }
 
-      if (lowerKey === Keyboard.KEYS.KEY_K && this.isControlDown()) {
-        event.preventDefault();
-        return window.gameClient.interface.openCharactherStatus();
-      }
 
-      if (lowerKey === Keyboard.KEYS.KEY_U && this.isControlDown()) {
-        event.preventDefault();
-        return window.gameClient.interface.openOutfit();
-      }
 
       if (lowerKey === Keyboard.KEYS.KEY_M && this.isControlDown()) {
         event.preventDefault();
@@ -285,7 +262,10 @@ class Keyboard {
 
       if (lowerKey === Keyboard.KEYS.KEY_E && this.isControlDown()) {
         event.preventDefault();
-        return window.gameClient.interface.channelManager.closeCurrentChannel();
+        // Use ReactChannelManager for channel closing
+        if ((window as any).reactChannelManager) {
+          (window as any).reactChannelManager.closeCurrentChannel();
+        }
       }
     }
 
@@ -314,16 +294,19 @@ class Keyboard {
           return window.gameClient.renderer.debugger.toggleStatistics();
         }
       }
-      return window.gameClient.interface.hotbarManager.handleKeyPress(code);
+      //return window.gameClient.interface.hotbarManager.handleKeyPress(code);
     }
 
     if (lowerKey === Keyboard.KEYS.TAB && window.gameClient.isConnected()) {
       event.preventDefault();
-      return window.gameClient.interface.channelManager.handleChannelIncrement(1);
+      // Use ReactChannelManager for channel navigation
+      if ((window as any).reactChannelManager) {
+        (window as any).reactChannelManager.handleChannelIncrement(1);
+      }
     }
 
     // When modal is open, block other inputs
-    if (window.gameClient.interface.modalManager.isOpened()) return;
+    //if (window.gameClient.interface.modalManager.isOpened()) return;
 
     // If not on main game body, handle key type
     if (document.activeElement !== document.body) {
@@ -336,6 +319,8 @@ class Keyboard {
   };
 
   private __keyUp = (event: KeyboardEvent): void => {
+    if (!event.key) return; // Skip if key is undefined/null
+    
     const lowerKey = event.key.toLowerCase();
 
     if (!this.__isConfigured(lowerKey)) return;

@@ -1,5 +1,5 @@
+// Vitals.ts
 import State from "../../../core/state";
-import SkillModal from "../../../ui/modals/modal-skills";
 import Position from "../../position";
 
 export interface VitalsData {
@@ -40,56 +40,29 @@ export class Vitals {
     this.maxCapacity = data.maxCapacity;
     this.speed = data.speed;
 
-    this.registerStatListener("health", "maxHealth", this.updateHealthBar);
-    this.registerStatListener("mana", "maxMana", this.updateManaBar);
-    this.registerStatListener("energy", "maxEnergy", this.updateEnergyBar);
+    // register reactive keys
+    this.registerStatListener("health", "maxHealth");
+    this.registerStatListener("mana", "maxMana");
+    this.registerStatListener("energy", "maxEnergy");
+    this.registerStatListener("capacity", "maxCapacity"); 
 
-    // Set values AFTER listeners
+    // set values AFTER listeners are added
     this.state.health = data.health;
     this.state.maxHealth = data.maxHealth;
     this.state.mana = data.mana;
     this.state.maxMana = data.maxMana;
     this.state.energy = data.energy;
     this.state.maxEnergy = data.maxEnergy;
-    this.state.capacity = data.capacity;
 
-    this.setCharactherModal(data);
+    this.state.capacity = data.capacity;       
+    this.state.maxCapacity = data.maxCapacity;
   }
 
-  private setCharactherModal(data: VitalsData): void {
-    (window.gameClient.interface.modalManager.get("skill-modal") as SkillModal)
-      .setCharactherInfo(data);
-  }
-
-  private registerStatListener( statKey: "health" | "mana" | "energy", maxStatKey: "maxHealth" | "maxMana" | "maxEnergy", updateFn: () => void
+  private registerStatListener(
+    statKey: "health" | "mana" | "energy" | "capacity",
+    maxStatKey: "maxHealth" | "maxMana" | "maxEnergy" | "maxCapacity"
   ): void {
-    this.state.add(statKey, updateFn.bind(this));
-    this.state.add(maxStatKey, updateFn.bind(this));
-  }
-
-  private updateHealthBar(): void {
-    const player = window.gameClient.player;
-    if (player && player.vitals.name === this.name) {
-      const fraction = player.getHealthFraction();
-      //player.characterElementPixi.setHealthFraction(fraction);
-    }
-  }
-
-  private updateManaBar(): void {
-    const player = window.gameClient.player;
-    if (player && player.vitals.name === this.name) {
-      const current = this.state.mana ?? 0;
-      const max = this.state.maxMana ?? 1;
-      //player.characterElementPixi.setManaFraction(100);
-    }
-  }
-
-  private updateEnergyBar(): void {
-    const player = window.gameClient.player;
-    if (player && player.vitals.name === this.name) {
-      const current = this.state.energy ?? 0;
-      const max = this.state.maxEnergy ?? 1;
-      //player.characterElementPixi.setEnergyFraction(100);
-    }
+    this.state.add(statKey);
+    this.state.add(maxStatKey);
   }
 }

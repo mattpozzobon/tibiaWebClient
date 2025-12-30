@@ -4,14 +4,23 @@ import Position from "../game/position";
 import { CONST } from "../helper/appContext";
 
 export interface CharacterFrames {
-  characterGroup: any; characterFrame: number;
-  bodyGroup?: any;     bodyFrame?: number;
-  legsGroup?: any;     legsFrame?: number;
-  feetGroup?: any;     feetFrame?: number;
-  leftHandGroup?: any; leftHandFrame?: number;
-  rightHandGroup?: any; rightHandFrame?: number;
-  hairGroup?: any;     hairFrame?: number;
-  headGroup?: any;     headFrame?: number;
+  characterGroup: any;
+  bodyGroup?: any;
+  legsGroup?: any;
+  feetGroup?: any;
+  leftHandGroup?: any;
+  rightHandGroup?: any;
+  backpackGroup?: any;
+  beltGroup?: any;
+  hairGroup?: any;
+  headGroup?: any;
+  healthPotionGroup?: any;
+  manaPotionGroup?: any;
+  energyPotionGroup?: any;
+  bagGroup?: any;
+  frame: number; // Single frame for most groups
+  leftHandFrame?: number; // Individual frame for left hand
+  rightHandFrame?: number; // Individual frame for right hand
   isMoving: boolean;
 }
 
@@ -91,7 +100,7 @@ export default class CreatureRendererHelper {
     this.creature.vitals.position = position;
   
     if (window.gameClient.player?.canSeeSmall(this.creature) && position.z === window.gameClient.player.vitals.position.z) {
-      window.gameClient.interface.soundManager.playWalkBit(position);
+      //window.gameClient.interface.soundManager.playWalkBit(position);
     }
   }
 
@@ -189,9 +198,8 @@ export default class CreatureRendererHelper {
     // const frameIndex = Math.floor(progress * frameCount);
     // return Math.max(0, Math.min(frameIndex, frameCount));
 
-    const frame = Math.round((1 - this.getMovingFraction()) * (frameGroup.animationLength - 1))
-    console.log('frame', frame, 'movingFraction', this.getMovingFraction(), 'animationLength', frameGroup.animationLength);
-    return frame;
+    return Math.round((1 - this.getMovingFraction()) * (frameGroup.animationLength - 1))
+
   }
   
 
@@ -205,103 +213,111 @@ export default class CreatureRendererHelper {
 
     // --- Base Character (body) ---
     const characterGroup = characterObject.getFrameGroup(groupType);
-    const characterFrame = isMoving ? this.__getWalkingFrame(characterGroup) : ((characterObject.frameGroups.length === 1 && !characterObject.isAlwaysAnimated()) ? 0 : characterGroup.getAlwaysAnimatedFrame());
-
-    // --- Body equipment ---
-    let bodyGroup = null, bodyFrame = 0;
-    if (outfit.equipment?.body && outfit.equipment.body !== 0) {
-      const bodyObject = outfit.getBodyDataObject && outfit.getBodyDataObject();
-      if (bodyObject) {
-        bodyGroup = bodyObject.getFrameGroup(groupType);
-        bodyFrame = isMoving
-          ? this.__getWalkingFrame(bodyGroup)
-          : (bodyGroup.getAlwaysAnimatedFrame ? bodyGroup.getAlwaysAnimatedFrame() : 0);
+    
+    // Single shared frame for character, equipment, and addons
+    const sharedFrame = isMoving 
+      ? this.__getWalkingFrame(characterGroup) 
+      : ((characterObject.frameGroups.length === 1 && !characterObject.isAlwaysAnimated()) ? 0 : characterGroup.getAlwaysAnimatedFrame());
+    
+    // Unified helper function for both equipment and addons
+    const getGroup = (getterFn: () => any) => {
+      const object = getterFn();
+      if (object) {
+        const group = object.getFrameGroup(groupType);
+        return group || null;
       }
-    }
+      return null;
+    };
 
-    // --- Legs ---
-    let legsGroup = null, legsFrame = 0;
-    if (outfit.equipment?.legs && outfit.equipment.legs !== 0) {
-      const legsObject = outfit.getLegsDataObject && outfit.getLegsDataObject();
-      if (legsObject) {
-        legsGroup = legsObject.getFrameGroup(groupType);
-        legsFrame = isMoving
-          ? this.__getWalkingFrame(legsGroup)
-          : (legsGroup.getAlwaysAnimatedFrame ? legsGroup.getAlwaysAnimatedFrame() : 0);
+    // Helper function for hand groups that need their own frames
+    const getHandGroup = (getterFn: () => any) => {
+      const object = getterFn();
+      if (object) {
+        const group = object.getFrameGroup(groupType);
+        if (group) {
+          const handFrame = isMoving 
+            ? this.__getWalkingFrame(group) 
+            : ((object.frameGroups.length === 1 && !object.isAlwaysAnimated()) ? 0 : group.getAlwaysAnimatedFrame());
+          return { group, frame: handFrame };
+        }
       }
-    }
+      return null;
+    };
 
-    // --- Feet ---
-    let feetGroup = null, feetFrame = 0;
-    if (outfit.equipment?.feet && outfit.equipment.feet !== 0) {
-      const feetObject = outfit.getFeetDataObject && outfit.getFeetDataObject();
-      if (feetObject) {
-        feetGroup = feetObject.getFrameGroup(groupType);
-        feetFrame = isMoving
-          ? this.__getWalkingFrame(feetGroup)
-          : (feetGroup.getAlwaysAnimatedFrame ? feetGroup.getAlwaysAnimatedFrame() : 0);
+    // Equipment configuration
+    const equipmentConfig = [
+      { key: 'bodyGroup', condition: outfit.equipment?.body, getter: () => outfit.getBodyDataObject?.() },
+      { key: 'legsGroup', condition: outfit.equipment?.legs, getter: () => outfit.getLegsDataObject?.() },
+      { key: 'feetGroup', condition: outfit.equipment?.feet, getter: () => outfit.getFeetDataObject?.() },
+      { key: 'backpackGroup', condition: outfit.equipment?.backpack, getter: () => outfit.getBackpackDataObject?.() },
+      { key: 'beltGroup', condition: outfit.equipment?.belt, getter: () => outfit.getBeltDataObject?.() },
+    ];
+
+    // Hand groups configuration (need their own frames)
+    const handConfig = [
+      { key: 'leftHandGroup', condition: outfit.equipment?.lefthand, getter: () => outfit.getLeftHandDataObject?.() },
+      { key: 'rightHandGroup', condition: outfit.equipment?.righthand, getter: () => outfit.getRightHandDataObject?.() },
+    ];
+
+    // Addon configuration
+    const addonConfig = [
+      { key: 'healthPotionGroup', condition: outfit.addons?.healthPotion, getter: () => window.gameClient.dataObjects.getOutfit(800) },
+      { key: 'manaPotionGroup', condition: outfit.addons?.manaPotion, getter: () => window.gameClient.dataObjects.getOutfit(801) },
+      { key: 'energyPotionGroup', condition: outfit.addons?.energyPotion, getter: () => window.gameClient.dataObjects.getOutfit(802) },
+      { key: 'bagGroup', condition: outfit.addons?.bag, getter: () => window.gameClient.dataObjects.getOutfit(803) },
+    ];
+
+    // Initialize all groups
+    const groups: Record<string, any> = {};
+    const handGroups: Record<string, any> = {};
+    
+    // Process equipment
+    equipmentConfig.forEach(({ key, condition, getter }) => {
+      if (condition && condition !== 0) {
+        groups[key] = getGroup(getter);
       }
-    }
+    });
 
-    // --- Left Hand ---
-    let leftHandGroup = null, leftHandFrame = 0;
-    if (outfit.equipment?.lefthand && outfit.equipment.lefthand !== 0) {
-      const leftHandObject = outfit.getLeftHandDataObject && outfit.getLeftHandDataObject();
-      if (leftHandObject) {
-        leftHandGroup = leftHandObject.getFrameGroup(groupType);
-        leftHandFrame = isMoving
-          ? this.__getWalkingFrame(leftHandGroup)
-          : (leftHandGroup.getAlwaysAnimatedFrame ? leftHandGroup.getAlwaysAnimatedFrame() : 0);
+    // Process hand groups (with their own frames)
+    handConfig.forEach(({ key, condition, getter }) => {
+      if (condition && condition !== 0) {
+        handGroups[key] = getHandGroup(getter);
       }
-    }
+    });
 
-    // --- Right Hand ---
-    let rightHandGroup = null, rightHandFrame = 0;
-    if (outfit.equipment?.righthand && outfit.equipment.righthand !== 0) {
-      const rightHandObject = outfit.getRightHandDataObject && outfit.getRightHandDataObject();
-      if (rightHandObject) {
-        rightHandGroup = rightHandObject.getFrameGroup(groupType);
-        rightHandFrame = isMoving
-          ? this.__getWalkingFrame(rightHandGroup)
-          : (rightHandGroup.getAlwaysAnimatedFrame ? rightHandGroup.getAlwaysAnimatedFrame() : 0);
+    // Process addons
+    addonConfig.forEach(({ key, condition, getter }) => {
+      if (condition && condition !== 0) {
+        groups[key] = getGroup(getter);
       }
-    }
+    });
 
-    // --- Head/helmet or hair ---
-    let headGroup = null, headFrame = 0, hairGroup = null, hairFrame = 0;
+    // Handle head/hair (special case)
     const hasHelmet = !!(outfit.equipment?.head && outfit.equipment.head !== 0);
-
-    if (hasHelmet) {
-      const headObject = outfit.getHeadDataObject && outfit.getHeadDataObject();
-      if (headObject) {
-        headGroup = headObject.getFrameGroup(groupType);
-        headFrame = isMoving ? this.__getWalkingFrame(headGroup) : (headGroup.getAlwaysAnimatedFrame ? headGroup.getAlwaysAnimatedFrame() : 0);
-      }
-    } else {
-      const hairObject = outfit.getHairDataObject && outfit.getHairDataObject();
-      if (hairObject) {
-        hairGroup = hairObject.getFrameGroup(groupType);
-        hairFrame = isMoving ? this.__getWalkingFrame(hairGroup) : (hairGroup.getAlwaysAnimatedFrame ? hairGroup.getAlwaysAnimatedFrame() : 0);
-      }
+    if (hasHelmet && outfit.renderHelmet) {
+      groups.headGroup = getGroup(() => outfit.getHeadDataObject?.());
+    } else if (outfit.equipment?.hair && outfit.equipment.hair !== 0) {
+      groups.hairGroup = getGroup(() => outfit.getHairDataObject?.());
     }
 
     return {
       characterGroup,
-      characterFrame,
-      bodyGroup,
-      bodyFrame,
-      legsGroup,
-      legsFrame,
-      feetGroup,
-      feetFrame,
-      leftHandGroup,
-      leftHandFrame,
-      rightHandGroup,
-      rightHandFrame,
-      headGroup,
-      headFrame,
-      hairGroup,
-      hairFrame,
+      bodyGroup: groups.bodyGroup,
+      legsGroup: groups.legsGroup,
+      feetGroup: groups.feetGroup,
+      leftHandGroup: handGroups.leftHandGroup?.group,
+      rightHandGroup: handGroups.rightHandGroup?.group,
+      backpackGroup: groups.backpackGroup,
+      beltGroup: groups.beltGroup,
+      headGroup: groups.headGroup,
+      hairGroup: groups.hairGroup,
+      healthPotionGroup: groups.healthPotionGroup,
+      manaPotionGroup: groups.manaPotionGroup,
+      energyPotionGroup: groups.energyPotionGroup,
+      bagGroup: groups.bagGroup,
+      frame: sharedFrame, // Single frame for most groups
+      leftHandFrame: handGroups.leftHandGroup?.frame, // Individual frame for left hand
+      rightHandFrame: handGroups.rightHandGroup?.frame, // Individual frame for right hand
       isMoving,
     };
   }

@@ -1,7 +1,6 @@
 import State from "../../core/state";
-import InteractiveWindow from "./window"; // Assuming IGameWindow is exported
-import BattleWindow from "./window-battle";
-import FriendWindow from "./window-friend";
+import InteractiveWindow from "./window";
+// Window classes removed - now handled by React components
 
 
 export default class WindowManager {
@@ -10,20 +9,11 @@ export default class WindowManager {
   public state: State;
 
   constructor() {
-    
-    this.windows = {
-      "battle-window": new BattleWindow(document.getElementById("battle-window") as HTMLElement),
-      //"skill-window": new SkillWindow(document.getElementById("skill-window") as HTMLElement),
-      "friend-window": new FriendWindow(document.getElementById("friend-window") as HTMLElement),
-    };
+    // Window system now handled by React components
+    this.windows = {}; // Empty - React components handle windows
 
     this.stacks = document.getElementsByClassName("column");
-    this.__attachStackEventListeners(this.stacks);
-
-    // Default add to left column
-    this.getWindow("battle-window")?.addTo(this.getStack("left")!);
-    this.getWindow("skill-window")?.addTo(this.getStack("left")!);
-    this.getWindow("friend-window")?.addTo(this.getStack("left")!);
+    // No event listeners - React components handle their own interactions
 
     // Initialize state. 
     // If state.add expects a callback function, we supply a no‑op arrow function.
@@ -76,9 +66,7 @@ export default class WindowManager {
   }
 
   private __attachStackEventListeners(stacks: HTMLCollectionOf<Element>): void {
-    Array.from(stacks).forEach((element) => {
-      element.addEventListener("dragover", (e: Event) => this.__handleWindowDrop(e as DragEvent));
-    });
+    // Stack event listeners now handled by React components
   }
 
   private __handleMove(event: MouseEvent): void {

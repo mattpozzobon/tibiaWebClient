@@ -11,7 +11,7 @@ export default class SpriteBatcher {
   }
 
   push(texture: Texture, x: number, y: number, w: number, h: number, outline = false, style?: TileLightStyle): void {
-    const key = texture.baseTexture.uid; // number, stable per base texture
+    const key = texture.source.uid; // number, stable per base texture
     let arr = this.batches.get(key);
     if (!arr) {
       arr = [];

@@ -1,0 +1,241 @@
+/* Minimap HUD Component Styles */
+
+  .minimap-container {
+    position: absolute;
+    bottom: 5px;
+    right: 10px;
+    width: 260px;
+    height: 260px;
+    user-select: none;
+    z-index: 1000;
+  }
+
+  /* When rendered inside a window, flow layout and host controls positioning */
+  .minimap-window .minimap-container,
+  .minimap-window-content .minimap-container {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    z-index: auto;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1; /* fill available content area as a square */
+    margin: 0;
+  }
+
+/* Zoom controls */
+.minimap-zoom-controls {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  z-index: 1001;
+}
+
+.zoom-button {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #444;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  
+  &:hover:not(:disabled) {
+    background: rgba(0, 122, 204, 0.8);
+    border-color: #007acc;
+  }
+  
+  &:active:not(:disabled) {
+    background: rgba(0, 122, 204, 1);
+    transform: scale(0.95);
+  }
+  
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  
+  &.follow {
+    font-size: 12px;
+    padding: 0 4px;
+    
+    &.active {
+      background: rgba(0, 122, 204, 0.9);
+      border-color: #007acc;
+    }
+  }
+}
+
+.zoom-in {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.zoom-out {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+
+  .minimap-canvas-container {
+    position: relative;
+    width: 240px;
+    height: 240px;
+    margin: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* Square minimap sizing inside window (fits 170px column) */
+  .minimap-window .minimap-canvas-container,
+  .minimap-window-content .minimap-canvas-container {
+    position: relative;
+    width: 152px;  /* Match canvas width to eliminate side gaps */
+    height: 140px; /* Height minus top padding and extra margin */
+    margin: 0 auto; /* Center the container within window content */
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;  /* Prevent breakout */
+    box-sizing: border-box;
+    max-height: 140px !important;
+  }
+
+.minimap-canvas {
+  cursor: crosshair;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  background: #000;
+  
+}
+
+/* Square canvas when rendered inside a window */
+.minimap-window .minimap-canvas,
+.minimap-window-content .minimap-canvas {
+  border-radius: 0;
+  clip-path: none;
+  width: 100% !important;  /* Fill entire container width */
+  height: 100% !important; /* Fill entire container height */
+  max-width: 152px !important;
+  max-height: 140px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box;
+  object-fit: cover; /* Cover the entire container */
+  display: block !important;
+  background: transparent !important; /* Remove black background */
+}
+
+.minimap-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #888;
+  font-size: 12px;
+  font-style: italic;
+  text-align: center;
+  width: 120px;
+  z-index: 1;
+}
+
+/* Marker tooltip styles */
+.marker-tooltip {
+  position: fixed;
+  z-index: 99999 !important;
+  background: rgba(0, 0, 0, 0.9) !important;
+  padding: 6px 12px !important;
+  font-size: 14px !important;
+  font-weight: bold !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+}
+
+/* Tooltip positioning for left column (show above magnifier) */
+.window-column-left .minimap-window .minimap-canvas-container .marker-tooltip,
+.window-column-left .minimap-window-content .minimap-canvas-container .marker-tooltip {
+  left: 180px; /* Position to the right of the left column */
+  margin-top: -160px; 
+  right: auto;
+}
+
+/* Tooltip positioning for right column (show above magnifier) */
+.window-column-right .minimap-window .minimap-canvas-container .marker-tooltip,
+.window-column-right .minimap-window-content .minimap-canvas-container .marker-tooltip {
+  right: 180px; 
+  margin-top: -160px; 
+  left: auto;
+}
+
+/* Portal tooltip positioning - optimized with cached column detection */
+.marker-tooltip-portal {
+  /* Base positioning handled by JavaScript */
+  max-width: 200px;
+  word-wrap: break-word;
+}
+
+/* Hide minimap portals when minimap window is minimized */
+.window.minimap-window.minimized ~ * [data-minimap-portal],
+.window.minimap-window.minimized [data-minimap-portal] {
+  display: none !important;
+}
+
+/* Global rule to hide minimap portals when any minimap window is minimized */
+body.minimap-minimized [data-minimap-portal] {
+  display: none !important;
+}
+
+/* Magnifier styles */
+.minimap-magnifier {
+  position: fixed;
+  width: 120px;
+  height: 120px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+  z-index: 1001;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+
+  canvas {
+    width: 120px;
+    height: 120px;
+    pointer-events: none;
+  }
+}
+
+
+
+/* Responsive design */
+  @media (max-width: 768px) {
+    .minimap-container {
+      width: 240px;
+      height: 240px;
+    }
+
+    .minimap-canvas-container {
+      width: 220px;
+      height: 220px;
+      margin: 10px;
+    }
+  }
+
+/* Animation for smooth transitions */
+.minimap-canvas {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}

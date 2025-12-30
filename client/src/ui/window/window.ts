@@ -16,6 +16,14 @@ export default class InteractiveWindow extends EventEmitter {
        * Makes an element with the window class interactive
        */
   
+      // Safety check - element might be null if React handles UI
+      if (!element) {
+        console.warn('InteractiveWindow created with null element - React UI system handles windows');
+        this.__element = null as any; // TypeScript workaround
+        this.state = null as any; // TypeScript workaround
+        return;
+      }
+  
       this.__element = element;
   
       // Make the interactive element draggable

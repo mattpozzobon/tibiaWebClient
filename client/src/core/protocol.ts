@@ -1,18 +1,13 @@
+import Outfit from "../game/outfit";
 import { CONST } from "../helper/appContext";
 import PacketWriter from "../network/packetwriter";
 
 class OutfitChangePacket extends PacketWriter {
-  constructor(outfit: { id: number; details: { head: number; body: number; legs: number; feet: number }; mount: number; mounted: boolean; addonOne: boolean; addonTwo: boolean }) {
-    super(CONST.PROTOCOL.CLIENT.OUTFIT, 11);
-    this.writeUInt16(outfit.id);
+  constructor(outfit: Outfit) {
+    super(CONST.PROTOCOL.CLIENT.OUTFIT, 13);
+    this.writeUInt16(outfit.equipment.hair);
     this.writeUInt8(outfit.details.head);
-    this.writeUInt8(outfit.details.body);
-    this.writeUInt8(outfit.details.legs);
-    this.writeUInt8(outfit.details.feet);
-    this.writeUInt16(outfit.mount);
-    this.writeBoolean(outfit.mounted);
-    this.writeBoolean(outfit.addonOne);
-    this.writeBoolean(outfit.addonTwo);
+    this.writeBoolean(outfit.renderHelmet);
   }
 }
 
@@ -159,4 +154,13 @@ class LatencyPacket extends PacketWriter {
   }
 }
 
-export { OutfitChangePacket, ContainerClosePacket, ChannelMessagePacket, ChannelJoinPacket, ChannelLeavePacket, ChannelPrivatePacket, MovementPacket, PlayerTurnPacket, ItemMovePacket, ItemLookPacket, ItemUsePacket, ItemUseWithPacket, TargetPacket, LogoutPacket, KeyringOpenPacket, FriendRemovePacket, FriendAddPacket, OfferBuyPacket, SpellCastPacket, LatencyPacket };
+class UseBeltPotionPacket extends PacketWriter {
+  constructor(potionType: 'health' | 'mana' | 'energy') {
+    super(CONST.PROTOCOL.CLIENT.USE_BELT_POTION, 1);
+    // Convert potion type to numeric value
+    const potionTypeValue = potionType === 'health' ? 0 : potionType === 'mana' ? 1 : 2;
+    this.writeUInt8(potionTypeValue);
+  }
+}
+
+export { OutfitChangePacket, ContainerClosePacket, ChannelMessagePacket, ChannelJoinPacket, ChannelLeavePacket, ChannelPrivatePacket, MovementPacket, PlayerTurnPacket, ItemMovePacket, ItemLookPacket, ItemUsePacket, ItemUseWithPacket, TargetPacket, LogoutPacket, KeyringOpenPacket, FriendRemovePacket, FriendAddPacket, OfferBuyPacket, SpellCastPacket, LatencyPacket, UseBeltPotionPacket };

@@ -1,6 +1,9 @@
 {
   "fonts/font.fnt": "58783e22afc5aae4253c272b6aa78d8ff3a10e2b",
   "fonts/font.png": "527347d5afeaa830d74c01d1dfc2388ef551323b",
+  "minimap/flag0.png": "c243d2840275f1f0c275ff055986f1ed439aae16",
+  "minimap/flag1.png": "ebecfe4cd72c92a35e26330741f04fa17f233234",
+  "minimap/flag12.png": "00079f9ba1942743f6c0166bf6d360006ccdf6ec",
   "sounds/cave.ogg": "e21bdc6772de328cd9a7454529d922f1ba973e03",
   "sounds/field.ogg": "8f2fce00456116dea7f2832f6e64c09ae1fb44d3",
   "sounds/forest.ogg": "7f45bdfebd126df4a2496b852ce6e5e1a5056320",
@@ -20,8 +23,8 @@
   "sounds/wind.ogg": "981f161f9e1a5749bf5da8e37c7f37b892afe7cc",
   "sounds/wood2.ogg": "fc987ecec7ea20b2e99caa5dc9834655fffaaf15",
   "sprites/constants.json": "990811e2b19d6244464d98a4976b71b788fa1dd5",
-  "sprites/Tibia.dat": "c56c406024e44c40f0a211dc840ebf80e9a9082c",
+  "sprites/Tibia.dat": "0ca3dccc2dd9ec40ff201cfbb46ce8a2f43039d3",
   "sprites/Tibia.otfi": "0f7eb1871ba52340d8b247fe3717e9a46fa23140",
-  "sprites/Tibia.spr": "e4392d8efde726eaddc6e9bb725cccd533b36b60",
-  "sprites/version.json": "f2fab4ae45d67429ba27b1cd9355834ed1f4dacb"
+  "sprites/Tibia.spr": "94abbf1b093e8979900394b0a2b155112d8ebd8b",
+  "sprites/version.json": "0026523e85a69ef492ebc8bbb3f417e659287121"
 }

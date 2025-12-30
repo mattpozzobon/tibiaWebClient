@@ -37,6 +37,7 @@
       "OPEN_KEYRING": 19,
       "CLIENT_USE_TILE": 20,
       "TARGET_CANCEL": 21,
+      "USE_BELT_POTION": 22,
       "REMOVE_FRIEND": 34,
       "ADD_FRIEND": 35
     },
@@ -82,7 +83,8 @@
       "CREATURE_PROPERTY": 37,
       "REMOVE_FRIEND": 40,
       "PLAYER_STATISTICS": 49,
-      "CHANNEL_JOIN": 50
+      "CHANNEL_JOIN": 50,
+      "FRIEND_UPDATE": 51
     }
   },
   "DIRECTION": {
@@ -207,8 +209,8 @@
     "ELECTRIFIED": 3,
     "INVISIBLE": 4,
     "PROTECTION_ZONE": 5,
-    "SUPPRESS_DRUNK": 6,
-    "LIGHT": 7,
+    "COMBAT_LOCK": 6,
+    "SUPPRESS_DRUNK": 7,
     "HEALING": 8,
     "REGENERATION": 9,
     "MORPH": 10,
@@ -216,7 +218,10 @@
     "MAGIC_FLAME": 12,
     "SATED": 13,
     "HASTE": 14,
-    "ARENA": 15
+    "ARENA": 15,
+    "HEALTH_HEALING": 16,
+    "MANA_HEALING": 17,
+    "ENERGY_HEALING": 18
   },
   "BLOODTYPE": {
     "BLOOD": 0,

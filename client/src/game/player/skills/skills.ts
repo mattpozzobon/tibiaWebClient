@@ -1,5 +1,3 @@
-import SkillModal from "../../../ui/modals/modal-skills";
-
 export default class Skills {
   private __skills: { [key: string]: any };
  
@@ -7,9 +5,10 @@ export default class Skills {
   constructor(skills: { [key: string]: any }) {
     
     this.__skills = skills;
-    Object.entries(this.__skills).forEach(([key, value]) => {
-      //(window.gameClient.interface.windowManager.getWindow("skill-window") as SkillWindow).setSkillValue(key, value, Math.random() * 100);
-      (window.gameClient.interface.modalManager.get("skill-modal") as SkillModal).setSkillValue(key, value, Math.random() * 100);
-    });
+    
+    // Modal system now handled by React components
+    
+    // Optional: Could dispatch a custom event for React components to listen to
+    // window.dispatchEvent(new CustomEvent('skillsUpdate', { detail: skills }));
   }
 }

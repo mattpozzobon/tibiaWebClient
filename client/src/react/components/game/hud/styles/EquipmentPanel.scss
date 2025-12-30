@@ -1,0 +1,129 @@
+.equipment-panel.equipment-container {
+  width: 112px;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5px;
+  box-sizing: border-box;
+}
+
+.equipment-panel.equipment-container .equipment-slots {
+  display: grid;
+  grid-template-columns: 32px 32px 32px;
+  grid-template-rows: repeat(5, 32px);
+  gap: 2px;
+  width: fit-content;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.equipment-panel.equipment-container .equipment-slots .slot {
+  width: 32px;
+  height: 32px;
+  position: relative;
+  border: 1px solid transparent;
+  background: transparent;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+  display: block;
+  
+  &:hover {
+    border-color: #fff;
+  }
+  
+  canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    width: 32px;
+    height: 32px;
+    z-index: 100;
+  }
+}
+
+// Manual grid positioning for each slot
+.equipment-panel.equipment-container .equipment-slots .slot-necklace { 
+  background-image: url('../../../../../../png/shoulder.png');
+  grid-column: 1;
+  grid-row: 1;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-helmet { 
+  background-image: url('../../../../../../png/head.png');
+  grid-column: 2;
+  grid-row: 1;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-backpack { 
+  background-image: url('../../../../../../png/backpack.png');
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.equipment-panel.equipment-container .equipment-slots .slot-left { 
+  background-image: url('../../../../../../png/left.png');
+  grid-column: 1;
+  grid-row: 2;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-armor { 
+  background-image: url('../../../../../../png/armor.png');
+  grid-column: 2;
+  grid-row: 2;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-right { 
+  background-image: url('../../../../../../png/right.png');
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.equipment-panel.equipment-container .equipment-slots .slot-belt { 
+  background-image: url('../../../../../../png/item.png');
+  grid-column: 1;
+  grid-row: 3;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-legs { 
+  background-image: url('../../../../../../png/legs.png');
+  grid-column: 2;
+  grid-row: 3;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-quiver { 
+  background-image: url('../../../../../../png/quiver.png');
+  grid-column: 3;
+  grid-row: 3;
+}
+
+.equipment-panel.equipment-container .equipment-slots .slot-ring { 
+  background-image: url('../../../../../../png/ring.png');
+  grid-column: 1;
+  grid-row: 4;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-boots { 
+  background-image: url('../../../../../../png/boots.png');
+  grid-column: 2;
+  grid-row: 4;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-ring2 { 
+  background-image: url('../../../../../../png/ring.png');
+  grid-column: 3;
+  grid-row: 4;
+}
+
+.equipment-panel.equipment-container .equipment-slots .slot-ring3 { 
+  background-image: url('../../../../../../png/ring.png');
+  grid-column: 1;
+  grid-row: 5;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-ring4 { 
+  background-image: url('../../../../../../png/ring.png');
+  grid-column: 2;
+  grid-row: 5;
+}
+.equipment-panel.equipment-container .equipment-slots .slot-ring5 { 
+  background-image: url('../../../../../../png/ring.png');
+  grid-column: 3;
+  grid-row: 5;
+}

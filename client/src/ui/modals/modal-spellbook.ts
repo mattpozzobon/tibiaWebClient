@@ -28,7 +28,7 @@ export default class SpellbookModal extends Modal {
 
   // Using an arrow function property to avoid issues with 'this'
   private __handleClick = (sid: number ): void => {
-    window.gameClient.interface.hotbarManager.addSlot(this.__index, sid);
+    //window.gameClient.interface.hotbarManager.addSlot(this.__index, sid);
     const cancelButton = this.element.querySelector("button[action='cancel']");
     if (cancelButton) {
       // __buttonClick is assumed to be defined on the base class (Modal)

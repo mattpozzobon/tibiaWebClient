@@ -93,9 +93,6 @@ export default class Creature {
     return this.__target !== null;
   }
 
-  public isMounted(): boolean {
-    return this.outfit.mounted;
-  }
 
   public serverSetOutfit(outfit: Outfit): void {
     this.outfit = outfit;

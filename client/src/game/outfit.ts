@@ -14,16 +14,23 @@ export interface OutfitEquipment {
     feet: number;
     lefthand: number;
     righthand: number;
+    backpack: number;
+    belt: number;
+}
+
+export interface OutfitAddons {
+    healthPotion: number;
+    manaPotion: number;
+    energyPotion: number;
+    bag: number;
 }
 
 export default class Outfit {
     id: number;
+    renderHelmet: boolean;
     details: OutfitDetails;
     equipment: OutfitEquipment;
-    mount: number;
-    mounted: boolean;
-    addonOne: boolean;
-    addonTwo: boolean;
+    addons: OutfitAddons;
   
     static colors: number[] = [
       0xFFFFFF, 0xBFD4FF, 0xBFE9FF, 0xBFFFFF, 0xBFFFE9, 0xBFFFD4, 0xBFFFBF,
@@ -50,21 +57,16 @@ export default class Outfit {
     constructor(
       outfit: {
         id: number;
+        renderHelmet: boolean;
         details: OutfitDetails;
         equipment: OutfitEquipment;
-        mount: number;
-        mounted: boolean;
-        addonOne: boolean;
-        addonTwo: boolean;
+        addons: OutfitAddons;
     }) {
-      
       this.id = outfit.id;
+      this.renderHelmet = outfit.renderHelmet;
       this.details = outfit.details;
       this.equipment = outfit.equipment;
-      this.mount = outfit.mount;
-      this.mounted = outfit.mounted;
-      this.addonOne = outfit.addonOne;
-      this.addonTwo = outfit.addonTwo;
+      this.addons = outfit.addons;
     }
   
     equals(other: Outfit): boolean {
@@ -82,12 +84,10 @@ export default class Outfit {
     serialize() {
       return {
         id: this.id,
+        renderHelmet: this.renderHelmet,
         details: { ...this.details },
         equipment: { ...this.equipment },
-        mount: this.mount,
-        mounted: this.mounted,
-        addonOne: this.addonOne,
-        addonTwo: this.addonTwo,
+        addons: { ...this.addons },
       };
     }
   
@@ -100,16 +100,12 @@ export default class Outfit {
     
     toEquipmentString(): string {
       return [
-        `[Equipment]: (${this.equipment.hair}, (${this.equipment.head}, ${this.equipment.body}, ${this.equipment.legs}, ${this.equipment.feet}, ${this.equipment.lefthand}, ${this.equipment.righthand})`
+        `[Equipment]: (${this.equipment.hair}, ${this.equipment.head}, ${this.equipment.body}, ${this.equipment.legs}, ${this.equipment.feet}, ${this.equipment.lefthand}, ${this.equipment.righthand}, ${this.equipment.backpack}, ${this.equipment.belt})`
       ].join(" ");
     }
   
     getSpriteBufferSize(object: any): number {
       return Math.ceil(Math.sqrt(object.frameGroups.reduce((a: number, b: any) => a + 4 * b.width * b.height * b.animationLength, 0)));
-    }
-  
-    getDataObjectMount(): any {
-      return window.gameClient.dataObjects.getOutfit(this.mount);
     }
   
     getLeftHandDataObject(): any {
@@ -138,6 +134,14 @@ export default class Outfit {
   
     getFeetDataObject(): any {
       return window.gameClient.dataObjects.getOutfit(this.equipment.feet);
+    }
+  
+    getBackpackDataObject(): any {
+      return window.gameClient.dataObjects.getOutfit(this.equipment.backpack);
+    }
+  
+    getBeltDataObject(): any {
+      return window.gameClient.dataObjects.getOutfit(this.equipment.belt);
     }
   
     getDataObject(): any {

@@ -2,11 +2,11 @@ import Chunk from "../core/chunk";
 import Clock from "../core/clock";
 import Pathfinder from "../core/pathfinder";
 import { TargetPacket } from "../core/protocol";
-import BattleWindow from "../ui/window/window-battle";
 import Creature from "./creature";
 import Player from "./player/player";
 import Position from "./position";
 import Tile from "./tile";
+import { reactNotificationManager } from "../react/services/ReactNotificationManager";
 
 
 export default class World {
@@ -45,12 +45,24 @@ export default class World {
     this.checkChunks();
     window.gameClient.renderer.tileRenderer.refreshVisibleTiles()
     //window.gameClient.renderer.minimap.setCenter();
-    if (window.gameClient.player!.renderer.getMovementEvent() === null) {
-      window.gameClient.player!.renderer.setMovementEvent(window.gameClient.eventQueue.addEvent(
-        window.gameClient.player!.unlockMovement.bind(window.gameClient.player),
-        10
-      ));
-    }
+    
+    // Dispatch teleportation event for minimap and other systems
+    const player = window.gameClient.player!;
+    window.dispatchEvent(new CustomEvent('creatureMove', {
+      detail: { 
+        id: player.id, 
+        position: player.getPosition(), 
+        speed: 0, // Teleportation has no speed
+        creature: player 
+      }
+    }));
+    
+    // if (window.gameClient.player!.renderer.getMovementEvent() === null) {
+    //   window.gameClient.player!.renderer.setMovementEvent(window.gameClient.eventQueue.addEvent(
+    //     window.gameClient.player!.unlockMovement.bind(window.gameClient.player),
+    //     10
+    //   ));
+    // }
   }
 
   public handleTransformTile(packet: { position: Position; id: number }): void {
@@ -95,15 +107,26 @@ export default class World {
     creature.moveTo(position, speed);
 
     if (creature === window.gameClient.player) {
-      window.gameClient.player!.setAmbientSound();
+      //window.gameClient.player!.setAmbientSound();
     }
+
+    // Dispatch event for minimap and other systems that need to know about creature movement
+    window.dispatchEvent(new CustomEvent('creatureMove', {
+      detail: { id, position, speed, creature }
+    }));
+
     return true;
   }
 
   public createCreature(id: number | string, creature: any): any {
     this.activeCreatures[id] = creature;
     this.addCreature(creature);
-    return (window.gameClient.interface.windowManager.getWindow("battle-window") as BattleWindow).addCreature(creature);
+    
+    // Window system now handled by React components
+    
+    // Optional: Could dispatch a custom event for React components to listen to
+    // window.dispatchEvent(new CustomEvent('creatureAdded', { detail: { id, creature } }));
+    return creature;
   }
 
   public getCreature(id: number | string): Creature | Player | null {
@@ -208,7 +231,8 @@ export default class World {
   
     // Only monsters can be attacked
     if (monster.constructor.name !== "Creature") {
-      return window.gameClient.interface.notificationManager.setCancelMessage("You cannot attack this creature.");
+      reactNotificationManager.addCancelMessage("You cannot attack this creature.");
+      return;
     }
   
     window.gameClient.player!.setTarget(monster);

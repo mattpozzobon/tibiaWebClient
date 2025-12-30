@@ -59,7 +59,7 @@ export default class Modal {
   protected __buttonClick(event: Event): void {
     const target = event.target as HTMLElement;
     if (this.__internalButtonClick(target)) {
-      window.gameClient.interface.modalManager.close();
+     // window.gameClient.interface.modalManager.close();
     }
   }
 

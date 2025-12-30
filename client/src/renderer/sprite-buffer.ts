@@ -40,17 +40,13 @@ export default class SpriteBuffer {
     this.atlasCanvas.height = this.size * cell;
     this.atlasCtx = this.atlasCanvas.getContext("2d")!;
 
-    // Prepare CanvasSource (for v8)
-    this.atlasSource = new CanvasSource({ resource: this.atlasCanvas });
     // Clamp to edge so UVs don't wrap
     this.atlasSource = new CanvasSource({
       resource: this.atlasCanvas,
-    
-      // pixel‐perfect sampling
-      minFilter: SCALE_MODES.NEAREST,
-      magFilter: SCALE_MODES.NEAREST,
-      mipmapFilter: SCALE_MODES.NEAREST,
-      wrapMode: WRAP_MODES.CLAMP
+      minFilter: 'nearest',
+      magFilter: 'nearest',
+      mipmapFilter: 'nearest',
+      wrapMode: 'clamp-to-edge'
     });
 
     // Prepare texture slots and scratch buffer
@@ -83,9 +79,7 @@ export default class SpriteBuffer {
       }
       window.gameClient.interface.loadAssetCallback("sprite", name);
     } catch (e) {
-      window.gameClient.interface.modalManager.open("floater-connecting", {
-        message: e instanceof Error ? e.message : String(e),
-      });
+      console.error(e);
     }
   }
 

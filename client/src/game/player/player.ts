@@ -4,18 +4,15 @@ import { ContainerClosePacket } from "../../core/protocol";
 import Skills from "./skills/skills";
 import Spellbook from "./spellbook/spellbook";
 import Creature, { CreatureData } from "../creature";
-import ConditionManager from "../condition";
-import SkillModal from "../../ui/modals/modal-skills";
-import BattleWindow from "../../ui/window/window-battle";
 import CharacterPixiElement from "../../ui/screen-elements/screen-element-character";
+import Containers from "./containers";
 
 export interface PlayerData extends CreatureData {
   equipment: any;
   spellbook: any;
   friendlist: any;
   skills: any;
-  mounts: any;
-  outfits: any;
+  hairs: any;
   vitals: any;
 }
 
@@ -23,16 +20,15 @@ export default class Player extends Creature {
   public equipment: Equipment;
   public spellbook: Spellbook;
   public friendlist: Friendlist;
+  public containers: Containers;
 
   public skills: Skills;
-  public mounts: any;
-  public outfits: any;
+  public hairs: any;
 
   // Private state for the player
   __movementEvent: any = null;
   __target: any = null;
   __movementBuffer: any = null;
-  __openedContainers: Set<any> = new Set();
   __serverWalkConfirmation: boolean = true;
 
   constructor(data: PlayerData) {
@@ -40,13 +36,9 @@ export default class Player extends Creature {
     this.skills = new Skills(data.skills);
     this.equipment = new Equipment(data.equipment);
     this.spellbook = new Spellbook(data.spellbook);
-    this.friendlist = new Friendlist(data.friendlist);
-    this.mounts = data.mounts;
-    this.outfits = data.outfits;
-
-    // Initialize character bars
-    //this.characterElement.addManaBar((this.vitals.state.mana / this.vitals.state.maxMana) * 100 + "%");
-    //this.characterElement.addEnergyBar((this.vitals.state.energy / this.vitals.state.maxEnergy) * 100 + "%");
+    this.friendlist = new Friendlist(data.friendlist.friends, data.friendlist.friendRequests);
+    this.containers = new Containers();
+    this.hairs = data.hairs;
   }
 
   static create(data: PlayerData): Player {
@@ -71,21 +63,21 @@ export default class Player extends Creature {
     }
   }
 
-  public setLevelSkillValue(which: string, value: number): void {
-    (window.gameClient.interface.modalManager.get("skill-modal") as SkillModal).setSkillValue(which, value, value);
-  }
+  // public setLevelSkillValue(which: string, value: number): void {
+  //   (window.gameClient.interface.modalManager.get("skill-modal") as SkillModal).setSkillValue(which, value, value);
+  // }
 
-  public setAmbientSound(): void {
-    if (this.isUnderground()) {
-      window.gameClient.interface.soundManager.setAmbientTrace("cave");
-      window.gameClient.interface.soundManager.setVolume("rain", 0);
-    } else {
-      window.gameClient.interface.soundManager.setAmbientTrace("forest");
-      // if (window.gameClient.renderer.weatherCanvas.isRaining()) {
-      //   window.gameClient.interface.soundManager.setVolume("rain", 1);
-      // }
-    }
-  }
+  // public setAmbientSound(): void {
+  //   if (this.isUnderground()) {
+  //     window.gameClient.interface.soundManager.setAmbientTrace("cave");
+  //     window.gameClient.interface.soundManager.setVolume("rain", 0);
+  //   } else {
+  //     window.gameClient.interface.soundManager.setAmbientTrace("forest");
+  //     // if (window.gameClient.renderer.weatherCanvas.isRaining()) {
+  //     //   window.gameClient.interface.soundManager.setVolume("rain", 1);
+  //     // }
+  //   }
+  // }
 
   public isUnderground(): boolean {
     return this.getPosition().z < 8;
@@ -123,11 +115,18 @@ export default class Player extends Creature {
 
   public setTarget(creature: any): void {
     this.__target = creature;
-    (window.gameClient.interface.windowManager.getWindow("battle-window")! as BattleWindow).setTarget(creature);
+    
+    // Battle window is now handled by React components
+    // Legacy window system is disabled
+    // const battleWindow = window.gameClient.interface.windowManager.getWindow("battle-window");
+    // if (battleWindow) {
+    //   (battleWindow as BattleWindow).setTarget(creature);
+    // }
+    // TODO: Update React battle component when it's implemented
   }
 
   public openContainer(container: any): void {
-    this.__openedContainers.add(container);
+    this.containers.addContainer(container);
   }
 
   public getItem(containerId: number, slotId: number): any {
@@ -138,27 +137,22 @@ export default class Player extends Creature {
 
   public getContainer(id: number): any {
     if (id === 0x00) return this.equipment;
-    let containers = Array.from(this.__openedContainers);
-    for (let i = 0; i < containers.length; i++) {
-      if (containers[i].__containerId === id) {
-        return containers[i];
-      }
-    }
-    return null;
+    return this.containers.getContainer(id);
   }
 
   public closeAllContainers(): void {
-    this.__openedContainers.forEach((container) => {
-      this.removeContainer(container);
-    });
+    this.containers.closeAllContainers();
   }
 
   public removeContainer(container: any): void {
-    this.__openedContainers.delete(container);
-    container.window.remove();
+    this.containers.removeContainer(container.id);
+    if (container.window) {
+      container.window.remove();
+    }
   }
 
   public closeContainer(container: any): void {
-    window.gameClient.send(new ContainerClosePacket(container.____containerId));
+    this.containers.removeContainer(container.id);
+    window.gameClient.send(new ContainerClosePacket(container.id));
   }
 }

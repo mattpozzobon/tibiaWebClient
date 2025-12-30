@@ -210,13 +210,6 @@ export default class PacketReader extends Packet {
     };
   }
   
-  public readFriend(): { name: string; online: boolean } {
-    return {
-      name: this.readString(),
-      online: this.readBoolean(),
-    };
-  }
-  
   public readAnimationLength(): { min: number; max: number } {
     return {
       min: this.readUInt32(),
@@ -308,6 +301,38 @@ export default class PacketReader extends Packet {
       items: this.readItems(),
     };
   }
+
+  public readOpenContainer2(): {
+    guid: number;
+    cid: number;
+    title: string;
+    size: number;
+    slotTypes: number[];  
+    items: (Item | null)[];
+  } {
+    const guid = this.readUInt32();
+    const cid  = this.readUInt16();
+    const title = this.readString();
+    const size = this.readUInt8();
+  
+    const hasExclusive = this.readUInt8() === 1;
+    const slotTypes: number[] = new Array(hasExclusive ? size : 0);
+    if (hasExclusive) {
+      for (let i = 0; i < size; i++) slotTypes[i] = this.readUInt8();
+    }
+  
+    const items = this.readItemsWithKnownSize(size);
+    return { guid, cid, title, size, slotTypes, items };
+  }
+
+  public readItemsWithKnownSize(size: number): (Item | null)[] {
+    const items: (Item | null)[] = new Array(size);
+    for (let i = 0; i < size; i++) {
+      const item = this.readItem(); // returns Item | null
+      items[i] = item === null ? null : item;
+    }
+    return items;
+  }  
   
   public readUInt8(): number {
     /*
@@ -396,12 +421,19 @@ export default class PacketReader extends Packet {
   }
   
   public readThing(id: number, count: number): Item {
-    let thing = new Thing(id);
-  
+    // Try to create a Thing to check if it's a fluid container, but handle sprite data errors
+    let thing;
+    try {
+      thing = new Thing(id);
+    } catch (error) {
+      // If sprite data isn't available, just create a regular Item
+      return new Item(id, count);
+    }
+
     if (thing.isFluidContainer() || thing.isSplash()) {
       return new FluidThing(id, count) as Item;
     }
-  
+
     return new Item(id, count);
   }
 
@@ -424,17 +456,21 @@ export default class PacketReader extends Packet {
   public readItems(): Item[] {
     /*
      * Function PacketReader.readItems
-     * Reads a consecutive number of items
+     * Reads items for all container slots
      */
-  
+
     let size = this.readUInt8();
-    let items: Item[] = [];
-  
+    let items: Item[] = new Array(size);
+
     for (let i = 0; i < size; i++) {
       let item = this.readItem();
-      if (item) items.push(item);
+      if (item === null) {
+        items[i] = new Item(0, 0); 
+      } else {
+        items[i] = item;
+      }
     }
-  
+
     return items;
   }
 
@@ -467,13 +503,20 @@ export default class PacketReader extends Packet {
   public readOutfit(): Outfit {
     return new Outfit({
       id: this.readUInt16(),
+      renderHelmet: this.readBoolean(),
       details: this.readOutfitDetails(),
       equipment: this.readOutfitEquipment(),
-      mount: this.readUInt16(),
-      mounted: this.readBoolean(),
-      addonOne: this.readBoolean(),
-      addonTwo: this.readBoolean(),
+      addons: this.readOutfitAddons(),
     });
+  }
+
+  public readOutfitAddons(): { healthPotion: number; manaPotion: number; energyPotion: number; bag: number } {
+    return {
+      healthPotion: this.readUInt8(),
+      manaPotion: this.readUInt8(),
+      energyPotion: this.readUInt8(),
+      bag: this.readUInt8(),
+    };
   }
 
   readOutfitEquipment(): OutfitEquipment {
@@ -485,6 +528,8 @@ export default class PacketReader extends Packet {
       feet: this.readUInt16(),
       lefthand: this.readUInt16(),
       righthand: this.readUInt16(),
+      backpack: this.readUInt16(),
+      belt: this.readUInt16(),
     };
   }
   
@@ -568,12 +613,14 @@ export default class PacketReader extends Packet {
      * Function PacketReader.readChannelMessage
      * Reads a channel message
      */
+   
     return {
       id: this.readUInt32(),
       name: this.readString(),
       message: this.readString(),
       color: this.readUInt8(),
     };
+    
   }
   
   public readItemInformation(): {
@@ -614,17 +661,12 @@ export default class PacketReader extends Packet {
     return itemInfo;
   }
   
-  public readEquipment(): Item[] {
-    /*
-     * Function PacketReader.readEquipment
-     * Reads the equipment from the packet which contains ten items
-     */
+  public readEquipment(): (Item | null)[] {
+    let items: (Item | null)[] = [];
   
-    let items: Item[] = [];
-  
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 15; i++) {
       let item = this.readItem();
-      if (item) items.push(item);
+      items[i] = item;
     }
   
     return items;
@@ -666,15 +708,59 @@ export default class PacketReader extends Packet {
     };
   }
 
+  public readFriend(): { name: string; online: boolean } {
+    const nameLength = this.readUInt8();
+    const name = new TextDecoder("utf-8").decode(this.buffer.slice(this.index, this.index + nameLength));
+    this.index += nameLength;
+    const online = this.readUInt8() === 1;
+    
+    return {
+      name: name,
+      online: online
+    };
+  }
+  
+  public readFriendlist(): Array<{ name: string; online: boolean }> {
+    let length = this.readUInt8();
+    let friendlist: Array<{ name: string; online: boolean }> = [];
+    
+    for (let i = 0; i < length; i++) {
+      friendlist.push(this.readFriend());
+    }
+    
+    return friendlist;
+  }
+
+  public readFriendRequests(): string[] {
+    const count = this.readUInt8();
+    const requests: string[] = [];
+    
+    for (let i = 0; i < count; i++) {
+      const nameLength = this.readUInt8();
+      const nameBytes = this.buffer.slice(this.index, this.index + nameLength);
+      this.index += nameLength;
+      const requesterName = new TextDecoder('utf-8').decode(nameBytes);
+      requests.push(requesterName);
+    }
+    
+    return requests;
+  }
+
+  public readFriendUpdate(): { friends: Array<{ name: string; online: boolean }>; friendRequests: string[] } {
+    const friends = this.readFriendlist();
+    const friendRequests = this.readFriendRequests();
+    
+    return { friends, friendRequests };
+  }
+  
   public readPlayerInfo(): {
     id: number;
     skills: any;
     attack: number;
-    equipment: Item[];
-    mounts: OutfitIdName[];
-    outfits: OutfitIdName[];
+    equipment: (Item | null)[];
+    hairs: OutfitIdName[];
     spellbook: number[];
-    friendlist: any[];
+    friendlist: { friends: Array<{ name: string; online: boolean }>; friendRequests: string[] };
     outfit: Outfit;
     vitals: VitalsData;
     conditions: number[];
@@ -684,10 +770,12 @@ export default class PacketReader extends Packet {
       skills: this.readSkills(),
       attack: this.readUInt8(),
       equipment: this.readEquipment(),
-      mounts: this.readOutfits(),
-      outfits: this.readOutfits(),
+      hairs: this.readOutfits(),
       spellbook: this.readArray(),
-      friendlist: this.readFriendlist(),
+      friendlist: {
+        friends: this.readFriendlist(),
+        friendRequests: this.readFriendRequests()
+      },
       outfit: this.readOutfit(),
       vitals: {
         name: this.readString(),
@@ -706,17 +794,6 @@ export default class PacketReader extends Packet {
       },
       conditions: this.readConditions(),
     };
-  }
-  
-  public readFriendlist(): any[] {
-    let length = this.readUInt8();
-    let friendlist: any[] = [];
-  
-    for (let i = 0; i < length; i++) {
-      friendlist.push(this.readFriend());
-    }
-  
-    return friendlist;
   }
   
   public readArray(): number[] {

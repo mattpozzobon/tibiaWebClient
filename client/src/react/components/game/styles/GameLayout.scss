@@ -1,0 +1,42 @@
+.game-layout {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.game-content {
+  position: absolute;
+  top: 0;
+  left: 170px;
+  right: 170px;
+  bottom: 0;
+  width: calc(100vw - 340px);
+  height: 100vh;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.game-content > * {
+  pointer-events: auto;
+}
+
+/* Ensure game canvas can receive events */
+#game-container {
+  pointer-events: auto;
+  z-index: 1;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .game-content {
+    left: 0;
+    right: 0;
+    width: 100vw;
+  }
+}

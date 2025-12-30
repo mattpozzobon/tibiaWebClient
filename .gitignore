@@ -11,3 +11,4 @@ packets.wal
 *.bundle.js
 **/bundle.js
 client/bundle.js
+client/build/

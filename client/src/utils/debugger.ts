@@ -139,7 +139,7 @@ export default class Debugger {
       `Identifier: ${window.gameClient.player!.id}`,
       `Current Position: ${window.gameClient.player!.getPosition().toString()}`,
       `Current Chunk: ${window.gameClient.player!.getChunk().id}`,
-      `Opened Containers: ${window.gameClient.player!.__openedContainers.size}`,
+      `Opened Containers: ${window.gameClient.player!.containers.getContainerCount()}`,
       `Outfit: ${window.gameClient.player!.outfit.toIdAndDetailsString()}`,
       `Outfit: ${window.gameClient.player!.outfit.toEquipmentString()}`,
     ].join("<br>");

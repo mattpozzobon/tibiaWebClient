@@ -13,7 +13,16 @@ export default class SoundTrace {
   constructor(id: string) {
     const el = document.getElementById(id) as HTMLAudioElement | null;
     if (!el) {
-      throw new Error(`Element with id ${id} not found`);
+      console.warn(`SoundTrace: Element with id "${id}" not found - React UI system handles audio`);
+      // Create a dummy audio element to prevent crashes
+      this.element = document.createElement('audio');
+      this.__volume = 0;
+      this.__volumeTarget = 0;
+      this.__volumeStart = 0;
+      this.__steps = 0;
+      this.__counter = 0;
+      this.__playing = false;
+      return;
     }
     this.element = el;
     this.element.loop = true;

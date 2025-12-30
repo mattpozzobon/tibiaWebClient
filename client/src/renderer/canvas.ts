@@ -122,9 +122,9 @@ export default class Canvas {
       0
     );
 
-    if (window.gameClient.interface.settings.isLightingEnabled() && animation.isLight()) {
-      //window.gameClient.renderer.__renderLightThing(renderPosition, animation, 1);
-    }
+    // if (window.gameClient.interface.settings.isLightingEnabled() && animation.isLight()) {
+    //   //window.gameClient.renderer.__renderLightThing(renderPosition, animation, 1);
+    // }
 
     this.drawSprite(animation, renderPosition, 32);
   }

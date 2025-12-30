@@ -1,5 +1,4 @@
 import HeapEvent from "../../../utils/heap-event";
-import SpellbookModal from "../../../modals/modal-spellbook";
 import { SpellCastPacket } from "../../../core/protocol";
 
 export default class Spellbook {
@@ -13,19 +12,28 @@ export default class Spellbook {
     this.spells = new Set(spells);
     this.cooldowns = new Map<number, HeapEvent>();
 
-    // Create the spell list in the modal.
-    (window.gameClient.interface.modalManager.get("spellbook-modal") as SpellbookModal).createSpellList(Array.from(this.spells));
-    window.gameClient.interface.hotbarManager.__loadConfiguration();
+    // Modal system now handled by React components
+    
+    // Optional: Could dispatch a custom event for React components to listen to
+    // window.dispatchEvent(new CustomEvent('spellbookUpdate', { detail: Array.from(this.spells) }));
   }
 
   public addSpell(sid: number): void {
     this.spells.add(sid);
-    (window.gameClient.interface.modalManager.get("spellbook-modal") as SpellbookModal).createSpellList(Array.from(this.spells));
+    
+    // Modal system now handled by React components
+    
+    // Optional: Could dispatch a custom event for React components to listen to
+    // window.dispatchEvent(new CustomEvent('spellAdded', { detail: { spellId: sid, allSpells: Array.from(this.spells) } }));
   }
 
   public removeSpell(sid: number): void {
     this.spells.delete(sid);
-    (window.gameClient.interface.modalManager.get("spellbook-modal") as SpellbookModal).createSpellList(Array.from(this.spells));
+    
+    // Modal system now handled by React components
+    
+    // Optional: Could dispatch a custom event for React components to listen to
+    // window.dispatchEvent(new CustomEvent('spellRemoved', { detail: { spellId: sid, allSpells: Array.from(this.spells) } }));
   }
 
   public castSpell(sid: number): void {

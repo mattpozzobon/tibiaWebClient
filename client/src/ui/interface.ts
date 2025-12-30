@@ -1,31 +1,26 @@
-import ChannelManager from "./managers/channel-manager";
 import HotbarManager from "./managers/hotbar-manager";
-import MenuManager from "./menu/menu-manager";
 import ModalManager from "./modals/modal-manager";
-import OutfitModal from "./modals/modal-outfit";
-import NotificationManager from "./notification";
 import { KeyringOpenPacket, LogoutPacket } from "../core/protocol";
 import ScreenElementManager from "./screen-elements/screen-element-manager";
 import Settings from "./settings";
 import SoundManager from "../audio/sound-manager";
 import State from "../core/state";
 import WindowManager from "./window/window-manager";
-import spriteBuffer from "../renderer/sprite-buffer";
-import LoginFlowManager from "./managers/login-manager";
+import ReactLoginFlowManager from "./managers/react-login-manager";
 import Renderer from "../renderer/renderer";
+import { reactNotificationManager } from "../react/services/ReactNotificationManager";
 
 export default class Interface {
   renderer: Renderer;
-  loginFlowManager: LoginFlowManager;
-  settings: Settings;
-  channelManager: ChannelManager;
-  hotbarManager: HotbarManager;
-  notificationManager: NotificationManager;
-  modalManager: ModalManager;
+  loginFlowManager: ReactLoginFlowManager;
+ // settings: Settings;
+ // hotbarManager: HotbarManager;
+
+  //modalManager: ModalManager;
   //statusBar: StatusBar;
-  windowManager: WindowManager;
-  soundManager: SoundManager;
-  menuManager: MenuManager;
+  //windowManager: WindowManager;
+  //soundManager: SoundManager;
+ //menuManager: MenuManager;
   screenElementManager: ScreenElementManager;
   state: State;
   static readonly SCREEN_WIDTH_MIN = 864;
@@ -99,16 +94,14 @@ export default class Interface {
 
   constructor(renderer: Renderer) {
     this.renderer = renderer;
-    this.settings = new Settings(this);
-    this.loginFlowManager = new LoginFlowManager();
-    this.channelManager = new ChannelManager();
-    this.hotbarManager = new HotbarManager();
-    this.notificationManager = new NotificationManager();
-    this.modalManager = new ModalManager();
+    //this.settings = new Settings(this);
+    this.loginFlowManager = new ReactLoginFlowManager();
+    //this.hotbarManager = new HotbarManager();
+    //this.modalManager = new ModalManager();
     //this.statusBar = new StatusBar();
-    this.windowManager = new WindowManager();
-    this.soundManager = new SoundManager( this.settings.isSoundEnabled());
-    this.menuManager = new MenuManager();
+    //this.windowManager = new WindowManager();
+    //this.soundManager = new SoundManager( this.settings.isSoundEnabled());
+    //this.menuManager = new MenuManager();
     this.screenElementManager = new ScreenElementManager(this.renderer);
     this.state = new State();
     
@@ -130,20 +123,15 @@ export default class Interface {
     window.gameClient.send(new KeyringOpenPacket());
   }
 
-  enableVersionFeatures(version: number): void {
-    if (version <= 1000) {
-      (this.modalManager.get("outfit-modal") as OutfitModal)?.disableAddons();
-    }
-  }
 
   getHexColor(index: number): string {
     return Interface.WEBCOLORS[index] || "#FFFFFF";
   }
 
   reset(): void {
-    this.screenElementManager.clear();
-    this.windowManager.closeAll();
-    this.hideGameInterface();
+    // this.screenElementManager.clear();
+    // this.windowManager.closeAll();
+    //this.hideGameInterface();
   }
 
   loadAssetsDelegator(): void {
@@ -154,49 +142,49 @@ export default class Interface {
     return Boolean(this.state.spritesLoaded && this.state.dataLoaded);
   }
 
-  showModal(id: string): void {
-    this.modalManager.open(id);
-  }
+  // showModal(id: string): void {
+  //   this.modalManager.open(id);
+  // }
 
-  toggleWindow(which: string): void {
-    console.log('toggleWindow', which);
-    this.windowManager.getWindow(which)?.toggle();
-  }
+  // toggleWindow(which: string): void {
+  //   console.log('toggleWindow', which);
+  //   this.windowManager.getWindow(which)?.toggle();
+  // }
 
   setCancelMessage(message: string): void {
-    this.notificationManager.setCancelMessage(message);
+    reactNotificationManager.addCancelMessage(message);
   }
 
-  hideGameInterface(): void {
-    this.loginFlowManager.showPreLogin();
-    this.modalManager.open("floater-enter");
-    window.onresize?.(new UIEvent("resize"));
-  }
+  // hideGameInterface(): void {
+  //   this.loginFlowManager.showPreLogin();
+  //   this.modalManager.open("floater-enter");
+  //   window.onresize?.(new UIEvent("resize"));
+  // }
 
   showGameInterface(): void {
     this.loginFlowManager.showGame();
     window.onresize?.(new UIEvent("resize"));
   }
 
-  loadGameFiles(event: Event): void {
-    console.log('LOAD FROM INTERFACE');
-    const target = event.target as HTMLInputElement;
-    if (!target.files) return;
+  // loadGameFiles(event: Event): void {
+  //   console.log('LOAD FROM INTERFACE');
+  //   const target = event.target as HTMLInputElement;
+  //   if (!target.files) return;
     
-    Array.from(target.files).forEach((file) => {
-      console.debug(`Loading asset ${file.name} from disk.`);
-      const reader = new FileReader();
-      if (file.name === "Tibia.dat") {
-        reader.addEventListener("load", (e) => window.gameClient.dataObjects.load(file.name, e));
-      } else if (file.name === "Tibia.spr") {
-        reader.addEventListener("load", (e) => spriteBuffer.load(file.name, e));
-      } else {
-        console.error(`Unknown asset file ${file.name} was selected.`);
-        return;
-      }
-      reader.readAsArrayBuffer(file);
-    });
-  }
+  //   Array.from(target.files).forEach((file) => {
+  //     console.debug(`Loading asset ${file.name} from disk.`);
+  //     const reader = new FileReader();
+  //     if (file.name === "Tibia.dat") {
+  //       reader.addEventListener("load", (e) => window.gameClient.dataObjects.load(file.name, e));
+  //     } else if (file.name === "Tibia.spr") {
+  //       reader.addEventListener("load", (e) => spriteBuffer.load(file.name, e));
+  //     } else {
+  //       console.error(`Unknown asset file ${file.name} was selected.`);
+  //       return;
+  //     }
+  //     reader.readAsArrayBuffer(file);
+  //   });
+  // }
 
   loadAssetCallback(which: string, filename: string): void {
     if (which === "sprite") {
@@ -251,37 +239,44 @@ export default class Interface {
     //window.gameClient.renderer.minimap.save();
 
     // Save the state of the settings to localstorage
-    this.settings.saveState();
+   // this.settings.saveState();
   }
 
-  sendLogout(): void {
-    const modal = this.modalManager.open("confirm-modal");
-    if (modal) {
-      (modal as any).handleOpen(() => {
-        if (window.gameClient.player!.getTile().isNoLogoutZone()) {
-          window.gameClient.interface.setCancelMessage("You may not logout here.");
-          return;
-        }
-        window.gameClient.send(new LogoutPacket());
-      });
-    }
-  }
+  // sendLogout(): void {
+  //   const modal = this.modalManager.open("confirm-modal");
+  //   if (modal) {
+  //     (modal as any).handleOpen(() => {
+  //       if (window.gameClient.player!.getTile().isNoLogoutZone()) {
+  //         window.gameClient.interface.setCancelMessage("You may not logout here.");
+  //         return;
+  //       }
+  //       window.gameClient.send(new LogoutPacket());
+  //     });
+  //   }
+  // }
 
-  openOptions(): void {
-    this.modalManager.open("settings-modal");
-  }
+  // openOptions(): void {
+  //   this.modalManager.open("settings-modal");
+  // }
 
-  openCharactherStatus(): void {
-    this.modalManager.open("skill-modal");
-  }
+  // openCharactherStatus(): void {
+  //   this.modalManager.open("skill-modal");
+  // }
 
-  openFriendsList(): void {
-    this.modalManager.open("friend-modal");
-  }
+  // openFriendsList(): void {
+  //   this.modalManager.open("friend-modal");
+  // }
 
-  openOutfit(): void {
-    this.modalManager.open("outfit-modal");
-  }
+  // openOutfit(): void {
+  //   // Try React UI system first
+  //   if ((window as any).reactUIManager) {
+  //     (window as any).reactUIManager.openModal('outfit');
+  //     return;
+  //   }
+    
+  //   // Fallback to old modal system
+  //   this.modalManager.open("outfit-modal");
+  // }
 
   handleResize() {
     const screenWidth = window.innerWidth;
@@ -347,14 +342,14 @@ export default class Interface {
   }
 
   public enableTopbarListeners(): void {
-    document.getElementById("openSkills")?.addEventListener("click", () => this.toggleWindow("skill-window"));
-    document.getElementById("openBattle")?.addEventListener("click", () => this.toggleWindow("battle-window"));
-    document.getElementById("openFriends")?.addEventListener("click", () => this.toggleWindow("friend-window"));
-    document.getElementById("logoutButton")?.addEventListener("click", () => this.sendLogout());
-    document.getElementById("load-assets")?.addEventListener("click", () => this.loadAssetsDelegator());
-    document.getElementById("asset-selector")?.addEventListener("change", (event) => this.loadGameFiles(event));
-    //document.getElementById("enter-game")?.addEventListener("click", () => this.enterGame());
-    window.onbeforeunload = () => window.gameClient.isConnected() ? true : undefined;
-    window.onresize = () => this.handleResize();
+    // document.getElementById("openSkills")?.addEventListener("click", () => this.toggleWindow("skill-window"));
+    // document.getElementById("openBattle")?.addEventListener("click", () => this.toggleWindow("battle-window"));
+    // document.getElementById("openFriends")?.addEventListener("click", () => this.toggleWindow("friend-window"));
+    // document.getElementById("logoutButton")?.addEventListener("click", () => this.sendLogout());
+    // document.getElementById("load-assets")?.addEventListener("click", () => this.loadAssetsDelegator());
+    // document.getElementById("asset-selector")?.addEventListener("change", (event) => this.loadGameFiles(event));
+    // //document.getElementById("enter-game")?.addEventListener("click", () => this.enterGame());
+    // window.onbeforeunload = () => window.gameClient.isConnected() ? true : undefined;
+    // window.onresize = () => this.handleResize();
   }  
 }

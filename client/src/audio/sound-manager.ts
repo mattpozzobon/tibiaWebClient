@@ -15,22 +15,7 @@ export default class SoundManager {
     this.soundbits = {};
     this.ambientTraces = {};
 
-    // Register ambient traces (only one ambient can play at a time)
-    this.registerAmbientTrace("field");
-    this.registerAmbientTrace("cave");
-    this.registerAmbientTrace("forest");
-    this.registerAmbientTrace("wind");
-
-    // Extra trace
-    this.registerTrace("rain");
-
-    // Small sound bits
-    this.registerSoundbit("wood", ["wood-2"]);
-    this.registerSoundbit("thunder", ["thunder-1", "thunder-2", "thunder-3", "thunder-4"]);
-    this.registerSoundbit("grass-walk", [
-      "grass-1", "grass-2", "grass-3", "grass-4",
-      "grass-5", "grass-6", "grass-7", "grass-8"
-    ]);
+    // Sound system DOM manipulation disabled - React handles audio
 
     // Master volume for all traces
     this.__masterVolume = enabled ? 1.0 : 0.0;
@@ -51,9 +36,7 @@ export default class SoundManager {
   }
 
   public setMasterVolume(amount: number): void {
-    if (!window.gameClient.interface.settings.isSoundEnabled()) {
-      amount = 0;
-    }
+    
     this.__masterVolume = amount;
     if (this.__currentAmbientTrace) {
       this.__currentAmbientTrace.setVolume(amount);

@@ -22,7 +22,7 @@ export default class PacketWriter extends Packet {
     } else {
       this.writeUInt8(0);
       this.writeUInt16(0);
-      this.writeUInt32(object.which.__containerId);
+      this.writeUInt32(object.which.id); // Use container GUID instead of client ID
     }
     this.writeUInt8(object.index);
   }

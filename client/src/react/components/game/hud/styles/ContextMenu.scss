@@ -1,0 +1,49 @@
+.context-menu-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9998;
+  background: transparent;
+}
+
+.context-menu {
+  position: fixed;
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 4px 0;
+  min-width: 120px;
+  z-index: 9999;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.context-menu-item {
+  padding: 8px 12px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  border-bottom: 1px solid #333;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  &:hover:not(.disabled) {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  &.disabled {
+    color: #666;
+    cursor: not-allowed;
+  }
+  
+  &.delete {
+    color: #ff6b6b;
+    
+    &:hover {
+      background: rgba(255, 107, 107, 0.1);
+    }
+  }
+}

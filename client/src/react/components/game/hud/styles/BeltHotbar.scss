@@ -1,0 +1,298 @@
+.belt-hotbar {
+  position: relative; // Changed from fixed to relative
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background-color: rgba(0, 0, 0, 0.7);
+  border: 2px solid #8B4513; // Brown border for belt theme
+  border-radius: 8px;
+  z-index: 1001; // Above main hotbar
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.belt-slot {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  background-color: rgba(139, 69, 19, 0.3); // Brown background
+  border: 2px solid #8B4513;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: rgba(139, 69, 19, 0.5);
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.6); // Gold glow
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  &.potion-slot {
+    &.health-potion {
+      border-color: rgba(255, 100, 100, 0.8);
+      background-color: rgba(255, 100, 100, 0.2);
+      
+      &:hover {
+        border-color: rgba(255, 100, 100, 1);
+        background-color: rgba(255, 100, 100, 0.3);
+        box-shadow: 0 0 8px rgba(255, 100, 100, 0.6);
+      }
+      
+      &.inactive {
+        border-color: rgba(139, 69, 19, 0.3);
+        background-color: rgba(0, 0, 0, 0.4);
+        opacity: 0.4;
+        cursor: default;
+        
+        &:hover {
+          transform: none;
+          box-shadow: none;
+        }
+        
+        .potion-icon .potion-emoji {
+          filter: grayscale(100%) brightness(0.5);
+        }
+      }
+    }
+    
+    &.mana-potion {
+      border-color: rgba(100, 100, 255, 0.8);
+      background-color: rgba(100, 100, 255, 0.2);
+      
+      &:hover {
+        border-color: rgba(100, 100, 255, 1);
+        background-color: rgba(100, 100, 255, 0.3);
+        box-shadow: 0 0 8px rgba(100, 100, 255, 0.6);
+      }
+      
+      &.inactive {
+        border-color: rgba(139, 69, 19, 0.3);
+        background-color: rgba(0, 0, 0, 0.4);
+        opacity: 0.4;
+        cursor: default;
+        
+        &:hover {
+          transform: none;
+          box-shadow: none;
+        }
+        
+        .potion-icon .potion-emoji {
+          filter: grayscale(100%) brightness(0.5);
+        }
+      }
+    }
+    
+    &.energy-potion {
+      border-color: rgba(255, 255, 100, 0.8);
+      background-color: rgba(255, 255, 100, 0.2);
+      
+      &:hover {
+        border-color: rgba(255, 255, 100, 1);
+        background-color: rgba(255, 255, 100, 0.3);
+        box-shadow: 0 0 8px rgba(255, 255, 100, 0.6);
+      }
+      
+      &.inactive {
+        border-color: rgba(139, 69, 19, 0.3);
+        background-color: rgba(0, 0, 0, 0.4);
+        opacity: 0.4;
+        cursor: default;
+        
+        &:hover {
+          transform: none;
+          box-shadow: none;
+        }
+        
+        .potion-icon .potion-emoji {
+          filter: grayscale(100%) brightness(0.5);
+        }
+      }
+    }
+  }
+  
+  &.empty-slot {
+    border-color: rgba(139, 69, 19, 0.3);
+    background-color: rgba(0, 0, 0, 0.4);
+    cursor: default;
+    opacity: 0.4; // Grey out inactive slots
+    
+    &:hover {
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .potion-icon {
+      opacity: 0.3; // Further grey out the icon
+      
+      img {
+        filter: grayscale(100%) brightness(0.5); // Make icon grey
+      }
+    }
+  }
+}
+
+.belt-slot canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.potion-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  .potion-emoji {
+    font-size: 18px;
+    line-height: 1;
+    filter: brightness(1.2);
+    
+    &.health-potion-emoji {
+      filter: hue-rotate(0deg) brightness(1.3);
+    }
+    
+    &.mana-potion-emoji {
+      filter: hue-rotate(240deg) brightness(1.3);
+    }
+    
+    &.energy-potion-emoji {
+      filter: hue-rotate(60deg) brightness(1.3);
+    }
+  }
+}
+
+.empty-slot-content {
+  width: 24px;
+  height: 24px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.belt-count {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 1px 3px;
+  border-radius: 2px;
+  min-width: 12px;
+  text-align: center;
+}
+
+.belt-key {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: bold;
+  color: #FFD700; // Gold color
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 1px solid #8B4513;
+}
+
+// Animation for when items are used
+.belt-slot.active {
+  animation: beltUse 0.3s ease-in-out;
+}
+
+@keyframes beltUse {
+  0% { 
+    box-shadow: 0 0 0px rgba(255, 215, 0, 0);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.8);
+    transform: scale(1.1);
+  }
+  100% { 
+    box-shadow: 0 0 0px rgba(255, 215, 0, 0);
+    transform: scale(1);
+  }
+}
+
+
+// Responsive design
+@media (max-width: 768px) {
+  .belt-hotbar {
+    gap: 2px;
+    padding: 2px;
+  }
+  
+  .belt-slot {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .belt-key {
+    font-size: 9px;
+    top: -6px;
+  }
+  
+  .belt-count {
+    font-size: 9px;
+  }
+  
+  .potion-icon {
+    width: 20px;
+    height: 20px;
+    
+    .potion-emoji {
+      font-size: 14px;
+    }
+  }
+  
+  .empty-slot-content {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .belt-hotbar {
+    gap: 1px;
+    padding: 1px;
+  }
+  
+  .belt-slot {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .belt-key {
+    font-size: 8px;
+    top: -5px;
+  }
+  
+  .potion-icon {
+    width: 16px;
+    height: 16px;
+    
+    .potion-emoji {
+      font-size: 12px;
+    }
+  }
+  
+  .empty-slot-content {
+    width: 16px;
+    height: 16px;
+  }
+}

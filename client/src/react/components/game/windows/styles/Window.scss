@@ -1,0 +1,195 @@
+.window {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  margin-bottom: 0;
+  width: 100%;
+  max-width: 170px;
+  min-width: 0;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  opacity: 1;
+  position: relative;
+  z-index: 5;
+  box-sizing: border-box;
+  overflow: visible;
+  
+  &.pinned {
+    margin-bottom: 0;
+  }
+  
+  &.dragging {
+    opacity: 0.8;
+    transform: scale(1.02);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+    z-index: 1001;
+  }
+  
+  &.minimized {
+    /* Reserve space so the header doesn't overlap the next window */
+    padding-top: 12px; /* equals header height */
+    z-index: 100; // keep header above neighboring windows
+    .window-content {
+      display: none;
+    }
+  }
+}
+
+.window-header {
+  padding: 1px 3px;
+  background: rgba(30, 30, 30, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+  cursor: grab;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  -webkit-user-drag: auto !important;
+  -webkit-touch-callout: none !important;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  box-sizing: border-box;
+  min-height: 12px;
+  height: 12px;
+  transform: translateY(-95%);
+  opacity: 0;
+  pointer-events: none; // prevent intercepting clicks when hidden above
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  
+  &:active {
+    cursor: grabbing;
+  }
+  
+  &[draggable="true"] {
+    -webkit-user-drag: element !important;
+  }
+}
+
+.window:hover .window-header,
+.window.minimized .window-header {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto; // re-enable interactions when visible
+  z-index: 101; // ensure header sits above adjacent windows
+}
+
+.window-title {
+  font-weight: 500;
+  color: #ccc;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.window-controls {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.window-control {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 2px;
+  background: rgba(50, 50, 50, 0.6);
+  color: #bbb;
+  font-size: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background: rgba(80, 80, 80, 0.9);
+  }
+  
+  &.close:hover {
+    background: rgba(180, 40, 40, 0.9);
+    color: #fff;
+  }
+  
+  &.minimize:hover {
+    background: rgba(60, 120, 60, 0.9);
+  }
+  
+  &.pin {
+    font-size: 8px;
+    
+    &.active {
+      background: rgba(0, 122, 204, 0.3);
+      color: #007acc;
+      border-color: #007acc;
+    }
+    
+    &:hover {
+      background: rgba(0, 122, 204, 0.2);
+      color: #007acc;
+    }
+  }
+}
+
+.window-content {
+  color: #ddd;
+  overflow: auto;
+  max-height: 80vh;
+  width: 100%;
+  box-sizing: border-box;
+  pointer-events: auto;
+  padding-top: 15px; /* base reveal space */
+}
+
+// Equipment window specific styles
+.window.equipment-window {
+  .window-content {
+    padding: 8px;
+    padding-top: 12px; // Reduced equipment padding
+    overflow: visible;
+    max-height: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+// Container window specific styles
+.window.container-window {
+  .window-content {
+    padding-top: 12px !important; // Extra padding for container windows
+  }
+}
+
+// Minimap window specific styles
+.window.minimap-window {
+  height: 164px; /* 170px - 6px padding */
+  width: 164px; /* 170px - 6px padding */
+  
+  .window-content {
+    padding: 0;
+    padding-top: 15px; // Add top padding for header space
+    display: block;
+    overflow: hidden; /* Prevent any breakout */
+    height: 149px; /* Height minus top padding */
+    width: 164px;
+    pointer-events: auto;
+    box-sizing: border-box;
+  }
+  
+  // Reset dimensions when minimized
+  &.minimized {
+    height: auto;
+  }
+}

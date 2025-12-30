@@ -60,9 +60,9 @@ export default class WeatherCanvas {
     this.__isRaining = bool;
 
     if (this.__isRaining && !window.gameClient.player!.isUnderground()) {
-      window.gameClient.interface.soundManager.setVolume("rain", 1);
+      // window.gameClient.interface.soundManager.setVolume("rain", 1);
     } else {
-      window.gameClient.interface.soundManager.setVolume("rain", 0);
+      // window.gameClient.interface.soundManager.setVolume("rain", 0);
     }
   }
 
@@ -83,7 +83,7 @@ export default class WeatherCanvas {
 
   public handleThunder(): void {
     if (Math.random() < this.__thunderIntensity && this.isRaining() && this.__flash === 0) {
-      window.gameClient.interface.soundManager.play("thunder");
+      //window.gameClient.interface.soundManager.play("thunder");
       this.setThunder();
     }
     this.drawThunder();

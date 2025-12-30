@@ -1,32 +1,12 @@
 import Modal from "./modal";
-import LoginModal from "./modal-login";
-import CreateAccountModal from "./modal-create-account";
-import RecoverAccountModal from "./modal-recover-account";
-import CharacterSelectorModal from "./modal-character-select";
-import OutfitModal from "./modal-outfit";
-import MoveItemModal from "./modal-move-item";
-import ChatModal from "./modal-chat";
-import EnterNameModal from "./modal-enter-name";
-import ConfirmModal from "./modal-confirm";
-import ReadableModal from "./modal-readable";
-import OfferModal from "./modal-offer";
-import MapModal from "./modal-map";
-import SpellbookModal from "./modal-spellbook";
-import SkillModal from "./modal-skills";
-import TextModal from "./modal-text";
+// All modal classes removed - now handled by React components
 
 const MODAL_IDS = {
-  LOGIN: "floater-enter",
-  CREATE_ACCOUNT: "floater-create",
-  RECOVER_ACCOUNT: "floater-recover",
-  
-  CHARACTER_SELECTOR: "character-selector",
-  
   SETTINGS: "settings-modal",
   SKILL: "skill-modal",
   OUTFIT: "outfit-modal",
   MOVE_ITEM: "move-item-modal",
-  CHAT: "chat-modal",
+  // CHAT: "chat-modal", // Now handled by React
   ENTER_NAME: "enter-name-modal",
   CONFIRM: "confirm-modal",
   READABLE: "readable-modal",
@@ -34,7 +14,6 @@ const MODAL_IDS = {
   MAP: "map-modal",
   SPELLBOOK: "spellbook-modal",
 
-  CONNECTING: "floater-connecting"
 } as const;
 
 const ELEMENT_IDS = {
@@ -63,28 +42,7 @@ export default class ModalManager {
   }
 
   private registerModals(): void {
-    const modalRegistrations = [
-      [CharacterSelectorModal, MODAL_IDS.CHARACTER_SELECTOR],
-      [Modal, MODAL_IDS.SETTINGS],
-      [LoginModal, MODAL_IDS.LOGIN],
-      [RecoverAccountModal, MODAL_IDS.RECOVER_ACCOUNT],
-      [CreateAccountModal, MODAL_IDS.CREATE_ACCOUNT],
-      [SkillModal, MODAL_IDS.SKILL],
-      [OutfitModal, MODAL_IDS.OUTFIT],
-      [MoveItemModal, MODAL_IDS.MOVE_ITEM],
-      [ChatModal, MODAL_IDS.CHAT],
-      [EnterNameModal, MODAL_IDS.ENTER_NAME],
-      [ConfirmModal, MODAL_IDS.CONFIRM],
-      [TextModal, MODAL_IDS.CONNECTING],
-      [ReadableModal, MODAL_IDS.READABLE],
-      [OfferModal, MODAL_IDS.OFFER],
-      [MapModal, MODAL_IDS.MAP],
-      [SpellbookModal, MODAL_IDS.SPELLBOOK]
-    ] as const;
-
-    modalRegistrations.forEach(([ModalClass, id]) => {
-      this.register(ModalClass, id);
-    });
+    // All modals now handled by React UI system
   }
 
   private register(ModalClass: ModalConstructor, id: string): void {
@@ -97,6 +55,8 @@ export default class ModalManager {
     this.modals.set(id, instance);
   }
 
+
+
   public addEventListeners(): void {
     this.addModalTriggerListeners();
     this.addTopbarListeners();
@@ -104,39 +64,15 @@ export default class ModalManager {
   }
 
   private addModalTriggerListeners(): void {
-    const triggerMappings = [
-      [ELEMENT_IDS.CREATE_ACCOUNT, MODAL_IDS.CREATE_ACCOUNT],
-      [ELEMENT_IDS.RECOVER_ACCOUNT, MODAL_IDS.RECOVER_ACCOUNT],
-      [ELEMENT_IDS.OPEN_CHAT_MODAL, MODAL_IDS.CHAT],
-      [ELEMENT_IDS.OPEN_OUTFIT, MODAL_IDS.OUTFIT],
-      [ELEMENT_IDS.OPEN_SETTINGS, MODAL_IDS.SETTINGS],
-      [ELEMENT_IDS.OPEN_SKILLS, MODAL_IDS.SKILL]
-    ] as const;
-
-    triggerMappings.forEach(([elementId, modalId]) => {
-      const element = document.getElementById(elementId);
-      element?.addEventListener("click", () => this.open(modalId));
-    });
+    // Modal triggers handled by React event system
   }
 
   private addTopbarListeners(): void {
-    const topbarPlayBtn = document.getElementById(ELEMENT_IDS.TOPBAR_PLAY_BTN);
-    const topbarNewsBtn = document.getElementById(ELEMENT_IDS.TOPBAR_NEWS_BTN);
-
-    topbarPlayBtn?.addEventListener("click", () => {
-      window.gameClient.interface.loginFlowManager.showPostLogin();
-    });
-
-    topbarNewsBtn?.addEventListener("click", () => {
-      window.gameClient.interface.loginFlowManager.showChangelog();
-    });
+    // Topbar interactions handled by React components
   }
 
   private addModalHeaderListeners(): void {
-    const modalHeaders = document.querySelectorAll(".modal-header");
-    modalHeaders.forEach(header => {
-      header.addEventListener("mousedown", this.handleHeaderMouseDown.bind(this) as EventListener);
-    });
+    // Modal header interactions handled by React components
   }
 
   private handleHeaderMouseDown(event: MouseEvent): void {
@@ -144,6 +80,33 @@ export default class ModalManager {
   }
 
   public open(id: string, options?: ModalOptions): Modal | null {
+    // Bridge to React UI system
+    if ((window as any).reactUIManager) {
+      console.log(`🔄 Redirecting modal "${id}" to React UI system`);
+      
+      // Map old modal IDs to React modal names
+      const modalMapping: { [key: string]: string } = {
+        [MODAL_IDS.SETTINGS]: 'settings',
+        [MODAL_IDS.SKILL]: 'skills',
+        [MODAL_IDS.OUTFIT]: 'outfit',
+        [MODAL_IDS.MAP]: 'map',
+        // [MODAL_IDS.CHAT]: 'chat', // Now handled by React
+        [MODAL_IDS.MOVE_ITEM]: 'moveItem',
+        [MODAL_IDS.CONFIRM]: 'confirm',
+        [MODAL_IDS.ENTER_NAME]: 'enterName',
+        [MODAL_IDS.READABLE]: 'readable',
+        [MODAL_IDS.OFFER]: 'offer',
+        [MODAL_IDS.SPELLBOOK]: 'spellbook'
+      };
+
+      const reactModalName = modalMapping[id];
+      if (reactModalName) {
+        (window as any).reactUIManager.openModal(reactModalName, options);
+        return null; // Return null since React is handling it
+      }
+    }
+
+    // Fallback to old system if React UI is not available
     if (this.isOpened() && this.openedModal?.id === id && this.openedModal.shouldStayOpenOnReopen()) {
       return null;
     }
@@ -176,7 +139,8 @@ export default class ModalManager {
   }
 
   public get(id: string): Modal | null {
-    return this.modals.get(id) || null;
+    // React components handle all modal interactions
+    return null;
   }
 
   public isOpened(): boolean {
@@ -206,7 +170,7 @@ export default class ModalManager {
 
     if (this.isAuthFormModal()) {
       this.close();
-      this.open(MODAL_IDS.LOGIN);
+      // Login now handled by React components
       return;
     }
 
@@ -219,7 +183,7 @@ export default class ModalManager {
   }
 
   private isAuthFormModal(): boolean {
-    const id = this.openedModal?.id;
-    return id === MODAL_IDS.CREATE_ACCOUNT || id === MODAL_IDS.RECOVER_ACCOUNT;
+    // Auth forms now handled by React components
+    return false;
   }
 }

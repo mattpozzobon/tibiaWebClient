@@ -13,11 +13,17 @@ import SpriteBuffer from "../renderer/sprite-buffer";
 import World from "../game/world";
 import Renderer from "../renderer/renderer";
 import ObjectBuffer from "./object-buffer";
+import { Emitter } from "../utils/event-emitter";
 
+type GCEvents = {
+  'gc:ready': GameClient;
+  'player:ready': Player;
+  'player:updated': Player;
+};
 
 export default class GameClient {
   SERVER_VERSION: string = "1098";
-
+  events: Emitter<GCEvents>;
   spriteBuffer: SpriteBuffer;
   dataObjects: ObjectBuffer;
   keyboard: Keyboard;
@@ -45,6 +51,9 @@ export default class GameClient {
     this.keyboard = new Keyboard();
     this.mouse = new Mouse();
     this.eventQueue = new EventQueue();
+    this.events = new Emitter<GCEvents>();
+
+    this.events.emit('gc:ready', this);
   }
 
   setServerData(packet: PacketReader): void {
@@ -57,19 +66,10 @@ export default class GameClient {
     ) {
       this.disconnect();
       packet.discard();
-
-      this.interface.modalManager.open(
-        "floater-connecting",
-        { message: `Server version (${serverData.clientVersion}) mismatch with client sprite (${SpriteBuffer.__version}) or object (${this.dataObjects.getVersion()}) data.` }
-      );
     }
-
-    this.interface.enableVersionFeatures(serverData.clientVersion);
 
     this.__setServerVersion(serverData.version);
     this.__setClientVersion(serverData.clientVersion);
-
-    console.log('serverData', serverData);
 
     Chunk.WIDTH = serverData.chunk.width;
     Chunk.HEIGHT = serverData.chunk.height;
@@ -80,7 +80,7 @@ export default class GameClient {
 
     this.__setTickInterval(serverData.tick);
 
-    document.getElementById("anti-aliasing")!.dispatchEvent(new Event("change"));
+    //document.getElementById("anti-aliasing")!.dispatchEvent(new Event("change"));
   }
 
   getFrame(): number {
@@ -95,16 +95,13 @@ export default class GameClient {
     return this.tickInterval;
   }
 
-  setErrorModal(message: string): void {
-    this.interface.modalManager.open("floater-connecting", { message });
-  }
 
   reset(): void {
     /*
      * Resets the gameclient for a new connection
      */
     //this.renderer.minimap.save();
-    this.interface.settings.saveState();
+    //this.interface.settings.saveState();
     this.gameLoop.abort();
     //this.renderer.screen.clear();
 
@@ -141,16 +138,17 @@ export default class GameClient {
      * Handles incoming login registration: start the game client
      */
     this.interface.showGameInterface();
-    this.interface.modalManager.close();
+    //this.interface.modalManager.close();
 
     this.player = Player.create(packet);
     this.world.createCreature(packet.id, this.player);
     console.log(this.player);
     window.gameClient.renderer.tileRenderer.refreshVisibleTiles()
-    this.player.setAmbientSound();
+    //this.player.setAmbientSound();
     //this.renderer.minimap.setRenderLayer(this.player.getPosition().z);
 
-    this.gameLoop.init();
+    this.gameLoop.init(); 
+    this.events.emit('player:ready', this.player);
   }
 
   isConnected(): boolean {
@@ -181,7 +179,7 @@ export default class GameClient {
      * Main body of the internal game loop
      */
     this.eventQueue.tick();
-    this.interface.soundManager.tick();
+    //this.interface.soundManager.tick();
     this.keyboard.handleInput();
     this.renderer.render();
   }

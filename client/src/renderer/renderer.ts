@@ -71,7 +71,13 @@ export default class Renderer {
     this.gameLayer = new Container();
     this.light = new LightRenderer(this.app.renderer);
 
-    this.hoverOutline = new OutlineFilter(2, 0xFFFFFF);
+    this.hoverOutline = new OutlineFilter({
+      thickness: 2,
+      color: 0xFFFFFF,
+      quality: 0.1,
+      alpha: 1.0,
+      knockout: false
+    });
 
     this.app.stage.addChild(this.scalingContainer);
     this.app.stage.addChild(this.noScallingOverlayLayer);
@@ -98,7 +104,7 @@ export default class Renderer {
 
     this.animationRenderer = new AnimationRenderer();
     this.tileRenderer = new TileRenderer(this.animationRenderer, this.light);
-    this.creatureRenderer = new CreatureRenderer(this.animationRenderer);
+    this.creatureRenderer = new CreatureRenderer(this.animationRenderer, this.light);
     this.itemRenderer = new ItemRenderer(this.light);
     this.positionHelper = new PositionHelper(this.app, this.scalingContainer);
   }
@@ -110,9 +116,13 @@ export default class Renderer {
     const baseWidth = baseCols * tileSize;
     const baseHeight = baseRows * tileSize;
 
-    const viewport = window.visualViewport ?? { width: window.innerWidth, height: window.innerHeight };
-    const scaleX = viewport.width / baseWidth;
-    const scaleY = viewport.height / baseHeight;
+    // Use the game container dimensions for initial sizing
+    const gameContainer = document.getElementById("game-container");
+    const containerWidth = gameContainer ? gameContainer.clientWidth : window.innerWidth;
+    const containerHeight = gameContainer ? gameContainer.clientHeight : window.innerHeight;
+    
+    const scaleX = containerWidth / baseWidth;
+    const scaleY = containerHeight / baseHeight;
     const scale = Math.floor(Math.min(scaleX, scaleY) * 100) / 100;
 
     const width = Math.floor(baseWidth * scale);
@@ -170,8 +180,10 @@ export default class Renderer {
     const baseWidth = baseCols * tileSize;
     const baseHeight = baseRows * tileSize;
 
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    // Use the game container dimensions instead of window dimensions
+    const gameContainer = document.getElementById("game-container");
+    const viewportWidth = gameContainer ? gameContainer.clientWidth : window.innerWidth;
+    const viewportHeight = gameContainer ? gameContainer.clientHeight : window.innerHeight;
 
     const aspectRatio = baseWidth / baseHeight;
     const viewportRatio = viewportWidth / viewportHeight;
@@ -351,17 +363,12 @@ export default class Renderer {
   }
 
   public __renderOther(): void {
-    window.gameClient.player!.equipment.render();
-    window.gameClient.interface.modalManager.render();
-    this.__renderContainers();
+    //ndow.gameClient.player!.equipment.render();
+   // window.gameClient.interface.modalManager.render();
     window.gameClient.world.clock.updateClockDOM();
     window.gameClient.interface.screenElementManager.render();
-    window.gameClient.interface.hotbarManager.render();
+    // window.gameClient.interface.hotbarManager.render();
     this.debugger.renderStatistics();
-  }
-
-  public __renderContainers(): void {
-    window.gameClient.player!.__openedContainers.forEach((container: any) => container.__renderAnimated());
   }
 
   public __handleVisibiliyChange(_event: Event): void {

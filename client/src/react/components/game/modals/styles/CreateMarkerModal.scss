@@ -1,0 +1,168 @@
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+.create-marker-modal {
+  background: #2a2a2a;
+  border: 1px solid #555;
+  border-radius: 8px;
+  min-width: 400px;
+  max-width: 500px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #444;
+  
+  h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 16px;
+  }
+  
+  .close-button {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    
+    &:hover {
+      color: #fff;
+    }
+  }
+}
+
+.modal-content {
+  padding: 20px;
+}
+
+.position-info {
+  background: #333;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  
+  p {
+    margin: 0;
+    color: #ccc;
+    font-size: 12px;
+  }
+}
+
+.form-group {
+  margin-bottom: 16px;
+  
+  label {
+    display: block;
+    margin-bottom: 6px;
+    color: #fff;
+    font-size: 14px;
+  }
+  
+  input[type="text"] {
+    width: 100%;
+    padding: 8px 12px;
+    background: #333;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    
+    &:focus {
+      outline: none;
+      border-color: #666;
+    }
+    
+    &::placeholder {
+      color: #888;
+    }
+  }
+}
+
+.icon-selection {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.icon-option {
+  width: 32px;
+  height: 32px;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #333;
+  
+  &.selected {
+    border-color: #4a9eff;
+    background: #444;
+  }
+  
+  &:hover {
+    background: #444;
+  }
+}
+
+.icon-preview {
+  max-width: 24px;
+  max-height: 24px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
+  
+  button {
+    padding: 8px 16px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background: #333;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    
+    &:hover {
+      background: #444;
+    }
+    
+    &[type="submit"] {
+      background: #4a9eff;
+      border-color: #4a9eff;
+      
+      &:hover {
+        background: #5ba8ff;
+      }
+    }
+    
+    &.delete-button {
+      background: #d32f2f;
+      border-color: #d32f2f;
+      
+      &:hover {
+        background: #e53935;
+      }
+    }
+  }
+}

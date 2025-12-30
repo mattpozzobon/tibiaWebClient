@@ -3,7 +3,7 @@ import { CONST } from "../helper/appContext";
 import SpriteBuffer from "../renderer/sprite-buffer";
 import PacketHandler from "./packet-handler";
 import PacketReader from "./packetreader";
-import { DownloadManager, DownloadProgress } from "./download-manager";
+// DownloadManager removed - asset download now handled by React components
 
 class NetworkManager {
   socket!: WebSocket;
@@ -11,7 +11,6 @@ class NetworkManager {
   nPacketsSent: number = 0;
   latency: number = 0;
   public packetHandler: PacketHandler;
-  public downloadManager: DownloadManager;
 
   constructor() {
     this.state = {
@@ -22,7 +21,6 @@ class NetworkManager {
       connected: false,
     };
     this.packetHandler = new PacketHandler();
-    this.downloadManager = new DownloadManager();
   }
 
   close(): void {
@@ -67,6 +65,8 @@ class NetworkManager {
         return this.packetHandler.handleTradeOffer(packet.readTradeOffer());
       case CONST.PROTOCOL.SERVER.REMOVE_FRIEND:
         return this.packetHandler.handleRemoveFriend(packet.readString());
+      case CONST.PROTOCOL.SERVER.FRIEND_UPDATE:
+        return this.packetHandler.handleFriendUpdate(packet.readFriendUpdate());
       case CONST.PROTOCOL.SERVER.ITEM_TRANSFORM:
         return this.packetHandler.handleTransformTile(packet.readTransformTile());
       case CONST.PROTOCOL.SERVER.MESSAGE_CANCEL:
@@ -104,7 +104,7 @@ class NetworkManager {
       case CONST.PROTOCOL.SERVER.ITEM_ADD:
         return this.packetHandler.handleItemAdd(packet.readTileItemAdd());
       case CONST.PROTOCOL.SERVER.CONTAINER_OPEN:
-        return this.packetHandler.handleContainerOpen(packet.readOpenContainer());
+        return this.packetHandler.handleContainerOpen(packet.readOpenContainer2());
       case CONST.PROTOCOL.SERVER.CONTAINER_ADD:
         return this.packetHandler.handleContainerAddItem(packet.readContainerItemAdd());
       case CONST.PROTOCOL.SERVER.STATE_PLAYER:
@@ -123,30 +123,34 @@ class NetworkManager {
         return this.packetHandler.handleEntityRemove(packet.readUInt32());
       case CONST.PROTOCOL.SERVER.CREATURE_TELEPORT:
         return this.packetHandler.handleEntityTeleport(packet.readCreatureTeleport());
-      case CONST.PROTOCOL.SERVER.MESSAGE_PRIVATE:
-        return this.packetHandler.handleReceivePrivateMessage(packet.readPrivateMessage());
+
       case CONST.PROTOCOL.SERVER.PLAYER_LOGIN:
         return this.packetHandler.handlePlayerConnect(packet.readString());
       case CONST.PROTOCOL.SERVER.PLAYER_LOGOUT:
         return this.packetHandler.handlePlayerDisconnect(packet.readString());
       case CONST.PROTOCOL.SERVER.WORLD_TIME:
         return this.packetHandler.handleWorldTime(packet.readUInt32());
-      case CONST.PROTOCOL.SERVER.CREATURE_MESSAGE:
-        return this.packetHandler.handleChannelMessage(packet.readChannelMessage());
       case CONST.PROTOCOL.SERVER.TOGGLE_CONDITION:
         return this.packetHandler.handleCondition(packet.readToggleCondition());
+      case CONST.PROTOCOL.SERVER.CREATURE_PROPERTY:
+        return this.packetHandler.handlePropertyChange(packet.readProperty());
+
+      // Messages 
       case CONST.PROTOCOL.SERVER.EMOTE:
         return this.packetHandler.handleEmote(packet.readDefaultMessage());
       case CONST.PROTOCOL.SERVER.CREATURE_SAY:
         return this.packetHandler.handleDefaultMessage(packet.readDefaultMessage());
-      case CONST.PROTOCOL.SERVER.CREATURE_PROPERTY:
-        return this.packetHandler.handlePropertyChange(packet.readProperty());
+      case CONST.PROTOCOL.SERVER.MESSAGE_PRIVATE:
+        return this.packetHandler.handleReceivePrivateMessage(packet.readPrivateMessage());
+      case CONST.PROTOCOL.SERVER.CREATURE_MESSAGE:
+          return this.packetHandler.handleChannelMessage(packet.readChannelMessage());
       default:
         throw new Error("An unknown packet was received from the server.");
     }
   }
 
   send(packet: any): void {
+    console.log('Sending packet:', packet);
     if (!this.isConnected()) return;
     const buffer = packet.getBuffer();
     this.state.bytesSent += buffer.length;
@@ -176,11 +180,9 @@ class NetworkManager {
     const loginHostPort = this.getConnectionSettings();
     const httpProtocol = location.protocol === "https:" ? "https:" : "http:";
     const handshakeUrl = `${httpProtocol}//${loginHostPort}/?token=${encodeURIComponent(idToken)}`;
-    console.log("Handshake URL:", handshakeUrl);
   
     fetch(handshakeUrl, { method: "GET" })
       .then(response => {
-        console.log("Handshake status:", response.status);
         if (!response.ok) throw new Error(`Login handshake failed: ${response.status}`);
         return response.json();
       })
@@ -229,7 +231,7 @@ class NetworkManager {
   }
 
   private __handleError(): void {
-    window.gameClient.interface.modalManager.open("floater-enter");
+    //window.gameClient.interface.modalManager.open("floater-enter");
     const errorBox = document.getElementById("auth-error")!;
     errorBox.textContent = "Could not connect to the Gameworld. Please try again later.";
   }

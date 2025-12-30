@@ -1,0 +1,104 @@
+/* Chat Modal Specific Styles */
+
+.channel-section,
+.private-section {
+  h3 {
+    color: white;
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    font-weight: bold;
+  }
+}
+
+.channel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.channel-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(0, 150, 255, 0.3);
+  }
+
+  &.selected {
+    background: rgba(0, 150, 255, 0.2);
+    border-color: #0096ff;
+  }
+}
+
+.channel-name {
+  color: white;
+  font-weight: bold;
+}
+
+.channel-type {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 10px 0;
+
+  hr {
+    flex: 1;
+    border: none;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  span {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+}
+
+.private-channel-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  padding: 12px 15px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #0096ff;
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+}
+
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .channel-option {
+    padding: 10px 12px;
+  }
+
+  .private-channel-input {
+    padding: 10px 12px;
+  }
+}

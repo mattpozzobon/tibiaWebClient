@@ -1,0 +1,393 @@
+import React, { useState, useRef, useEffect } from 'react';
+import type GameClient from '../../../../core/gameclient';
+import { ChannelMessagePacket, ChannelPrivatePacket } from '../../../../core/protocol';
+import { chatEventManager, ChatMessageData } from '../../../services/ChatEventManager';
+import { reactChannelManager, Channel } from '../../../services/ReactChannelManager';
+import './styles/ChatWindow.scss';
+
+// Ensure services are initialized
+chatEventManager;
+
+interface ChatProps {
+  gc: GameClient;
+}
+
+interface ChatMessage {
+  id: string;
+  text: string;
+  sender?: string;
+  timestamp: Date;
+  color?: string;
+  type?: number;
+  channelName?: string;
+}
+
+export default function Chat({ gc }: ChatProps) {
+  const [allMessages, setAllMessages] = useState<ChatMessage[]>([]);
+  const [consoleMessages, setConsoleMessages] = useState<ChatMessage[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
+  const [isActive, setIsActive] = useState(false); // Chat input active state
+  const [isCollapsed, setIsCollapsed] = useState(true); // Chat window collapsed state
+  const chatMessagesEndRef = useRef<HTMLDivElement>(null);
+  const consoleMessagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Method to handle Enter key from keyboard system
+  const handleEnterKey = () => {
+    if (!isActive) {
+      // First Enter press - activate chat and expand window
+      setIsActive(true);
+      setIsCollapsed(false);
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+    } else {
+      // Second Enter press - send message if not empty and deactivate
+      const message = inputValue.trim();
+      if (message && activeChannel) {
+        // Check if it's a LocalChannel (Console) - cannot send to local channels
+        if (activeChannel.type === 'local') {
+          gc.interface.setCancelMessage("Cannot write to a local channel.");
+          return;
+        }
+        
+        // Send message based on channel type
+        if (activeChannel.type === 'private') {
+          // Private channel - send private packet and add message immediately
+          // (server response only goes to recipient, not back to sender)
+          gc.send(new ChannelPrivatePacket(activeChannel.name, message));
+          
+          // Add message immediately for sender feedback
+          const senderMessage: ChatMessage = {
+            id: `sent-${activeChannel.name}-${message}-${Date.now()}`,
+            text: message,
+            sender: gc.player?.vitals.name || 'You',
+            timestamp: new Date(),
+            color: '#ffffff',
+            type: 1,
+            channelName: activeChannel.name
+          };
+          
+          // Add to allMessages for immediate display
+          setAllMessages(prev => [...prev, senderMessage]);
+        } else if (activeChannel.id !== null) {
+          // Regular channel - send with say (loudness 1)
+          // Message will appear when server broadcasts it back
+          gc.send(new ChannelMessagePacket(activeChannel.id, 1, message));
+        }
+      }
+      
+      // Clear input, blur, and deactivate chat
+      setInputValue('');
+      setIsActive(false);
+      inputRef.current?.blur();
+    }
+  };
+
+  // Expose the handleEnterKey method to the global scope
+  useEffect(() => {
+    (window as any).reactChatWindow = {
+      handleEnterKey
+    };
+
+    return () => {
+      delete (window as any).reactChatWindow;
+    };
+  }, [isActive, inputValue]);
+
+  const scrollToBottom = (ref: React.RefObject<HTMLDivElement | null>, section: string) => {
+    if (ref.current) {
+      // Find the parent chat-messages container
+      const messagesContainer = ref.current.closest('.chat-messages');
+      if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom(chatMessagesEndRef, 'chat');
+  }, [allMessages, activeChannel]);
+
+  useEffect(() => {
+    scrollToBottom(consoleMessagesEndRef, 'console');
+  }, [consoleMessages]);
+
+  useEffect(() => {
+    // Initialize with React channel manager
+    const initialChannels = reactChannelManager.getChannels();
+    setChannels(initialChannels);
+    setActiveChannel(reactChannelManager.getActiveChannel());
+
+    // Subscribe to channel changes
+    const unsubscribeChannel = reactChannelManager.onChannelChange((channel: Channel) => {
+      setActiveChannel(channel);
+      // Also update the channels array when it changes
+      setChannels(reactChannelManager.getChannels());
+    });
+
+    // Loudness system removed - all messages use say
+
+    // Subscribe to chat events from ChatEventManager
+    const unsubscribeMessages = chatEventManager.onMessage((messageData: ChatMessageData) => {
+
+      // Convert ChatMessageData to ChatMessage format
+      const chatMessage: ChatMessage = {
+        id: messageData.id,
+        text: messageData.text,
+        sender: messageData.sender,
+        timestamp: messageData.timestamp,
+        color: messageData.color,
+        type: messageData.type,
+        channelName: messageData.channelName
+      };
+      
+      // Route messages to appropriate channel based on channelName
+      if (messageData.channelName === 'Console') {
+        setConsoleMessages(prev => {
+          const exists = prev.some(msg => msg.id === chatMessage.id);
+          if (exists) {
+            return prev;
+          }
+          return [...prev.slice(-49), chatMessage]; // Keep last 50 console messages
+        });
+      } else {
+        // Add to all messages for channel filtering
+        setAllMessages(prev => {
+          const exists = prev.some(msg => msg.id === chatMessage.id);
+          if (exists) {
+            return prev;
+          }
+          return [...prev.slice(-199), chatMessage]; // Keep last 200 messages total
+        });
+      }
+    });
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      unsubscribeChannel();
+      unsubscribeMessages();
+    };
+  }, []);
+
+
+  const handleChannelChange = (channel: Channel) => {
+    // Join the channel if not already joined (except for Console and private channels)
+    if (channel.type !== 'local' && channel.type !== 'private' && channel.id !== null) {
+      reactChannelManager.joinChannel(channel.id);
+    }
+    
+    // Clear unread count for private channels when switching to them
+    if (channel.type === 'private') {
+      reactChannelManager.clearUnreadCount(channel.name);
+    }
+    
+    // Set as active channel - find by name for private channels, by id for regular channels
+    const channelIndex = channels.findIndex(c => {
+      if (channel.type === 'private') {
+        return c.name === channel.name && c.type === 'private';
+      } else {
+        return c.id === channel.id && c.name === channel.name;
+      }
+    });
+    
+    if (channelIndex !== -1) {
+      reactChannelManager.setActiveChannel(channelIndex);
+    }
+  };
+
+  // Filter messages by active channel
+  const getFilteredMessages = () => {
+    if (!activeChannel) return [];
+    return allMessages.filter(msg => msg.channelName === activeChannel.name);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setIsActive(false);
+      inputRef.current?.blur();
+    } else if (e.key === 'ArrowUp' && e.shiftKey) {
+      // Handle channel suggestion
+      reactChannelManager.suggestPrevious();
+    }
+  };
+
+  const handleFocus = () => {
+    if (!isActive) {
+      setIsActive(true);
+    }
+  };
+
+  const handleBlur = () => {
+    // Let Enter/Escape control deactivation
+  };
+
+  const handleInputClick = () => {
+    if (!isActive) {
+      setIsActive(true);
+      setIsCollapsed(false);
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+    } else {
+      inputRef.current?.focus();
+    }
+  };
+
+  const handleCollapseChat = () => {
+    setIsCollapsed(true);
+    setIsActive(false);
+    inputRef.current?.blur();
+  };
+
+  // Loudness system removed - all messages use say
+
+  const openChatModal = () => {
+    if ((window as any).reactUIManager) {
+      (window as any).reactUIManager.openModal('chat');
+    }
+  };
+
+  // Show collapsed icon when chat is inactive
+  if (isCollapsed) {
+    return (
+      <div className="chat-collapsed" onClick={() => setIsCollapsed(false)} title="Click to open chat">
+        <div className="chat-icon">💬</div>
+        {channels.some(ch => ch.type === 'private' && ch.unreadCount && ch.unreadCount > 0) && (
+          <div className="chat-notification-dot"></div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div id="chat-container" className="standalone-component">
+    <div className="chat-window">
+      <div className="chat-header">
+        <div className="chat-channel-tabs">
+          {channels.filter(ch => ch.type !== 'local').map((channel) => (
+            <div key={channel.id || channel.name} className="channel-tab-wrapper">
+              <button
+                className={`channel-tab ${activeChannel?.id === channel.id && activeChannel?.name === channel.name ? 'active' : ''} ${channel.type === 'private' ? 'private' : (reactChannelManager.isJoinedToChannel(channel.id!) ? 'joined' : 'not-joined')}`}
+                onClick={() => handleChannelChange(channel)}
+                title={`Switch to ${channel.name} channel ${channel.type === 'private' ? '(private)' : (reactChannelManager.isJoinedToChannel(channel.id!) ? '(joined)' : '(not joined)')}`}
+              >
+                {channel.name}
+                {channel.type === 'private' && <span className="private-indicator">🔒</span>}
+                {channel.type !== 'private' && reactChannelManager.isJoinedToChannel(channel.id!) && <span className="joined-indicator">●</span>}
+                {channel.type === 'private' && channel.unreadCount && channel.unreadCount > 0 && (
+                  <span className="unread-count">{channel.unreadCount}</span>
+                )}
+              </button>
+              {channel.type === 'private' && (
+                <button
+                  className="channel-close-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    reactChannelManager.removePrivateChannel(channel.name);
+                  }}
+                  title={`Close private chat with ${channel.name}`}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="chat-controls">
+          <button 
+            className="chat-control-btn"
+            onClick={openChatModal}
+            title="Open Chat Options"
+          >
+            💬
+          </button>
+          <button 
+            className="chat-control-btn chat-collapse-btn"
+            onClick={handleCollapseChat}
+            title="Collapse chat"
+          >
+            
+          </button>
+        </div>
+      </div>
+      
+      <div className="chat-messages-container">
+        <div className="chat-messages-section">
+          <div className="chat-section-header">
+            💬 {activeChannel?.name || 'Chat'}
+          </div>
+          <div className="chat-messages">
+            {getFilteredMessages().map((message, index) => (
+              <div key={message.id || index} className="message">
+                <span className="message-time">
+                  {message.timestamp.toLocaleTimeString([], { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </span>
+                {message.sender && (
+                  <span className="message-sender" style={{ color: message.color }}>
+                    {message.sender === 'You' ? '👤' : '💬'} {message.sender}:
+                  </span>
+                )}
+                <span className="message-text">{message.text}</span>
+              </div>
+            ))}
+            <div ref={chatMessagesEndRef} />
+          </div>
+        </div>
+        
+        <div className="chat-messages-section">
+          <div className="chat-section-header">🔧 Console</div>
+          <div className="chat-messages">
+            {consoleMessages.map((message, index) => (
+              <div key={message.id || index} className="message">
+                <span className="message-time">
+                  {message.timestamp.toLocaleTimeString([], { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </span>
+                {message.sender && (
+                  <span className="message-sender" style={{ color: message.color }}>
+                    🔧 {message.sender}:
+                  </span>
+                )}
+                <span className="message-text">{message.text}</span>
+              </div>
+            ))}
+            <div ref={consoleMessagesEndRef} />
+          </div>
+        </div>
+      </div>
+
+      <div className="chat-input-form">
+        <input
+          ref={inputRef}
+          type="text"
+          value={inputValue}
+          onChange={(e) => isActive && setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          onClick={handleInputClick}
+          placeholder={isActive ? "Type a message..." : "Press Enter or click to chat"}
+          className={`chat-input ${isActive ? 'active' : 'inactive'}`}
+          readOnly={!isActive}
+        />
+        <button 
+          type="button" 
+          className="chat-send-btn"
+          disabled={!inputValue.trim() || !isActive}
+          onClick={handleEnterKey}
+        >
+          Send
+        </button>
+      </div>
+    </div>
+    </div>
+  );
+}

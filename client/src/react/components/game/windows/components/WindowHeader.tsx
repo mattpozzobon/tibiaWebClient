@@ -43,11 +43,7 @@ export default function WindowHeader({
 
   return (
     <div className="window-column-header">
-      <button 
-        className={`window-icon ${isEquipmentActive ? 'active' : ''}`}
-        onClick={() => onToggleWindow('equipment', column)}
-        title={TOOLTIPS.EQUIPMENT}
-      >
+      <button className={`window-icon ${isEquipmentActive ? 'active' : ''}`} onClick={() => onToggleWindow('equipment', column)} title={TOOLTIPS.EQUIPMENT}>
         {WINDOW_ICONS.EQUIPMENT}
       </button>
       
@@ -68,11 +64,7 @@ export default function WindowHeader({
       </button>
       
       {onToggleSubPanel && getSubPanelToggleIcon() && (
-        <button 
-          className={`window-icon ${showSubPanel ? 'active' : ''}`}
-          onClick={() => onToggleSubPanel(column === COLUMN_TYPES.LEFT ? 'left' : 'right')}
-          title={getSubPanelTooltip()}
-        >
+        <button className={`window-icon ${showSubPanel ? 'active' : ''}`} onClick={() => onToggleSubPanel(column === COLUMN_TYPES.LEFT ? 'left' : 'right')} title={getSubPanelTooltip()}>
           {getSubPanelToggleIcon()}
         </button>
       )}

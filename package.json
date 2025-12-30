@@ -3,7 +3,7 @@
     "build": "webpack --config webpack.config.js --mode production",
     "build:dev": "webpack --config webpack.config.js --mode development",
     "watch": "webpack --config webpack.config.js --mode development --watch",
-    "dev": "concurrently \"npm run watch\" \"py client-server.py\"",
+    "start:all": "concurrently \"npm run watch\" \"py client-server.py\"",
     "start": "npm run dev",
     "upload:data": "node scripts/upload-data.mjs"
   },

@@ -1,7 +1,6 @@
 import React, { useState, useRef, useCallback, createContext, useContext, useEffect, useMemo } from 'react';
 import './styles/WindowManager.scss';
-import { Window, EquipmentWindow, MinimapWindow, ContainerWindow } from './index';
-import WindowColumn from './components/WindowColumn';
+import { EquipmentWindow, MinimapWindow } from './index';
 import WindowColumnRenderer from './components/WindowColumnRenderer';
 import { LOCALSTORAGE_KEYS, COLUMN_TYPES, WINDOW_TYPES, WINDOW_CLASSES, type ColumnType } from './constants';
 import { useLocalStorage, useLocalStorageString } from './hooks/useLocalStorage';
@@ -108,7 +107,7 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
         return newValue;
       });
     }
-  }, [autoOpenContainersColumn]);
+  }, [autoOpenContainersColumn, setShowLeftSubPanel, setShowRightSubPanel, setAutoOpenContainersColumn]);
 
 
   // Load window state from localStorage on mount

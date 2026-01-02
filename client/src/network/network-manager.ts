@@ -168,16 +168,17 @@ class NetworkManager {
   }
 
   getConnectionSettings(): string {
-    const host = process.env.SERVER_HOST!; // must be hostname only
+    const host = process.env.SERVER_HOST!; // hostname only (or full URL if you want)
   
-    const isLocal = host === "localhost" || host === "127.0.0.1" || host.endsWith(".local");
+    const isLocal =
+      host === "localhost" || host === "127.0.0.1" || host.endsWith(".local");
   
     if (isLocal) {
-      return "127.0.0.1:1338";
+      return "http://127.0.0.1:1338";
     }
   
-    // hosted (Netlify/Fly): no port in URL (Fly https terminates on 443)
-    return host;
+    // Fly is HTTPS
+    return `https://${host}`;
   }
   
   fetchCallback(response: Response): Promise<ArrayBuffer> {
@@ -186,23 +187,27 @@ class NetworkManager {
   }
 
   public openGameSocket(idToken: string): void {
-    const loginHost = this.getConnectionSettings();
-    const isHttps = location.protocol === "https:";
-    const protocol = isHttps ? "https:" : "http:";
+    const baseUrl = this.getConnectionSettings(); // MUST return full base URL e.g. "http://127.0.0.1:1338" or "https://emperia-server.fly.dev"
   
-    const handshakeUrl = `${protocol}//${loginHost}/?token=${encodeURIComponent(idToken)}`;
+    const handshakeUrl = `${baseUrl}/?token=${encodeURIComponent(idToken)}`;
   
     fetch(handshakeUrl, { method: "GET" })
-      .then(r => {
-        if (!r.ok) throw new Error(`Login handshake failed: ${r.status}`);
+      .then(async r => {
+        if (!r.ok) {
+          const text = await r.text().catch(() => "");
+          throw new Error(`Login handshake failed: ${r.status} ${text.slice(0, 200)}`);
+        }
         return r.json();
       })
       .then((data: { token: string; gameHost: string; loginHost: string }) => {
-        const charactersUrl = `${protocol}//${loginHost}/characters?token=${encodeURIComponent(data.token)}`;
+        const charactersUrl = `${baseUrl}/characters?token=${encodeURIComponent(data.token)}`;
   
         return fetch(charactersUrl)
-          .then(res => {
-            if (!res.ok) throw new Error(`Characters fetch failed: ${res.status}`);
+          .then(async res => {
+            if (!res.ok) {
+              const text = await res.text().catch(() => "");
+              throw new Error(`Characters fetch failed: ${res.status} ${text.slice(0, 200)}`);
+            }
             return res.json();
           })
           .then(characters => {
@@ -222,7 +227,9 @@ class NetworkManager {
         console.error("openGameSocket error:", err);
         this.__handleError();
       });
-  }  
+  }
+  
+
 
   public connectGameServer(host: string, token: string, characterId: number): void {
     const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";

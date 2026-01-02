@@ -168,8 +168,15 @@ class NetworkManager {
   }
 
   getConnectionSettings(): string {
-    return "127.0.0.1:1338";
+    // Netlify / Fly (HTTPS) – no port, let browser use 443
+    if (location.protocol === "https:") {
+      return process.env.SERVER_HOST!;
+    }
+  
+    // Local dev (http)
+    return `${process.env.SERVER_HOST}:${process.env.SERVER_PORT}`;
   }
+  
 
   fetchCallback(response: Response): Promise<ArrayBuffer> {
     if (response.status !== 200) return Promise.reject(response);
@@ -178,8 +185,8 @@ class NetworkManager {
 
   public openGameSocket(idToken: string): void {
     const loginHostPort = this.getConnectionSettings();
-    const httpProtocol = location.protocol === "https:" ? "https:" : "http:";
-    const handshakeUrl = `${httpProtocol}//${loginHostPort}/?token=${encodeURIComponent(idToken)}`;
+    const protocol = location.protocol === "https:" ? "https:" : "http:";
+    const handshakeUrl = `${protocol}//${loginHostPort}/?token=${encodeURIComponent(idToken)}`;
   
     fetch(handshakeUrl, { method: "GET" })
       .then(response => {
@@ -187,9 +194,13 @@ class NetworkManager {
         return response.json();
       })
       .then((data: { token: string; gameHost: string; loginHost: string }) => {
-        const charactersUrl = `${httpProtocol}//${loginHostPort}/characters?token=${encodeURIComponent(data.token)}`;
+        const charactersUrl = `${protocol}//${loginHostPort}/characters?token=${encodeURIComponent(data.token)}`;
+  
         return fetch(charactersUrl)
-          .then(res => res.json())
+          .then(res => {
+            if (!res.ok) throw new Error(`Characters fetch failed: ${res.status}`);
+            return res.json();
+          })
           .then(characters => {
             if (!Array.isArray(characters)) throw new Error("Invalid characters list");
   
@@ -207,7 +218,7 @@ class NetworkManager {
         console.error("openGameSocket error:", err);
         this.__handleError();
       });
-  }
+  }  
 
   public connectGameServer(host: string, token: string, characterId: number): void {
     const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";

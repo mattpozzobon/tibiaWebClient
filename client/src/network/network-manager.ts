@@ -173,7 +173,7 @@ class NetworkManager {
     const isLocal = host === "localhost" || host === "127.0.0.1" || host.endsWith(".local");
   
     if (isLocal) {
-      return `${host}:${process.env.SERVER_PORT}`;
+      return "127.0.0.1:1338";
     }
   
     // hosted (Netlify/Fly): no port in URL (Fly https terminates on 443)

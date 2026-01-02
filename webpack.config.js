@@ -1,7 +1,11 @@
 const path = require('path');
 const webpack = require('webpack');
 const Dotenv = require('dotenv-webpack');
-require('dotenv').config({ path: './.env' });
+
+// Only load local .env during local development
+if (process.env.NETLIFY !== 'true') {
+  require('dotenv').config({ path: './.env' });
+}
 
 module.exports = {
   entry: './client/src/App.tsx',
@@ -29,7 +33,31 @@ module.exports = {
   },
   optimization: { splitChunks: false },
   plugins: [
-    new Dotenv({ path: './.env', safe: false, systemvars: true, silent: false }),
+    new Dotenv({
+      // On Netlify, rely on environment variables (no .env file)
+      systemvars: true,
+      // Only read .env locally (NETLIFY builds won't have it)
+      path: process.env.NETLIFY === 'true' ? undefined : './.env',
+      // Only expose these into the browser bundle
+      allowlist: [
+        'ASSET_BASE_URL',
+        'SERVER_HOST',
+        'SERVER_PORT',
+        'DATABASE_NAME',
+        'DATABASE_VERSION',
+        'REQUIRED_FILES',
+        'FILE_VERSIONS_KEY',
+        'FIREBASE_API_KEY',
+        'FIREBASE_AUTH_DOMAIN',
+        'FIREBASE_PROJECT_ID',
+        'FIREBASE_STORAGE_BUCKET',
+        'FIREBASE_MESSAGING_SENDER_ID',
+        'FIREBASE_APP_ID',
+      ],
+      silent: true,
+    }),
+
+    // Keep your constant for client code
     new webpack.DefinePlugin({
       __CDN_BASE__: JSON.stringify(process.env.ASSET_BASE_URL),
     }),

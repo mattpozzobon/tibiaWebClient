@@ -168,33 +168,37 @@ class NetworkManager {
   }
 
   getConnectionSettings(): string {
-    // Netlify / Fly (HTTPS) – no port, let browser use 443
-    if (location.protocol === "https:") {
-      return process.env.SERVER_HOST!;
+    const host = process.env.SERVER_HOST!; // must be hostname only
+  
+    const isLocal = host === "localhost" || host === "127.0.0.1" || host.endsWith(".local");
+  
+    if (isLocal) {
+      return `${host}:${process.env.SERVER_PORT}`;
     }
   
-    // Local dev (http)
-    return `${process.env.SERVER_HOST}:${process.env.SERVER_PORT}`;
+    // hosted (Netlify/Fly): no port in URL (Fly https terminates on 443)
+    return host;
   }
   
-
   fetchCallback(response: Response): Promise<ArrayBuffer> {
     if (response.status !== 200) return Promise.reject(response);
     return response.arrayBuffer();
   }
 
   public openGameSocket(idToken: string): void {
-    const loginHostPort = this.getConnectionSettings();
-    const protocol = location.protocol === "https:" ? "https:" : "http:";
-    const handshakeUrl = `${protocol}//${loginHostPort}/?token=${encodeURIComponent(idToken)}`;
+    const loginHost = this.getConnectionSettings();
+    const isHttps = location.protocol === "https:";
+    const protocol = isHttps ? "https:" : "http:";
+  
+    const handshakeUrl = `${protocol}//${loginHost}/?token=${encodeURIComponent(idToken)}`;
   
     fetch(handshakeUrl, { method: "GET" })
-      .then(response => {
-        if (!response.ok) throw new Error(`Login handshake failed: ${response.status}`);
-        return response.json();
+      .then(r => {
+        if (!r.ok) throw new Error(`Login handshake failed: ${r.status}`);
+        return r.json();
       })
       .then((data: { token: string; gameHost: string; loginHost: string }) => {
-        const charactersUrl = `${protocol}//${loginHostPort}/characters?token=${encodeURIComponent(data.token)}`;
+        const charactersUrl = `${protocol}//${loginHost}/characters?token=${encodeURIComponent(data.token)}`;
   
         return fetch(charactersUrl)
           .then(res => {

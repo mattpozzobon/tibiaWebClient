@@ -1,4 +1,5 @@
 [build]
+  command = "npm ci && npm run build"
   publish = "client"
   functions = "netlify/functions"
 
@@ -7,7 +8,6 @@
   to = "/.netlify/functions/changelog"
   status = 200
 
-# CDN fallback (matches your ASSET_BASE_URL=/data pattern)
 [[redirects]]
   from = "/data/sprites/*"
   to = "https://pub-731c9162b7da4ead9743fb831880fd77.r2.dev/data/sprites/:splat"
@@ -20,7 +20,7 @@
   status = 302
   force = false
 
-# If your app is an SPA and refresh gives 404, uncomment this:
+# If you have SPA routing and refresh gives 404, uncomment:
 # [[redirects]]
 #   from = "/*"
 #   to = "/index.html"

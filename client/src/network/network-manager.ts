@@ -168,7 +168,12 @@ class NetworkManager {
   }
 
   getConnectionSettings(): string {
-    const host = process.env.SERVER_HOST!; // hostname only (or full URL if you want)
+    const host = process.env.SERVER_HOST; // hostname only (or full URL if you want)
+  
+    if (!host) {
+      console.error("SERVER_HOST environment variable is not set!");
+      throw new Error("SERVER_HOST environment variable is not set");
+    }
   
     const isLocal =
       host === "localhost" || host === "127.0.0.1" || host.endsWith(".local");
@@ -187,46 +192,56 @@ class NetworkManager {
   }
 
   public openGameSocket(idToken: string): void {
-    const baseUrl = this.getConnectionSettings(); // MUST return full base URL e.g. "http://127.0.0.1:1338" or "https://emperia-server.fly.dev"
+    try {
+      const baseUrl = this.getConnectionSettings(); // MUST return full base URL e.g. "http://127.0.0.1:1338" or "https://emperia-server.fly.dev"
+      console.log("openGameSocket: baseUrl =", baseUrl);
   
-    const handshakeUrl = `${baseUrl}/?token=${encodeURIComponent(idToken)}`;
+      const handshakeUrl = `${baseUrl}/?token=${encodeURIComponent(idToken)}`;
+      console.log("openGameSocket: fetching handshake from", handshakeUrl.replace(/\?token=.*/, "?token=..."));
   
-    fetch(handshakeUrl, { method: "GET" })
-      .then(async r => {
-        if (!r.ok) {
-          const text = await r.text().catch(() => "");
-          throw new Error(`Login handshake failed: ${r.status} ${text.slice(0, 200)}`);
-        }
-        return r.json();
-      })
-      .then((data: { token: string; gameHost: string; loginHost: string }) => {
-        const charactersUrl = `${baseUrl}/characters?token=${encodeURIComponent(data.token)}`;
+      fetch(handshakeUrl, { method: "GET" })
+        .then(async r => {
+          if (!r.ok) {
+            const text = await r.text().catch(() => "");
+            throw new Error(`Login handshake failed: ${r.status} ${text.slice(0, 200)}`);
+          }
+          return r.json();
+        })
+        .then((data: { token: string; gameHost: string; loginHost: string }) => {
+          console.log("openGameSocket: handshake successful, fetching characters");
+          const charactersUrl = `${baseUrl}/characters?token=${encodeURIComponent(data.token)}`;
+          console.log("openGameSocket: fetching characters from", charactersUrl.replace(/\?token=.*/, "?token=..."));
   
-        return fetch(charactersUrl)
-          .then(async res => {
-            if (!res.ok) {
-              const text = await res.text().catch(() => "");
-              throw new Error(`Characters fetch failed: ${res.status} ${text.slice(0, 200)}`);
-            }
-            return res.json();
-          })
-          .then(characters => {
-            if (!Array.isArray(characters)) throw new Error("Invalid characters list");
+          return fetch(charactersUrl)
+            .then(async res => {
+              if (!res.ok) {
+                const text = await res.text().catch(() => "");
+                throw new Error(`Characters fetch failed: ${res.status} ${text.slice(0, 200)}`);
+              }
+              return res.json();
+            })
+            .then(characters => {
+              if (!Array.isArray(characters)) throw new Error("Invalid characters list");
+              console.log("openGameSocket: characters fetched successfully, count =", characters.length);
   
-            window.gameClient.interface.loginFlowManager.setLoginInfo(
-              data.token,
-              characters,
-              data.loginHost,
-              data.gameHost
-            );
+              window.gameClient.interface.loginFlowManager.setLoginInfo(
+                data.token,
+                characters,
+                data.loginHost,
+                data.gameHost
+              );
   
-            window.gameClient.interface.loginFlowManager.showPostLogin();
-          });
-      })
-      .catch(err => {
-        console.error("openGameSocket error:", err);
-        this.__handleError();
-      });
+              window.gameClient.interface.loginFlowManager.showPostLogin();
+            });
+        })
+        .catch(err => {
+          console.error("openGameSocket error:", err);
+          this.__handleError();
+        });
+    } catch (err) {
+      console.error("openGameSocket: failed to get connection settings:", err);
+      this.__handleError();
+    }
   }
   
 

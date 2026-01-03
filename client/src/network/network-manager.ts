@@ -201,11 +201,15 @@ class NetworkManager {
   
       fetch(handshakeUrl, { method: "GET" })
         .then(async r => {
+          console.log("openGameSocket: handshake response status =", r.status, r.statusText);
           if (!r.ok) {
             const text = await r.text().catch(() => "");
+            console.error("openGameSocket: handshake failed with status", r.status, "response:", text.slice(0, 500));
             throw new Error(`Login handshake failed: ${r.status} ${text.slice(0, 200)}`);
           }
-          return r.json();
+          const data = await r.json();
+          console.log("openGameSocket: handshake successful, response data:", { token: data.token ? "present" : "missing", gameHost: data.gameHost, loginHost: data.loginHost });
+          return data;
         })
         .then((data: { token: string; gameHost: string; loginHost: string }) => {
           console.log("openGameSocket: handshake successful, fetching characters");
@@ -214,14 +218,19 @@ class NetworkManager {
   
           return fetch(charactersUrl)
             .then(async res => {
+              console.log("openGameSocket: characters response status =", res.status, res.statusText);
               if (!res.ok) {
                 const text = await res.text().catch(() => "");
+                console.error("openGameSocket: characters fetch failed with status", res.status, "response:", text.slice(0, 500));
                 throw new Error(`Characters fetch failed: ${res.status} ${text.slice(0, 200)}`);
               }
               return res.json();
             })
             .then(characters => {
-              if (!Array.isArray(characters)) throw new Error("Invalid characters list");
+              if (!Array.isArray(characters)) {
+                console.error("openGameSocket: characters response is not an array:", characters);
+                throw new Error("Invalid characters list");
+              }
               console.log("openGameSocket: characters fetched successfully, count =", characters.length);
   
               window.gameClient.interface.loginFlowManager.setLoginInfo(
@@ -236,6 +245,7 @@ class NetworkManager {
         })
         .catch(err => {
           console.error("openGameSocket error:", err);
+          console.error("openGameSocket error stack:", err.stack);
           this.__handleError();
         });
     } catch (err) {

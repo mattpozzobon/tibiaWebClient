@@ -229,8 +229,9 @@ export default class World {
       return;
     }
   
-    // Only monsters can be attacked
-    if (monster.constructor.name !== "Creature") {
+    // Only monsters can be attacked (not Players, which extend Creature)
+    // Use instanceof check instead of constructor.name (which breaks in minified production builds)
+    if (!(monster instanceof Creature) || monster instanceof Player) {
       reactNotificationManager.addCancelMessage("You cannot attack this creature.");
       return;
     }

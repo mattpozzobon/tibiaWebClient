@@ -159,7 +159,8 @@ class Mouse {
 
     const toObject = this.getWorldObject(event);
 
-    if (this.__mouseDownObject.which.constructor.name === "Tile") {
+    // Use instanceof instead of constructor.name (which breaks in minified production builds)
+    if (this.__mouseDownObject.which instanceof Tile) {
       if (this.__mouseDownObject.which === toObject.which) return this.__handleMouseClick(event);
       if (!this.__mouseDownObject.which.getPosition().besides(window.gameClient.player!.getPosition())) {
         return window.gameClient.interface.setCancelMessage("You have to move closer.");
@@ -276,7 +277,8 @@ class Mouse {
 
     const toObject = this.__getSlotObject(event);
 
-    if (this.__mouseDownObject.which.constructor.name === "Tile") {
+    // Use instanceof instead of constructor.name (which breaks in minified production builds)
+    if (this.__mouseDownObject.which instanceof Tile) {
       if (!this.__mouseDownObject.which.getPosition().besides(window.gameClient.player!.getPosition())) return;
     }
 

@@ -182,7 +182,8 @@ export default class AnimationRenderer {
   ): void {
     if (creature.__animations && creature.__animations.entries.length > 0) {
       creature.__animations.forEach((animation: any) => {
-        if (animation.constructor.name !== "BoxAnimation") {
+        // Use instanceof instead of constructor.name (which breaks in minified production builds)
+        if (!(animation instanceof BoxAnimation)) {
           this.renderAnimation(animation, creature, batcher, undefined, getCreatureScreenPosition);
         }
       }, this);
@@ -196,7 +197,8 @@ export default class AnimationRenderer {
   ): void {
     if (creature.__animations && creature.__animations.entries.length > 0) {
       creature.__animations.forEach((animation: any) => {
-        if (animation.constructor.name === "BoxAnimation") {
+        // Use instanceof instead of constructor.name (which breaks in minified production builds)
+        if (animation instanceof BoxAnimation) {
           this.renderAnimation(animation, creature, batcher, undefined, getCreatureScreenPosition);
         }
       }, this);

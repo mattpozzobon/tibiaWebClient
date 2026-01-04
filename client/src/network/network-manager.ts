@@ -253,8 +253,6 @@ class NetworkManager {
       this.__handleError();
     }
   }
-  
-
 
   public connectGameServer(host: string, token: string, characterId: number): void {
     const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";

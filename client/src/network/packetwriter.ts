@@ -1,4 +1,5 @@
 import Packet from "./packet";
+import Tile from "../game/tile";
 
 export default class PacketWriter extends Packet {
   public buffer: Uint8Array;
@@ -16,7 +17,8 @@ export default class PacketWriter extends Packet {
 
   public __writeGenericMove(object: any): void {
     // Generic packet to write a specific location (position, container) and index.
-    if (object.which.constructor.name === "Tile") {
+    // Use instanceof instead of constructor.name (which breaks in minified production builds)
+    if (object.which instanceof Tile) {
       this.writeUInt8(1);
       this.writePosition(object.which.getPosition());
     } else {

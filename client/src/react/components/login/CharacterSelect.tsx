@@ -100,35 +100,57 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
   }
 
   // Load characters - first try to use already-fetched characters from loginFlowManager
+  // Uses polling to handle race condition where characters might not be set yet
   useEffect(() => {
     let cancelled = false;
+    let pollInterval: NodeJS.Timeout | null = null;
+    let pollAttempts = 0;
+    const MAX_POLL_ATTEMPTS = 20; // 20 attempts * 250ms = 5 seconds max
+    const POLL_INTERVAL_MS = 250;
 
-    const loadCharacters = async () => {
+    const checkAndLoadCharacters = async () => {
       try {
-        setLoading(true);
-        setError(null);
-
         // First, check if characters are already available from the initial login fetch
         const loginInfo = (gc?.interface?.loginFlowManager as any)?.loginInfo;
-        if (loginInfo?.characters && Array.isArray(loginInfo.characters)) {
-          // Characters already fetched by network-manager, use them
+        
+        if (loginInfo?.characters && Array.isArray(loginInfo.characters) && loginInfo.characters.length >= 0) {
+          // Characters available, use them
           if (!cancelled) {
+            console.log("CharacterSelect: Using characters from loginFlowManager", loginInfo.characters.length);
             setCharacters(loginInfo.characters);
             setLoading(false);
+            setError(null);
+            // Clear any polling interval
+            if (pollInterval) {
+              clearInterval(pollInterval);
+              pollInterval = null;
+            }
           }
-          return;
+          return true; // Success
         }
 
-        // Fallback: fetch characters if not available (shouldn't normally happen)
+        // Characters not available yet
+        return false;
+      } catch (err: any) {
+        console.error("CharacterSelect: Error checking characters:", err);
+        if (!cancelled) setError(err?.message || "Failed to check characters");
+        return false;
+      }
+    };
+
+    const fetchCharactersFallback = async () => {
+      try {
+        setError(null);
         const token = localStorage.getItem("auth_token");
         if (!token) {
           throw new Error("No auth token found");
         }
 
-        // Get login host from gc or use default
+        const loginInfo = (gc?.interface?.loginFlowManager as any)?.loginInfo;
         const loginHost = loginInfo?.loginHost || "127.0.0.1:3000";
         
         const baseUrl = getBaseUrl(loginHost);
+        console.log("CharacterSelect: Fetching characters as fallback");
         const response = await fetch(`${baseUrl}/characters?token=${encodeURIComponent(token)}`);
         
         if (!response.ok) {
@@ -136,16 +158,66 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
         }
 
         const chars = await response.json();
-        if (!cancelled) setCharacters(chars || []);
+        if (!cancelled) {
+          setCharacters(chars || []);
+          setLoading(false);
+        }
       } catch (err: any) {
-        if (!cancelled) setError(err?.message || "Failed to load characters");
-      } finally {
-        if (!cancelled) setLoading(false);
+        console.error("CharacterSelect: Fallback fetch failed:", err);
+        if (!cancelled) {
+          setError(err?.message || "Failed to load characters");
+          setLoading(false);
+        }
       }
     };
 
-    loadCharacters();
-    return () => { cancelled = true; };
+    const startPolling = () => {
+      // Clear any existing interval
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+
+      pollInterval = setInterval(() => {
+        if (cancelled) {
+          if (pollInterval) clearInterval(pollInterval);
+          return;
+        }
+
+        pollAttempts++;
+        checkAndLoadCharacters().then((success) => {
+          if (success) {
+            // Characters loaded, polling will stop in checkAndLoadCharacters
+            return;
+          }
+
+          // If we've exceeded max attempts, fall back to fetching
+          if (pollAttempts >= MAX_POLL_ATTEMPTS) {
+            console.warn("CharacterSelect: Characters not available after polling, using fallback fetch");
+            if (pollInterval) {
+              clearInterval(pollInterval);
+              pollInterval = null;
+            }
+            fetchCharactersFallback();
+          }
+        });
+      }, POLL_INTERVAL_MS);
+    };
+
+    // Initial check
+    setLoading(true);
+    checkAndLoadCharacters().then((success) => {
+      if (!success && !cancelled) {
+        // Characters not available yet, start polling
+        startPolling();
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
   }, [gc]);
 
   const handleEnterGame = async () => {
@@ -348,15 +420,13 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
         ))}
       </div>
 
-      {selectedCharacter && (
-        <button
-          onClick={handleEnterGame}
-          disabled={loading}
-          className="character-select-button"
-        >
-          {loading ? 'Entering...' : 'GO!'}
-        </button>
-      )}
+      <button
+        onClick={handleEnterGame}
+        disabled={!selectedCharacter || loading}
+        className="character-select-button"
+      >
+        {loading ? 'Entering...' : 'GO!'}
+      </button>
 
     </div>
   );

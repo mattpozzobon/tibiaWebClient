@@ -39,6 +39,10 @@ export default function LoginFlow({ gc, engineStatus, onGameStart, onCharacterSe
   }, [gc]);
 
   const handleLoginSuccess = () => {
+    // Clear any previous login info (characters, etc.) before starting new login
+    if (gc?.interface?.loginFlowManager) {
+      (gc.interface.loginFlowManager as any).clearLoginInfo();
+    }
     setLoading(true);
     onGameStart();    
     setStep("asset-download");
@@ -53,6 +57,10 @@ export default function LoginFlow({ gc, engineStatus, onGameStart, onCharacterSe
   };
 
   const handleLogout = () => {
+    // Clear login info when logging out
+    if (gc?.interface?.loginFlowManager) {
+      (gc.interface.loginFlowManager as any).clearLoginInfo();
+    }
     localStorage.removeItem("auth_token");
     sessionStorage.removeItem("auth_token");
     setStep("login");

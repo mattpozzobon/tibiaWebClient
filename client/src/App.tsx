@@ -29,6 +29,37 @@ const App: React.FC = () => {
     setIsInitialized(true);
   }, []);
 
+  useEffect(() => {
+    // Listen for game disconnect events
+    const handleDisconnect = (event: CustomEvent) => {
+      console.log('Game disconnected:', event.detail?.reason || 'Unknown reason');
+      
+      // Clear authentication state
+      setIsAuthenticated(false);
+      setCharacterChosen(false);
+      
+      // Clear tokens
+      localStorage.removeItem('auth_token');
+      sessionStorage.removeItem('auth_token');
+      
+      // Clear login info if gameClient exists
+      if (window.gameClient?.interface?.loginFlowManager) {
+        (window.gameClient.interface.loginFlowManager as any).clearLoginInfo?.();
+      }
+      
+      // Reset game client
+      if (window.gameClient) {
+        window.gameClient.reset();
+      }
+    };
+
+    window.addEventListener('game-disconnect', handleDisconnect as EventListener);
+    
+    return () => {
+      window.removeEventListener('game-disconnect', handleDisconnect as EventListener);
+    };
+  }, []);
+
   const shouldInitEngine = isInitialized && isAuthenticated;
   const { gc, status: engineStatus, error: engineError } = useGameClient(shouldInitEngine);
 

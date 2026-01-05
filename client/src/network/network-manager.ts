@@ -3,6 +3,7 @@ import { CONST } from "../helper/appContext";
 import SpriteBuffer from "../renderer/sprite-buffer";
 import PacketHandler from "./packet-handler";
 import PacketReader from "./packetreader";
+import ApiEndpoints from "../utils/api-endpoints";
 // DownloadManager removed - asset download now handled by React components
 
 class NetworkManager {
@@ -168,22 +169,11 @@ class NetworkManager {
   }
 
   getConnectionSettings(): string {
-    const host = process.env.SERVER_HOST; // hostname only (or full URL if you want)
-  
-    if (!host) {
-      console.error("SERVER_HOST environment variable is not set!");
+    const baseUrl = ApiEndpoints.getBaseUrl();
+    if (!baseUrl) {
       throw new Error("SERVER_HOST environment variable is not set");
     }
-  
-    const isLocal =
-      host === "localhost" || host === "127.0.0.1" || host.endsWith(".local");
-  
-    if (isLocal) {
-      return "http://127.0.0.1:1338";
-    }
-  
-    // Fly is HTTPS
-    return `https://${host}`;
+    return baseUrl;
   }
   
   fetchCallback(response: Response): Promise<ArrayBuffer> {
@@ -196,7 +186,7 @@ class NetworkManager {
       const baseUrl = this.getConnectionSettings(); // MUST return full base URL e.g. "http://127.0.0.1:1338" or "https://emperia-server.fly.dev"
       console.log("openGameSocket: baseUrl =", baseUrl);
   
-      const handshakeUrl = `${baseUrl}/?token=${encodeURIComponent(idToken)}`;
+      const handshakeUrl = ApiEndpoints.getHandshakeUrl(idToken);
       console.log("openGameSocket: fetching handshake from", handshakeUrl.replace(/\?token=.*/, "?token=..."));
   
       fetch(handshakeUrl, { method: "GET" })
@@ -213,7 +203,7 @@ class NetworkManager {
         })
         .then((data: { token: string; gameHost: string; loginHost: string }) => {
           console.log("openGameSocket: handshake successful, fetching characters");
-          const charactersUrl = `${baseUrl}/characters?token=${encodeURIComponent(data.token)}`;
+          const charactersUrl = ApiEndpoints.getCharactersUrl(data.token);
           console.log("openGameSocket: fetching characters from", charactersUrl.replace(/\?token=.*/, "?token=..."));
   
           return fetch(charactersUrl)
@@ -276,17 +266,26 @@ class NetworkManager {
   }
 
   private __handleError(): void {
-    //window.gameClient.interface.modalManager.open("floater-enter");
-    const errorBox = document.getElementById("auth-error")!;
-    errorBox.textContent = "Could not connect to the Gameworld. Please try again later.";
+    console.error("WebSocket error occurred");
+    this.__handleDisconnect("Connection error occurred");
   }
 
   private __handleClose(): void {
     console.log("Disconnected");
-    if (this.state.connected && window.gameClient.renderer) {
+    this.__handleDisconnect("Connection closed");
+  }
+
+  private __handleDisconnect(reason: string): void {
+    if (this.state.connected && window.gameClient?.renderer) {
+      // Stop game rendering
       window.gameClient.reset();
     }
     this.state.connected = false;
+    
+    // Dispatch disconnect event to trigger UI reset
+    window.dispatchEvent(new CustomEvent('game-disconnect', { 
+      detail: { reason } 
+    }));
   }
 
   private __handleConnection(): void {

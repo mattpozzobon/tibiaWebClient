@@ -9,9 +9,29 @@ interface TopbarIslandProps {
 export default function TopbarIsland({ gc }: TopbarIslandProps) {
 
   const handleLogout = () => {
+    // Close the socket connection
+    if (gc?.networkManager) {
+      gc.networkManager.close();
+    }
+    
+    // Clear tokens
     localStorage.removeItem("auth_token");
     sessionStorage.removeItem("auth_token");
-    location.reload();
+    
+    // Clear login info
+    if (gc?.interface?.loginFlowManager) {
+      (gc.interface.loginFlowManager as any).clearLoginInfo?.();
+    }
+    
+    // Reset game client
+    if (gc) {
+      gc.reset();
+    }
+    
+    // Trigger disconnect event to return to login
+    window.dispatchEvent(new CustomEvent('game-disconnect', { 
+      detail: { reason: 'User logged out' } 
+    }));
   };
 
   const handleOutfit = () => {

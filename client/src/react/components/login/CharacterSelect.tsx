@@ -3,23 +3,8 @@ import type GameClient from "../../../core/gameclient";
 // Removed modal import as it's not used here anymore
 import { renderOutfitToCanvas } from "../../../utils/outfit-renderer";
 import Outfit from "../../../game/outfit";
+import ApiEndpoints from "../../../utils/api-endpoints";
 import './styles/CharacterSelect.scss';
-
-// Helper function to determine protocol (http vs https) based on host
-function getBaseUrl(host: string): string {
-  // Extract hostname (remove port if present)
-  const hostname = host.split(':')[0];
-  
-  const isLocal =
-    hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".local");
-  
-  if (isLocal) {
-    return `http://${host}`;
-  }
-  
-  // Non-local hosts use HTTPS
-  return `https://${host}`;
-}
 
 interface CharacterSelectProps {
   gc: GameClient | null;
@@ -102,6 +87,14 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
   // Load characters - first try to use already-fetched characters from loginFlowManager
   // Uses polling to handle race condition where characters might not be set yet
   useEffect(() => {
+    // Reset state when component mounts or when gc changes (new login)
+    setCharacters([]);
+    setSelectedCharacter(null);
+    setLoading(true);
+    setError(null);
+    setCreateCharacterSlot(null);
+    setCreateCharacterData({ name: '', sex: 'male' });
+    
     let cancelled = false;
     let pollInterval: NodeJS.Timeout | null = null;
     let pollAttempts = 0;
@@ -110,11 +103,23 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
 
     const checkAndLoadCharacters = async () => {
       try {
+        // Get current auth token to ensure we have a valid session
+        const currentAuthToken = sessionStorage.getItem("auth_token") || localStorage.getItem("auth_token");
+        
         // First, check if characters are already available from the initial login fetch
         const loginInfo = (gc?.interface?.loginFlowManager as any)?.loginInfo;
         
-        if (loginInfo?.characters && Array.isArray(loginInfo.characters) && loginInfo.characters.length >= 0) {
-          // Characters available, use them
+        // Only use characters if:
+        // 1. We have a current auth token (valid session)
+        // 2. Characters exist and are an array
+        // 3. loginInfo has a token (meaning it was set by the current login process)
+        // This ensures we don't use stale characters from a previous login
+        if (currentAuthToken &&
+            loginInfo?.characters && 
+            Array.isArray(loginInfo.characters) && 
+            loginInfo.characters.length >= 0 &&
+            loginInfo.token) {
+          // Characters available and loginInfo was set (meaning it's from current login), use them
           if (!cancelled) {
             console.log("CharacterSelect: Using characters from loginFlowManager", loginInfo.characters.length);
             setCharacters(loginInfo.characters);
@@ -129,7 +134,7 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
           return true; // Success
         }
 
-        // Characters not available yet
+        // Characters not available yet or no valid session
         return false;
       } catch (err: any) {
         console.error("CharacterSelect: Error checking characters:", err);
@@ -147,11 +152,15 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
         }
 
         const loginInfo = (gc?.interface?.loginFlowManager as any)?.loginInfo;
-        const loginHost = loginInfo?.loginHost || "127.0.0.1:3000";
+        const loginHost = loginInfo?.loginHost;
         
-        const baseUrl = getBaseUrl(loginHost);
+        // Use loginHost from server if available, otherwise use ApiEndpoints default
+        const charactersUrl = loginHost 
+          ? ApiEndpoints.buildUrlFromHost(loginHost, ApiEndpoints.CHARACTERS) + `?token=${encodeURIComponent(token)}`
+          : ApiEndpoints.getCharactersUrl(token);
+        
         console.log("CharacterSelect: Fetching characters as fallback");
-        const response = await fetch(`${baseUrl}/characters?token=${encodeURIComponent(token)}`);
+        const response = await fetch(charactersUrl);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch characters: ${response.status}`);
@@ -270,10 +279,15 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
         throw new Error('No auth token found');
       }
 
-      const loginHost = (gc?.interface?.loginFlowManager as any)?.loginInfo?.loginHost || '127.0.0.1:3000';
+      const loginInfo = (gc?.interface?.loginFlowManager as any)?.loginInfo;
+      const loginHost = loginInfo?.loginHost;
 
-      const baseUrl = getBaseUrl(loginHost);
-      const response = await fetch(`${baseUrl}/characters/create?token=${encodeURIComponent(token)}`, {
+      // Use loginHost from server if available, otherwise use ApiEndpoints default
+      const createUrl = loginHost
+        ? ApiEndpoints.buildUrlFromHost(loginHost, ApiEndpoints.CHARACTERS_CREATE) + `?token=${encodeURIComponent(token)}`
+        : ApiEndpoints.getCharactersCreateUrl(token);
+
+      const response = await fetch(createUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: normalizedName, sex })
@@ -288,7 +302,10 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
       }
 
       // Refresh character list
-      const listResponse = await fetch(`${baseUrl}/characters?token=${encodeURIComponent(token)}`);
+      const listUrl = loginHost
+        ? ApiEndpoints.buildUrlFromHost(loginHost, ApiEndpoints.CHARACTERS) + `?token=${encodeURIComponent(token)}`
+        : ApiEndpoints.getCharactersUrl(token);
+      const listResponse = await fetch(listUrl);
       if (listResponse.ok) {
         const chars = await listResponse.json();
         setCharacters(chars || []);

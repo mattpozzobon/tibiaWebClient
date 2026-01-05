@@ -45,6 +45,19 @@ export default class ReactLoginFlowManager {
     this.loginInfo = { token, characters, loginHost, gameHost };
   }
 
+  public clearLoginInfo(): void {
+    this.loginInfo = {
+      token: "",
+      characters: [],
+      loginHost: "",
+      gameHost: ""
+    };
+  }
+
+  public getLoginInfo(): LoginInfo {
+    return this.loginInfo;
+  }
+
   public showPreLogin(): void {
     this.setDisplay("flex", "none", "none");
     this.ui.loginWrapper?.classList.remove("post-login");

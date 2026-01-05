@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ApiEndpoints from '../../../utils/api-endpoints';
 import './styles/ServerStatus.scss';
 
 interface ServerStatusData {
@@ -7,26 +8,6 @@ interface ServerStatusData {
   uptime: number | null;
   activeMonsters: number;
   worldTime: string;
-}
-
-// Helper function to get base URL (same logic as network-manager)
-function getBaseUrl(): string {
-  const host = process.env.SERVER_HOST;
-  
-  if (!host) {
-    console.error("SERVER_HOST environment variable is not set!");
-    return '';
-  }
-  
-  const isLocal =
-    host === "localhost" || host === "127.0.0.1" || host.endsWith(".local");
-  
-  if (isLocal) {
-    return "http://127.0.0.1:1338";
-  }
-  
-  // Non-local hosts use HTTPS
-  return `https://${host}`;
 }
 
 function formatUptime(ms: number | null): string {
@@ -52,8 +33,8 @@ export default function ServerStatus() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const baseUrl = getBaseUrl();
-    if (!baseUrl) {
+    const statusUrl = ApiEndpoints.getStatusUrl();
+    if (!statusUrl) {
       setError("Server configuration unavailable");
       setLoading(false);
       return;
@@ -61,7 +42,7 @@ export default function ServerStatus() {
 
     const fetchStatus = async () => {
       try {
-        const response = await fetch(`${baseUrl}/api/status`);
+        const response = await fetch(statusUrl);
         if (!response.ok) {
           throw new Error(`Failed to fetch: ${response.status}`);
         }
@@ -80,7 +61,7 @@ export default function ServerStatus() {
     fetchStatus();
 
     // Poll every 5 seconds
-    const interval = setInterval(fetchStatus, 5000);
+    const interval = setInterval(fetchStatus, 60000);
 
     return () => {
       clearInterval(interval);

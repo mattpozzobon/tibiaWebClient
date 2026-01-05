@@ -10,7 +10,6 @@ import Thing from "../game/thing";
 import Tile from "../game/tile";
 import { CONST } from "../helper/appContext";
 import Interface from "../ui/interface";
-import BattleWindow from "../ui/window/window-battle";
 import { reactChannelManager } from "../react/services/ReactChannelManager";
 import { reactNotificationManager } from "../react/services/ReactNotificationManager";
 

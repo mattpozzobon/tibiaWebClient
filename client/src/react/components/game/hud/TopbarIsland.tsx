@@ -10,6 +10,7 @@ export default function TopbarIsland({ gc }: TopbarIslandProps) {
 
   const handleLogout = () => {
     localStorage.removeItem("auth_token");
+    sessionStorage.removeItem("auth_token");
     location.reload();
   };
 

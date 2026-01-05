@@ -141,7 +141,7 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
     const fetchCharactersFallback = async () => {
       try {
         setError(null);
-        const token = localStorage.getItem("auth_token");
+        const token = sessionStorage.getItem("auth_token") || localStorage.getItem("auth_token");
         if (!token) {
           throw new Error("No auth token found");
         }
@@ -265,7 +265,7 @@ export default function CharacterSelect({ gc, onCharacterSelected, onLogout }: C
       setCreating(true);
       setError(null);
 
-      const token = localStorage.getItem('auth_token');
+      const token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
       if (!token) {
         throw new Error('No auth token found');
       }

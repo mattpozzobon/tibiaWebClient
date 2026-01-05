@@ -11,7 +11,7 @@ export default function LoginIsland({ onLoggedIn }: { onLoggedIn: () => void }) 
   const [showCreate, setShowCreate] = useState(false);
   const [showRecover, setShowRecover] = useState(false);
 
-  async function submitLogin(email: string, password: string) {
+  async function submitLogin(email: string, password: string, rememberMe: boolean) {
     setLoading(true); 
     setErr(null);
     try {
@@ -25,7 +25,15 @@ export default function LoginIsland({ onLoggedIn }: { onLoggedIn: () => void }) 
       }
       
       const token = await user.getIdToken();
-      localStorage.setItem("auth_token", token);
+      // Always save token to sessionStorage for current session (clears on tab close)
+      sessionStorage.setItem("auth_token", token);
+      // Only persist to localStorage if "Remember me" is checked
+      if (rememberMe) {
+        localStorage.setItem("auth_token", token);
+      } else {
+        // Remove token from localStorage if it exists and user doesn't want to remember
+        localStorage.removeItem("auth_token");
+      }
       onLoggedIn();
     } catch (ex: any) {
       let message = "Login failed.";

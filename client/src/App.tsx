@@ -23,7 +23,8 @@ const App: React.FC = () => {
   const [characterChosen, setCharacterChosen] = useState(false);
 
   useEffect(() => {
-    const token = !!localStorage.getItem('auth_token');
+    // Check both sessionStorage and localStorage for auth token
+    const token = !!(sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token'));
     setIsAuthenticated(token);
     setIsInitialized(true);
   }, []);

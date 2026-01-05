@@ -1,0 +1,50 @@
+.server-status {
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  pointer-events: none;
+  user-select: none;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  
+  .status-label {
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: normal;
+  }
+  
+  .status-value {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: bold;
+    
+    &.status-open {
+      color: #4CAF50;
+    }
+    
+    &.status-opening {
+      color: #FF9800;
+    }
+    
+    &.status-closing {
+      color: #FF9800;
+    }
+    
+    &.status-closed {
+      color: #f44336;
+    }
+    
+    &.status-error {
+      color: #f44336;
+    }
+  }
+  
+  .status-separator {
+    color: rgba(255, 255, 255, 0.3);
+    margin: 0 2px;
+  }
+}

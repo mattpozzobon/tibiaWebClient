@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 interface LoginFormProps {
-  onSubmit: (email: string, password: string) => Promise<void>;
+  onSubmit: (email: string, password: string, rememberMe: boolean) => Promise<void>;
   loading: boolean;
   error: string | null;
   onShowRegister?: () => void;
@@ -11,11 +11,12 @@ interface LoginFormProps {
 export default function LoginForm({ onSubmit, loading, error, onShowRegister, onShowRecover }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
-    await onSubmit(email, password);
+    await onSubmit(email, password, rememberMe);
   };
 
   return (
@@ -45,6 +46,15 @@ export default function LoginForm({ onSubmit, loading, error, onShowRegister, on
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+        <label htmlFor="remember-me" className="remember-me-label">
+          <input
+            type="checkbox"
+            id="remember-me"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+          />
+          <span>Remember me & auto-login</span>
+        </label>
         <button 
           id="enter-game" 
           className="btn-primary btn-space" 

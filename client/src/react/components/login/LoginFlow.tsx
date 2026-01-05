@@ -6,6 +6,7 @@ import CharacterSelect from "./CharacterSelect";
 import ChangelogSidebar from "./ChangelogSidebar";
 import ChangelogModal from "../ChangelogModal";
 import BuildInfo from "./BuildInfo";
+import ServerStatus from "./ServerStatus";
 import type GameClient from "../../../core/gameclient";
 import './styles/LoginFlow.scss';
 
@@ -20,14 +21,15 @@ interface LoginFlowProps {
 
 export default function LoginFlow({ gc, engineStatus, onGameStart, onCharacterSelected }: LoginFlowProps) {
   const [step, setStep] = useState<LoginStep>(() =>
-    localStorage.getItem("auth_token") ? "asset-download" : "login"
+    (sessionStorage.getItem("auth_token") || localStorage.getItem("auth_token")) ? "asset-download" : "login"
   );
 
   const [loading, setLoading] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("auth_token");
+    // Check both sessionStorage (current session) and localStorage (remember me)
+    const token = sessionStorage.getItem("auth_token") || localStorage.getItem("auth_token");
     if (!gc || !token) return;
     try {
       gc.networkManager.openGameSocket(token);
@@ -52,6 +54,7 @@ export default function LoginFlow({ gc, engineStatus, onGameStart, onCharacterSe
 
   const handleLogout = () => {
     localStorage.removeItem("auth_token");
+    sessionStorage.removeItem("auth_token");
     setStep("login");
   };
 
@@ -81,7 +84,10 @@ export default function LoginFlow({ gc, engineStatus, onGameStart, onCharacterSe
 
       )}
 
-      <BuildInfo />
+      <div className="login-footer">
+        <ServerStatus />
+        <BuildInfo />
+      </div>
     </div>
   );
 }

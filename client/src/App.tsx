@@ -47,9 +47,12 @@ const App: React.FC = () => {
         (window.gameClient.interface.loginFlowManager as any).clearLoginInfo?.();
       }
       
-      // Reset game client
+      // Destroy game client completely - this will trigger reinitialization
       if (window.gameClient) {
-        window.gameClient.reset();
+        window.gameClient.destroy();
+        // Clear the gc state to trigger reinitialization in useGameClient
+        // We do this by setting shouldInitEngine to false temporarily
+        // The next login will set isAuthenticated back to true, triggering reinit
       }
     };
 

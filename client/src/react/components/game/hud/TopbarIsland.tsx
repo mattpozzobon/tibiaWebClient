@@ -9,9 +9,9 @@ interface TopbarIslandProps {
 export default function TopbarIsland({ gc }: TopbarIslandProps) {
 
   const handleLogout = () => {
-    // Close the socket connection
-    if (gc?.networkManager) {
-      gc.networkManager.close();
+    // Destroy game client completely
+    if (gc) {
+      gc.destroy();
     }
     
     // Clear tokens
@@ -21,11 +21,6 @@ export default function TopbarIsland({ gc }: TopbarIslandProps) {
     // Clear login info
     if (gc?.interface?.loginFlowManager) {
       (gc.interface.loginFlowManager as any).clearLoginInfo?.();
-    }
-    
-    // Reset game client
-    if (gc) {
-      gc.reset();
     }
     
     // Trigger disconnect event to return to login

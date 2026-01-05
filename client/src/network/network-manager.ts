@@ -276,13 +276,10 @@ class NetworkManager {
   }
 
   private __handleDisconnect(reason: string): void {
-    if (this.state.connected && window.gameClient?.renderer) {
-      // Stop game rendering
-      window.gameClient.reset();
-    }
     this.state.connected = false;
     
-    // Dispatch disconnect event to trigger UI reset
+    // Dispatch disconnect event to trigger UI reset and destroy
+    // The App.tsx handler will call destroy() on the game client
     window.dispatchEvent(new CustomEvent('game-disconnect', { 
       detail: { reason } 
     }));

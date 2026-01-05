@@ -96,25 +96,50 @@ export default class GameClient {
   }
 
 
-  reset(): void {
+  destroy(): void {
     /*
-     * Resets the gameclient for a new connection
+     * Fully destroys the game client and all its resources
+     * This should be called before creating a new GameClient instance
      */
-    //this.renderer.minimap.save();
-    //this.interface.settings.saveState();
+    // Abort game loop
     this.gameLoop.abort();
     
-    // Clear the renderer screen
-    if (this.renderer && this.renderer.app) {
-      this.renderer.app.stage.removeChildren();
-    }
-
+    // Disconnect network
+    this.disconnect();
+    
+    // Clear player
     if (this.player) {
       this.player.closeAllContainers();
       this.player = null;
     }
-
+    
+    // Clear world
+    this.world = null as any;
+    
+    // Reset interface
     this.interface.reset();
+    
+    // Destroy renderer and PIXI app
+    if (this.renderer && this.renderer.app) {
+      // Remove all children from stage
+      this.renderer.app.stage.removeChildren();
+      
+      // Destroy the PIXI application
+      this.renderer.app.destroy(true, {
+        children: true,
+        texture: true,
+      });
+    }
+    
+    // Clear PIXI texture cache if available
+    if (typeof window !== 'undefined' && (window as any).PIXI?.utils?.clearTextureCache) {
+      (window as any).PIXI.utils.clearTextureCache();
+    }
+    
+    // Clear window reference
+    if ((window as any).gameClient === this) {
+      (window as any).gameClient = null;
+    }
   }
 
   disconnect(): void {

@@ -57,12 +57,25 @@ export default function LoginFlow({ gc, engineStatus, onGameStart, onCharacterSe
   };
 
   const handleLogout = () => {
+    // Destroy game client completely
+    if (gc) {
+      gc.destroy();
+    }
+    
     // Clear login info when logging out
     if (gc?.interface?.loginFlowManager) {
       (gc.interface.loginFlowManager as any).clearLoginInfo();
     }
+    
+    // Clear tokens
     localStorage.removeItem("auth_token");
     sessionStorage.removeItem("auth_token");
+    
+    // Trigger disconnect event to ensure proper cleanup
+    window.dispatchEvent(new CustomEvent('game-disconnect', { 
+      detail: { reason: 'User logged out' } 
+    }));
+    
     setStep("login");
   };
 

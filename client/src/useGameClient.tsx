@@ -45,7 +45,30 @@ export function useGameClient(shouldInit: boolean) {
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
-      if (!shouldInit || startedRef.current || gc) return;
+      // If shouldInit is false, destroy existing client and reset state
+      if (!shouldInit) {
+        if (window.gameClient) {
+          window.gameClient.destroy();
+        }
+        if (!cancelled) {
+          setGc(null);
+          setStatus('idle');
+          setError(null);
+          startedRef.current = false;
+        }
+        return;
+      }
+      
+      // If already initialized and client exists, don't reinitialize
+      if (startedRef.current && gc && window.gameClient === gc) {
+        return;
+      }
+      
+      // If there's a stale gameClient reference, destroy it first
+      if (window.gameClient && window.gameClient !== gc) {
+        window.gameClient.destroy();
+      }
+      
       startedRef.current = true;
       try {
         setStatus('waiting-container');
@@ -66,6 +89,7 @@ export function useGameClient(shouldInit: boolean) {
         if (!cancelled) {
           setError(e);
           setStatus('error');
+          startedRef.current = false;
         }
       }
     };

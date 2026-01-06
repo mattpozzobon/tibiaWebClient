@@ -8,6 +8,7 @@ interface ServerStatusData {
   uptime: number | null;
   activeMonsters: number;
   worldTime: string;
+  scheduledShutdownTime: string | null;
 }
 
 function formatUptime(ms: number | null): string {
@@ -27,10 +28,29 @@ function formatUptime(ms: number | null): string {
   return `${seconds}s`;
 }
 
+function formatCountdown(ms: number): string {
+  if (ms <= 0) return '0s';
+  
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  
+  if (days > 0) {
+    return `${days}d ${hours % 24}h ${minutes % 60}m`;
+  } else if (hours > 0) {
+    return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+  } else if (minutes > 0) {
+    return `${minutes}m ${seconds % 60}s`;
+  }
+  return `${seconds}s`;
+}
+
 export default function ServerStatus() {
   const [status, setStatus] = useState<ServerStatusData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   useEffect(() => {
     const statusUrl = ApiEndpoints.getStatusUrl();
@@ -68,6 +88,36 @@ export default function ServerStatus() {
     };
   }, []);
 
+  // Countdown timer for scheduled shutdown
+  useEffect(() => {
+    if (!status?.scheduledShutdownTime) {
+      setCountdown(null);
+      return;
+    }
+
+    const updateCountdown = () => {
+      try {
+        const shutdownDate = new Date(status.scheduledShutdownTime!);
+        const now = new Date();
+        const remaining = shutdownDate.getTime() - now.getTime();
+        setCountdown(remaining > 0 ? remaining : 0);
+      } catch (e) {
+        console.error('Failed to calculate countdown:', e);
+        setCountdown(null);
+      }
+    };
+
+    // Update immediately
+    updateCountdown();
+
+    // Update every second
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [status?.scheduledShutdownTime]);
+
   if (loading) {
     return (
       <div className="server-status">
@@ -101,6 +151,13 @@ export default function ServerStatus() {
       <span className="status-separator">|</span>
       <span className="status-label">Time:</span>
       <span className="status-value">{status.worldTime}</span>
+      {status.scheduledShutdownTime && countdown !== null && (
+        <>
+          <span className="status-separator">|</span>
+          <span className="status-label">Server Save:</span>
+          <span className="status-value">{formatCountdown(countdown)}</span>
+        </>
+      )}
     </div>
   );
 }

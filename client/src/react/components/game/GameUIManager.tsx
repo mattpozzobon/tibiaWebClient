@@ -16,7 +16,7 @@ import MoveItemModal from './modals/MoveItemModal';
 // import OfferModal from './modals/OfferModal';
 // import SpellbookModal from './modals/SpellbookModal';
 
-import ChatWindow from './hud/Chat';
+import ChatWindow from './hud/chat/Chat';
 import ConfirmModal from './modals/ConfirmModal';
 import { useGameClient } from '../../hooks/gameClientCtx';
 // import FriendList from './FriendList';

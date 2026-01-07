@@ -1,6 +1,6 @@
 import React from 'react';
 import TopbarIsland from './hud/TopbarIsland';
-import Chat from './hud/Chat';
+import Chat from './hud/chat/Chat';
 import BottomHudContainer from './hud/BottomHudContainer';
 import { useGameClient } from '../../hooks/gameClientCtx';
 

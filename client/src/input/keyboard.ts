@@ -1,5 +1,6 @@
 import { MovementPacket, PlayerTurnPacket, TargetPacket } from "../core/protocol";
 import { CONST } from "../helper/appContext";
+import { isAnyModalOpen, closeAllModals } from "../utils/modalUtils";
 
 
 
@@ -192,7 +193,11 @@ class Keyboard {
   }
 
   private __handleReturnKey(): void {
-
+    // Check if any modal is open first - modals take precedence
+    if (isAnyModalOpen()) {
+      // Let the modal handle Enter key (modals handle their own Enter key events)
+      return;
+    }
   
     // Call React chat's handleEnterKey method directly
     if ((window as any).reactChatWindow && (window as any).reactChatWindow.handleEnterKey) {
@@ -201,7 +206,13 @@ class Keyboard {
   }
 
   private __handleEscapeKey(): void {
-    // Check if chat is active first
+    // Check if any modal is open first - modals take precedence
+    if (isAnyModalOpen()) {
+      closeAllModals();
+      return;
+    }
+    
+    // Check if chat is active
     const reactChatInput = document.querySelector(".chat-window .chat-input") as HTMLInputElement;
     if (reactChatInput && document.activeElement === reactChatInput) {
       // Chat is focused - let React chat handle Escape
@@ -262,6 +273,11 @@ class Keyboard {
     const { code } = event;
 
     if (lowerKey === Keyboard.KEYS.ENTER) {
+      // Check if any modal is open first - modals take precedence
+      if (isAnyModalOpen()) {
+        // Let the modal handle Enter - don't prevent default here as modal will handle it
+        return;
+      }
       this.__handleReturnKey();
       return;
     }

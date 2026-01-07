@@ -80,8 +80,12 @@ export default function ChatModal({ isOpen, onClose, gc }: ChatModalProps) {
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
       handleConfirm();
     } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
       onClose();
     }
   };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type GameClient from '../../../core/gameclient';
 
 // Import all game UI components
@@ -16,7 +16,6 @@ import MoveItemModal from './modals/MoveItemModal';
 // import OfferModal from './modals/OfferModal';
 // import SpellbookModal from './modals/SpellbookModal';
 
-import ChatWindow from './hud/chat/Chat';
 import ConfirmModal from './modals/ConfirmModal';
 import { useGameClient } from '../../hooks/gameClientCtx';
 // import FriendList from './FriendList';
@@ -56,6 +55,12 @@ export default function GameUIManager() {
   // const [showPlayerStats, setShowPlayerStats] = useState(false);
   // const [showFriendList, setShowFriendList] = useState(false);
 
+  // Use ref to track modals state for external access
+  const modalsRef = useRef(modals);
+  useEffect(() => {
+    modalsRef.current = modals;
+  }, [modals]);
+
   // Modal management functions
   const openModal = useCallback((modalName: string, data?: any) => {
     setModals(prev => ({
@@ -87,6 +92,11 @@ export default function GameUIManager() {
   // const togglePlayerStats = useCallback(() => setShowPlayerStats(prev => !prev), []);
   // const toggleFriendList = useCallback(() => setShowFriendList(prev => !prev), []);
 
+  // Check if any modal is open - use ref to always get current state
+  const isAnyModalOpen = useCallback(() => {
+    return Object.values(modalsRef.current).some(modal => modal.isOpen);
+  }, []);
+
   // Expose functions to global scope for compatibility with existing game code
   useEffect(() => {
     // Create a global UI manager for compatibility
@@ -95,6 +105,7 @@ export default function GameUIManager() {
       closeModal,
       closeAllModals,
       toggleChat,
+      isAnyModalOpen,
       // toggleInventory,
       // togglePlayerStats,
       // toggleFriendList,
@@ -106,7 +117,7 @@ export default function GameUIManager() {
       }
     };
 
-  }, [openModal, closeModal, closeAllModals, toggleChat]);
+  }, [openModal, closeModal, closeAllModals, toggleChat, isAnyModalOpen]);
 
   return (
     <div className="game-ui-manager">

@@ -44,8 +44,12 @@ export default function ConfirmModal({ isOpen, onClose, gc, data }: ConfirmModal
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter') {
+      event.preventDefault();
+      event.stopPropagation();
       handleConfirm();
     } else if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
       handleCancel();
     }
   };

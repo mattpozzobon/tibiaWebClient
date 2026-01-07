@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type GameClient from '../../../../../core/gameclient';
 import { ChannelMessagePacket, ChannelPrivatePacket } from '../../../../../core/protocol';
 import { reactChannelManager } from '../../../../services/ReactChannelManager';
+import { isAnyModalOpen } from '../../../../../utils/modalUtils';
 import './../styles/ChatWindow.scss';
 
 // Components
@@ -92,6 +93,11 @@ export default function Chat({ gc }: ChatProps) {
 
   // Message sending
   const handleEnterKey = useCallback(() => {
+    // Check if any modal is open first - modals take precedence
+    if (isAnyModalOpen()) {
+      return; // Let modals handle Enter
+    }
+    
     if (!isActive) {
       setIsActive(true);
       setIsCollapsed(false);
@@ -145,6 +151,11 @@ export default function Chat({ gc }: ChatProps) {
   // Global Escape handler
   useEffect(() => {
     const handleGlobalEscape = (e: KeyboardEvent) => {
+      // Check if any modal is open first - modals take precedence
+      if (isAnyModalOpen()) {
+        return; // Let modals handle Escape
+      }
+      
       if (e.key === 'Escape' && !isActive && !isCollapsed) {
         setIsCollapsed(true);
       }
@@ -161,6 +172,11 @@ export default function Chat({ gc }: ChatProps) {
 
   // Input handlers
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    // Check if any modal is open first - modals take precedence
+    if (isAnyModalOpen()) {
+      return; // Let modals handle keyboard events
+    }
+    
     if (e.key === 'Escape') {
       if (isActive) {
         setIsActive(false);

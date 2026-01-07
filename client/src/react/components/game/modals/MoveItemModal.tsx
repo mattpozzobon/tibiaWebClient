@@ -85,8 +85,12 @@ export default function MoveItemModal({ isOpen, onClose, gc, data }: MoveItemMod
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter') {
+      event.preventDefault();
+      event.stopPropagation();
       handleConfirm();
     } else if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
       onClose();
     }
   };

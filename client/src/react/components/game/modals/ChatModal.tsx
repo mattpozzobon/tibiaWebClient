@@ -58,9 +58,16 @@ export default function ChatModal({ isOpen, onClose, gc }: ChatModalProps) {
           // Add local channel
           reactChannelManager.addChannel(null, channel.name, 'regular');
         } else {
-          // Join global channel
-          if (channel.channelId) {
-            reactChannelManager.addChannel(channel.channelId, channel.name, 'regular');
+          // Join global channel (World, Trade, Help)
+          // These channels already exist in the default channels, so just join them
+          if (channel.channelId !== undefined) {
+            reactChannelManager.joinChannel(channel.channelId);
+            // Switch to the joined channel
+            const allChannels = reactChannelManager.getChannels();
+            const channelIndex = allChannels.findIndex(c => c.id === channel.channelId);
+            if (channelIndex !== -1) {
+              reactChannelManager.setActiveChannel(channelIndex);
+            }
           }
         }
       }

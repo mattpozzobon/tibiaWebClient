@@ -2,10 +2,8 @@
 
 .chat-window {
   position: absolute;
-  bottom: 80px;
-  left: 10px;
-  width: 600px; /* Made wider to accommodate merged messages */
-  height: 350px; /* Made taller for better visibility */
+  min-width: 300px;
+  min-height: 200px;
   background: rgba(0, 0, 0, 0.95);
   border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 15px;
@@ -13,9 +11,91 @@
   flex-direction: column;
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(10px);
-  z-index: 1000;
+  z-index: 10000; /* High z-index to display over everything */
   overflow: hidden;
   opacity: 1; /* Always keep chat window visible and opaque */
+  resize: none; /* Prevent browser default resize */
+}
+
+/* Resize handles */
+.resize-handle {
+  position: absolute;
+  background: transparent;
+  z-index: 1001;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  &:active {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* Edge handles */
+.resize-handle-top {
+  top: 0;
+  left: 10px;
+  right: 10px;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.resize-handle-right {
+  top: 10px;
+  right: 0;
+  bottom: 10px;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.resize-handle-bottom {
+  bottom: 0;
+  left: 10px;
+  right: 10px;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.resize-handle-left {
+  top: 10px;
+  left: 0;
+  bottom: 10px;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+/* Corner handles */
+.resize-handle-top-left {
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  cursor: nwse-resize;
+}
+
+.resize-handle-top-right {
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  cursor: nesw-resize;
+}
+
+.resize-handle-bottom-left {
+  bottom: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  cursor: nesw-resize;
+}
+
+.resize-handle-bottom-right {
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  cursor: nwse-resize;
 }
 
 .chat-header {
@@ -26,6 +106,21 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(0, 0, 0, 0.3);
   min-height: 20px;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  
+  &:active {
+    cursor: grabbing;
+  }
+  
+  // Allow clicking on interactive elements
+  button, input, .channel-tab {
+    cursor: pointer;
+    user-select: auto;
+  }
 }
 
 .chat-channel-tabs {

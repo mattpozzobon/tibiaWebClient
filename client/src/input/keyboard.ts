@@ -191,7 +191,6 @@ class Keyboard {
     window.gameClient.send(new PlayerTurnPacket(direction));
   }
 
-  
   private __handleReturnKey(): void {
 
   
@@ -233,7 +232,6 @@ class Keyboard {
     }
   }
 
-
   private __keyDown = (event: KeyboardEvent): void => {
     // convert event.key to lower case for consistency
     //event.preventDefault();
@@ -241,12 +239,35 @@ class Keyboard {
     
     const lowerKey = event.key.toLowerCase();
 
+    // Check if chat is active - if so, only handle Enter and Escape, block other game actions
+    const chatInput = document.querySelector(".chat-window .chat-input") as HTMLInputElement;
+    const isChatActive = chatInput && (document.activeElement === chatInput || chatInput.classList.contains('active'));
+
+    // Handle belt hotbar shortcuts (1-3) before other checks if chat is not active
+    if (!isChatActive && window.gameClient.isConnected()) {
+      const beltHotbar = (window as any).reactBeltHotbar;
+      if (beltHotbar && beltHotbar.hasBeltSlots) {
+        // Check for number keys 1-3
+        const slotIndex = parseInt(lowerKey) - 1;
+        if (!isNaN(slotIndex) && slotIndex >= 0 && slotIndex < 3) {
+          event.preventDefault();
+          beltHotbar.handleSlotClick(slotIndex);
+          return;
+        }
+      }
+    }
+
     if (!this.__isConfigured(lowerKey)) return;
 
     const { code } = event;
 
     if (lowerKey === Keyboard.KEYS.ENTER) {
       this.__handleReturnKey();
+      return;
+    }
+
+    // If chat is active, block all other game actions except Escape
+    if (isChatActive && lowerKey !== Keyboard.KEYS.ESC) {
       return;
     }
 

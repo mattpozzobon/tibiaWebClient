@@ -15,16 +15,16 @@
 @import '../components/game/modals/styles/ChatModal.scss';
 
 // Global React component styles
-.react-component {
-  // Base styles for all React components
-}
+// .react-component {
+//   Base styles for all React components
+// }
 
 // Utility classes
 .loading-spinner {
   width: 40px;
   height: 40px;
   border: 4px solid rgba(255, 255, 255, 0.3);
-  border-top: 4px solid #0096ff;
+  border-top: 4px solid #ffd700;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto;
@@ -38,19 +38,39 @@
 // Common button styles
 .btn-primary {
   padding: 12px 20px;
-  background: linear-gradient(135deg, #0096ff 0%, #007acc 100%);
-  border: none;
+  background: #1a1205;
+  color: #f9c349;
+  border: 2px solid #c98b30;
   border-radius: 8px;
-  color: white;
+  box-sizing: border-box;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.3s ease;
+  text-align: center;
+  transition:
+    background 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out,
+    color 0.2s;
+  box-shadow:
+    inset 0 0 8px rgba(255, 204, 102, 0.5),
+    0 0 8px rgba(255, 204, 102, 0.4);
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #00aaff 0%, #0088dd 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 150, 255, 0.3);
+    background: #2a1c0a;
+    color: #ffe89e;
+    border: 2px solid #c98b30;
+    box-shadow:
+      inset 0 0 12px rgba(255, 204, 102, 0.7),
+      0 0 12px rgba(255, 204, 102, 0.6);
+    transform: none;
+  }
+
+  &:active:not(:disabled) {
+    background: #9b6d2c;
+    color: #fff4cc;
+    box-shadow:
+      inset 0 0 4px rgba(255, 204, 102, 0.9),
+      0 0 8px rgba(255, 204, 102, 0.5);
   }
 
   &:disabled {
@@ -138,8 +158,8 @@
 
   &:focus {
     outline: none;
-    border-color: #0096ff;
-    box-shadow: 0 0 0 2px rgba(0, 150, 255, 0.2);
+    border-color: #ffd700;
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
   }
 
   &::placeholder {
@@ -182,7 +202,7 @@
 }
 
 .text-accent {
-  color: #0096ff;
+  color: #ffd700;
 }
 
 .text-success {

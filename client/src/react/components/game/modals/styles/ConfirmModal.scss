@@ -109,30 +109,6 @@
   background: rgba(0, 0, 0, 0.3);
 }
 
-.btn-primary {
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #0096ff 0%, #007acc 100%);
-  border: none;
-  border-radius: 8px;
-  color: white;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #00aaff 0%, #0088dd 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 150, 255, 0.3);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-}
-
 .btn-secondary {
   padding: 12px 24px;
   background: linear-gradient(135deg, #666 0%, #444 100%);

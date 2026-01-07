@@ -120,30 +120,27 @@ export default function BeltHotbar({ gc }: BeltHotbarProps) {
     }
   }, [getPotionType, addonState, gc]);
 
-  // Handle keyboard shortcuts
+  // Expose handleSlotClick to keyboard system
   useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (beltSlots.length === 0) return;
-
-      // Check for number keys 1-3
-      const key = event.key;
-      const slotIndex = parseInt(key) - 1;
-      
-      if (slotIndex >= 0 && slotIndex < beltSlots.length) {
+    (window as any).reactBeltHotbar = {
+      handleSlotClick: (slotIndex: number) => {
+        if (beltSlots.length === 0) return;
+        
         // Check if the addon is active before allowing the shortcut
         const isActive = (slotIndex === 0 && addonState.healthPotion > 0) ||
                         (slotIndex === 1 && addonState.manaPotion > 0) ||
                         (slotIndex === 2 && addonState.energyPotion > 0);
         
-        if (isActive) {
-          event.preventDefault();
+        if (isActive && slotIndex >= 0 && slotIndex < beltSlots.length) {
           handleSlotClick(slotIndex);
         }
-      }
+      },
+      hasBeltSlots: beltSlots.length > 0
     };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+    return () => {
+      delete (window as any).reactBeltHotbar;
+    };
   }, [beltSlots.length, handleSlotClick, addonState]);
 
   // Don't render if no belt item or no outfit addons

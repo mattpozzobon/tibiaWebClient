@@ -44,7 +44,7 @@ export default function Chat({ gc }: ChatProps) {
         inputRef.current?.focus();
       }, 0);
     } else {
-      // Second Enter press - send message if not empty and deactivate
+      // Second Enter press - send message if not empty, otherwise just deactivate
       const message = inputValue.trim();
       if (message && activeChannel) {
         // Check if it's a LocalChannel (Console) - cannot send to local channels
@@ -77,10 +77,12 @@ export default function Chat({ gc }: ChatProps) {
           // Message will appear when server broadcasts it back
           gc.send(new ChannelMessagePacket(activeChannel.id, 1, message));
         }
+        
+        // Clear input after sending
+        setInputValue('');
       }
       
-      // Clear input, blur, and deactivate chat
-      setInputValue('');
+      // Always deactivate chat and blur input
       setIsActive(false);
       inputRef.current?.blur();
     }
@@ -96,6 +98,23 @@ export default function Chat({ gc }: ChatProps) {
       delete (window as any).reactChatWindow;
     };
   }, [isActive, inputValue]);
+
+  // Handle Escape key globally when chat is visible but not active
+  useEffect(() => {
+    const handleGlobalEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isActive && !isCollapsed) {
+        setIsCollapsed(true);
+      }
+    };
+
+    if (!isCollapsed) {
+      window.addEventListener('keydown', handleGlobalEscape);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleGlobalEscape);
+    };
+  }, [isActive, isCollapsed]);
 
   const scrollToBottom = (ref: React.RefObject<HTMLDivElement | null>, section: string) => {
     if (ref.current) {
@@ -206,8 +225,14 @@ export default function Chat({ gc }: ChatProps) {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
-      setIsActive(false);
-      inputRef.current?.blur();
+      if (isActive) {
+        // If chat is active, deactivate it
+        setIsActive(false);
+        inputRef.current?.blur();
+      } else if (!isCollapsed) {
+        // If chat is not active and not collapsed, collapse it
+        setIsCollapsed(true);
+      }
     } else if (e.key === 'ArrowUp' && e.shiftKey) {
       // Handle channel suggestion
       reactChannelManager.suggestPrevious();

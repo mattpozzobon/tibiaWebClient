@@ -62,6 +62,17 @@ export default function Minimap({ gc }: MinimapProps) {
   const minZoom = Math.max(1, baseZoom - 3); // allow 3 steps out
   const handleZoomIn = useCallback(() => setZoomLevel(prev => Math.min(prev + 1, maxZoom)), [maxZoom]);
   const handleZoomOut = useCallback(() => setZoomLevel(prev => Math.max(prev - 1, minZoom)), [minZoom]);
+  
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      // Scroll up = zoom in
+      handleZoomIn();
+    } else {
+      // Scroll down = zoom out
+      handleZoomOut();
+    }
+  }, [handleZoomIn, handleZoomOut]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -701,14 +712,15 @@ export default function Minimap({ gc }: MinimapProps) {
             onMouseLeave={handleCanvasMouseLeave}
             onClick={handleCanvasClick}
             onDoubleClick={handleDoubleClick}
+            onWheel={handleWheel}
           />
+        </div>
 
-
-          {/* Zoom controls inside minimap */}
-          <div className="minimap-zoom-controls">
-            <button className="zoom-button zoom-in" onClick={handleZoomIn} disabled={zoomLevel >= 8} title="Zoom In">+</button>
-            <button className="zoom-button zoom-out" onClick={handleZoomOut} disabled={zoomLevel <= 1} title="Zoom Out">−</button>
-          </div>
+        {/* Zoom controls under minimap */}
+        <div className="minimap-zoom-controls">
+          <button className="zoom-button zoom-in" onClick={handleZoomIn} disabled={zoomLevel >= maxZoom} title="Zoom In">+</button>
+          <span className="zoom-level-display">{zoomLevel}</span>
+          <button className="zoom-button zoom-out" onClick={handleZoomOut} disabled={zoomLevel <= minZoom} title="Zoom Out">−</button>
         </div>
 
 

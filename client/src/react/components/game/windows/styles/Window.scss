@@ -175,16 +175,20 @@
 
 // Minimap window specific styles
 .window.minimap-window {
-  height: 164px; /* 170px - 6px padding */
-  width: 164px; /* 170px - 6px padding */
+  height: 225px; /* 182px minimap + ~28px for buttons + 15px top padding */
+  width: 198px; /* Match window max-width */
   
   .window-content {
     padding: 0;
     padding-top: 15px; // Add top padding for header space
+    padding-left: 6px; // Reduced left padding
+    padding-right: 0px; // Reduced right padding
+    padding-bottom: 2px; // Reduced bottom padding
     display: block;
-    overflow: hidden; /* Prevent any breakout */
-    height: 149px; /* Height minus top padding */
-    width: 164px;
+    overflow: visible; /* Allow buttons to show */
+    height: auto; /* Let content determine height */
+    min-height: 182px; /* Minimum for minimap */
+    width: 182px; /* 198px - 16px padding (8px * 2) */
     pointer-events: auto;
     box-sizing: border-box;
   }

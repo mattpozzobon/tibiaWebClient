@@ -1,5 +1,5 @@
 .equipment-panel.equipment-container {
-  width: 112px;
+  width: 118px; // 3 columns (36px each) = 108px + padding (5px * 2) = 10px = 118px
   height: 100%;
   display: flex;
   justify-content: center;
@@ -10,26 +10,29 @@
 
 .equipment-panel.equipment-container .equipment-slots {
   display: grid;
-  grid-template-columns: 32px 32px 32px;
-  grid-template-rows: repeat(5, 32px);
-  gap: 2px;
+  grid-template-columns: 36px 36px 36px;
+  grid-template-rows: repeat(5, 36px);
+  gap: 0px;
   width: fit-content;
   margin: 0 auto;
   box-sizing: border-box;
 }
 
 .equipment-panel.equipment-container .equipment-slots .slot {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   position: relative;
-  border: 1px solid transparent;
+  border: none;
   background: transparent;
   background-position: center;
   background-repeat: no-repeat;
-  background-size: contain;
+  background-size: 36px 36px;
   transition: border-color 0.2s ease;
   box-sizing: border-box;
   display: block;
+  margin: 0;
+  padding: 0;
+  outline: none;
   
   &:hover {
     border-color: #fff;

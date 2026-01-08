@@ -6,7 +6,7 @@
   box-shadow: 0 8px 20px rgba(0,0,0,0.4);
   margin-bottom: 0;
   width: 100%;
-  max-width: 170px;
+  max-width: 198px; // 5 slots (36px each) = 180px + padding (8px * 2) = 16px + border (1px * 2) = 2px = 198px
   min-width: 0;
   flex-shrink: 0;
   transition: all 0.2s ease;

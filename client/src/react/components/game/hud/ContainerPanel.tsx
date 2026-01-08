@@ -65,25 +65,26 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
     // Clear the canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Set background based on slot type
-    div.style.backgroundImage = getSlotBackgroundImage(index);
-    div.style.backgroundSize = 'contain';
-    div.style.backgroundRepeat = 'no-repeat';
-    div.style.backgroundPosition = 'center';
-
     const item = slot.item;
+    
+    // Set background based on slot type, but use item.png if item is equipped
     if (item) {
+      // Item is equipped - use item.png background (same as normal slots)
+      div.style.backgroundImage = 'url(/assets/item.png)';
+      div.style.backgroundSize = 'contain';
+      div.style.backgroundRepeat = 'no-repeat';
+      div.style.backgroundPosition = 'center';
+      
       // Render the item on canvas
       ItemRenderer.renderItemToCanvas(gc, item, canvas, { size: 32, padding: 0 });
       
-      // Draw item count if > 1
-      if (item.count > 1) {
-        ctx.fillStyle = '#fff';
-        ctx.font = '10px Arial';
-        ctx.fillText(item.count.toString(), 20, 12);
-      }
+      // Count is now displayed via a separate span element (like belt hotbar)
     } else {
-      // Keep background as item.png for empty slots
+      // No item - use slot type background
+      div.style.backgroundImage = getSlotBackgroundImage(index);
+      div.style.backgroundSize = 'contain';
+      div.style.backgroundRepeat = 'no-repeat';
+      div.style.backgroundPosition = 'center';
     }
   };
 
@@ -177,6 +178,8 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
     const handleContainerItemChanged = (event: CustomEvent) => {
       if (event.detail.containerId === containerId) {
         reRenderSlots();
+        // Force React re-render to update quantity labels
+        setForceRender(prev => prev + 1);
       }
     };
 
@@ -236,6 +239,9 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
                     if (el) canvasRefs.current[`slot-${index}`] = el;
                   }}
                 />
+                {container.slots[index]?.item && container.slots[index].item.count > 1 && (
+                  <span className="slot-count">{container.slots[index].item.count}</span>
+                )}
               </div>
             ))}
           </div>
@@ -267,6 +273,9 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
                     if (el) canvasRefs.current[`slot-${index}`] = el;
                   }}
                 />
+                {container.slots[index]?.item && container.slots[index].item.count > 1 && (
+                  <span className="slot-count">{container.slots[index].item.count}</span>
+                )}
               </div>
             ))}
           </div>

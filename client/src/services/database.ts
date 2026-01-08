@@ -48,6 +48,22 @@ export default class Database {
     window.location.reload();
   }
 
+  public clearMinimapCache(): void {
+    if (!this.database) {
+      console.warn("Database not initialized, cannot clear minimap cache");
+      return;
+    }
+    const minimapStore = this.createTransaction(this.MINIMAP_STORE, "readwrite");
+    const request = minimapStore.clear();
+    request.onsuccess = (): void => {
+      console.log("Minimap cache cleared successfully");
+      this.loadedMinimapChunks = {};
+    };
+    request.onerror = (): void => {
+      console.error("Failed to clear minimap cache:", request.error);
+    };
+  }
+
   // Database Transactions
   private createTransaction(store: string, mode: IDBTransactionMode): IDBObjectStore {
     if (!this.database) {

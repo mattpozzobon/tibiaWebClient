@@ -1,6 +1,6 @@
 import { useRef, useCallback } from 'react';
 import Canvas from '../../../../../../renderer/canvas';
-import { MINIMAP_CONFIG, MINIMAP_COLORS } from '../../../../../../config/minimap-config';
+import { MINIMAP_CONFIG } from '../../../../../../config/minimap-config';
 import { drawPlayerIndicator, drawMarkers } from '../utils/renderingUtils';
 import { computeZoomWindow } from '../utils/coordinateTransformations';
 import type Player from '../../../../../../game/player/player';

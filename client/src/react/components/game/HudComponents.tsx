@@ -16,7 +16,7 @@ const Hud: React.FC = () => {
       <LogoutIcon gc={gc} />
       <OutfitIcon gc={gc} />
       <FriendsIcon gc={gc} />
-      <ChangelogIcon gc={gc} />
+      {/* <ChangelogIcon gc={gc} /> */}
       <Chat gc={gc} />
       <BottomHudContainer gameClient={gc} />
     </>

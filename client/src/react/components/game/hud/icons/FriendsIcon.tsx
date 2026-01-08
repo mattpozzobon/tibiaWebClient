@@ -7,6 +7,7 @@ interface FriendsIconProps {
 
 export default function FriendsIcon({ gc }: FriendsIconProps) {
   const handleFriends = () => {
+    // Open friends modal (keep original behavior)
     (window as any).reactUIManager?.openModal('friends');
   };
 

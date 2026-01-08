@@ -191,7 +191,7 @@ export default function Window({
         <>
           <div 
             ref={contentRef}
-            className={`window-content ${className === 'container-window' ? 'container-scrollable' : ''}`}
+            className={`window-content ${className === 'container-window' ? 'container-scrollable' : ''} ${className === 'friends-window' ? 'friends-scrollable' : ''}`}
             style={currentHeight ? { 
               height: `calc(${currentHeight}px - 12px)`, 
               overflowY: currentHeight < (naturalHeight || Infinity) 

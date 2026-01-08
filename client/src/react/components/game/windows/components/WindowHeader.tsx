@@ -25,6 +25,7 @@ export default function WindowHeader({
   const isEquipmentActive = windows.some(w => w.id === 'equipment') || pinnedWindows.some(w => w.id === 'equipment');
   const isMinimapActive = windows.some(w => w.id === 'minimap') || pinnedWindows.some(w => w.id === 'minimap');
   const isStatusActive = windows.some(w => w.id === 'status') || pinnedWindows.some(w => w.id === 'status');
+  const isFriendsActive = windows.some(w => w.id === 'friends') || pinnedWindows.some(w => w.id === 'friends');
 
   const getSubPanelToggleIcon = () => {
     if (column === COLUMN_TYPES.LEFT) return WINDOW_ICONS.ADD_LEFT_SUB_PANEL;
@@ -62,6 +63,14 @@ export default function WindowHeader({
         title={TOOLTIPS.STATUS}
       >
         {WINDOW_ICONS.STATUS}
+      </button>
+      
+      <button 
+        className={`window-icon ${isFriendsActive ? 'active' : ''}`}
+        onClick={() => onToggleWindow('friends', column)}
+        title={TOOLTIPS.FRIENDS}
+      >
+        {WINDOW_ICONS.FRIENDS}
       </button>
       
       <button 

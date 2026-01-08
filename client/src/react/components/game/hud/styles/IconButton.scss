@@ -3,10 +3,10 @@
 .icon-button {
   position: absolute;
   bottom: 5px;
-  width: 50px;
-  height: 50px;
+  width: 35px;
+  height: 35px;
   background: rgba(0, 0, 0, 0.95);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -15,19 +15,19 @@
   transition: all 0.3s ease;
   z-index: 10001; /* Higher than window manager and windows */
   backdrop-filter: blur(10px);
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
   pointer-events: auto;
 
   &:hover {
     background: rgba(0, 0, 0, 1);
     border-color: rgba(255, 255, 255, 0.4);
     transform: scale(1.1);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
   }
 
   img {
-    width: 24px;
-    height: 24px;
+    width: 17px;
+    height: 17px;
     filter: brightness(0) invert(1);
     transition: filter 0.3s ease;
     image-rendering: pixelated;
@@ -36,7 +36,7 @@
   }
 
   .changelog-icon {
-    font-size: 20px;
+    font-size: 14px;
     color: rgba(255, 255, 255, 0.8);
     transition: color 0.3s ease;
   }
@@ -52,13 +52,13 @@
 }
 
 .outfit-icon .icon-button {
-  right: 70px; // Outfit
+  right: 55px; // Outfit
 }
 
 .friends-icon .icon-button {
-  right: 130px; // Friends
+  right: 100px; // Friends
 }
 
 .changelog-icon-wrapper .icon-button {
-  right: 190px; // Changelog (leftmost)
+  right: 145px; // Changelog (leftmost)
 }

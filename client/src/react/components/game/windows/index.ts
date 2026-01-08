@@ -4,6 +4,7 @@ export { default as EquipmentWindow } from './EquipmentWindow';
 export { default as MinimapWindow } from './MinimapWindow';
 export { default as ContainerWindow } from './ContainerWindow';
 export { default as StatusWindow } from './StatusWindow';
+export { default as FriendsWindow } from './FriendsWindow';
 export { default as WindowInitializer } from './WindowInitializer';
 export type { WindowData } from './WindowManager';
 export type { WindowProps } from './Window';

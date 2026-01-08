@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState } from 'react';
-import { useWindowManager, EquipmentWindow, MinimapWindow, ContainerWindow, StatusWindow } from './index';
+import { useWindowManager, EquipmentWindow, MinimapWindow, ContainerWindow, StatusWindow, FriendsWindow } from './index';
 import { LOCALSTORAGE_KEYS, WINDOW_TYPES, COLUMN_TYPES, type ColumnType } from './constants';
 import type GameClient from '../../../../core/gameclient';
 import { useGameClientInitialized } from '../../../hooks/useGameClientInitialized';
@@ -33,6 +33,7 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
       removeWindow('equipment');
       removeWindow('minimap');
       removeWindow('status');
+      removeWindow('friends');
 
       // Helper function to get saved window state
       const getSavedWindowState = (windowId: string) => {
@@ -48,10 +49,11 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
         return null;
       };
 
-      // Get saved state for equipment, minimap, and status windows
+      // Get saved state for equipment, minimap, status, and friends windows
       const savedEquipment = getSavedWindowState('equipment');
       const savedMinimap = getSavedWindowState('minimap');
       const savedStatus = getSavedWindowState('status');
+      const savedFriends = getSavedWindowState('friends');
 
       // Add the equipment window with saved state or defaults
       addWindow({
@@ -84,6 +86,17 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
         order: savedStatus?.order || 0,
         className: savedStatus?.className || 'status-window',
         pinned: savedStatus?.pinned || false
+      });
+
+      // Add the friends window with saved state or defaults
+      addWindow({
+        id: 'friends',
+        title: 'Friends',
+        component: <FriendsWindow gc={gc} />,
+        column: savedFriends?.column || 'right',
+        order: savedFriends?.order || 0,
+        className: savedFriends?.className || 'friends-window',
+        pinned: savedFriends?.pinned || false
       });
     }, 100); // Small delay to let WindowManager load first
 

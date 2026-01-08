@@ -211,6 +211,18 @@
   }
 }
 
+// Friends window specific styles
+.window.friends-window {
+  .window-content {
+    padding: 4px 6px;
+    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: visible;
+  }
+}
+
 // Resize handle
 .window-resize-handle {
   position: absolute;

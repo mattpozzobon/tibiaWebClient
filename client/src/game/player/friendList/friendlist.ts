@@ -105,6 +105,7 @@ export default class Friendlist {
   }
 
   public updateDOM(): void {
+    console.log("[Friendlist] Dispatching friendsUpdate with");
     const friendArray: Friend[] = Array.from(this.__friends, this.__deconstructMap.bind(this))
       .filter(this.__showOfflineFilter.bind(this))
       .sort(this.__sortFunction);

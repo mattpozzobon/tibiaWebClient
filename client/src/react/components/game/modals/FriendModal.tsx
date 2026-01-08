@@ -20,6 +20,7 @@ interface ContextMenu {
   x: number;
   y: number;
   friendName: string;
+  friendOnline?: boolean;
 }
 
 export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
@@ -28,8 +29,9 @@ export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
   const [friendRequests, setFriendRequests] = useState<string[]>([]);
   const [newFriendName, setNewFriendName] = useState('');
   const [showOffline, setShowOffline] = useState(true);
-  const [contextMenu, setContextMenu] = useState<ContextMenu>({ visible: false, x: 0, y: 0, friendName: '' });
+  const [contextMenu, setContextMenu] = useState<ContextMenu>({ visible: false, x: 0, y: 0, friendName: '', friendOnline: false });
   const modalRef = useRef<HTMLDivElement>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isOpen || !gc.player) return;
@@ -83,15 +85,20 @@ export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
   }, [isOpen, gc.player]);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (contextMenu.visible && modalRef.current && !modalRef.current.contains(event.target as Node)) {
-        setContextMenu({ visible: false, x: 0, y: 0, friendName: '' });
+    const handleClick = (event: MouseEvent) => {
+      if (contextMenu.visible) {
+        const target = event.target as Node;
+        if (contextMenuRef.current && !contextMenuRef.current.contains(target)) {
+          setContextMenu({ visible: false, x: 0, y: 0, friendName: '', friendOnline: false });
+        }
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [contextMenu.visible]);
+    if (isOpen) {
+      document.addEventListener('click', handleClick, true);
+      return () => document.removeEventListener('click', handleClick, true);
+    }
+  }, [contextMenu.visible, isOpen]);
 
   const handleAddFriend = () => {
     if (!newFriendName.trim()) return;
@@ -124,19 +131,44 @@ export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
 
   const handleFriendRightClick = (event: React.MouseEvent, friendName: string) => {
     event.preventDefault();
+    const friend = friends.find(f => f.name === friendName);
     setContextMenu({
       visible: true,
       x: event.clientX,
       y: event.clientY,
-      friendName
+      friendName,
+      friendOnline: friend?.online || false
     });
   };
 
-  const handleContextMenuAction = (action: 'remove', friendName: string) => {
-    if (action === 'remove') {
+  const handleMessageFriend = (friendName: string) => {
+    const { reactChannelManager } = require('../../../services/ReactChannelManager');
+    reactChannelManager.addPrivateChannel(friendName);
+    const channels = reactChannelManager.getChannels();
+    const privateChannelIndex = channels.findIndex((ch: any) => ch.name === friendName && ch.type === 'private');
+    if (privateChannelIndex !== -1) {
+      reactChannelManager.setActiveChannel(privateChannelIndex);
+    }
+    const chatWindow = (window as any).reactChatWindow;
+    if (chatWindow) {
+      chatWindow.setIsCollapsed(false);
+      chatWindow.setIsActive(true);
+      setTimeout(() => {
+        const inputRef = chatWindow?.inputRef;
+        if (inputRef?.current) {
+          inputRef.current.focus();
+        }
+      }, 100);
+    }
+  };
+
+  const handleContextMenuAction = (action: 'message' | 'remove', friendName: string) => {
+    if (action === 'message') {
+      handleMessageFriend(friendName);
+    } else if (action === 'remove') {
       handleRemoveFriend(friendName);
     }
-    setContextMenu({ visible: false, x: 0, y: 0, friendName: '' });
+    setContextMenu({ visible: false, x: 0, y: 0, friendName: '', friendOnline: false });
   };
 
   const filteredFriends = friends.filter(friend => showOffline || friend.online);
@@ -166,7 +198,14 @@ export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
         </button>
       </div>
 
-      <div className="modal-content">
+      <div 
+        className="modal-content"
+        onClick={(e) => {
+          if (contextMenu.visible && contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
+            setContextMenu({ visible: false, x: 0, y: 0, friendName: '', friendOnline: false });
+          }
+        }}
+      >
           {activeTab === 'friends' && (
             <>
               <div className="add-friend-section">
@@ -257,6 +296,7 @@ export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
 
       {contextMenu.visible && (
         <div 
+          ref={contextMenuRef}
           className="context-menu"
           style={{
             position: 'fixed',
@@ -265,6 +305,14 @@ export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
             zIndex: 1000
           }}
         >
+          {contextMenu.friendOnline && (
+            <button 
+              className="context-menu-item"
+              onClick={() => handleContextMenuAction('message', contextMenu.friendName)}
+            >
+              Message
+            </button>
+          )}
           <button 
             className="context-menu-item"
             onClick={() => handleContextMenuAction('remove', contextMenu.friendName)}

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, createContext, useContext, useEffect, useMemo } from 'react';
 import './styles/WindowManager.scss';
-import { EquipmentWindow, MinimapWindow, StatusWindow } from './index';
+import { EquipmentWindow, MinimapWindow, StatusWindow, FriendsWindow } from './index';
 import WindowColumnRenderer from './components/WindowColumnRenderer';
 import { LOCALSTORAGE_KEYS, COLUMN_TYPES, WINDOW_TYPES, WINDOW_CLASSES, type ColumnType } from './constants';
 import { useLocalStorage, useLocalStorageString } from './hooks/useLocalStorage';
@@ -31,6 +31,7 @@ interface WindowManagerContextType {
   removeWindow: (windowId: string) => void;
   moveWindow: (windowId: string, newColumn: ColumnType) => void;
   togglePin: (windowId: string) => void;
+  toggleWindow: (windowId: string, column: ColumnType) => void;
   windows: WindowData[];
 }
 
@@ -362,6 +363,16 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
           className: WINDOW_CLASSES.STATUS,
           pinned: false
         };
+      case WINDOW_TYPES.FRIENDS:
+        return {
+          id: WINDOW_TYPES.FRIENDS,
+          title: 'Friends',
+          component: <FriendsWindow gc={gc} />,
+          column,
+          order: 0,
+          className: WINDOW_CLASSES.FRIENDS,
+          pinned: false
+        };
       default:
         return null;
     }
@@ -464,8 +475,24 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
     removeWindow,
     moveWindow,
     togglePin,
+    toggleWindow,
     windows
-  }), [addWindow, removeWindow, moveWindow, togglePin, windows]);
+  }), [addWindow, removeWindow, moveWindow, togglePin, toggleWindow, windows]);
+
+  // Expose window manager functions globally for components outside the context
+  useEffect(() => {
+    (window as any).windowManager = {
+      toggleWindow,
+      addWindow,
+      removeWindow,
+      moveWindow,
+      togglePin
+    };
+
+    return () => {
+      delete (window as any).windowManager;
+    };
+  }, [toggleWindow, addWindow, removeWindow, moveWindow, togglePin]);
 
   return (
     <WindowManagerContext.Provider value={contextValue}>

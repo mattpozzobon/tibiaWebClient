@@ -40,7 +40,7 @@ export default function WindowGroup({
           onPin={() => onTogglePin(window.id)}
           onDrop={(e) => onWindowDrop(e, window.id)}
           onDragOver={onDragOver}
-          onResize={onWindowResize && window.className === 'container-window' ? (height) => onWindowResize(window.id, height) : undefined}
+          onResize={onWindowResize && (window.className === 'container-window' || window.className === 'friends-window') ? (height) => onWindowResize(window.id, height) : undefined}
           isDragging={draggedWindow === window.id}
           isPinned={isPinned}
           className={window.className}

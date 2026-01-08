@@ -140,13 +140,18 @@ export default function Chat({ gc }: ChatProps) {
     }
   }, [isActive, inputValue, activeChannel, gc, addMessage]);
 
-  // Expose handleEnterKey to global scope
+  // Expose chat methods to global scope
   useEffect(() => {
-    (window as any).reactChatWindow = { handleEnterKey };
+    (window as any).reactChatWindow = { 
+      handleEnterKey,
+      setIsCollapsed,
+      setIsActive,
+      inputRef
+    };
     return () => {
       delete (window as any).reactChatWindow;
     };
-  }, [handleEnterKey]);
+  }, [handleEnterKey, setIsCollapsed, setIsActive]);
 
   // Global Escape handler
   useEffect(() => {

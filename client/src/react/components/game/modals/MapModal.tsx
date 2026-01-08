@@ -1,7 +1,7 @@
 import React from 'react';
 import type GameClient from '../../../../core/gameclient';
 import BaseModal from '../../shared/BaseModal';
-import Minimap from '../hud/Minimap';
+import Minimap from '../hud/minimap';
 import './styles/MapModal.scss';
 
 interface MapModalProps {

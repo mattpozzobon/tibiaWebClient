@@ -1,5 +1,5 @@
 import React from 'react';
-import Minimap from '../hud/Minimap';
+import Minimap from '../hud/minimap';
 import type GameClient from '../../../../core/gameclient';
 
 interface MinimapWindowProps {

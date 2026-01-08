@@ -1,0 +1,381 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+
+
+import ContextMenu from '../ContextMenu';
+import CreateMarkerModal from '../../modals/CreateMarkerModal';
+import EditMarkerModal from '../../modals/EditMarkerModal';
+import { MinimapErrorBoundary } from '../MinimapErrorBoundary';
+import MinimapCanvas, { MinimapCanvasProps } from './components/MinimapCanvas';
+import MinimapZoomControls from './components/MinimapZoomControls';
+import { useMinimapZoom } from './hooks/useMinimapZoom';
+import { useMinimapView } from './hooks/useMinimapView';
+import { useMinimapMarkers } from './hooks/useMinimapMarkers';
+import { useMinimapRendering } from './hooks/useMinimapRendering';
+import { useMinimapChunks } from './hooks/useMinimapChunks';
+import { useMinimapCache } from './hooks/useMinimapCache';
+import { useMinimapMagnifier } from './hooks/useMinimapMagnifier';
+import { useMinimapInteractions } from './hooks/useMinimapInteractions';
+import './styles/Minimap.scss';
+import { usePlayer } from '../../../../hooks/usePlayerAttribute';
+import { MapMarker } from '../../../../../types/map-marker';
+import GameClient from '../../../../../core/gameclient';
+import Canvas from '../../../../../renderer/canvas';
+
+interface MinimapProps {
+  gc: GameClient;
+}
+
+export default function Minimap({ gc }: MinimapProps) {
+  const player = usePlayer(gc);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  const currentCanvasSize = 240; // Fixed canvas size
+  const { zoomLevel, minZoom, maxZoom, handleZoomIn, handleZoomOut, handleWheel, zoomDebounceRef } = useMinimapZoom();
+  const {
+    viewCenterRef,
+    currentFloorRef,
+    isFollowingPlayer,
+    setIsFollowingPlayer,
+    viewCenterVersion,
+    renderLayer,
+    setRenderLayer,
+    getActiveViewCenter,
+    getQuantizedCenter,
+    setViewCenter
+  } = useMinimapView(player);
+  
+  const { markers, markerImages, loadMarkers } = useMinimapMarkers(gc, renderLayer);
+  const { updateChunks } = useMinimapChunks(gc, player);
+  
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number }>({ visible: false, x: 0, y: 0 });
+  const [createMarkerModal, setCreateMarkerModal] = useState<{ visible: boolean; x: number; y: number; floor: number }>({ visible: false, x: 0, y: 0, floor: 0 });
+  const [editMarkerModal, setEditMarkerModal] = useState<{ visible: boolean; marker: MapMarker | null }>({ visible: false, marker: null });
+  const [hoveredMarker, setHoveredMarker] = useState<MapMarker | null>(null);
+  
+  const { magnifier, setMagnifier, magnifierCanvasRef } = useMinimapMagnifier(canvasRef, currentCanvasSize);
+  
+  const { minimapCanvasRef, chunksRef, prevCenterRef, render } = useMinimapRendering(
+    player,
+    markers,
+    markerImages,
+    zoomLevel,
+    currentCanvasSize,
+    renderLayer,
+    getQuantizedCenter,
+    canvasRef
+  );
+  
+  const chunkUpdate = useCallback((chunks: any) => {
+    chunksRef.current = chunks;
+    updateChunks(chunks);
+    render(chunks, true);
+  }, [updateChunks, render, chunksRef]);
+  
+  const { cache, schedulePanCache, debouncedCache, cacheTimeoutRef } = useMinimapCache(
+    gc,
+    currentCanvasSize,
+    getQuantizedCenter,
+    chunkUpdate
+  );
+  
+  const {
+    isPanningRef,
+    panStartClientRef,
+    panStartViewRef,
+    skipNextClickRef,
+    handleCanvasRightClick,
+    handleCanvasMouseMove,
+    handleCanvasMouseLeave,
+    handleMouseDown,
+    handleMouseUp,
+    handleCanvasClick,
+    handleDoubleClick
+  } = useMinimapInteractions(
+    player,
+    markers,
+    markerImages,
+    currentFloorRef,
+    zoomLevel,
+    currentCanvasSize,
+    getActiveViewCenter,
+    getQuantizedCenter,
+    setViewCenter,
+    setIsFollowingPlayer,
+    setContextMenu,
+    setCreateMarkerModal,
+    setEditMarkerModal,
+    setHoveredMarker,
+    setMagnifier,
+    render,
+    chunksRef
+  );
+  
+  useEffect(() => {
+    if (!minimapCanvasRef.current) {
+      try {
+        minimapCanvasRef.current = new Canvas(null, currentCanvasSize, currentCanvasSize);
+        setIsInitialized(true);
+      } catch {
+        setIsInitialized(false);
+      }
+    } else {
+      try {
+        minimapCanvasRef.current = new Canvas(null, currentCanvasSize, currentCanvasSize);
+      } catch {
+        setIsInitialized(false);
+      }
+    }
+  }, [currentCanvasSize]);
+  
+  useEffect(() => {
+    if (player && isInitialized) {
+      const p = player.getPosition();
+      setRenderLayer(p.z);
+      currentFloorRef.current = p.z;
+      prevCenterRef.current = null;
+      if (isFollowingPlayer || !viewCenterRef.current) {
+        setViewCenter(p.x, p.y, p.z);
+      }
+      const initialLoad = () => cache();
+      initialLoad();
+      const t = setTimeout(initialLoad, 100);
+      return () => clearTimeout(t);
+    }
+  }, [player, isInitialized, cache, isFollowingPlayer, setViewCenter, setRenderLayer, currentFloorRef, prevCenterRef, viewCenterRef]);
+  
+  useEffect(() => {
+    if (player && isInitialized && gc.world && gc.database) {
+      const force = () => {
+        const c = getQuantizedCenter();
+        gc.database.cleanupDistantMinimapChunks(c);
+        cache();
+      };
+      force();
+      setTimeout(force, 50);
+      setTimeout(force, 200);
+    }
+  }, [player, isInitialized, gc.world, gc.database, cache, getQuantizedCenter]);
+  
+  useEffect(() => {
+    if (!player || !isInitialized) return;
+    
+    const handlePlayerMove = () => {
+      if (!player) return;
+      const p = player.getPosition();
+      
+      if (currentFloorRef.current !== p.z) {
+        setRenderLayer(p.z);
+        currentFloorRef.current = p.z;
+        chunksRef.current = {};
+        prevCenterRef.current = null;
+        gc.database.saveMinimapChunksForCurrentLevel();
+      }
+      
+      if (isFollowingPlayer) setViewCenter(p.x, p.y, p.z);
+      
+      const focus = isFollowingPlayer ? p : getQuantizedCenter();
+      gc.database.cleanupDistantMinimapChunks(focus);
+      cache();
+    };
+    
+    const handleCreatureMove = (e: CustomEvent) => {
+      if (e.detail.id === player?.id) {
+        setIsFollowingPlayer(true);
+        handlePlayerMove();
+      }
+    };
+    const handleServerMove = (e: CustomEvent) => {
+      if (e.detail.id === player?.id) {
+        setIsFollowingPlayer(true);
+        handlePlayerMove();
+      }
+    };
+    
+    window.addEventListener('creatureMove', handleCreatureMove as EventListener);
+    window.addEventListener('creatureServerMove', handleServerMove as EventListener);
+    
+    const handleGlobalMouseUp = () => {
+      isPanningRef.current = false;
+    };
+    const handleGlobalMouseMove = (ev: MouseEvent) => {
+      if (!isPanningRef.current) return;
+      const { x: sx, y: sy } = panStartClientRef.current;
+      const start = panStartViewRef.current!;
+      const dxPx = ev.clientX - sx;
+      const dyPx = ev.clientY - sy;
+      const worldDx = dxPx / zoomLevel;
+      const worldDy = dyPx / zoomLevel;
+      setIsFollowingPlayer(false);
+      setViewCenter(start.x - worldDx, start.y - worldDy, start.z);
+      skipNextClickRef.current = Math.hypot(dxPx, dyPx) > 3;
+      if (chunksRef.current) render(chunksRef.current, true);
+      schedulePanCache();
+    };
+    
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    
+    return () => {
+      window.removeEventListener('creatureMove', handleCreatureMove as EventListener);
+      window.removeEventListener('creatureServerMove', handleServerMove as EventListener);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+    };
+  }, [player, isInitialized, cache, gc.database, isFollowingPlayer, getQuantizedCenter, setViewCenter, zoomLevel, render, schedulePanCache, setIsFollowingPlayer, setRenderLayer, currentFloorRef, chunksRef, prevCenterRef, isPanningRef, panStartClientRef, panStartViewRef, skipNextClickRef]);
+  
+  useEffect(() => {
+    if (!player || !isInitialized) return;
+    return () => {
+      if (cacheTimeoutRef.current) clearTimeout(cacheTimeoutRef.current);
+      gc.database.saveAllMinimapChunks();
+    };
+  }, [player, isInitialized, gc.database, cacheTimeoutRef]);
+  
+  useEffect(() => {
+    if (chunksRef.current) {
+      render(chunksRef.current, true);
+      debouncedCache();
+    }
+  }, [viewCenterVersion, render, debouncedCache, chunksRef]);
+  
+  useEffect(() => {
+    if (chunksRef.current) {
+      if (zoomDebounceRef.current) {
+        clearTimeout(zoomDebounceRef.current);
+      }
+      zoomDebounceRef.current = setTimeout(() => {
+        if (chunksRef.current) {
+          render(chunksRef.current, true);
+        }
+        zoomDebounceRef.current = null;
+      }, 16);
+    }
+    return () => {
+      if (zoomDebounceRef.current) {
+        clearTimeout(zoomDebounceRef.current);
+      }
+    };
+  }, [zoomLevel, render, chunksRef, zoomDebounceRef]);
+  
+  const handleCreateMarker = useCallback(async (data: Omit<MapMarker, 'id' | 'createdAt'>) => {
+    if (!gc.database) return;
+    try { await gc.database.saveMapMarker(data); await loadMarkers(); }
+    catch { alert('Failed to create marker'); }
+  }, [gc.database, loadMarkers]);
+  
+  const handleUpdateMarker = useCallback(async (m: MapMarker) => {
+    if (!gc.database) return;
+    try { await gc.database.updateMapMarker(m); await loadMarkers(); }
+    catch { alert('Failed to update marker'); }
+  }, [gc.database, loadMarkers]);
+  
+  const handleDeleteMarker = useCallback(async (id: string) => {
+    if (!gc.database) return;
+    try { await gc.database.deleteMapMarker(id); await loadMarkers(); }
+    catch { alert('Failed to delete marker'); }
+  }, [gc.database, loadMarkers]);
+  
+  if (!player || !isInitialized) return null;
+  
+  return (
+    <MinimapErrorBoundary>
+      <div className="minimap-container">
+        <MinimapCanvas
+          ref={canvasRef}
+          canvasSize={currentCanvasSize}
+          onContextMenu={handleCanvasRightClick}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleCanvasMouseMove}
+          onMouseLeave={handleCanvasMouseLeave}
+          onClick={handleCanvasClick}
+          onDoubleClick={handleDoubleClick}
+          onWheel={handleWheel}
+        />
+        
+        <MinimapZoomControls
+          zoomLevel={zoomLevel}
+          minZoom={minZoom}
+          maxZoom={maxZoom}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+        />
+      </div>
+      
+      {createPortal(
+        <ContextMenu
+          visible={contextMenu.visible}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={editMarkerModal.marker ? [
+            { label: 'Edit Marker', onClick: () => setEditMarkerModal(prev => ({ ...prev, visible: true })) },
+            { label: 'Delete Marker', onClick: async () => {
+                const m = editMarkerModal.marker;
+                if (!m || !gc.database) return;
+                try { await gc.database.deleteMapMarker(m.id); await loadMarkers(); }
+                catch { alert('Failed to delete marker'); }
+              }, className: 'delete' }
+          ] : [
+            { label: 'Create Marker', onClick: () => setCreateMarkerModal(prev => ({ ...prev, visible: true })) }
+          ]}
+          onClose={() => setContextMenu({ visible: false, x: 0, y: 0 })}
+        />,
+        document.body
+      )}
+      
+      {createPortal(
+        <CreateMarkerModal
+          visible={createMarkerModal.visible}
+          x={createMarkerModal.x}
+          y={createMarkerModal.y}
+          floor={createMarkerModal.floor}
+          onClose={() => setCreateMarkerModal({ visible: false, x: 0, y: 0, floor: 0 })}
+          onCreate={handleCreateMarker}
+        />,
+        document.body
+      )}
+      
+      {createPortal(
+        <EditMarkerModal
+          visible={editMarkerModal.visible}
+          marker={editMarkerModal.marker}
+          onClose={() => setEditMarkerModal({ visible: false, marker: null })}
+          onUpdate={handleUpdateMarker}
+          onDelete={handleDeleteMarker}
+        />,
+        document.body
+      )}
+      
+      {createPortal(
+        magnifier.visible && (
+          <div 
+            className="minimap-magnifier" 
+            style={{ left: magnifier.displayX, top: magnifier.displayY }}
+            data-minimap-portal="magnifier"
+          >
+            <canvas ref={magnifierCanvasRef} />
+          </div>
+        ),
+        document.body
+      )}
+      
+      {createPortal(
+        hoveredMarker && hoveredMarker.description && hoveredMarker.description.trim() && magnifier.visible && (
+          <div 
+            className="marker-tooltip marker-tooltip-portal"
+            style={{ 
+              left: magnifier.displayX,
+              top: magnifier.displayY
+            }}
+            data-minimap-portal="tooltip"
+          >
+            {hoveredMarker.description}
+          </div>
+        ),
+        document.body
+      )}
+    </MinimapErrorBoundary>
+  );
+}

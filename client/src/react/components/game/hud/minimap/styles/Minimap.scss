@@ -116,6 +116,22 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    transition: width 0.2s ease, height 0.2s ease;
+    
+    &.size-small {
+      width: 160px;
+      height: 160px;
+    }
+    
+    &.size-medium {
+      width: 240px;
+      height: 240px;
+    }
+    
+    &.size-large {
+      width: 320px;
+      height: 320px;
+    }
   }
 
   /* Square minimap sizing inside window (fits 198px column) */
@@ -132,6 +148,24 @@
     overflow: hidden;  /* Prevent breakout */
     box-sizing: border-box;
     max-height: 182px !important;
+    
+    &.size-small {
+      width: 122px;
+      height: 122px;
+      max-height: 122px !important;
+    }
+    
+    &.size-medium {
+      width: 182px;
+      height: 182px;
+      max-height: 182px !important;
+    }
+    
+    &.size-large {
+      width: 182px; /* Max size for window */
+      height: 182px;
+      max-height: 182px !important;
+    }
   }
 
 .minimap-canvas {

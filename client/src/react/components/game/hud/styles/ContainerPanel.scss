@@ -22,15 +22,46 @@
 
 // Special slots section
 .special-slots-section {
-  margin-bottom: 4px;
+  margin-bottom: 0;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  
+  // Only show line if there are normal slots after
+  &.has-normal-slots::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 0 8px;
+  }
+  
+  .container-slots.special-slots {
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1px;
+    width: fit-content;
+    max-width: calc(5 * 32px + 4 * 1px); // Max width for 5 columns
+  }
 }
 
 // Normal slots section - inherits from .container-slots
 
 // Spacer between special and normal slots
 .slots-spacer {
-  height: 4px;
-  margin: 2px 0;
+  height: 1px;
+  margin: 0;
+  background: rgba(255, 255, 255, 0.2);
+  width: calc(100% - 16px);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .container-panel.container-container .container-slots .slot {
@@ -76,7 +107,7 @@
 // Container window specific styles
 .window.container-window {
   .window-content {
-    padding: 8px;
+    padding: 8px 8px 2px 8px;
     overflow-y: auto;
     overflow-x: hidden;
     max-height: 80vh;

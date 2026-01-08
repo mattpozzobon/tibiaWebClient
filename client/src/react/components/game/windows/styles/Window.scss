@@ -169,6 +169,7 @@
 .window.container-window {
   .window-content {
     padding-top: 12px !important; // Extra padding for container windows
+    padding-bottom: 2px !important; // Reduced bottom padding
   }
 }
 

@@ -218,7 +218,7 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
     >
       {/* Special slots section */}
       {specialSlots.length > 0 && (
-        <div className="special-slots-section">
+        <div className={`special-slots-section ${normalSlots.length > 0 ? 'has-normal-slots' : ''}`}>
           <div className="container-slots special-slots">
             {specialSlots.map((index) => (
               <div

@@ -527,14 +527,25 @@ export default class PacketReader extends Packet {
     energyPotionId: number;
     energyQuantity: number;
   } {
-    return {
-      healthPotionId: this.readUInt16(),
-      healthQuantity: this.readUInt8(),
-      manaPotionId: this.readUInt16(),
-      manaQuantity: this.readUInt8(),
-      energyPotionId: this.readUInt16(),
-      energyQuantity: this.readUInt8(),
+    // Server now uses UInt16 for quantities to support values > 255
+    const healthPotionId = this.readUInt16();
+    const healthQuantity = this.readUInt16();
+    const manaPotionId = this.readUInt16();
+    const manaQuantity = this.readUInt16();
+    const energyPotionId = this.readUInt16();
+    const energyQuantity = this.readUInt16();
+    
+    const result = {
+      healthPotionId,
+      healthQuantity,
+      manaPotionId,
+      manaQuantity,
+      energyPotionId,
+      energyQuantity,
     };
+    
+    console.log('[BELT_POTION_QUANTITIES] Raw packet data:', result);
+    return result;
   }
 
   readOutfitEquipment(): OutfitEquipment {

@@ -248,7 +248,7 @@ export default function BeltHotbar({ gc }: BeltHotbarProps) {
               className="potion-canvas"
             />
             {quantity > 0 && (
-              <span className="belt-count">{quantity}</span>
+              <span className="belt-count" style={{ width: 'auto', maxWidth: 'none' }}>{quantity.toString()}</span>
             )}
           </>
         ) : (

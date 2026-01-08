@@ -10,6 +10,7 @@
   border-radius: 8px;
   z-index: 1001; // Above main hotbar
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  overflow: visible;
 }
 
 .belt-slot {
@@ -24,6 +25,8 @@
   justify-content: center;
   align-items: center;
   transition: all 0.2s ease;
+  overflow: visible !important;
+  clip-path: none !important;
 
   &:hover {
     background-color: rgba(139, 69, 19, 0.5);
@@ -144,6 +147,8 @@
   height: 100%;
   object-fit: contain;
   pointer-events: none;
+  position: relative;
+  z-index: 1;
 }
 
 .potion-icon {
@@ -182,16 +187,27 @@
 .belt-count {
   position: absolute;
   bottom: 2px;
-  right: 2px;
-  font-size: 10px;
+  left: 2px;
+  font-size: 8px;
   font-weight: bold;
   color: #fff;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
   background-color: rgba(0, 0, 0, 0.6);
-  padding: 1px 3px;
+  padding: 1px 4px;
   border-radius: 2px;
-  min-width: 12px;
-  text-align: center;
+  min-width: auto !important;
+  width: max-content !important;
+  max-width: 1000px !important;
+  white-space: nowrap !important;
+  text-align: left;
+  z-index: 100 !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  box-sizing: content-box;
+  display: inline-block;
+  line-height: 1;
+  word-break: keep-all;
+  letter-spacing: 0;
 }
 
 .belt-key {
@@ -248,7 +264,8 @@
   }
   
   .belt-count {
-    font-size: 9px;
+    font-size: 7px;
+    right: 3px;
   }
   
   .potion-icon {

@@ -117,6 +117,7 @@ class PacketHandler {
     energyPotionId: number;
     energyQuantity: number;
   }): void {
+    console.log('[BELT_POTION_QUANTITIES] Packet received in handler:', packet);
     if (!window.gameClient.player) return;
     
     window.gameClient.player.updateBeltPotionQuantities(packet);

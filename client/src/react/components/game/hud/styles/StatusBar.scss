@@ -3,6 +3,8 @@
 .status-bar {
   position: relative; // Changed from absolute to relative
   display: flex;
+  justify-content: center;
+  align-items: center;
   gap: 8px;
   padding: 8px 16px;
   background: transparent;

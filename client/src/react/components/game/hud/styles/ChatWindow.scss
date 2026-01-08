@@ -566,9 +566,10 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  z-index: 1000;
+  z-index: 10001; /* Higher than window manager (100) and windows (10000) */
   backdrop-filter: blur(10px);
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+  pointer-events: auto; /* Ensure it's clickable */
 
   &:hover {
     background: rgba(0, 0, 0, 1);

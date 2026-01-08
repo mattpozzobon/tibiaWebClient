@@ -11,9 +11,9 @@ interface BottomHudContainerProps {
 const BottomHudContainer: React.FC<BottomHudContainerProps> = ({ gameClient }) => {
   return (
     <div className="bottom-hud-container">
-      <div className="bottom-hud-top-row">
-        <BeltHotbar gc={gameClient} />
+      <div className="bottom-hud-center">
         <StatusBar gameClient={gameClient} />
+        <BeltHotbar gc={gameClient} />
       </div>
     </div>
   );

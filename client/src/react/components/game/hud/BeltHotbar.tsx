@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { usePlayerEquipment } from '../../../hooks/usePlayerAttribute';
 import { ItemRenderer } from '../../../../utils/item-renderer';
 import { UseBeltPotionPacket } from '../../../../core/protocol';
 import type GameClient from '../../../../core/gameclient';
-import type Item from '../../../../game/item';
+import Item from '../../../../game/item';
 import './styles/BeltHotbar.scss';
 
 interface BeltHotbarProps {
@@ -15,123 +15,146 @@ interface BeltSlot {
   canvas: HTMLCanvasElement | null;
 }
 
+interface PotionState {
+  healthPotionId: number;
+  healthQuantity: number;
+  manaPotionId: number;
+  manaQuantity: number;
+  energyPotionId: number;
+  energyQuantity: number;
+}
+
+const DEFAULT_POTION_STATE: PotionState = {
+  healthPotionId: 0,
+  healthQuantity: 0,
+  manaPotionId: 0,
+  manaQuantity: 0,
+  energyPotionId: 0,
+  energyQuantity: 0,
+};
+
+const BELT_SLOT_COUNT = 3;
+const CANVAS_SIZE = 32;
+
 export default function BeltHotbar({ gc }: BeltHotbarProps) {
-  const { equipment, equipmentItems } = usePlayerEquipment(gc);
+  const { equipmentItems } = usePlayerEquipment(gc);
   const [beltSlots, setBeltSlots] = useState<BeltSlot[]>([]);
   const canvasRefs = useRef<(HTMLCanvasElement | null)[]>([]);
-  const [beltContainer, setBeltContainer] = useState<any>(null);
 
-  // Get belt item (equipment slot 14)
+  // Get belt item from equipment slot 14
   const beltItem = equipmentItems[14];
   
-  // Get player outfit addons for potion icons
-  const outfitAddons = gc.player?.outfit?.addons;
+  // Get belt potion quantities from player
+  const beltPotionQuantities = gc.player?.beltPotionQuantities || DEFAULT_POTION_STATE;
 
-  // Create 3 slots based on outfit addons (only if belt is equipped)
+  // Determine if belt is equipped
+  const isBeltEquipped = useMemo(() => 
+    beltPotionQuantities.healthPotionId > 0 || 
+    beltPotionQuantities.manaPotionId > 0 || 
+    beltPotionQuantities.energyPotionId > 0,
+    [beltPotionQuantities]
+  );
+  
+  const hasBelt = beltItem || isBeltEquipped;
+
+  // Track potion state
+  const [potionState, setPotionState] = useState<PotionState>(beltPotionQuantities);
+
+  // Update state when player's belt potion quantities change
   useEffect(() => {
-    if (!beltItem) {
+    if (gc.player?.beltPotionQuantities) {
+      setPotionState(gc.player.beltPotionQuantities);
+    }
+  }, [gc.player?.beltPotionQuantities]);
+
+  // Initialize belt slots
+  useEffect(() => {
+    if (!hasBelt) {
       setBeltSlots([]);
       return;
     }
     
-    const slots: BeltSlot[] = [];
-    
-    // Create 3 slots for health, mana, and energy potions
-    for (let i = 0; i < 3; i++) {
-      slots.push({
-        item: null, // No actual items, just icons
-        canvas: null
-      });
-    }
+    const slots: BeltSlot[] = Array.from({ length: BELT_SLOT_COUNT }, () => ({
+      item: null,
+      canvas: null
+    }));
     
     setBeltSlots(slots);
-  }, [beltItem, outfitAddons]);
+  }, [hasBelt]);
 
-  // Force re-render when outfit addons change by using a state that tracks the addon values
-  const [addonState, setAddonState] = useState({
-    healthPotion: 0,
-    manaPotion: 0,
-    energyPotion: 0
-  });
-
-  // Update addon state when outfit addons change
-  useEffect(() => {
-    if (outfitAddons) {
-      const newState = {
-        healthPotion: outfitAddons.healthPotion || 0,
-        manaPotion: outfitAddons.manaPotion || 0,
-        energyPotion: outfitAddons.energyPotion || 0
-      };
-      
-      // Always update to ensure we catch changes
-      setAddonState(newState);
-    }
-  }, [outfitAddons]);
-
-  // Listen for outfit changes by monitoring the outfit object directly
-  useEffect(() => {
-    if (!gc.player?.outfit) return;
-
-    // Force a re-render when outfit changes by using a ref to track changes
-    const forceUpdate = () => {
-      if (gc.player?.outfit?.addons) {
-        const currentAddons = gc.player.outfit.addons;
-        const newState = {
-          healthPotion: currentAddons.healthPotion || 0,
-          manaPotion: currentAddons.manaPotion || 0,
-          energyPotion: currentAddons.energyPotion || 0
-        };
-        setAddonState(newState);
-      }
-    };
-
-    // Check for changes periodically (fallback)
-    const interval = setInterval(forceUpdate, 200);
-
-    return () => clearInterval(interval);
-  }, [gc.player]);
-
-
-  // Get potion type for each slot
-  const getPotionType = useCallback((index: number) => {
+  // Get potion data for a specific slot index
+  const getPotionData = useCallback((index: number): { id: number; quantity: number } => {
     switch (index) {
-      case 0: return addonState.healthPotion > 0 ? 'health' : null;
-      case 1: return addonState.manaPotion > 0 ? 'mana' : null;
-      case 2: return addonState.energyPotion > 0 ? 'energy' : null;
-      default: return null;
+      case 0:
+        return { id: potionState.healthPotionId, quantity: potionState.healthQuantity };
+      case 1:
+        return { id: potionState.manaPotionId, quantity: potionState.manaQuantity };
+      case 2:
+        return { id: potionState.energyPotionId, quantity: potionState.energyQuantity };
+      default:
+        return { id: 0, quantity: 0 };
     }
-  }, [addonState]);
+  }, [potionState]);
+
+  // Render potion items to canvas
+  useEffect(() => {
+    if (!gc || beltSlots.length === 0) return;
+
+    beltSlots.forEach((_, index) => {
+      const canvas = canvasRefs.current[index];
+      if (!canvas) return;
+
+      const { id: potionId, quantity } = getPotionData(index);
+
+      if (potionId > 0) {
+        const potionItem = new Item(potionId, quantity);
+        ItemRenderer.renderItemToCanvas(gc, potionItem, canvas, { 
+          size: CANVAS_SIZE, 
+          background: 'transparent' 
+        });
+      } else {
+        const ctx = canvas.getContext('2d');
+        ctx?.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    });
+  }, [gc, beltSlots, getPotionData]);
+
+
+  // Get potion type name for a slot
+  const getPotionType = useCallback((index: number): 'health' | 'mana' | 'energy' | null => {
+    const potionTypes: Array<'health' | 'mana' | 'energy' | null> = [
+      potionState.healthPotionId > 0 ? 'health' : null,
+      potionState.manaPotionId > 0 ? 'mana' : null,
+      potionState.energyPotionId > 0 ? 'energy' : null,
+    ];
+    return potionTypes[index] ?? null;
+  }, [potionState]);
+
+  // Check if a slot has available potions
+  const isSlotActive = useCallback((index: number): boolean => {
+    const { quantity } = getPotionData(index);
+    return quantity > 0;
+  }, [getPotionData]);
 
   // Handle slot click
   const handleSlotClick = useCallback((index: number) => {
     const potionType = getPotionType(index);
-    if (potionType) {
-      // Check if the addon is actually active (value > 0)
-      const isActive = (index === 0 && addonState.healthPotion > 0) ||
-                      (index === 1 && addonState.manaPotion > 0) ||
-                      (index === 2 && addonState.energyPotion > 0);
-      
-      if (isActive) {
-        // Send the belt potion packet to the server
-        const packet = new UseBeltPotionPacket(potionType);
-        gc.send(packet);
-        console.log(`Using ${potionType} potion via belt hotbar`);
-      }
-    }
-  }, [getPotionType, addonState, gc]);
+    if (!potionType || !isSlotActive(index)) return;
+
+    const packet = new UseBeltPotionPacket(potionType);
+    gc.send(packet);
+    console.log(`Using ${potionType} potion via belt hotbar`);
+  }, [getPotionType, isSlotActive, gc]);
 
   // Expose handleSlotClick to keyboard system
   useEffect(() => {
     (window as any).reactBeltHotbar = {
       handleSlotClick: (slotIndex: number) => {
-        if (beltSlots.length === 0) return;
+        if (beltSlots.length === 0 || slotIndex < 0 || slotIndex >= beltSlots.length) {
+          return;
+        }
         
-        // Check if the addon is active before allowing the shortcut
-        const isActive = (slotIndex === 0 && addonState.healthPotion > 0) ||
-                        (slotIndex === 1 && addonState.manaPotion > 0) ||
-                        (slotIndex === 2 && addonState.energyPotion > 0);
-        
-        if (isActive && slotIndex >= 0 && slotIndex < beltSlots.length) {
+        if (isSlotActive(slotIndex)) {
           handleSlotClick(slotIndex);
         }
       },
@@ -141,49 +164,61 @@ export default function BeltHotbar({ gc }: BeltHotbarProps) {
     return () => {
       delete (window as any).reactBeltHotbar;
     };
-  }, [beltSlots.length, handleSlotClick, addonState]);
+  }, [beltSlots.length, handleSlotClick, isSlotActive]);
 
-  // Don't render if no belt item or no outfit addons
-  if (!beltItem || !outfitAddons || beltSlots.length === 0) {
+  // Render individual slot
+  const renderSlot = useCallback((index: number) => {
+    const potionType = getPotionType(index);
+    const { quantity } = getPotionData(index);
+    const active = isSlotActive(index);
+    
+    const slotTitle = potionType 
+      ? `${potionType.charAt(0).toUpperCase() + potionType.slice(1)} Potion (${quantity})`
+      : `Slot ${index + 1}`;
+    
+    const slotClassName = potionType
+      ? `belt-slot potion-slot ${potionType}-potion${!active ? ' inactive' : ''}`
+      : 'belt-slot empty-slot';
+
+    return (
+      <div
+        key={index}
+        className={slotClassName}
+        onClick={() => handleSlotClick(index)}
+        title={slotTitle}
+      >
+        {potionType ? (
+          <>
+            <canvas
+              ref={(el) => {
+                if (el) {
+                  canvasRefs.current[index] = el;
+                  el.width = CANVAS_SIZE;
+                  el.height = CANVAS_SIZE;
+                }
+              }}
+              className="potion-canvas"
+            />
+            {quantity > 0 && (
+              <span className="belt-count">{quantity}</span>
+            )}
+          </>
+        ) : (
+          <div className="empty-slot-content"></div>
+        )}
+        <span className="belt-key">{index + 1}</span>
+      </div>
+    );
+  }, [getPotionType, getPotionData, isSlotActive, handleSlotClick]);
+
+  // Don't render if no belt equipped
+  if (!hasBelt || beltSlots.length === 0) {
     return null;
   }
 
   return (
     <div className="belt-hotbar">
-      {beltSlots.map((slot, index) => {
-        const potionType = getPotionType(index);
-        const isActive = (
-          (index === 0 && addonState.healthPotion > 0) ||
-          (index === 1 && addonState.manaPotion > 0) ||
-          (index === 2 && addonState.energyPotion > 0)
-        );
-        
-        const slotTitle = potionType ? 
-          `${potionType.charAt(0).toUpperCase() + potionType.slice(1)} Potion ${isActive ? '(Active)' : '(Inactive)'}` : 
-          `Slot ${index + 1}`;
-        
-        return (
-          <div
-            key={index}
-            className={`belt-slot ${potionType ? `potion-slot ${potionType}-potion${!isActive ? ' inactive' : ''}` : 'empty-slot'}`}
-            onClick={() => handleSlotClick(index)}
-            title={slotTitle}
-          >
-            {potionType ? (
-              <div className="potion-icon">
-                <span className={`potion-emoji ${potionType}-potion-emoji`}>
-                  {potionType === 'health' && '❤️'}
-                  {potionType === 'mana' && '💙'}
-                  {potionType === 'energy' && '⚡'}
-                </span>
-              </div>
-            ) : (
-              <div className="empty-slot-content"></div>
-            )}
-            <span className="belt-key">{index + 1}</span>
-          </div>
-        );
-      })}
+      {beltSlots.map((_, index) => renderSlot(index))}
     </div>
   );
 }

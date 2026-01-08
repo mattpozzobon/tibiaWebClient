@@ -14,6 +14,14 @@ export interface PlayerData extends CreatureData {
   skills: any;
   hairs: any;
   vitals: any;
+  beltPotionQuantities?: {
+    healthPotionId: number;
+    healthQuantity: number;
+    manaPotionId: number;
+    manaQuantity: number;
+    energyPotionId: number;
+    energyQuantity: number;
+  };
 }
 
 export default class Player extends Creature {
@@ -24,6 +32,21 @@ export default class Player extends Creature {
 
   public skills: Skills;
   public hairs: any;
+  public beltPotionQuantities: {
+    healthPotionId: number;
+    healthQuantity: number;
+    manaPotionId: number;
+    manaQuantity: number;
+    energyPotionId: number;
+    energyQuantity: number;
+  } = {
+    healthPotionId: 0,
+    healthQuantity: 0,
+    manaPotionId: 0,
+    manaQuantity: 0,
+    energyPotionId: 0,
+    energyQuantity: 0,
+  };
 
   // Private state for the player
   __movementEvent: any = null;
@@ -39,6 +62,9 @@ export default class Player extends Creature {
     this.friendlist = new Friendlist(data.friendlist.friends, data.friendlist.friendRequests);
     this.containers = new Containers();
     this.hairs = data.hairs;
+    if (data.beltPotionQuantities) {
+      this.beltPotionQuantities = { ...data.beltPotionQuantities };
+    }
   }
 
   static create(data: PlayerData): Player {

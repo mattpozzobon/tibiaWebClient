@@ -519,6 +519,24 @@ export default class PacketReader extends Packet {
     };
   }
 
+  public readBeltPotionQuantities(): {
+    healthPotionId: number;
+    healthQuantity: number;
+    manaPotionId: number;
+    manaQuantity: number;
+    energyPotionId: number;
+    energyQuantity: number;
+  } {
+    return {
+      healthPotionId: this.readUInt16(),
+      healthQuantity: this.readUInt8(),
+      manaPotionId: this.readUInt16(),
+      manaQuantity: this.readUInt8(),
+      energyPotionId: this.readUInt16(),
+      energyQuantity: this.readUInt8(),
+    };
+  }
+
   readOutfitEquipment(): OutfitEquipment {
     return {
       hair: this.readUInt16(),
@@ -758,6 +776,14 @@ export default class PacketReader extends Packet {
     skills: any;
     attack: number;
     equipment: (Item | null)[];
+    beltPotionQuantities: {
+      healthPotionId: number;
+      healthQuantity: number;
+      manaPotionId: number;
+      manaQuantity: number;
+      energyPotionId: number;
+      energyQuantity: number;
+    };
     hairs: OutfitIdName[];
     spellbook: number[];
     friendlist: { friends: Array<{ name: string; online: boolean }>; friendRequests: string[] };
@@ -770,6 +796,8 @@ export default class PacketReader extends Packet {
       skills: this.readSkills(),
       attack: this.readUInt8(),
       equipment: this.readEquipment(),
+      // Section 5: Belt potion quantities (after equipment, before hairs)
+      beltPotionQuantities: this.readBeltPotionQuantities(),
       hairs: this.readOutfits(),
       spellbook: this.readArray(),
       friendlist: {

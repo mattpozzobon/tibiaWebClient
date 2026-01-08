@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { ItemRenderer } from '../../../../utils/item-renderer';
 import Item from '../../../../game/item';
 import type GameClient from '../../../../core/gameclient';
-import { usePlayerEquipment } from '../../../hooks/usePlayerAttribute';
+import { usePlayerEquipment, usePlayerVitals } from '../../../hooks/usePlayerAttribute';
 import './styles/EquipmentPanel.scss';
 
 interface EquipmentPanelProps {
@@ -33,6 +33,7 @@ export default function EquipmentPanel({ gc }: EquipmentPanelProps) {
   
   // Use the new hook for equipment data
   const { equipment, equipmentItems, forceRender } = usePlayerEquipment(gc);
+  const { vitalValues } = usePlayerVitals(gc);
   
 
   const renderSlot = (id: string) => {
@@ -59,6 +60,10 @@ export default function EquipmentPanel({ gc }: EquipmentPanelProps) {
       // Handle special cases for slot backgrounds
       if (slotType === 'necklace') {
         backgroundImage = 'shoulder.png';
+      } else if (slotType === 'helmet') {
+        backgroundImage = 'head.png'; // helmet.png doesn't exist, use head.png
+      } else if (slotType === 'belt') {
+        backgroundImage = 'item.png'; // belt.png doesn't exist, use item.png
       } else if (slotType.startsWith('ring')) {
         backgroundImage = 'ring.png';
       } else {
@@ -98,6 +103,43 @@ export default function EquipmentPanel({ gc }: EquipmentPanelProps) {
   }, [equipmentItems, forceRender]);
 
 
+  // Capacity bar component
+  const CapacityBar = () => {
+    if (!vitalValues) return null;
+    
+    const percentage = Math.min(vitalValues.maxCapacity > 0 ? (vitalValues.capacity / vitalValues.maxCapacity) * 100 : 0, 100);
+    const isLow = percentage < 25;
+    const barColor = isLow ? '#FFC107' : '#9E9E9E';
+    
+    const displayCurrent = Math.round(vitalValues.capacity / 100);
+    const displayMax = Math.round(vitalValues.maxCapacity / 100);
+    
+    const formatNumber = (num: number): string => {
+      if (num > 1000) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      }
+      return num.toString();
+    };
+    
+    const formattedCurrent = formatNumber(displayCurrent);
+    const formattedMax = formatNumber(displayMax);
+    
+    return (
+      <div className="equipment-capacity-bar">
+        <div className="capacity-bar-icon">
+          <img src="png/skills/max-cap.png" alt="Capacity" />
+        </div>
+        <div className="capacity-bar-container">
+          <div
+            className="capacity-bar-fill"
+            style={{ width: `${percentage}%`, backgroundColor: barColor, transition: 'width 0.3s ease, background-color 0.3s ease' }}
+          />
+          <div className="capacity-bar-value">{formattedCurrent} oz / {formattedMax} oz</div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="equipment-panel equipment-container" ref={containerRef}>
       <div className="equipment-slots">
@@ -115,6 +157,7 @@ export default function EquipmentPanel({ gc }: EquipmentPanelProps) {
           );
         })}
       </div>
+      <CapacityBar />
     </div>
   );
 }

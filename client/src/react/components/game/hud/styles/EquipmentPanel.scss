@@ -1,18 +1,21 @@
 .equipment-panel.equipment-container {
-  width: 118px; // 3 columns (36px each) = 108px + padding (5px * 2) = 10px = 118px
+  width: 100%;
+  max-width: 100%;
   height: 100%;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 5px;
+  padding: 6px;
   box-sizing: border-box;
+  gap: 8px;
 }
 
 .equipment-panel.equipment-container .equipment-slots {
   display: grid;
   grid-template-columns: 36px 36px 36px;
   grid-template-rows: repeat(5, 36px);
-  gap: 0px;
+  gap: 2px;
   width: fit-content;
   margin: 0 auto;
   box-sizing: border-box;
@@ -150,8 +153,81 @@
   grid-column: 2;
   grid-row: 5;
 }
-.equipment-panel.equipment-container .equipment-slots .slot-ring5 { 
+.equipment-panel.equipment-container .equipment-slots .slot-ring5 {
   --slot-bg-image-css: url('../../../../../../png/ring.png');
   grid-column: 3;
   grid-row: 5;
+}
+
+// Capacity bar styling
+.equipment-capacity-bar {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 4px;
+  padding-left: 10px; // Add padding to accommodate icon overlap
+}
+
+.capacity-bar-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  
+  img {
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    display: block;
+  }
+}
+
+.capacity-bar-container {
+  width: calc(100% - 10px);
+  height: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.capacity-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  position: relative;
+  
+  // Add gradient light effect
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), transparent);
+    border-radius: 6px;
+    pointer-events: none;
+  }
+}
+
+.capacity-bar-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 8px;
+  color: #FFFFFF;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  white-space: nowrap;
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }

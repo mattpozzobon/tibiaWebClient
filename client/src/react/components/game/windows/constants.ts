@@ -12,6 +12,7 @@ export const WINDOW_TYPES = {
   EQUIPMENT: 'equipment',
   MINIMAP: 'minimap',
   CONTAINER: 'container',
+  STATUS: 'status',
 } as const;
 
 export const COLUMN_TYPES = {
@@ -29,6 +30,7 @@ export const PANEL_TYPES = {
 export const WINDOW_ICONS = {
   EQUIPMENT: '🧥',
   MINIMAP: '🗺️',
+  STATUS: '❤️',
   AUTO_OPEN_CONTAINERS: '📦',
   ADD_LEFT_SUB_PANEL: '➡️',
   ADD_RIGHT_SUB_PANEL: '⬅️',
@@ -37,17 +39,20 @@ export const WINDOW_ICONS = {
 export const WINDOW_TITLES = {
   EQUIPMENT: 'Equipment',
   MINIMAP: 'Minimap',
+  STATUS: 'Status',
 } as const;
 
 export const WINDOW_CLASSES = {
   EQUIPMENT: 'equipment-window',
   MINIMAP: 'minimap-window',
   CONTAINER: 'container-window',
+  STATUS: 'status-window',
 } as const;
 
 export const TOOLTIPS = {
   EQUIPMENT: 'Equipment',
   MINIMAP: 'Minimap',
+  STATUS: 'Status',
   AUTO_OPEN_ON: 'Auto-open containers: ON',
   AUTO_OPEN_OFF: 'Auto-open containers: OFF',
   SHOW_LEFT_SUB_PANEL: 'Show right sub-panel',

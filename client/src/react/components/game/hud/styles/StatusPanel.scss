@@ -1,0 +1,79 @@
+// StatusPanel.scss - Compact and slick status bars styling
+
+.status-loading {
+  color: #FFFFFF;
+  text-align: center;
+  font-size: 10px;
+  padding: 4px;
+}
+
+.status-bar {
+  position: relative;
+  width: 100%;
+  padding: 1px 0;
+  padding-left: 10px; // Add padding to accommodate icon overlap
+}
+
+.bar-icon-wrap {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  
+  img {
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    display: block;
+  }
+}
+
+.bar-container {
+  width: calc(100% - 10px);
+  height: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  position: relative;
+  
+  // Add gradient light effect
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), transparent);
+    border-radius: 6px;
+    pointer-events: none;
+  }
+}
+
+.bar-value-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 8px;
+  color: #FFFFFF;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  white-space: nowrap;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}

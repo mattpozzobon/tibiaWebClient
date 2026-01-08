@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, createContext, useContext, useEffect, useMemo } from 'react';
 import './styles/WindowManager.scss';
-import { EquipmentWindow, MinimapWindow } from './index';
+import { EquipmentWindow, MinimapWindow, StatusWindow } from './index';
 import WindowColumnRenderer from './components/WindowColumnRenderer';
 import { LOCALSTORAGE_KEYS, COLUMN_TYPES, WINDOW_TYPES, WINDOW_CLASSES, type ColumnType } from './constants';
 import { useLocalStorage, useLocalStorageString } from './hooks/useLocalStorage';
@@ -350,6 +350,16 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
           column,
           order: 0,
           className: WINDOW_CLASSES.MINIMAP,
+          pinned: false
+        };
+      case WINDOW_TYPES.STATUS:
+        return {
+          id: WINDOW_TYPES.STATUS,
+          title: 'Status',
+          component: <StatusWindow gc={gc} />,
+          column,
+          order: 0,
+          className: WINDOW_CLASSES.STATUS,
           pinned: false
         };
       default:

@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState } from 'react';
-import { useWindowManager, EquipmentWindow, MinimapWindow, ContainerWindow } from './index';
+import { useWindowManager, EquipmentWindow, MinimapWindow, ContainerWindow, StatusWindow } from './index';
 import { LOCALSTORAGE_KEYS, WINDOW_TYPES, COLUMN_TYPES, type ColumnType } from './constants';
 import type GameClient from '../../../../core/gameclient';
 import { useGameClientInitialized } from '../../../hooks/useGameClientInitialized';
@@ -32,6 +32,7 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
       // Clean up existing windows to avoid duplicates
       removeWindow('equipment');
       removeWindow('minimap');
+      removeWindow('status');
 
       // Helper function to get saved window state
       const getSavedWindowState = (windowId: string) => {
@@ -47,9 +48,10 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
         return null;
       };
 
-      // Get saved state for equipment and minimap windows
+      // Get saved state for equipment, minimap, and status windows
       const savedEquipment = getSavedWindowState('equipment');
       const savedMinimap = getSavedWindowState('minimap');
+      const savedStatus = getSavedWindowState('status');
 
       // Add the equipment window with saved state or defaults
       addWindow({
@@ -71,6 +73,17 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
         order: savedMinimap?.order || 0,
         className: savedMinimap?.className || 'minimap-window',
         pinned: savedMinimap?.pinned || false
+      });
+
+      // Add the status window with saved state or defaults
+      addWindow({
+        id: 'status',
+        title: 'Status',
+        component: <StatusWindow gc={gc} />,
+        column: savedStatus?.column || 'left',
+        order: savedStatus?.order || 0,
+        className: savedStatus?.className || 'status-window',
+        pinned: savedStatus?.pinned || false
       });
     }, 100); // Small delay to let WindowManager load first
 

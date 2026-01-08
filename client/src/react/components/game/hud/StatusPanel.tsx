@@ -1,11 +1,10 @@
-// PlayerBars.tsx
 import React from 'react';
 import type GameClient from '../../../../core/gameclient';
 import { usePlayerVitals } from '../../../hooks/usePlayerAttribute';
-import './styles/PlayerBars.scss';
+import './styles/StatusPanel.scss';
 
-interface PlayerBarsProps {
-  gameClient: GameClient;
+interface StatusPanelProps {
+  gc: GameClient;
 }
 
 interface BarProps {
@@ -13,10 +12,10 @@ interface BarProps {
   max: number;
   color: string;
   lowColor?: string;
-  icon?: string;
+  iconPath?: string;
 }
 
-const Bar: React.FC<BarProps & { isCapacity?: boolean }> = ({ current, max, color, lowColor, icon, isCapacity }) => {
+const Bar: React.FC<BarProps & { isCapacity?: boolean }> = ({ current, max, color, lowColor, iconPath, isCapacity }) => {
   const percentage = Math.min(max > 0 ? (current / max) * 100 : 0, 100);
   const isLow = percentage < 25;
   const barColor = isLow && lowColor ? lowColor : color;
@@ -38,8 +37,12 @@ const Bar: React.FC<BarProps & { isCapacity?: boolean }> = ({ current, max, colo
   const suffix = isCapacity ? ' oz' : '';
 
   return (
-    <div className="player-bar">
-      <div className="bar-icon-wrap">{icon && <span className="bar-icon">{icon}</span>}</div>
+    <div className="status-bar">
+      {iconPath && (
+        <div className="bar-icon-wrap">
+          <img src={iconPath} alt="" />
+        </div>
+      )}
       <div className="bar-container">
         <div
           className="bar-fill"
@@ -51,25 +54,22 @@ const Bar: React.FC<BarProps & { isCapacity?: boolean }> = ({ current, max, colo
   );
 };
 
-const PlayerBars: React.FC<PlayerBarsProps> = ({ gameClient }) => {
-  const { vitals, vitalValues } = usePlayerVitals(gameClient);
+const StatusPanel: React.FC<StatusPanelProps> = ({ gc }) => {
+  const { vitals, vitalValues } = usePlayerVitals(gc);
 
   if (!vitals) {
     return (
-      <div id="player-bars" className="player-bars-container">
-        <div className="loading">Loading player stats...</div>
-      </div>
+      <div className="status-loading">Loading player stats...</div>
     );
   }
 
   return (
-    <div id="player-bars" className="player-bars-container">
-      <Bar current={vitalValues.health}  max={vitalValues.maxHealth}   color="#4CAF50" lowColor="#F44336" icon="❤️" />
-      <Bar current={vitalValues.mana}    max={vitalValues.maxMana}     color="#2196F3" lowColor="#FF9800" icon="💙" />
-      <Bar current={vitalValues.energy}  max={vitalValues.maxEnergy}   color="#9C27B0" lowColor="#FF5722" icon="⚡" />
-      <Bar current={vitalValues.capacity} max={vitalValues.maxCapacity} color="#9E9E9E" lowColor="#FFC107" icon="🎒" isCapacity={true} />
-    </div>
+    <>
+      <Bar current={vitalValues.health}  max={vitalValues.maxHealth}   color="#4CAF50" lowColor="#F44336" iconPath="png/skills/max-health.png" />
+      <Bar current={vitalValues.mana}    max={vitalValues.maxMana}     color="#2196F3" lowColor="#FF9800" iconPath="png/skills/max-mana.png" />
+      <Bar current={vitalValues.energy}  max={vitalValues.maxEnergy}   color="#FFEB3B" lowColor="#FFC107" iconPath="png/skills/max-energy.png" />
+    </>
   );
 };
 
-export default PlayerBars;
+export default StatusPanel;

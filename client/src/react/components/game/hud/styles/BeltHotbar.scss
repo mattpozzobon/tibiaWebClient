@@ -5,11 +5,11 @@
   align-items: center;
   gap: 4px;
   padding: 4px;
-  background-color: rgba(0, 0, 0, 0.7);
-  border: 2px solid #8B4513; // Brown border for belt theme
-  border-radius: 8px;
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
   z-index: 1001; // Above main hotbar
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  box-shadow: none;
   overflow: visible;
 }
 

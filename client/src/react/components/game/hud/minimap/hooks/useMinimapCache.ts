@@ -29,6 +29,7 @@ export function useMinimapCache(
       new Position(center.x - radius, center.y + radius, z),
       new Position(center.x - radius, center.y, z)
     ];
+    
     try {
       gc.database.preloadMinimapChunks(positions, chunkUpdate);
     } catch {}

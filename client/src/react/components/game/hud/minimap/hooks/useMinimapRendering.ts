@@ -50,27 +50,30 @@ export function useMinimapRendering(
     const offctx = minimap.context;
     const centerPoint = canvasSize / 2;
 
-    if (prevCenterRef.current && prevCenterRef.current.z === renderLayer) {
-      const dx = prevCenterRef.current.x - center.x;
-      const dy = prevCenterRef.current.y - center.y;
-      if (dx !== 0 || dy !== 0) {
-        offctx.save();
-        offctx.globalCompositeOperation = 'copy';
-        offctx.drawImage(minimap.canvas, dx, dy);
-        offctx.restore();
-        if (dx > 0) offctx.clearRect(0, 0, dx, canvasSize);
-        else if (dx < 0) offctx.clearRect(canvasSize + dx, 0, -dx, canvasSize);
-        if (dy > 0) offctx.clearRect(0, 0, canvasSize, dy);
-        else if (dy < 0) offctx.clearRect(0, canvasSize + dy, canvasSize, -dy);
-      }
+    // Always clear when floor changes, otherwise use optimization
+    const canOptimize = prevCenterRef.current && prevCenterRef.current.z === renderLayer;
+    const dx = canOptimize && prevCenterRef.current ? prevCenterRef.current.x - center.x : 0;
+    const dy = canOptimize && prevCenterRef.current ? prevCenterRef.current.y - center.y : 0;
+    const useOptimization = canOptimize && (dx !== 0 || dy !== 0) && Math.abs(dx) < canvasSize && Math.abs(dy) < canvasSize;
+
+    if (useOptimization) {
+      // Use optimization: copy and shift existing canvas
+      offctx.save();
+      offctx.globalCompositeOperation = 'copy';
+      offctx.drawImage(minimap.canvas, dx, dy);
+      offctx.restore();
+      if (dx > 0) offctx.clearRect(0, 0, dx, canvasSize);
+      else if (dx < 0) offctx.clearRect(canvasSize + dx, 0, -dx, canvasSize);
+      if (dy > 0) offctx.clearRect(0, 0, canvasSize, dy);
+      else if (dy < 0) offctx.clearRect(0, canvasSize + dy, canvasSize, -dy);
     } else {
+      // Full clear
       offctx.clearRect(0, 0, canvasSize, canvasSize);
     }
-    prevCenterRef.current = { x: center.x, y: center.y, z: renderLayer };
 
     Object.keys(chunks).forEach((id: string) => {
       const ch = chunks[id];
-      if (!ch) return;
+      if (!ch || !ch.imageData) return;
       const [cx, cy, cz] = id.split('.').map(Number);
       if (cz !== renderLayer) return;
 
@@ -80,6 +83,8 @@ export function useMinimapRendering(
         cy * MINIMAP_CONFIG.MINIMAP_CHUNK_SIZE - center.y + centerPoint
       );
     });
+
+    prevCenterRef.current = { x: center.x, y: center.y, z: renderLayer };
 
     const canvas = canvasRef.current;
     if (!canvas) return;

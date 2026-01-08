@@ -181,4 +181,15 @@ export default class Player extends Creature {
     this.containers.removeContainer(container.id);
     window.gameClient.send(new ContainerClosePacket(container.id));
   }
+
+  public updateBeltPotionQuantities(quantities: {
+    healthPotionId: number;
+    healthQuantity: number;
+    manaPotionId: number;
+    manaQuantity: number;
+    energyPotionId: number;
+    energyQuantity: number;
+  }): void {
+    this.beltPotionQuantities = { ...quantities };
+  }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { usePlayerEquipment } from '../../../hooks/usePlayerAttribute';
 import { ItemRenderer } from '../../../../utils/item-renderer';
 import { UseBeltPotionPacket } from '../../../../core/protocol';
@@ -47,25 +47,54 @@ export default function BeltHotbar({ gc }: BeltHotbarProps) {
   // Get belt potion quantities from player
   const beltPotionQuantities = gc.player?.beltPotionQuantities || DEFAULT_POTION_STATE;
 
-  // Determine if belt is equipped
-  const isBeltEquipped = useMemo(() => 
-    beltPotionQuantities.healthPotionId > 0 || 
-    beltPotionQuantities.manaPotionId > 0 || 
-    beltPotionQuantities.energyPotionId > 0,
-    [beltPotionQuantities]
-  );
-  
-  const hasBelt = beltItem || isBeltEquipped;
+  // Only render if belt is actually equipped (check equipment slot)
+  const hasBelt = beltItem !== null && beltItem !== undefined;
 
   // Track potion state
   const [potionState, setPotionState] = useState<PotionState>(beltPotionQuantities);
 
   // Update state when player's belt potion quantities change
+  // Use polling to detect changes since React won't detect nested object mutations
   useEffect(() => {
-    if (gc.player?.beltPotionQuantities) {
-      setPotionState(gc.player.beltPotionQuantities);
+    if (!gc.player) {
+      setPotionState(DEFAULT_POTION_STATE);
+      return;
     }
-  }, [gc.player?.beltPotionQuantities]);
+
+    const updatePotionState = () => {
+      const quantities = gc.player?.beltPotionQuantities || DEFAULT_POTION_STATE;
+      
+      setPotionState(prev => {
+        // Only update if values actually changed
+        if (
+          prev.healthPotionId !== quantities.healthPotionId ||
+          prev.healthQuantity !== quantities.healthQuantity ||
+          prev.manaPotionId !== quantities.manaPotionId ||
+          prev.manaQuantity !== quantities.manaQuantity ||
+          prev.energyPotionId !== quantities.energyPotionId ||
+          prev.energyQuantity !== quantities.energyQuantity
+        ) {
+          return {
+            healthPotionId: quantities.healthPotionId,
+            healthQuantity: quantities.healthQuantity,
+            manaPotionId: quantities.manaPotionId,
+            manaQuantity: quantities.manaQuantity,
+            energyPotionId: quantities.energyPotionId,
+            energyQuantity: quantities.energyQuantity,
+          };
+        }
+        return prev;
+      });
+    };
+
+    // Initial update
+    updatePotionState();
+
+    // Poll for changes every 100ms (same as usePlayerConditions)
+    const interval = setInterval(updatePotionState, 100);
+
+    return () => clearInterval(interval);
+  }, [gc, gc.player]);
 
   // Initialize belt slots
   useEffect(() => {
@@ -98,26 +127,31 @@ export default function BeltHotbar({ gc }: BeltHotbarProps) {
 
   // Render potion items to canvas
   useEffect(() => {
-    if (!gc || beltSlots.length === 0) return;
+    if (!gc || !hasBelt) return;
 
-    beltSlots.forEach((_, index) => {
-      const canvas = canvasRefs.current[index];
-      if (!canvas) return;
+    // Use a small delay to ensure canvas refs are set after DOM updates
+    const renderTimer = setTimeout(() => {
+      for (let index = 0; index < BELT_SLOT_COUNT; index++) {
+        const canvas = canvasRefs.current[index];
+        if (!canvas) continue;
 
-      const { id: potionId, quantity } = getPotionData(index);
+        const { id: potionId, quantity } = getPotionData(index);
 
-      if (potionId > 0) {
-        const potionItem = new Item(potionId, quantity);
-        ItemRenderer.renderItemToCanvas(gc, potionItem, canvas, { 
-          size: CANVAS_SIZE, 
-          background: 'transparent' 
-        });
-      } else {
-        const ctx = canvas.getContext('2d');
-        ctx?.clearRect(0, 0, canvas.width, canvas.height);
+        if (potionId > 0) {
+          const potionItem = new Item(potionId, quantity);
+          ItemRenderer.renderItemToCanvas(gc, potionItem, canvas, { 
+            size: CANVAS_SIZE, 
+            background: 'transparent' 
+          });
+        } else {
+          const ctx = canvas.getContext('2d');
+          ctx?.clearRect(0, 0, canvas.width, canvas.height);
+        }
       }
-    });
-  }, [gc, beltSlots, getPotionData]);
+    }, 0);
+
+    return () => clearTimeout(renderTimer);
+  }, [gc, hasBelt, getPotionData, potionState, equipmentItems]);
 
 
   // Get potion type name for a slot
@@ -195,6 +229,20 @@ export default function BeltHotbar({ gc }: BeltHotbarProps) {
                   canvasRefs.current[index] = el;
                   el.width = CANVAS_SIZE;
                   el.height = CANVAS_SIZE;
+                  
+                  // Render immediately when canvas is mounted
+                  if (gc) {
+                    const { id: potionId, quantity } = getPotionData(index);
+                    if (potionId > 0) {
+                      const potionItem = new Item(potionId, quantity);
+                      ItemRenderer.renderItemToCanvas(gc, potionItem, el, { 
+                        size: CANVAS_SIZE, 
+                        background: 'transparent' 
+                      });
+                    }
+                  }
+                } else {
+                  canvasRefs.current[index] = null;
                 }
               }}
               className="potion-canvas"

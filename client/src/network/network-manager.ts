@@ -145,6 +145,8 @@ class NetworkManager {
         return this.packetHandler.handleReceivePrivateMessage(packet.readPrivateMessage());
       case CONST.PROTOCOL.SERVER.CREATURE_MESSAGE:
           return this.packetHandler.handleChannelMessage(packet.readChannelMessage());
+      case CONST.PROTOCOL.SERVER.BELT_POTION_QUANTITIES:
+        return this.packetHandler.handleBeltPotionQuantities(packet.readBeltPotionQuantities());
       default:
         throw new Error("An unknown packet was received from the server.");
     }

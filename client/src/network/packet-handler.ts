@@ -109,6 +109,19 @@ class PacketHandler {
     window.gameClient.player.vitals.speed = packet.speed;
   }
 
+  handleBeltPotionQuantities(packet: {
+    healthPotionId: number;
+    healthQuantity: number;
+    manaPotionId: number;
+    manaQuantity: number;
+    energyPotionId: number;
+    energyQuantity: number;
+  }): void {
+    if (!window.gameClient.player) return;
+    
+    window.gameClient.player.updateBeltPotionQuantities(packet);
+  }
+
   handleOpenChannel(packet: any): void {
     // TODO: Handle channel opening with ReactChannelManager
     // window.gameClient.interface.channelManager.handleOpenChannel(packet);

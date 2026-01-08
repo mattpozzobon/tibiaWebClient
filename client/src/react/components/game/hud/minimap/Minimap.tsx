@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-
-
+import type GameClient from '../../../../../core/gameclient';
+import Canvas from '../../../../../renderer/canvas';
+import { usePlayer } from '../../../../hooks/usePlayerAttribute';
+import { MapMarker } from '../../../../../types/map-marker';
 import ContextMenu from '../ContextMenu';
 import CreateMarkerModal from '../../modals/CreateMarkerModal';
 import EditMarkerModal from '../../modals/EditMarkerModal';
 import { MinimapErrorBoundary } from '../MinimapErrorBoundary';
-import MinimapCanvas, { MinimapCanvasProps } from './components/MinimapCanvas';
+import MinimapCanvas from './components/MinimapCanvas';
 import MinimapZoomControls from './components/MinimapZoomControls';
 import { useMinimapZoom } from './hooks/useMinimapZoom';
 import { useMinimapView } from './hooks/useMinimapView';
@@ -17,10 +19,10 @@ import { useMinimapCache } from './hooks/useMinimapCache';
 import { useMinimapMagnifier } from './hooks/useMinimapMagnifier';
 import { useMinimapInteractions } from './hooks/useMinimapInteractions';
 import './styles/Minimap.scss';
-import { usePlayer } from '../../../../hooks/usePlayerAttribute';
-import { MapMarker } from '../../../../../types/map-marker';
-import GameClient from '../../../../../core/gameclient';
-import Canvas from '../../../../../renderer/canvas';
+
+const CANVAS_SIZE = 240;
+const ZOOM_DEBOUNCE_MS = 16;
+const INITIAL_CACHE_DELAY_MS = 100;
 
 interface MinimapProps {
   gc: GameClient;
@@ -29,8 +31,6 @@ interface MinimapProps {
 export default function Minimap({ gc }: MinimapProps) {
   const player = usePlayer(gc);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  
-  const currentCanvasSize = 240; // Fixed canvas size
   const { zoomLevel, minZoom, maxZoom, handleZoomIn, handleZoomOut, handleWheel, zoomDebounceRef } = useMinimapZoom();
   const {
     viewCenterRef,
@@ -54,14 +54,14 @@ export default function Minimap({ gc }: MinimapProps) {
   const [editMarkerModal, setEditMarkerModal] = useState<{ visible: boolean; marker: MapMarker | null }>({ visible: false, marker: null });
   const [hoveredMarker, setHoveredMarker] = useState<MapMarker | null>(null);
   
-  const { magnifier, setMagnifier, magnifierCanvasRef } = useMinimapMagnifier(canvasRef, currentCanvasSize);
+  const { magnifier, setMagnifier, magnifierCanvasRef } = useMinimapMagnifier(canvasRef, CANVAS_SIZE);
   
   const { minimapCanvasRef, chunksRef, prevCenterRef, render } = useMinimapRendering(
     player,
     markers,
     markerImages,
     zoomLevel,
-    currentCanvasSize,
+    CANVAS_SIZE,
     renderLayer,
     getQuantizedCenter,
     canvasRef
@@ -75,7 +75,7 @@ export default function Minimap({ gc }: MinimapProps) {
   
   const { cache, schedulePanCache, debouncedCache, cacheTimeoutRef } = useMinimapCache(
     gc,
-    currentCanvasSize,
+    CANVAS_SIZE,
     getQuantizedCenter,
     chunkUpdate
   );
@@ -98,7 +98,7 @@ export default function Minimap({ gc }: MinimapProps) {
     markerImages,
     currentFloorRef,
     zoomLevel,
-    currentCanvasSize,
+    CANVAS_SIZE,
     getActiveViewCenter,
     getQuantizedCenter,
     setViewCenter,
@@ -113,21 +113,13 @@ export default function Minimap({ gc }: MinimapProps) {
   );
   
   useEffect(() => {
-    if (!minimapCanvasRef.current) {
-      try {
-        minimapCanvasRef.current = new Canvas(null, currentCanvasSize, currentCanvasSize);
-        setIsInitialized(true);
-      } catch {
-        setIsInitialized(false);
-      }
-    } else {
-      try {
-        minimapCanvasRef.current = new Canvas(null, currentCanvasSize, currentCanvasSize);
-      } catch {
-        setIsInitialized(false);
-      }
+    try {
+      minimapCanvasRef.current = new Canvas(null, CANVAS_SIZE, CANVAS_SIZE);
+      setIsInitialized(true);
+    } catch {
+      setIsInitialized(false);
     }
-  }, [currentCanvasSize]);
+  }, []);
   
   useEffect(() => {
     if (player && isInitialized) {
@@ -140,7 +132,7 @@ export default function Minimap({ gc }: MinimapProps) {
       }
       const initialLoad = () => cache();
       initialLoad();
-      const t = setTimeout(initialLoad, 100);
+      const t = setTimeout(initialLoad, INITIAL_CACHE_DELAY_MS);
       return () => clearTimeout(t);
     }
   }, [player, isInitialized, cache, isFollowingPlayer, setViewCenter, setRenderLayer, currentFloorRef, prevCenterRef, viewCenterRef]);
@@ -250,7 +242,7 @@ export default function Minimap({ gc }: MinimapProps) {
           render(chunksRef.current, true);
         }
         zoomDebounceRef.current = null;
-      }, 16);
+      }, ZOOM_DEBOUNCE_MS);
     }
     return () => {
       if (zoomDebounceRef.current) {
@@ -261,20 +253,32 @@ export default function Minimap({ gc }: MinimapProps) {
   
   const handleCreateMarker = useCallback(async (data: Omit<MapMarker, 'id' | 'createdAt'>) => {
     if (!gc.database) return;
-    try { await gc.database.saveMapMarker(data); await loadMarkers(); }
-    catch { alert('Failed to create marker'); }
+    try {
+      await gc.database.saveMapMarker(data);
+      await loadMarkers();
+    } catch (error) {
+      console.error('Failed to create marker:', error);
+    }
   }, [gc.database, loadMarkers]);
   
   const handleUpdateMarker = useCallback(async (m: MapMarker) => {
     if (!gc.database) return;
-    try { await gc.database.updateMapMarker(m); await loadMarkers(); }
-    catch { alert('Failed to update marker'); }
+    try {
+      await gc.database.updateMapMarker(m);
+      await loadMarkers();
+    } catch (error) {
+      console.error('Failed to update marker:', error);
+    }
   }, [gc.database, loadMarkers]);
   
   const handleDeleteMarker = useCallback(async (id: string) => {
     if (!gc.database) return;
-    try { await gc.database.deleteMapMarker(id); await loadMarkers(); }
-    catch { alert('Failed to delete marker'); }
+    try {
+      await gc.database.deleteMapMarker(id);
+      await loadMarkers();
+    } catch (error) {
+      console.error('Failed to delete marker:', error);
+    }
   }, [gc.database, loadMarkers]);
   
   if (!player || !isInitialized) return null;
@@ -284,7 +288,7 @@ export default function Minimap({ gc }: MinimapProps) {
       <div className="minimap-container">
         <MinimapCanvas
           ref={canvasRef}
-          canvasSize={currentCanvasSize}
+          canvasSize={CANVAS_SIZE}
           onContextMenu={handleCanvasRightClick}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
@@ -314,8 +318,12 @@ export default function Minimap({ gc }: MinimapProps) {
             { label: 'Delete Marker', onClick: async () => {
                 const m = editMarkerModal.marker;
                 if (!m || !gc.database) return;
-                try { await gc.database.deleteMapMarker(m.id); await loadMarkers(); }
-                catch { alert('Failed to delete marker'); }
+                try {
+                  await gc.database.deleteMapMarker(m.id);
+                  await loadMarkers();
+                } catch (error) {
+                  console.error('Failed to delete marker:', error);
+                }
               }, className: 'delete' }
           ] : [
             { label: 'Create Marker', onClick: () => setCreateMarkerModal(prev => ({ ...prev, visible: true })) }

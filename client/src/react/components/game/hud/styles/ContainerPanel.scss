@@ -80,6 +80,26 @@
   padding: 0;
   outline: none;
   
+  // Make slot background image semi-transparent using pseudo-element
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: var(--slot-bg-image-inline, none);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 36px 36px;
+    opacity: 0.5; // Semi-transparent
+    z-index: 1;
+    pointer-events: none;
+  }
+  
+  // Make the actual background transparent so pseudo-element shows through
+  background-image: none !important;
+  
   &:hover {
     border: 1px solid #fff;
   }
@@ -93,6 +113,7 @@
     width: 32px;
     height: 32px;
     z-index: 100;
+    opacity: 1; // Ensure canvas is fully opaque
   }
   
   // Special slot styling - same as normal slots

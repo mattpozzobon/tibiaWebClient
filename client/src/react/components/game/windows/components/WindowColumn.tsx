@@ -22,6 +22,7 @@ interface WindowColumnProps {
   onColumnDrop: (e: React.DragEvent, column: ColumnType) => void;
   onWindowDrop: (e: React.DragEvent, targetWindowId: string) => void;
   onDragOver: (e: React.DragEvent) => void;
+  onWindowResize?: (windowId: string, height: number) => void;
 }
 
 export default function WindowColumn({
@@ -42,6 +43,7 @@ export default function WindowColumn({
   onColumnDrop,
   onWindowDrop,
   onDragOver,
+  onWindowResize,
 }: WindowColumnProps) {
   const getColumnClassName = () => {
     const baseClass = `window-column window-column-${column}`;
@@ -76,6 +78,7 @@ export default function WindowColumn({
         onTogglePin={onTogglePin}
         onWindowDrop={onWindowDrop}
         onDragOver={onDragOver}
+        onWindowResize={onWindowResize}
       />
       
       <WindowGroup
@@ -88,6 +91,7 @@ export default function WindowColumn({
         onTogglePin={onTogglePin}
         onWindowDrop={onWindowDrop}
         onDragOver={onDragOver}
+        onWindowResize={onWindowResize}
       />
     </div>
   );

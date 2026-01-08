@@ -34,8 +34,31 @@
   padding: 0;
   outline: none;
   
+  // Make slot background image semi-transparent using pseudo-element
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: var(--slot-bg-image-inline, var(--slot-bg-image-css, none));
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 36px 36px;
+    opacity: 0.5; // Semi-transparent
+    z-index: 1;
+    pointer-events: none;
+  }
+  
+  // Store the CSS background-image in a variable for the pseudo-element
+  --slot-bg-image-css: var(--computed-bg-image);
+  
+  // Make the actual background transparent so pseudo-element shows through
+  background-image: none !important;
+  
   &:hover {
-    border-color: #fff;
+    border: 1px solid #fff;
   }
   
   canvas {
@@ -47,86 +70,88 @@
     width: 32px;
     height: 32px;
     z-index: 100;
+    opacity: 1; // Ensure canvas is fully opaque
   }
 }
 
 // Manual grid positioning for each slot
+// Set CSS variable for background images so pseudo-element can use them
 .equipment-panel.equipment-container .equipment-slots .slot-necklace { 
-  background-image: url('../../../../../../png/shoulder.png');
+  --slot-bg-image-css: url('../../../../../../png/shoulder.png');
   grid-column: 1;
   grid-row: 1;
 }
 .equipment-panel.equipment-container .equipment-slots .slot-helmet { 
-  background-image: url('../../../../../../png/head.png');
+  --slot-bg-image-css: url('../../../../../../png/head.png');
   grid-column: 2;
   grid-row: 1;
 }
 .equipment-panel.equipment-container .equipment-slots .slot-backpack { 
-  background-image: url('../../../../../../png/backpack.png');
+  --slot-bg-image-css: url('../../../../../../png/backpack.png');
   grid-column: 3;
   grid-row: 1;
 }
 
 .equipment-panel.equipment-container .equipment-slots .slot-left { 
-  background-image: url('../../../../../../png/left.png');
+  --slot-bg-image-css: url('../../../../../../png/left.png');
   grid-column: 1;
   grid-row: 2;
 }
 .equipment-panel.equipment-container .equipment-slots .slot-armor { 
-  background-image: url('../../../../../../png/armor.png');
+  --slot-bg-image-css: url('../../../../../../png/armor.png');
   grid-column: 2;
   grid-row: 2;
 }
 .equipment-panel.equipment-container .equipment-slots .slot-right { 
-  background-image: url('../../../../../../png/right.png');
+  --slot-bg-image-css: url('../../../../../../png/right.png');
   grid-column: 3;
   grid-row: 2;
 }
 
 .equipment-panel.equipment-container .equipment-slots .slot-belt { 
-  background-image: url('../../../../../../png/item.png');
+  --slot-bg-image-css: url('../../../../../../png/item.png');
   grid-column: 1;
   grid-row: 3;
 }
 .equipment-panel.equipment-container .equipment-slots .slot-legs { 
-  background-image: url('../../../../../../png/legs.png');
+  --slot-bg-image-css: url('../../../../../../png/legs.png');
   grid-column: 2;
   grid-row: 3;
 }
 .equipment-panel.equipment-container .equipment-slots .slot-quiver { 
-  background-image: url('../../../../../../png/quiver.png');
+  --slot-bg-image-css: url('../../../../../../png/quiver.png');
   grid-column: 3;
   grid-row: 3;
 }
 
 .equipment-panel.equipment-container .equipment-slots .slot-ring { 
-  background-image: url('../../../../../../png/ring.png');
+  --slot-bg-image-css: url('../../../../../../png/ring.png');
   grid-column: 1;
   grid-row: 4;
 }
 .equipment-panel.equipment-container .equipment-slots .slot-boots { 
-  background-image: url('../../../../../../png/boots.png');
+  --slot-bg-image-css: url('../../../../../../png/boots.png');
   grid-column: 2;
   grid-row: 4;
 }
 .equipment-panel.equipment-container .equipment-slots .slot-ring2 { 
-  background-image: url('../../../../../../png/ring.png');
+  --slot-bg-image-css: url('../../../../../../png/ring.png');
   grid-column: 3;
   grid-row: 4;
 }
 
 .equipment-panel.equipment-container .equipment-slots .slot-ring3 { 
-  background-image: url('../../../../../../png/ring.png');
+  --slot-bg-image-css: url('../../../../../../png/ring.png');
   grid-column: 1;
   grid-row: 5;
 }
 .equipment-panel.equipment-container .equipment-slots .slot-ring4 { 
-  background-image: url('../../../../../../png/ring.png');
+  --slot-bg-image-css: url('../../../../../../png/ring.png');
   grid-column: 2;
   grid-row: 5;
 }
 .equipment-panel.equipment-container .equipment-slots .slot-ring5 { 
-  background-image: url('../../../../../../png/ring.png');
+  --slot-bg-image-css: url('../../../../../../png/ring.png');
   grid-column: 3;
   grid-row: 5;
 }

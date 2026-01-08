@@ -12,6 +12,7 @@ interface WindowGroupProps {
   onTogglePin: (windowId: string) => void;
   onWindowDrop: (e: React.DragEvent, targetWindowId: string) => void;
   onDragOver: (e: React.DragEvent) => void;
+  onWindowResize?: (windowId: string, height: number) => void;
 }
 
 export default function WindowGroup({
@@ -24,6 +25,7 @@ export default function WindowGroup({
   onTogglePin,
   onWindowDrop,
   onDragOver,
+  onWindowResize,
 }: WindowGroupProps) {
   return (
     <div className={isPinned ? 'window-group-bottom' : 'window-group-top'}>
@@ -38,9 +40,11 @@ export default function WindowGroup({
           onPin={() => onTogglePin(window.id)}
           onDrop={(e) => onWindowDrop(e, window.id)}
           onDragOver={onDragOver}
+          onResize={onWindowResize && window.className === 'container-window' ? (height) => onWindowResize(window.id, height) : undefined}
           isDragging={draggedWindow === window.id}
           isPinned={isPinned}
           className={window.className}
+          height={window.height}
         >
           {window.component}
         </Window>

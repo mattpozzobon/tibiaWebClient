@@ -144,7 +144,7 @@
 
 .window-content {
   color: #ddd;
-  overflow: auto;
+  overflow: visible;
   max-height: 80vh;
   width: 100%;
   box-sizing: border-box;
@@ -196,5 +196,29 @@
   // Reset dimensions when minimized
   &.minimized {
     height: auto;
+  }
+}
+
+// Resize handle
+.window-resize-handle {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  cursor: ns-resize;
+  background: transparent;
+  z-index: 1000;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+}
+
+.window.resizing {
+  user-select: none;
+  .window-resize-handle {
+    background: rgba(255, 255, 255, 0.5);
   }
 }

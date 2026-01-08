@@ -14,6 +14,7 @@ export interface WindowData {
   order: number;
   className?: string;
   pinned?: boolean;
+  height?: number; // Custom height in pixels (for resizable windows)
 }
 
 export interface SerializableWindowData {
@@ -215,6 +216,14 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
     setWindows(prev => prev.map(w => 
       w.id === windowId 
         ? { ...w, pinned: !w.pinned }
+        : w
+    ));
+  }, []);
+
+  const handleWindowResize = useCallback((windowId: string, height: number) => {
+    setWindows(prev => prev.map(w => 
+      w.id === windowId 
+        ? { ...w, height }
         : w
     ));
   }, []);
@@ -470,6 +479,7 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
                 onColumnDrop={handleColumnDrop}
                 onWindowDrop={handleWindowDrop}
                 onDragOver={handleDragOver}
+                onWindowResize={handleWindowResize}
               />
             ))}
           </div>
@@ -492,6 +502,7 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
                 onColumnDrop={handleColumnDrop}
                 onWindowDrop={handleWindowDrop}
                 onDragOver={handleDragOver}
+                onWindowResize={handleWindowResize}
               />
             ))}
           </div>

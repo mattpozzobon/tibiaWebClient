@@ -10,7 +10,7 @@ interface WindowInitializerProps {
 }
 
 export default function WindowInitializer({ gc }: WindowInitializerProps) {
-  const { addWindow, removeWindow } = useWindowManager();
+  const { addWindow, removeWindow, windows } = useWindowManager();
   const { isInitialized: isGameInitialized, hasEquipment } = useGameClientInitialized(gc);
 
   // Log when equipment is fully initialized
@@ -117,13 +117,51 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
         // Use default 'right' if localStorage fails
       }
       
+      // Calculate available space in the column
+      const calculateAvailableSpace = (targetColumn: ColumnType): number => {
+        const viewportHeight = window.innerHeight;
+        const columnPadding = 3 + 12; // top padding + bottom padding
+        const headerHeight = 12; // window header height
+        
+        // Get all windows in the target column
+        const columnWindows = windows.filter(w => w.column === targetColumn);
+        
+        // Calculate total height of existing windows
+        let totalWindowHeight = 0;
+        columnWindows.forEach(w => {
+          if (w.height) {
+            totalWindowHeight += w.height;
+          } else {
+            // Default heights for different window types
+            if (w.className === 'container-window') {
+              totalWindowHeight += 200; // Default container height
+            } else if (w.className === 'minimap-window') {
+              totalWindowHeight += 225;
+            } else if (w.className === 'equipment-window') {
+              totalWindowHeight += 150;
+            } else {
+              totalWindowHeight += 200; // Default
+            }
+          }
+        });
+        
+        // Available space = viewport height - column padding - existing windows
+        const availableSpace = viewportHeight - columnPadding - totalWindowHeight;
+        return Math.max(100, availableSpace); // Minimum 100px
+      };
+      
+      const availableSpace = calculateAvailableSpace(column);
+      const defaultContainerHeight = 300; // Default container window height
+      const containerHeight = availableSpace < defaultContainerHeight ? availableSpace : undefined;
+      
       addWindow({
         id: windowId,
         title: title,
         component: <ContainerWindow gc={gc} containerId={containerId} />,
         column: column,
         order: 0,
-        className: 'container-window'
+        className: 'container-window',
+        height: containerHeight
       });
     };
 

@@ -46,9 +46,10 @@ export default function EquipmentPanel({ gc }: EquipmentPanelProps) {
     const itm: Item | null = equipmentItems[slotIdx] || null;
     
     // Update slot background based on whether item is equipped
+    // Use CSS variable for pseudo-element to make it semi-transparent
     if (itm) {
       // Item is equipped - use item.png background
-      slotDiv.style.backgroundImage = "url('../../../../../../png/item.png')";
+      slotDiv.style.setProperty('--slot-bg-image-inline', "url('../../../../../../png/item.png')");
       ItemRenderer.renderItemToCanvas(gc, itm, canvas, { size: 32, background: 'transparent' });
     } else {
       // No item - use default slot background
@@ -64,7 +65,7 @@ export default function EquipmentPanel({ gc }: EquipmentPanelProps) {
         backgroundImage = `${slotType}.png`;
       }
       
-      slotDiv.style.backgroundImage = `url('../../../../../../png/${backgroundImage}')`;
+      slotDiv.style.setProperty('--slot-bg-image-inline', `url('../../../../../../png/${backgroundImage}')`);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
   };

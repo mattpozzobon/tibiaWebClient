@@ -27,6 +27,7 @@ interface WindowColumnRendererProps {
   onColumnDrop: (e: React.DragEvent, column: ColumnType) => void;
   onWindowDrop: (e: React.DragEvent, targetWindowId: string) => void;
   onDragOver: (e: React.DragEvent) => void;
+  onWindowResize?: (windowId: string, height: number) => void;
 }
 
 export default function WindowColumnRenderer({
@@ -43,6 +44,7 @@ export default function WindowColumnRenderer({
   onColumnDrop,
   onWindowDrop,
   onDragOver,
+  onWindowResize,
 }: WindowColumnRendererProps) {
   // If there's a condition and it's false, don't render
   if (config.condition !== undefined && !config.condition) {
@@ -68,6 +70,7 @@ export default function WindowColumnRenderer({
       onColumnDrop={onColumnDrop}
       onWindowDrop={onWindowDrop}
       onDragOver={onDragOver}
+      onWindowResize={onWindowResize}
     />
   );
 }

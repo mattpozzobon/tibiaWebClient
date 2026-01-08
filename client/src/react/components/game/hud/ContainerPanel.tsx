@@ -68,9 +68,10 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
     const item = slot.item;
     
     // Set background based on slot type, but use item.png if item is equipped
+    // Use CSS variable for pseudo-element to make it semi-transparent
     if (item) {
       // Item is equipped - use item.png background (same as normal slots)
-      div.style.backgroundImage = 'url(/assets/item.png)';
+      div.style.setProperty('--slot-bg-image-inline', 'url(/assets/item.png)');
       div.style.backgroundSize = 'contain';
       div.style.backgroundRepeat = 'no-repeat';
       div.style.backgroundPosition = 'center';
@@ -81,7 +82,7 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
       // Count is now displayed via a separate span element (like belt hotbar)
     } else {
       // No item - use slot type background
-      div.style.backgroundImage = getSlotBackgroundImage(index);
+      div.style.setProperty('--slot-bg-image-inline', getSlotBackgroundImage(index));
       div.style.backgroundSize = 'contain';
       div.style.backgroundRepeat = 'no-repeat';
       div.style.backgroundPosition = 'center';
@@ -104,8 +105,8 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
       if (div.dataset.bound !== '1' && slot) {
         div.setAttribute('slotIndex', i.toString());
         if (!div.classList.contains('slot')) div.classList.add('slot');
-        // Set background based on slot type
-        div.style.backgroundImage = getSlotBackgroundImage(i);
+        // Set background based on slot type (using CSS variable for semi-transparency)
+        div.style.setProperty('--slot-bg-image-inline', getSlotBackgroundImage(i));
         div.style.backgroundSize = 'contain';
         div.style.backgroundRepeat = 'no-repeat';
         div.style.backgroundPosition = 'center';
@@ -125,8 +126,8 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
             ctx.clearRect(0, 0, canvas.width, canvas.height);
           }
         }
-        // Set background based on slot type for empty slots
-        div.style.backgroundImage = getSlotBackgroundImage(i);
+        // Set background based on slot type for empty slots (using CSS variable)
+        div.style.setProperty('--slot-bg-image-inline', getSlotBackgroundImage(i));
         div.style.backgroundSize = 'contain';
         div.style.backgroundRepeat = 'no-repeat';
         div.style.backgroundPosition = 'center';
@@ -147,8 +148,8 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
         if (!div) continue;
         
         if (slot) {
-          // Ensure background is item.png even when item exists
-          div.style.backgroundImage = 'url(/assets/item.png)';
+          // Ensure background is item.png even when item exists (using CSS variable)
+          div.style.setProperty('--slot-bg-image-inline', 'url(/assets/item.png)');
           div.style.backgroundSize = 'contain';
           div.style.backgroundRepeat = 'no-repeat';
           div.style.backgroundPosition = 'center';
@@ -162,8 +163,8 @@ export default function ContainerPanel({ gc, containerId }: ContainerPanelProps)
               ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
           }
-          // Set background based on slot type for empty slots
-          div.style.backgroundImage = getSlotBackgroundImage(i);
+          // Set background based on slot type for empty slots (using CSS variable)
+          div.style.setProperty('--slot-bg-image-inline', getSlotBackgroundImage(i));
           div.style.backgroundSize = 'contain';
           div.style.backgroundRepeat = 'no-repeat';
           div.style.backgroundPosition = 'center';

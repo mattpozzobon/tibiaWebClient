@@ -4,27 +4,37 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 9998;
+  z-index: 10000;
   background: transparent;
+  pointer-events: auto;
 }
 
 .context-menu {
   position: fixed;
   background: rgba(0, 0, 0, 0.9);
   border: 1px solid #555;
-  border-radius: 4px;
-  padding: 4px 0;
-  min-width: 120px;
-  z-index: 9999;
+  border-radius: 0;
+  padding: 0;
+  min-width: 90px;
+  z-index: 10001;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  pointer-events: auto;
+  overflow: hidden;
+  font-family: inherit;
 }
 
 .context-menu-item {
-  padding: 8px 12px;
+  display: block;
+  width: 100%;
+  padding: 4px 10px;
+  margin: 0;
   color: #fff;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 8px;
+  line-height: 1.2;
   border-bottom: 1px solid #333;
+  white-space: nowrap;
+  box-sizing: border-box;
   
   &:last-child {
     border-bottom: none;

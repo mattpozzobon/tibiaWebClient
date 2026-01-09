@@ -90,7 +90,6 @@ class Mouse {
   private __handleContextMenu(event: MouseEvent): void {
     event.preventDefault();
     // window.gameClient.interface.menuManager.close();
-    const t = event.target as HTMLElement;
     // if (t.className === "hotbar-item") return window.gameClient.interface.menuManager.open("hotbar-menu", event);
     // if (t.id === "chat-text-area" || t.className === "channel-empty") return window.gameClient.interface.menuManager.open("chat-body-menu", event);
     // if (t.parentElement?.id === "chat-text-area" && t.getAttribute("name") !== null) return window.gameClient.interface.menuManager.open("chat-entry-menu", event);

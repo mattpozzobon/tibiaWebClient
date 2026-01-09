@@ -15,6 +15,7 @@
   overflow: hidden;
   opacity: 1; /* Always keep chat window visible and opaque */
   resize: none; /* Prevent browser default resize */
+  pointer-events: auto; /* Ensure chat window captures mouse events and blocks game canvas */
 }
 
 /* Resize handles */
@@ -299,6 +300,11 @@
   gap: 1px;
   background: rgba(255, 255, 255, 0.1);
   min-height: 0; /* Allow container to shrink */
+  // Enable text selection for copying messages - use !important to override global #root * rule
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
 }
 
 .chat-messages-section {
@@ -307,6 +313,11 @@
   flex-direction: column;
   min-height: 0; /* Allow section to shrink */
   overflow: hidden; /* Prevent overflow from affecting other sections */
+  // Enable text selection for copying messages - use !important to override global #root * rule
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
 }
 
 .chat-section-header {
@@ -333,12 +344,18 @@
   gap: 1px;
   min-height: 0; /* Important for flex child scrolling */
   max-height: 100%; /* Ensure it doesn't exceed container height */
+  // Enable text selection for copying messages - use !important to override global #root * rule
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  cursor: default; /* Default cursor, text cursor only on message elements */
 }
 
 .message {
   display: flex;
-  align-items: flex-start;
-  gap: 4px;
+  align-items: baseline; /* Align items to baseline for better text alignment */
+  gap: 2px; /* Reduced gap between timestamp and sender */
   font-size: 11px;
   line-height: 1.2;
   word-wrap: break-word;
@@ -346,14 +363,25 @@
   overflow-wrap: break-word;
   padding: 1px 0;
   min-width: 0; /* Allow flex items to shrink */
+  // Enable text selection for copying - use !important to override global #root * rule
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  cursor: text; /* Show text cursor when hovering over messages */
 }
 
 .message-time {
   color: rgba(255, 255, 255, 0.35);
   font-size: 9px;
   white-space: nowrap;
-  margin-top: 1px;
+  margin-top: 0; /* Remove top margin for better alignment */
   min-width: 35px;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  cursor: text; /* Show text cursor when hovering over timestamps */
 }
 
 .message-sender {
@@ -361,6 +389,16 @@
   white-space: nowrap;
   font-size: 10px;
   min-width: 50px;
+  margin-left: 0; /* Remove any left margin */
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  cursor: pointer; /* Show pointer cursor when hovering over sender names to indicate interactivity */
+  
+  &:hover {
+    text-decoration: underline; /* Visual feedback on hover */
+  }
 }
 
 .message-text {
@@ -371,6 +409,11 @@
   word-break: break-word;
   overflow-wrap: break-word;
   min-width: 0; /* Allow flex items to shrink */
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  cursor: text; /* Show text cursor when hovering over message text */
 }
 
 .chat-input-form {
@@ -408,17 +451,25 @@
   padding: 4px 8px;
   font-size: 11px;
   transition: all 0.2s ease;
-
+  font-family: inherit;
+  
   &:focus {
     outline: none;
     border-color: #0096ff;
     background: rgba(255, 255, 255, 0.15);
+    caret-color: #0096ff; // Ensure caret is visible when focused
   }
 
   &.active {
     border-color: #0096ff;
     background: rgba(255, 255, 255, 0.15);
     box-shadow: 0 0 10px rgba(0, 150, 255, 0.3);
+    caret-color: #0096ff; // Ensure caret is visible when active
+  }
+  
+  // Ensure caret is visible when active and focused
+  &.active:focus {
+    caret-color: #0096ff !important; // Force caret visibility
   }
 
   &.inactive {
@@ -454,6 +505,28 @@
   &:disabled {
     cursor: pointer;
     opacity: 0.8;
+  }
+  
+  // Ensure text selection works when active
+  &.active {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+  }
+  
+  // Hide caret when readonly (inactive state)
+  &[readonly] {
+    caret-color: transparent !important;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+  
+  // Ensure caret is visible when not readonly (active state)
+  &:not([readonly]) {
+    caret-color: #0096ff;
   }
 }
 

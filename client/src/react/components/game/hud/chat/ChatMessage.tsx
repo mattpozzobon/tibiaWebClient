@@ -12,9 +12,18 @@ export interface ChatMessage {
 
 interface ChatMessageProps {
   message: ChatMessage;
+  onSenderRightClick?: (e: React.MouseEvent, senderName: string) => void;
 }
 
-export default function ChatMessageComponent({ message }: ChatMessageProps) {
+export default function ChatMessageComponent({ message, onSenderRightClick }: ChatMessageProps) {
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (message.sender && message.sender !== 'You' && onSenderRightClick) {
+      e.preventDefault();
+      e.stopPropagation();
+      onSenderRightClick(e, message.sender);
+    }
+  };
+
   return (
     <div className="message">
       <span className="message-time">
@@ -25,7 +34,11 @@ export default function ChatMessageComponent({ message }: ChatMessageProps) {
         })}
       </span>
       {message.sender && (
-        <span className="message-sender" style={{ color: message.color }}>
+        <span 
+          className="message-sender" 
+          style={{ color: message.color }}
+          onContextMenu={handleContextMenu}
+        >
           {message.sender === 'You' ? '👤' : ''} {message.sender}:
         </span>
       )}

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import type GameClient from '../../../../../core/gameclient';
-import { ChannelMessagePacket, ChannelPrivatePacket } from '../../../../../core/protocol';
+import { ChannelMessagePacket, ChannelPrivatePacket, FriendAddPacket } from '../../../../../core/protocol';
 import { reactChannelManager } from '../../../../services/ReactChannelManager';
 import { isAnyModalOpen } from '../../../../../utils/modalUtils';
 import './../styles/ChatWindow.scss';
@@ -12,6 +13,7 @@ import ChatMessageList from './ChatMessageList';
 import ChatInput, { ChatInputRef } from './ChatInput';
 import ChatResizeHandles from './ChatResizeHandles';
 import { ChatMessage } from './ChatMessage';
+import ContextMenu from '../ContextMenu';
 
 // Hooks
 import { useChatMessages } from './hooks/useChatMessages';
@@ -28,6 +30,14 @@ export default function Chat({ gc }: ChatProps) {
   const [inputValue, setInputValue] = useState('');
   const [isActive, setIsActive] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
+  
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; senderName: string }>({
+    visible: false,
+    x: 0,
+    y: 0,
+    senderName: ''
+  });
 
   // Window position and size state
   const [chatWidth, setChatWidth] = useState(() => { const saved = localStorage.getItem('chatWidth'); return saved ? parseInt(saved, 10) : 600; });
@@ -226,6 +236,45 @@ export default function Chat({ gc }: ChatProps) {
   // Filter messages by active channel
   const getFilteredMessages = useCallback(() => { if (!activeChannel) return []; return allMessages.filter(msg => msg.channelName === activeChannel.name); }, [allMessages, activeChannel]);
 
+  // Handle right-click on sender name
+  const handleSenderRightClick = useCallback((e: React.MouseEvent, senderName: string) => {
+    // Don't show context menu for "You", empty sender, or the player's own name
+    if (!senderName || senderName === 'You') return;
+    
+    // Check if the sender is the current player
+    const playerName = gc.player?.vitals.name;
+    if (playerName && senderName === playerName) return;
+    
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      senderName
+    });
+  }, [gc.player]);
+
+  // Handle add friend action
+  const handleAddFriend = useCallback((senderName: string) => {
+    if (!senderName) return;
+    gc.send(new FriendAddPacket(senderName));
+    setContextMenu({ visible: false, x: 0, y: 0, senderName: '' });
+  }, [gc]);
+
+  // Close context menu on outside click
+  useEffect(() => {
+    if (!contextMenu.visible) return;
+    
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.context-menu')) {
+        setContextMenu({ visible: false, x: 0, y: 0, senderName: '' });
+      }
+    };
+
+    document.addEventListener('click', handleClick, true);
+    return () => document.removeEventListener('click', handleClick, true);
+  }, [contextMenu.visible]);
+
   // Save dimensions and position to localStorage
   useEffect(() => {
     localStorage.setItem('chatWidth', chatWidth.toString());
@@ -254,12 +303,20 @@ export default function Chat({ gc }: ChatProps) {
             <div className="chat-section-header">
               💬 {activeChannel?.name || 'Chat'}
             </div>
-            <ChatMessageList messages={getFilteredMessages()} messagesEndRef={chatMessagesEndRef} />
+            <ChatMessageList 
+              messages={getFilteredMessages()} 
+              messagesEndRef={chatMessagesEndRef} 
+              onSenderRightClick={handleSenderRightClick}
+            />
           </div>
           
           <div className="chat-messages-section">
             <div className="chat-section-header">🔧 Console</div>
-            <ChatMessageList messages={consoleMessages} messagesEndRef={consoleMessagesEndRef} />
+            <ChatMessageList 
+              messages={consoleMessages} 
+              messagesEndRef={consoleMessagesEndRef} 
+              onSenderRightClick={handleSenderRightClick}
+            />
           </div>
         </div>
 
@@ -267,6 +324,22 @@ export default function Chat({ gc }: ChatProps) {
         
         <ChatResizeHandles onResizeStart={handleResizeStart} />
       </div>
+      
+      {contextMenu.visible && createPortal(
+        <ContextMenu
+          visible={contextMenu.visible}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={[
+            {
+              label: 'Add Friend',
+              onClick: () => handleAddFriend(contextMenu.senderName)
+            }
+          ]}
+          onClose={() => setContextMenu({ visible: false, x: 0, y: 0, senderName: '' })}
+        />,
+        document.body
+      )}
     </div>
   );
 }

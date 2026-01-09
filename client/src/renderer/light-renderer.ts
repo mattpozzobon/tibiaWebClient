@@ -72,13 +72,15 @@ export default class LightRenderer {
   private glowMaxAlpha: number = 0.3;                       
   private lowerGlowMaxAlpha: number = 0.38;   // slightly brighter cap for lower floors
   private lowerGlowBoost: number = 1.4;       // boost lower-floor glow to match the player’s
-  private glowBlend: 'lighten' = 'lighten';   // 'lighten' avoids stacking
+  private glowBlend: 'lighten' = 'lighten';   // 'lighten' avoids stacking, but we also use aggressive attenuation
 
   // Overlap (current floor only) — stronger damping to reduce stacking
   private gridW = 0;
   private gridH = 0;
   private overlapGrid: Uint16Array | null = null;
-  private overlapK = 20.0; // ↑ was 1.0 (higher => additional lights contribute less)
+  private overlapK = 500.0; // Extremely aggressive damping - second light contributes <0.2%
+  private maxLightsPerCell = 1; // Only first light contributes significantly - others are heavily dimmed
+  private maxBrightnessPerCell = 0.25; // Hard cap on maximum brightness per cell regardless of light count
 
   // Floors
   private currentZ = 0;
@@ -366,20 +368,37 @@ export default class LightRenderer {
       g.scale.set((r / texRadius) * this.glowScale);
       g.tint = tint;
 
-      // Overlap attenuation (current floor)
+      // Overlap attenuation (current floor) - aggressively prevent cumulative brightness
       const gx = Math.max(0, Math.min(this.gridW - 1, Math.floor(tileX + 0.5)));
       const gy = Math.max(0, Math.min(this.gridH - 1, Math.floor(tileY + 0.5)));
       const idx = gy * this.gridW + gx;
       const prev = this.overlapGrid ? this.overlapGrid[idx] : 0;
       if (this.overlapGrid) this.overlapGrid[idx] = prev + 1;
 
-      const atten = 1 / (1 + this.overlapK * prev);
+      // Extremely aggressive attenuation: first light is full brightness, additional lights contribute almost nothing
+      let atten = 1.0;
+      if (prev > 0) {
+        // Second light and beyond get extremely heavy penalty - exponential decay
+        // Formula: 1 / (1 + 500 * prev) * 0.01^(prev-1)
+        // This means: 1st light = 100%, 2nd = ~0.2%, 3rd = ~0.002%, etc.
+        atten = 1 / (1 + this.overlapK * prev);
+        // Additional exponential penalty - each additional light is 1% of previous
+        atten *= Math.pow(0.01, Math.max(0, prev - 1));
+      }
+      
       const r8 = (tint >> 16) & 0xff, g8 = (tint >> 8) & 0xff, b8 = tint & 0xff;
       const lum = 0.2126 * r8 + 0.7152 * g8 + 0.0722 * b8;
       const lumScale = 0.5 + 0.5 * (1 - lum / 255);
 
-      const base = Math.min(this.glowMaxAlpha, 0.4 * this.ambient); // ↓ was 0.5
-      g.alpha = base * lumScale * atten;
+      const base = Math.min(this.glowMaxAlpha, 0.4 * this.ambient);
+      let finalAlpha = base * lumScale * atten;
+      
+      // Hard cap: never exceed maxBrightnessPerCell regardless of how many lights
+      // Divide by (prev + 1) so each light gets a smaller share of the max brightness
+      const maxAlphaForThisLight = this.maxBrightnessPerCell / Math.max(1, prev + 1);
+      finalAlpha = Math.min(finalAlpha, maxAlphaForThisLight);
+      
+      g.alpha = finalAlpha;
 
       this.glowUsed++;
       return;

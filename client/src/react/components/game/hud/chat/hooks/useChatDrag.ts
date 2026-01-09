@@ -26,10 +26,16 @@ export function useChatDrag({
   } | null>(null);
 
   const handleDragStart = (e: React.MouseEvent) => {
-    // Don't start dragging if clicking on interactive elements
+    // Don't start dragging if clicking on interactive elements or message areas
     const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('input') || target.closest('.channel-tab')) {
-      return;
+    if (target.closest('button') || 
+        target.closest('input') || 
+        target.closest('.channel-tab') ||
+        target.closest('.chat-messages') ||
+        target.closest('.message') ||
+        target.closest('.chat-messages-container') ||
+        target.closest('.chat-messages-section')) {
+      return; // Allow text selection in messages
     }
     
     e.preventDefault();

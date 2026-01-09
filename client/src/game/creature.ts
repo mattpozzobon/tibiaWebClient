@@ -100,7 +100,10 @@ export default class Creature {
       window.gameClient.renderer.creatureRenderer.clearTextureCache();
     }
     // Force refresh of the creature's renderer helper to update hair/head logic
+    // Preserve the current look direction to prevent resetting when equipping items
+    const currentDirection = this.renderer.getLookDirection();
     this.renderer = new CreatureRendererHelper(this);
+    this.renderer.__setLookDirection(currentDirection);
   }
 
   public setPosition(position: Position): void {

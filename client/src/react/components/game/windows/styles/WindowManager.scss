@@ -141,20 +141,20 @@
   justify-content: center;
   font-size: 10px;
   transition: all 0.2s ease;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(128, 128, 128, 0.3); /* Grey color for inactive icons */
   
   &:hover {
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(160, 160, 160, 1);
     transform: scale(1.05);
   }
   
   &.active {
-    color: #007acc;
+    color: #ffffff;
     text-shadow: 0 0 8px rgba(0, 122, 204, 0.6);
   }
   
   &.active:hover {
-    color: #0099ff;
+    color: #c6c6c6;
     text-shadow: 0 0 12px rgba(0, 122, 204, 0.8);
   }
 }

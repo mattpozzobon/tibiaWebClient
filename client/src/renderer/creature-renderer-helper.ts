@@ -82,20 +82,26 @@ export default class CreatureRendererHelper {
   public moveTo(position: Position, stepDurationTicks: number): any {
     if (!window.gameClient.world.isValidWorldPosition(position)) return false;
   
+    const currentPosition = this.creature.getPosition();
+    const positionChanged = !currentPosition.equals(position);
+  
     this.creature.__chunk = window.gameClient.world.getChunkFromWorldPosition(position);
   
     // Only cancel existing movement if we're moving to a different position
-    if (this.__movementEvent && !this.creature.getPosition().equals(position)) {
+    if (this.__movementEvent && positionChanged) {
       this.__movementEvent.cancel();
     }
   
     // Save old position
-    this.creature.__previousPosition = this.creature.getPosition().copy();
+    this.creature.__previousPosition = currentPosition.copy();
   
     this.__movementEvent = window.gameClient.eventQueue.addEvent(this.unlockMovement.bind(this), stepDurationTicks + 1);
   
-    const angle = this.creature.getPosition().getLookDirection(position);
-    if (angle !== null) this.__lookDirection = angle;
+    // Only update direction if position actually changed
+    if (positionChanged) {
+      const angle = currentPosition.getLookDirection(position);
+      if (angle !== null) this.__lookDirection = angle;
+    }
   
     this.creature.vitals.position = position;
   

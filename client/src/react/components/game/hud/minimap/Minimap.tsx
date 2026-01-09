@@ -46,7 +46,7 @@ export default function Minimap({ gc }: MinimapProps) {
   } = useMinimapView(player);
   
   const { markers, markerImages, loadMarkers } = useMinimapMarkers(gc, renderLayer);
-  const { updateChunks } = useMinimapChunks(gc, player);
+  const { updateChunks, flushSaves } = useMinimapChunks(gc, player);
   
   const [isInitialized, setIsInitialized] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number }>({ visible: false, x: 0, y: 0 });
@@ -67,10 +67,27 @@ export default function Minimap({ gc }: MinimapProps) {
     canvasRef
   );
   
+  const chunkUpdateRenderTimeoutRef = useRef<number | null>(null);
+  
   const chunkUpdate = useCallback((chunks: any) => {
     chunksRef.current = chunks;
+    // Update chunks first (modifies ImageData in place)
     updateChunks(chunks);
-    render(chunks, true);
+    
+    // Debounce render to batch multiple rapid chunk updates (e.g., when CHUNK packets arrive)
+    // This prevents flickering by ensuring we only render once after all updates settle
+    if (chunkUpdateRenderTimeoutRef.current !== null) {
+      cancelAnimationFrame(chunkUpdateRenderTimeoutRef.current);
+    }
+    
+    chunkUpdateRenderTimeoutRef.current = requestAnimationFrame(() => {
+      chunkUpdateRenderTimeoutRef.current = null;
+      // Use latest chunks from ref in case they've been updated
+      const latestChunks = chunksRef.current;
+      if (Object.keys(latestChunks).length > 0) {
+        render(latestChunks, true);
+      }
+    });
   }, [updateChunks, render, chunksRef]);
   
   const { cache, schedulePanCache, debouncedCache, cacheTimeoutRef } = useMinimapCache(
@@ -221,9 +238,14 @@ export default function Minimap({ gc }: MinimapProps) {
     if (!player || !isInitialized) return;
     return () => {
       if (cacheTimeoutRef.current) clearTimeout(cacheTimeoutRef.current);
+      if (chunkUpdateRenderTimeoutRef.current !== null) {
+        cancelAnimationFrame(chunkUpdateRenderTimeoutRef.current);
+      }
+      // Flush any pending chunk saves before saving all
+      flushSaves();
       gc.database.saveAllMinimapChunks();
     };
-  }, [player, isInitialized, gc.database, cacheTimeoutRef]);
+  }, [player, isInitialized, gc.database, cacheTimeoutRef, flushSaves]);
   
   useEffect(() => {
     if (chunksRef.current) {

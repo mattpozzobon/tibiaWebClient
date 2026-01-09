@@ -47,6 +47,10 @@ export class MemoryManager {
     
     return stats;
   }
+
+  static logMemoryStats(): void {
+    console.log('Memory Stats:', this.getMemoryStats());
+  }
 }
 
 // Auto-cleanup on page unload

@@ -121,8 +121,9 @@ export function useMinimapRendering(
     const hasVisibleChunks = visibleChunks.length > 0;
     
     if (hasVisibleChunks) {
-      // Clear and draw only visible chunks
-      offctx.clearRect(0, 0, canvasSize, canvasSize);
+      // Fill with black background for unexplored areas, then draw visible chunks
+      offctx.fillStyle = '#000000';
+      offctx.fillRect(0, 0, canvasSize, canvasSize);
       visibleChunks.forEach(({ imageData, x, y }) => {
         offctx.putImageData(imageData, x, y);
       });
@@ -151,8 +152,9 @@ export function useMinimapRendering(
     // ONLY update final canvas if we have visible chunks
     // This is the critical fix - never clear the final canvas unless we have visible content ready
     if (hasVisibleChunks) {
-      // Clear and draw minimap canvas in one atomic operation
-      ctx.clearRect(0, 0, canvasSize, canvasSize);
+      // Fill with black background, then draw minimap canvas in one atomic operation
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvasSize, canvasSize);
       ctx.drawImage(
         minimap.canvas,
         zoomWindow.sourceOffset, zoomWindow.sourceOffset, zoomWindow.sourceSize, zoomWindow.sourceSize,
@@ -166,8 +168,9 @@ export function useMinimapRendering(
         drawPlayerIndicator(ctx, p, center, zoomWindow, zoomLevel, canvasSize);
       }
     } else if (!hasChunksForLayer && Object.keys(chunks).length === 0) {
-      // Only clear if we truly have no chunks at all (initial load)
-      ctx.clearRect(0, 0, canvasSize, canvasSize);
+      // Fill with black background if we truly have no chunks at all (initial load)
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvasSize, canvasSize);
       // Still draw markers even if no map chunks
       drawMarkers(ctx, markers, markerImages, center, zoomWindow, zoomLevel, canvasSize);
       if (player) {

@@ -37,8 +37,12 @@ export function useMinimapMarkers(gc: GameClient, renderLayer: number) {
     MemoryManager.registerCache('markerImages', new Map(Object.entries(markerImages)));
     const cleanup = () => { spatialIndexRef.current.clear(); };
     MemoryManager.registerCleanup(cleanup);
+    const perfInterval = setInterval(() => {
+      MemoryManager.logMemoryStats();
+    }, 30000);
     return () => {
       MemoryManager.unregisterCleanup(cleanup);
+      clearInterval(perfInterval);
     };
   }, [markerImages]);
   

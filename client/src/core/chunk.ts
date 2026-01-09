@@ -83,12 +83,17 @@ export default class Chunk {
     return Chunk.DEPTH;
   }
 
-  public getFirstFloorFromBottom(position: Position): number {
-    // Returns the first visible floor from the bottom used for determining the maximum render layer.
+  public getFirstOccludingFloorAbove(position: Position): number {
     const positions: Position[] = [
       position,
-      position.north(),
-      position.west()
+      position.north().north(),
+      position.south().south(),
+      position.east().east(),
+      position.west().west(),
+      position.northeast().northeast(),
+      position.northwest().northwest(),
+      position.southeast().southeast(),
+      position.southwest().southwest()
     ];
     const minimum = (position.z % Chunk.DEPTH) + 1;
     const maximum = Math.max(minimum, Chunk.DEPTH);
@@ -96,9 +101,9 @@ export default class Chunk {
     for (let z = 1; z <= maximum - minimum; z++) {
       for (let i = 0; i < positions.length; i++) {
         const tilePosition = positions[i];
-        const tile = window.gameClient.world.getTileFromWorldPosition(
-          new Position(tilePosition.x + z, tilePosition.y + z, tilePosition.z + z)
-        );
+        const checkPos = new Position(tilePosition.x - z, tilePosition.y - z, tilePosition.z + z);
+        const tile = window.gameClient.world.getTileFromWorldPosition(checkPos);
+        
         if (tile === null) {
           continue;
         }

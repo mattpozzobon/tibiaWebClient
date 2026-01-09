@@ -76,9 +76,7 @@ export default class Creature {
   }
   
   public getMaxFloor(): number {
-    return window.gameClient.world
-      .getChunkFromWorldPosition(this.getPosition())
-      .getFirstFloorFromBottom(this.getPosition());
+    return window.gameClient.world.getChunkFromWorldPosition(this.getPosition()).getFirstOccludingFloorAbove(this.getPosition());
   }
 
   public getPosition(): Position {

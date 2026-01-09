@@ -43,7 +43,7 @@ export default class World {
     window.gameClient.player!.__serverWalkConfirmation = true;
     this.checkEntityReferences();
     this.checkChunks();
-    window.gameClient.renderer.tileRenderer.refreshVisibleTiles()
+    window.gameClient.renderer.refreshVisibleTiles()
     //window.gameClient.renderer.minimap.setCenter();
     
     // Dispatch teleportation event for minimap and other systems

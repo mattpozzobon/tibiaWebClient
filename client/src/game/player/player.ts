@@ -122,7 +122,7 @@ export default class Player extends Creature {
 
   public confirmClientWalk(): void {
     if (this.__serverWalkConfirmation) {
-      window.gameClient.renderer.tileRenderer.refreshVisibleTiles()
+      window.gameClient.renderer.refreshVisibleTiles()
     }
     this.__serverWalkConfirmation = true;
   }

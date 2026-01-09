@@ -10,7 +10,6 @@ import TileLighting from "./tile-lighting";
 import LightRenderer from "./light-renderer";
 
 export default class TileRenderer {
-  public tileCache: Tile[][] = [];
   private animationRenderer: AnimationRenderer;
   private lighting: TileLighting;
   private light: LightRenderer;
@@ -19,25 +18,6 @@ export default class TileRenderer {
     this.animationRenderer = animationRenderer;
     this.lighting = lighting;
     this.light = light;
-  }
-
-  public refreshVisibleTiles(): void {
-    this.tileCache = [];
-    const player = window.gameClient.player!;
-    const world = window.gameClient.world!;
-    const maxFloor = player.getMaxFloor();
-
-    for (let floor = 0; floor < maxFloor; floor++) {
-      const floorTiles: Tile[] = [];
-      for (const chunk of world.chunks) {
-        for (const tile of chunk.getFloorTiles(floor)) {
-          if (!player.canSee(tile)) continue;
-          if (tile.id === 0 && tile.items.length === 0) continue;
-          floorTiles.push(tile);
-        }
-      }
-      this.tileCache.push(floorTiles);
-    }
   }
 
   public collectSprites(tile: Tile, screenPos: Position, batcher: SpriteBatcher): void {

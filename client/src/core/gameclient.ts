@@ -172,7 +172,7 @@ export default class GameClient {
     this.player = Player.create(packet);
     this.world.createCreature(packet.id, this.player);
     console.log(this.player);
-    window.gameClient.renderer.tileRenderer.refreshVisibleTiles()
+    window.gameClient.renderer.refreshVisibleTiles()
     //this.player.setAmbientSound();
     //this.renderer.minimap.setRenderLayer(this.player.getPosition().z);
 

@@ -47,6 +47,7 @@ export default class Renderer {
   public tileRenderer: TileRenderer;
   public itemRenderer: ItemRenderer;
   public light: LightRenderer;
+  public tileCache: Tile[][] = [];
   public scalingContainer: Container;
   public noScallingOverlayLayer: Container;
   public creatureRenderer: CreatureRenderer;
@@ -244,6 +245,25 @@ export default class Renderer {
     return this.positionHelper.getWorldCoordinates(event);
   }
 
+  public refreshVisibleTiles(): void {
+    this.tileCache = [];
+    const player = window.gameClient.player!;
+    const world = window.gameClient.world!;
+    const maxFloor = player.getMaxFloor();
+
+    for (let floor = 0; floor < maxFloor; floor++) {
+      const floorTiles: Tile[] = [];
+      for (const chunk of world.chunks) {
+        for (const tile of chunk.getFloorTiles(floor)) {
+          if (!player.canSee(tile)) continue;
+          if (tile.id === 0 && tile.items.length === 0) continue;
+          floorTiles.push(tile);
+        }
+      }
+      this.tileCache.push(floorTiles);
+    }
+  }
+
   // src/renderer/renderer.ts (__renderWorld only)
   private __renderWorld(): void {
     const tAssembleStart = performance.now();
@@ -268,7 +288,7 @@ export default class Renderer {
     // Use pre-bound functions to avoid rebinding every frame
     const getStatic = this.cachedGetStatic!;
     const getCreature = this.cachedGetCreature!;
-    const floors = this.tileRenderer.tileCache;
+    const floors = this.tileCache;
 
     for (let f = 0; f < floors.length; f++) {
       const tiles = floors[f];

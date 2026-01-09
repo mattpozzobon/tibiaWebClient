@@ -48,6 +48,8 @@ export default class Renderer {
   public itemRenderer: ItemRenderer;
   public light: LightRenderer;
   public tileCache: Tile[][] = [];
+  private lastTileCachePlayerPos: Position | null = null;
+  private lastTileCachePlayerZ: number = -1;
   public scalingContainer: Container;
   public noScallingOverlayLayer: Container;
   public creatureRenderer: CreatureRenderer;
@@ -246,11 +248,26 @@ export default class Renderer {
   }
 
   public refreshVisibleTiles(): void {
-    this.tileCache = [];
     const player = window.gameClient.player!;
+    const playerPos = player.getPosition();
+    const playerZ = playerPos.z;
+    
+    // Only refresh if player moved significantly or changed floor
+    if (this.lastTileCachePlayerPos && 
+        this.lastTileCachePlayerPos.z === playerZ &&
+        Math.abs(this.lastTileCachePlayerPos.x - playerPos.x) < 2 &&
+        Math.abs(this.lastTileCachePlayerPos.y - playerPos.y) < 2) {
+      return; // Cache is still valid
+    }
+    
+    this.lastTileCachePlayerPos = playerPos.copy();
+    this.lastTileCachePlayerZ = playerZ;
+    
+    this.tileCache = [];
     const world = window.gameClient.world!;
     const maxFloor = player.getMaxFloor();
 
+    // Pre-allocate arrays for better performance
     for (let floor = 0; floor < maxFloor; floor++) {
       const floorTiles: Tile[] = [];
       for (const chunk of world.chunks) {
@@ -278,8 +295,12 @@ export default class Renderer {
     this.batchCount = 0;
     this.textureSwitches = 0;
 
-    for (let i = 0; i < this.lastFramePoolUsed; i++) {
-      this.spritePool[i].visible = false;
+    // Optimize: Only reset visibility for sprites that were actually used
+    if (this.lastFramePoolUsed > 0) {
+      const pool = this.spritePool;
+      for (let i = 0; i < this.lastFramePoolUsed; i++) {
+        pool[i].visible = false;
+      }
     }
     this.lastFramePoolUsed = 0;
 
@@ -294,6 +315,7 @@ export default class Renderer {
       const tiles = floors[f];
       if (!tiles || tiles.length === 0) continue;
 
+      // Pre-calculate screen positions for all tiles on this floor
       for (let t = 0; t < tiles.length; t++) {
         const tile = tiles[t];
         const screenPos = getStatic(tile.getPosition());

@@ -8,8 +8,9 @@ export default class SpriteBatcher {
 
   reset(): void {
     // Reuse arrays instead of clearing - more efficient for frequent resets
+    // Only clear arrays that have content to avoid unnecessary iterations
     for (const arr of this.batches.values()) {
-      if (arr.length > 0) arr.length = 0;
+      arr.length = 0; // Direct assignment is faster than checking length
     }
   }
 

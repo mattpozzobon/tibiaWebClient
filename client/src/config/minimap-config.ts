@@ -30,125 +30,97 @@ export const MINIMAP_CONFIG = {
 
 export type MarkerIcon = typeof MINIMAP_CONFIG.MARKER_ICONS[number];
 
-// Helper function to convert RGB to ARGB (32-bit integer)
-// RGB values are 0-255, alpha is always 255 (fully opaque)
-// Using function format allows IDE color previews
-const rgb = (r: number, g: number, b: number): number => {
-  return (0xFF << 24) | (r << 16) | (g << 8) | b;
-};
-
-// Colors for the minimap in RGB format (converted to ARGB)
+// Helper function for RGB tuples - returns [R, G, B] for readability
 // Format: rgb(R, G, B) where each value is 0-255
 // This format allows IDE color previews in Cursor
-export const MINIMAP_COLORS_RGB = [
-  // B0
-  rgb(0,0,0),   rgb(42,26,29), rgb(85,51,40),  rgb(128,77,51), rgb(170,102,62),rgb(212,127,73),
-  rgb(0,51,0),  rgb(51,51,0),  rgb(102,51,0),  rgb(153,51,0),  rgb(204,51,0),  rgb(255,51,0),
-  rgb(0,102,0), rgb(51,102,0), rgb(102,102,0), rgb(153,102,0), rgb(204,102,0), rgb(255,102,0),
-  rgb(0,153,0), rgb(51,153,0), rgb(102,153,0), rgb(153,153,0), rgb(204,153,0), rgb(255,153,0),
-  rgb(0,204,0), rgb(51,204,0), rgb(102,204,0), rgb(153,204,0), rgb(204,204,0), rgb(255,204,0),
-  rgb(0,255,0), rgb(51,255,0), rgb(102,255,0), rgb(153,255,0), rgb(204,255,0), rgb(255,255,0),
+const rgb = (r: number, g: number, b: number): [number, number, number] => {
+  return [r, g, b];
+};
 
-  // B1
-  rgb(0,0,51),   rgb(42,26,48),  rgb(85,51,60),   rgb(128,77,72),  rgb(170,102,84), rgb(212,127,96),
-  rgb(0,51,51),  rgb(51,51,51),  rgb(102,51,51),  rgb(153,51,51),  rgb(204,51,51),  rgb(255,51,51),
-  rgb(0,102,51), rgb(51,102,51), rgb(102,102,51), rgb(153,102,51), rgb(204,102,51), rgb(255,102,51),
-  rgb(0,153,51), rgb(51,153,51), rgb(102,153,51), rgb(153,153,51), rgb(204,153,51), rgb(255,153,51),
-  rgb(0,204,51), rgb(51,204,51), rgb(102,204,51), rgb(153,204,51), rgb(204,204,51), rgb(255,204,51),
-  rgb(0,255,51), rgb(51,255,51), rgb(102,255,51), rgb(153,255,51), rgb(204,255,51), rgb(255,255,51),
-
-  // B2
-  rgb(0,0,102),   rgb(42,26,48),   rgb(85,51,60),    rgb(128,77,72),   rgb(170,102,84),  rgb(212,127,96),
-  rgb(0,51,102),  rgb(51,51,102),  rgb(102,51,102),  rgb(153,51,102),  rgb(204,51,102),  rgb(255,51,102),
-  rgb(0,102,102), rgb(51,102,102), rgb(102,102,102), rgb(153,102,102), rgb(204,102,102), rgb(255,102,102),
-  rgb(0,153,102), rgb(51,153,102), rgb(102,153,102), rgb(153,153,102), rgb(204,153,102), rgb(255,153,102),
-  rgb(0,204,102), rgb(51,204,102), rgb(102,204,102), rgb(153,204,102), rgb(204,204,102), rgb(255,204,102),
-  rgb(0,255,102), rgb(51,255,102), rgb(102,255,102), rgb(153,255,102), rgb(204,255,102), rgb(255,255,102),
-
-  // B3
-  rgb(0,0,153),  rgb(42,26,67),   rgb(85,51,80),     rgb(128,77,93),   rgb(170,102,106),  rgb(212,127,119),
-  rgb(0,51,153),  rgb(51,51,153),  rgb(102,51,153),  rgb(153,51,153),  rgb(204,51,153),  rgb(255,51,153),
-  rgb(0,102,153), rgb(51,102,153), rgb(102,102,153), rgb(153,102,153), rgb(204,102,153), rgb(255,102,153),
-  rgb(0,153,153), rgb(51,153,153), rgb(102,153,153), rgb(153,153,153), rgb(204,153,153), rgb(255,153,153),
-  rgb(0,204,153), rgb(51,204,153), rgb(102,204,153), rgb(153,204,153), rgb(204,204,153), rgb(255,204,153),
-  rgb(0,255,153), rgb(51,255,153), rgb(102,255,153), rgb(153,255,153), rgb(204,255,153), rgb(255,255,153),
-
-  // B4
-  rgb(0,0,204),   rgb(42,26,86),    rgb(85,51,100),  rgb(128,77,114),  rgb(170,102,128), rgb(212,127,142),
-  rgb(0,51,204),  rgb(51,51,204),  rgb(102,51,204),  rgb(153,51,204),  rgb(204,51,204),  rgb(255,51,204),
-  rgb(0,102,204), rgb(51,102,204), rgb(102,102,204), rgb(153,102,204), rgb(204,102,204), rgb(255,102,204),
-  rgb(0,153,204), rgb(51,153,204), rgb(102,153,204), rgb(153,153,204), rgb(204,153,204), rgb(255,153,204),
-  rgb(0,204,204), rgb(51,204,204), rgb(102,204,204), rgb(153,204,204), rgb(204,204,204), rgb(255,204,204),
-  rgb(0,255,204), rgb(51,255,204), rgb(102,255,204), rgb(153,255,204), rgb(204,255,204), rgb(255,255,204),
-
-  // B5
-  rgb(0,0,255),   rgb(42,26,105),  rgb(85,51,120),   rgb(128,77,135),  rgb(170,102,150), rgb(212,127,165),
-  rgb(0,51,255),  rgb(51,51,255),  rgb(102,51,255),  rgb(153,51,255),  rgb(204,51,255),  rgb(255,51,255),
-  rgb(0,102,255), rgb(51,102,255), rgb(102,102,255), rgb(153,102,255), rgb(204,102,255), rgb(255,102,255),
-  rgb(0,153,255), rgb(51,153,255), rgb(102,153,255), rgb(153,153,255), rgb(204,153,255), rgb(255,153,255),
-  rgb(0,204,255), rgb(51,204,255), rgb(102,204,255), rgb(153,204,255), rgb(204,204,255), rgb(255,204,255),
-  rgb(0,255,255), rgb(51,255,255), rgb(102,255,255), rgb(153,255,255), rgb(204,255,255), rgb(255,255,255),
+// Colors for the minimap stored as RGB tuples [R, G, B]
+// Format: rgb(R, G, B) where each value is 0-255
+// This format allows IDE color previews in Cursor
+export const MINIMAP_COLORS_RGB: [number, number, number][] = [
+  rgb(0, 0, 0), rgb(0, 0, 51), rgb(0, 0, 102), rgb(0, 0, 153),
+  rgb(0, 0, 204), rgb(0, 0, 255), rgb(0, 51, 0), rgb(0, 51, 51),
+  rgb(0, 51, 102), rgb(0, 51, 153), rgb(0, 51, 204), rgb(0, 51, 255),
+  rgb(0, 102, 0), rgb(0, 102, 51), rgb(0, 102, 102), rgb(130, 95, 60), //Brown Floor
+  rgb(130, 95, 60), rgb(0, 102, 255), rgb(0, 153, 0), rgb(30, 188, 236),
+  rgb(0, 153, 102), rgb(0, 153, 153), rgb(0, 153, 204), rgb(0, 153, 255), //1st Grass Colour
+  rgb(17, 159, 17), rgb(0, 204, 51), rgb(0, 204, 102), rgb(0, 204, 153),
+  rgb(0, 204, 204), rgb(0, 204, 255), rgb(0, 255, 0), rgb(0, 255, 51),
+  rgb(0, 255, 102), rgb(0, 255, 153), rgb(0, 255, 204), rgb(0, 255, 255),
+  rgb(51, 0, 0), rgb(51, 0, 51), rgb(51, 0, 102), rgb(51, 0, 153),
+  rgb(51, 0, 204), rgb(51, 0, 255), rgb(51, 51, 0), rgb(51, 51, 51),
+  rgb(51, 51, 102), rgb(51, 51, 153), rgb(51, 51, 204), rgb(51, 51, 255),
+  rgb(0, 102, 204), rgb(0, 102, 255), rgb(0, 153, 0), rgb(102, 204, 255),
+  rgb(0, 153, 102), rgb(0, 153, 153), rgb(0, 153, 204), rgb(0, 153, 255),
+  rgb(0, 204, 0), rgb(0, 204, 51), rgb(0, 204, 102), rgb(0, 204, 153),
+  rgb(0, 204, 204), rgb(0, 204, 255), rgb(0, 255, 0), rgb(0, 255, 51),
+  rgb(0, 255, 102), rgb(0, 255, 153), rgb(0, 255, 204), rgb(0, 255, 255),
+  rgb(51, 0, 0), rgb(51, 0, 51), rgb(51, 0, 102), rgb(51, 0, 153),
+  rgb(51, 0, 204), rgb(51, 0, 255), rgb(51, 51, 0), rgb(51, 51, 51),
+  rgb(51, 51, 102), rgb(51, 51, 153), rgb(51, 51, 204), rgb(51, 51, 255),
+  rgb(0, 153, 204), rgb(0, 153, 255), rgb(0, 204, 0), rgb(0, 204, 51),
+  rgb(0, 204, 102), rgb(0, 204, 153), rgb(0, 204, 204), rgb(0, 204, 255),
+  rgb(0, 255, 0), rgb(0, 255, 51), rgb(0, 255, 102), rgb(0, 255, 153),
+  rgb(0, 255, 204), rgb(0, 255, 255), rgb(51, 0, 0), rgb(51, 0, 51),
+  rgb(51, 0, 102), rgb(51, 0, 153), rgb(51, 0, 204), rgb(51, 0, 255),
+  rgb(51, 51, 0), rgb(51, 51, 51), rgb(51, 51, 102), rgb(51, 51, 153),
+  rgb(51, 51, 204), rgb(51, 51, 255), rgb(0, 204, 204), rgb(0, 204, 255),
+  rgb(0, 255, 0), rgb(0, 255, 51), rgb(0, 255, 102), rgb(0, 255, 153),
+  rgb(0, 255, 204), rgb(0, 255, 255), rgb(51, 0, 0), rgb(51, 0, 51),
+  rgb(51, 0, 102), rgb(51, 0, 153), rgb(51, 0, 204), rgb(51, 0, 255),
+  rgb(51, 51, 0), rgb(51, 51, 51), rgb(51, 51, 102), rgb(51, 51, 153),
+  rgb(51, 51, 204), rgb(51, 51, 255), rgb(51, 102, 0), rgb(51, 102, 51),
+  rgb(51, 102, 102), rgb(83, 83, 83), rgb(51, 102, 204), rgb(51, 102, 255), //2nd colour floors
+  rgb(51, 153, 0), rgb(51, 153, 51), rgb(51, 153, 102), rgb(51, 153, 153),
+  rgb(51, 153, 204), rgb(51, 153, 255), rgb(51, 204, 0), rgb(51, 204, 51),
+  rgb(51, 204, 102), rgb(51, 204, 153), rgb(51, 204, 204), rgb(51, 204, 255),
+  rgb(51, 255, 0), rgb(51, 255, 51), rgb(51, 255, 102), rgb(51, 255, 153),
+  rgb(51, 255, 204), rgb(51, 255, 255), rgb(102, 0, 0), rgb(102, 0, 51),
+  rgb(102, 0, 102), rgb(102, 0, 153), rgb(102, 0, 204), rgb(102, 0, 255),
+  rgb(102, 51, 0), rgb(102, 51, 51), rgb(102, 51, 102), rgb(102, 51, 153),
+  rgb(102, 51, 204), rgb(102, 51, 255), rgb(102, 102, 0), rgb(102, 102, 51),
+  rgb(102, 102, 102), rgb(102, 102, 153), rgb(102, 102, 204), rgb(102, 102, 255),
+  rgb(102, 153, 0), rgb(102, 153, 51), rgb(102, 153, 102), rgb(102, 153, 153),
+  rgb(102, 153, 204), rgb(102, 153, 255), rgb(102, 204, 0), rgb(102, 204, 51),
+  rgb(102, 204, 102), rgb(102, 204, 153), rgb(102, 204, 204), rgb(102, 204, 255),
+  rgb(102, 255, 0), rgb(102, 255, 51), rgb(102, 255, 102), rgb(102, 255, 153),
+  rgb(102, 255, 204), rgb(102, 255, 255), rgb(62, 32, 1), rgb(153, 0, 51), //Walls 3rd color
+  rgb(153, 0, 102), rgb(153, 0, 153), rgb(153, 0, 204), rgb(153, 0, 255),
+  rgb(153, 51, 0), rgb(153, 51, 51), rgb(153, 51, 102), rgb(153, 51, 153),
+  rgb(153, 51, 204), rgb(153, 51, 255), rgb(153, 102, 0), rgb(153, 102, 51),
+  rgb(153, 102, 102), rgb(153, 102, 153), rgb(153, 102, 204), rgb(153, 102, 255),
+  rgb(153, 153, 0), rgb(153, 153, 51), rgb(153, 153, 102), rgb(153, 153, 153),
+  rgb(153, 153, 204), rgb(153, 153, 255), rgb(251, 255, 0), rgb(153, 204, 51), //3rd colour stairs, holes, teleport
+  rgb(153, 204, 102), rgb(153, 204, 153), rgb(153, 204, 204), rgb(153, 204, 255),
+  rgb(153, 255, 0), rgb(153, 255, 51), rgb(153, 255, 102), rgb(153, 255, 153),
+  rgb(153, 255, 204), rgb(153, 255, 255), rgb(204, 0, 0), rgb(204, 0, 51),
+  rgb(204, 0, 102), rgb(204, 0, 153), rgb(204, 0, 204), rgb(204, 0, 255),
+  rgb(204, 51, 0), rgb(204, 51, 51), rgb(204, 51, 102), rgb(204, 51, 153),
+  rgb(204, 51, 204), rgb(204, 51, 255), rgb(204, 102, 0), rgb(204, 102, 51),
+  rgb(204, 102, 102), rgb(204, 102, 153), rgb(204, 102, 204), rgb(204, 102, 255),
+  rgb(204, 153, 0), rgb(204, 153, 51), rgb(204, 153, 102), rgb(204, 153, 153),
+  rgb(204, 153, 204), rgb(204, 153, 255), rgb(204, 204, 0), rgb(204, 204, 51),
+  rgb(204, 204, 102), rgb(204, 204, 153), rgb(204, 204, 204), rgb(204, 204, 255),
+  rgb(204, 255, 0), rgb(204, 255, 51), rgb(204, 255, 102), rgb(204, 255, 153),
+  rgb(204, 255, 204), rgb(204, 255, 255), rgb(255, 0, 0), rgb(255, 0, 51),
+  rgb(255, 0, 102), rgb(255, 0, 153), rgb(255, 0, 204), rgb(255, 0, 255),
+  rgb(255, 51, 0), rgb(255, 51, 51), rgb(255, 51, 102), rgb(255, 51, 153),
+  rgb(255, 51, 204), rgb(255, 51, 255), rgb(255, 102, 0), rgb(255, 102, 51),
+  rgb(255, 102, 102), rgb(255, 102, 153), rgb(255, 102, 204), rgb(255, 102, 255),
+  rgb(255, 153, 0), rgb(255, 153, 51), rgb(255, 153, 102), rgb(255, 153, 153),
+  rgb(255, 153, 204), rgb(255, 153, 255), rgb(255, 204, 0), rgb(255, 204, 51),
+  rgb(255, 204, 102), rgb(255, 204, 153), rgb(255, 204, 204), rgb(255, 204, 255),
+  rgb(255, 255, 0), rgb(255, 255, 51), rgb(255, 255, 102), rgb(255, 255, 153),
+  rgb(255, 255, 204), rgb(255, 255, 255), rgb(0, 0, 0), rgb(0, 0, 0),
+  rgb(0, 0, 0), rgb(0, 0, 0), rgb(0, 0, 0), rgb(0, 0, 0),
+  rgb(0, 0, 0), rgb(0, 0, 0),
 ];
 
-// Export colors directly (already converted to ARGB by rgb() function)
-export const MINIMAP_COLORS: number[] = MINIMAP_COLORS_RGB;
-
-export const MINIMAP_COLORS_EARTHY = [
-  0xFF000000, 0xFF150C0B, 0xFF2A1715, 0xFF3F2320, 0xFF542F2B, 0xFF693B36, 0xFF1E2217, 0xFF333300,
-  0xFF473D2E, 0xFF5C4939, 0xFF715544, 0xFF865F4E, 0xFF303F2A, 0xFF454B35, 0xFF5A5740, 0xFF6F634A,
-  0xFF847F55, 0xFF998B5F, 0xFF475F3F, 0xFF5C6B49, 0xFF717754, 0xFF86835F, 0xFF9B8F69, 0xFFB09B74,
-  0xFF5F7F54, 0xFF748B5E, 0xFF899769, 0xFF9EA373, 0xFFCCCC00, 0xFFFFCC00, 0xFF779F69, 0xFF8CAB73,
-  0xFFA1B77E, 0xFFB6C388, 0xFFCCFF00, 0xFFFFFF00, 0xFF0A0A12, 0xFF1F1520, 0xFF341F2D, 0xFF492A3A,
-  0xFF5E3547, 0xFF734054, 0xFF202326, 0xFF333333, 0xFF4B3E3E, 0xFF60494B, 0xFF755457, 0xFF8A5F62,
-  0xFF39453D, 0xFF4E5148, 0xFF635D52, 0xFF78695D, 0xFF8D7568, 0xFFA28173, 0xFF506552, 0xFF65615D,
-  0xFF7A6D67, 0xFF8F7872, 0xFFCC9933, 0xFFFF9933, 0xFF688565, 0xFF7D9170, 0xFF928D7A, 0xFFA79985,
-  0xFFCCCC33, 0xFFFFCC33, 0xFF80A579, 0xFF95B182, 0xFFAABD8D, 0xFFBFC997, 0xFFD4D5A2, 0xFFE9E1AD,
-  0xFF0F0D24, 0xFF241832, 0xFF392340, 0xFF4E2E4D, 0xFF63395A, 0xFF784467, 0xFF252638, 0xFF333366,
-  0xFF4F3C4C, 0xFF644759, 0xFF795266, 0xFF8E5D73, 0xFF3E4447, 0xFF534F54, 0xFF685A61, 0xFF7D666E,
-  0xFF92717B, 0xFFA77C88, 0xFF55645A, 0xFF6A5F67, 0xFF7F6A74, 0xFF947581, 0xFFCC9966, 0xFFFF9966,
-  0xFF6D846F, 0xFF827F7C, 0xFF978A89, 0xFFAC9596, 0xFFC1A0A3, 0xFFD6ABAF, 0xFF85A474, 0xFF9A9F81,
-  0xFFAFAB8E, 0xFFC4B69A, 0xFFCCFF66, 0xFFFFFF66, 0xFF111039, 0xFF261B47, 0xFF3B2654, 0xFF503161,
-  0xFF652C6E, 0xFF7A377B, 0xFF2B2A49, 0xFF333399, 0xFF554063, 0xFF6A4B70, 0xFF7F567D, 0xFF945189,
-  0xFF444653, 0xFF595160, 0xFF6E5C6D, 0xFF83667A, 0xFF987187, 0xFFAD7C94, 0xFF5B6266, 0xFF705D73,
-  0xFF856880, 0xFF9A738D, 0xFFCC9999, 0xFFFF9999, 0xFF737D78, 0xFF887885, 0xFF9D8392, 0xFFB28D9F,
-  0xFFC798AC, 0xFFDCA3B9, 0xFF8B9D84, 0xFFA09892, 0xFFB5A3A0, 0xFFCAAEB1, 0xFFFFCC99, 0xFFFFFF99,
-  0xFF13164D, 0xFF28115B, 0xFF3D1C68, 0xFF522775, 0xFF673283, 0xFF7C3D90, 0xFF30315A, 0xFF3333CC,
-  0xFF5A4774, 0xFF6F5281, 0xFF844D8E, 0xFF99589B, 0xFF495265, 0xFF5E5D72, 0xFF73687F, 0xFF88738C,
-  0xFF9D7E99, 0xFFB289A6, 0xFF606674, 0xFF756181, 0xFF8A6C8E, 0xFF9F779B, 0xFFCC99CC, 0xFFFF99CC,
-  0xFF788785, 0xFF8D8292, 0xFFA28D9F, 0xFFB798AC, 0xFFE4B3DB, 0xFFF9BEE8, 0xFF90A79B, 0xFFA5A2A8,
-  0xFFBAADC1, 0xFFCFA8CE, 0xFFFFCCFF, 0xFFFFFFCC, 0xFF151A61, 0xFF2A156F, 0xFF3F217C, 0xFF541C89,
-  0xFF691796, 0xFF7E22A3, 0xFF353765, 0xFF3366CC, 0xFF5F4D7F, 0xFF74588C, 0xFF895399, 0xFF9E5EA6,
-  0xFF4E546A, 0xFF635F77, 0xFF786A84, 0xFF8D7591, 0xFFA2709E, 0xFFB77BAB, 0xFF656E71, 0xFF7A6980,
-  0xFF8F748D, 0xFFA47F9A, 0xFFB97AA7, 0xFFCE85B4, 0xFF7D867C, 0xFF928189, 0xFFA78C96, 0xFFBC97A3,
-  0xFFD192B0, 0xFFE69DBD, 0xFF95A686, 0xFFAA9F91, 0xFFBFAA9E, 0xFFD4B5AB, 0xFFE9B0B8, 0xFFFFBBC5,
-  0xFF171E75, 0xFF2C1983, 0xFF412491, 0xFF561F9E, 0xFF6B1AAB, 0xFF8015B9, 0xFF3A3A6F, 0xFF3399CC,
-  0xFF645094, 0xFF794BA1, 0xFF8E56AE, 0xFFA361BB, 0xFF535570, 0xFF68607D, 0xFF7D6B8A, 0xFF926697,
-  0xFFA771A4, 0xFFBC7CB1, 0xFF6A756F, 0xFF7F7082, 0xFF946B8F, 0xFFA9769C, 0xFFBE81A9, 0xFFD38CB6,
-  0xFF829D7C, 0xFF978891, 0xFFAC93A0, 0xFFC19EAD, 0xFFD8A9BA, 0xFFEFB4C7, 0xFF9ABF89, 0xFFAFA896,
-  0xFFC4B3A5, 0xFFDBBEB2, 0xFFF2C9BF, 0xFFFFD4CC, 0xFF192389, 0xFF2E1E96, 0xFF4319A3, 0xFF5814B0,
-  0xFF6D0FBE, 0xFF820ACC, 0xFF3F3F84, 0xFF6699CC, 0xFF69559E, 0xFF7E60AB, 0xFF935BB8, 0xFFA866C5,
-  0xFF585F80, 0xFF6D6A8D, 0xFF82759A, 0xFF9760A7, 0xFFAC6BB4, 0xFFC176C1, 0xFF6F7C7E, 0xFF84778B,
-  0xFF996298, 0xFFAE6DA5, 0xFFC378B2, 0xFFD883BF, 0xFF879A78, 0xFF9C8593, 0xFFB170A0, 0xFFC67BAD,
-  0xFFDB86BA, 0xFFF091C7, 0xFF9FBF85, 0xFFB4A892, 0xFFC9B3A1, 0xFFDEBEAE, 0xFFF3C9BB, 0xFFFFD4C8,
-  0xFF292C2F, 0xFF3E373C, 0xFF534249, 0xFF683D56, 0xFF7D4863, 0xFF925370, 0xFF404446, 0xFF0099FF,
-  0xFF6A6A60, 0xFF7F756D, 0xFF94707A, 0xFFA97B87, 0xFF595A59, 0xFF6E6566, 0xFF837073, 0xFF986B80,
-  0xFFAD768D, 0xFFC2819A, 0xFF71726A, 0xFF866D77, 0xFF9B7884, 0xFFB07391, 0xFFC57E9E, 0xFFDA89AB,
-  0xFF899975, 0xFF9E8482, 0xFFB38F8F, 0xFFC88A9C, 0xFFDD95A9, 0xFFF2A0B6, 0xFFA1B970, 0xFFB6947F,
-  0xFFCB9F8C, 0xFFE09A99, 0xFFF5A5A6, 0xFFFFB0B3, 0xFF404345, 0xFF555E52, 0xFF6A6960, 0xFF7F746D,
-  0xFF946F7A, 0xFFA97A87, 0xFF585C56, 0xFF33CCFF, 0xFF827252, 0xFF976D60, 0xFFAC6871, 0xFFC1737E,
-  0xFF707356, 0xFF856E64, 0xFF9A6971, 0xFFAF647E, 0xFFC45F8B, 0xFFD96A98, 0xFF889255, 0xFF9D8D62,
-  0xFFB2886F, 0xFFC7837C, 0xFFDC7E89, 0xFFF18996, 0xFFA0B250, 0xFFB5AD5E, 0xFFCAA86B, 0xFFDFA378,
-  0xFFF49E85, 0xFFFFA992, 0xFFB8D24B, 0xFFCCCD58, 0xFFE1C866, 0xFFF6C373, 0xFFFFBE80, 0xFFFFB98D,
-  0xFF575A5C, 0xFF6C556A, 0xFF815077, 0xFF964B84, 0xFFAB4691, 0xFFC0419E, 0xFF6F726C, 0xFF00CCFF,
-  0xFF996886, 0xFFAE6393, 0xFFC35EA0, 0xFFD859AD, 0xFF878A73, 0xFF9C8580, 0xFFB1808D, 0xFFC67B9A,
-  0xFFDB76A7, 0xFFF071B4, 0xFF9FA275, 0xFFB49D82, 0xFFC9988F, 0xFFDE939C, 0xFFF38EAA, 0xFFFF89B7,
-  0xFFB7BA78, 0xFFCCA585, 0xFFE1A092, 0xFFF69BA0, 0xFFFF96AD, 0xFFFF91BA, 0xFFCFC47A, 0xFFE4AF87,
-  0xFFF9AAA4, 0xFFFFA5B1, 0xFFFFA0BE, 0xFFFF9BCB, 0xFF6B7072, 0xFF807B7F, 0xFF95868C, 0xFFA78199,
-  0xFFBC8CA6, 0xFFD197B3, 0xFF838789, 0xFF98A0A4, 0xFFADA9AF, 0xFFB9A3B3, 0xFFC4A4BD, 0xFFD9AFCA,
-  0xFF9CA19F, 0xFFB19CAC, 0xFFC497B9, 0xFFD992C6, 0xFFE49DD3, 0xFFF9A8E0, 0xFFB4BCB5, 0xFFC9B7C2,
-  0xFFDEB2CF, 0xFFF3ADDC, 0xFFFFB8E9, 0xFFFFC3F6, 0xFFC7C3BC, 0xFFD2CBC7, 0xFFDDD5D0, 0xFFE8DEDA,
-  0xFFF3E7E6, 0xFFD8D8D4
-];
+// Export RGB tuples directly
+export const MINIMAP_COLORS: [number, number, number][] = MINIMAP_COLORS_RGB;
 
 // Performance monitoring labels
 export const PERFORMANCE_LABELS = {

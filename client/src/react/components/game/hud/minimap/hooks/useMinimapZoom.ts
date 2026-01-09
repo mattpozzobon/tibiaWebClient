@@ -1,37 +1,54 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { MINIMAP_CONFIG } from '../../../../../../config/minimap-config';
 
+const ALLOWED_ZOOM_LEVELS = [5, 7, 9] as const;
+
 export function useMinimapZoom() {
-  const baseZoom = MINIMAP_CONFIG.ZOOM_LEVEL;
-  const maxZoom = baseZoom + 4;
-  const minZoom = Math.max(0.5, baseZoom - 6);
-  const zoomStep = 0.5;
+  const minZoom = ALLOWED_ZOOM_LEVELS[0];
+  const maxZoom = ALLOWED_ZOOM_LEVELS[ALLOWED_ZOOM_LEVELS.length - 1];
   
-  const [zoomLevel, setZoomLevel] = useState<number>(MINIMAP_CONFIG.ZOOM_LEVEL);
+  // Initialize to closest allowed zoom level from config, or default to 7
+  const initialZoom = ALLOWED_ZOOM_LEVELS.reduce((prev, curr) => 
+    Math.abs(curr - MINIMAP_CONFIG.ZOOM_LEVEL) < Math.abs(prev - MINIMAP_CONFIG.ZOOM_LEVEL) ? curr : prev
+  );
+  
+  const [zoomLevel, setZoomLevel] = useState<number>(initialZoom);
   const zoomDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
+  const getNextZoomLevel = useCallback((current: number, direction: 'in' | 'out'): number => {
+    const currentIndex = ALLOWED_ZOOM_LEVELS.findIndex(level => level === current);
+    if (currentIndex === -1) {
+      // If current zoom is not in allowed levels, find the closest one
+      const closest = ALLOWED_ZOOM_LEVELS.reduce((prev, curr) => 
+        Math.abs(curr - current) < Math.abs(prev - current) ? curr : prev
+      );
+      return closest;
+    }
+    
+    if (direction === 'in') {
+      return currentIndex < ALLOWED_ZOOM_LEVELS.length - 1 
+        ? ALLOWED_ZOOM_LEVELS[currentIndex + 1]
+        : current;
+    } else {
+      return currentIndex > 0 
+        ? ALLOWED_ZOOM_LEVELS[currentIndex - 1]
+        : current;
+    }
+  }, []);
+  
   const handleZoomIn = useCallback(() => {
-    setZoomLevel(prev => {
-      const newZoom = Math.min(prev + zoomStep, maxZoom);
-      return Math.round(newZoom * 2) / 2;
-    });
-  }, [maxZoom, zoomStep]);
+    setZoomLevel(prev => getNextZoomLevel(prev, 'in'));
+  }, [getNextZoomLevel]);
   
   const handleZoomOut = useCallback(() => {
-    setZoomLevel(prev => {
-      const newZoom = Math.max(prev - zoomStep, minZoom);
-      return Math.round(newZoom * 2) / 2;
-    });
-  }, [minZoom, zoomStep]);
+    setZoomLevel(prev => getNextZoomLevel(prev, 'out'));
+  }, [getNextZoomLevel]);
   
   const handleWheel = useCallback((e: React.WheelEvent<HTMLCanvasElement>) => {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? -zoomStep : zoomStep;
-    setZoomLevel(prev => {
-      const newZoom = Math.max(minZoom, Math.min(maxZoom, prev + delta));
-      return Math.round(newZoom * 2) / 2;
-    });
-  }, [minZoom, maxZoom, zoomStep]);
+    const direction = e.deltaY > 0 ? 'out' : 'in';
+    setZoomLevel(prev => getNextZoomLevel(prev, direction));
+  }, [getNextZoomLevel]);
   
   useEffect(() => {
     return () => {
@@ -46,7 +63,6 @@ export function useMinimapZoom() {
     setZoomLevel,
     minZoom,
     maxZoom,
-    zoomStep,
     handleZoomIn,
     handleZoomOut,
     handleWheel,

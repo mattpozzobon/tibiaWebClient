@@ -30,14 +30,20 @@ export function drawMarkers(
   canvasSize: number
 ): void {
   const minX = 0, minY = 0, maxX = canvasSize, maxY = canvasSize;
-  const baseZoom = MINIMAP_CONFIG.ZOOM_LEVEL;
-  const zoomScale = Math.max(0.5, Math.min(2.5, zoomLevel / baseZoom));
-  const baseMarkerScale = 1.6 * zoomScale;
-  const minMarkerScale = 0.8;
-  const markerScale = Math.max(minMarkerScale, baseMarkerScale);
+  // Use larger scale to make markers more visible at all zoom levels
+  const markerScale = 1.5;
   const margin = 64;
 
+  // Disable image smoothing for pixel-perfect rendering
   ctx.imageSmoothingEnabled = false;
+  // Use low quality smoothing if available (for better pixel art rendering)
+  if ('imageSmoothingQuality' in ctx) {
+    (ctx as any).imageSmoothingQuality = 'low';
+  }
+
+  // Create a temporary canvas for high-quality scaling (reused for all markers)
+  let tempCanvas: HTMLCanvasElement | null = null;
+  let tempCtx: CanvasRenderingContext2D | null = null;
 
   for (const m of markers) {
     const { cx, cy } = worldTileCenterToFinal(m.x, m.y, center, zoomWindow, zoomLevel, canvasSize);
@@ -45,13 +51,36 @@ export function drawMarkers(
     
     const img = markerImages[m.icon];
     if (img && img.complete && img.naturalWidth > 0) {
-      const w = img.naturalWidth * markerScale;
-      const h = img.naturalHeight * markerScale;
+      // Calculate dimensions
+      const w = Math.round(img.naturalWidth * markerScale);
+      const h = Math.round(img.naturalHeight * markerScale);
       const drawX = Math.round(cx - w / 2);
       const drawY = Math.round(cy - h / 2);
-      const drawW = Math.round(w);
-      const drawH = Math.round(h);
-      ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, drawX, drawY, drawW, drawH);
+      
+      // For pixel-perfect scaling, render to intermediate canvas first
+      if (!tempCanvas || tempCanvas.width < w || tempCanvas.height < h) {
+        tempCanvas = document.createElement('canvas');
+        tempCanvas.width = Math.max(w, 64);
+        tempCanvas.height = Math.max(h, 64);
+        tempCtx = tempCanvas.getContext('2d', { willReadFrequently: false });
+        if (tempCtx) {
+          tempCtx.imageSmoothingEnabled = false;
+          if ('imageSmoothingQuality' in tempCtx) {
+            (tempCtx as any).imageSmoothingQuality = 'low';
+          }
+        }
+      }
+      
+      if (tempCtx && tempCanvas) {
+        // Clear and draw to temp canvas at exact scale
+        tempCtx.clearRect(0, 0, w, h);
+        tempCtx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, w, h);
+        // Draw temp canvas to final canvas (this preserves quality better)
+        ctx.drawImage(tempCanvas, 0, 0, w, h, drawX, drawY, w, h);
+      } else {
+        // Fallback to direct drawing
+        ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, drawX, drawY, w, h);
+      }
     } else {
       ctx.fillStyle = '#FFD700';
       ctx.beginPath();

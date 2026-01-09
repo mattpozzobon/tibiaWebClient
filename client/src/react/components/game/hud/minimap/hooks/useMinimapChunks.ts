@@ -27,13 +27,23 @@ export function useMinimapChunks(
         const chunkId = gc.database.getMinimapChunkId(tile.getPosition());
         const buffer = chunks[chunkId];
         if (!buffer) return;
-        const index =
-          (tile.getPosition().x % MINIMAP_CONFIG.MINIMAP_CHUNK_SIZE) +
-          ((tile.getPosition().y % MINIMAP_CONFIG.MINIMAP_CHUNK_SIZE) * MINIMAP_CONFIG.MINIMAP_CHUNK_SIZE);
-        const DEFAULT_COLOR = 0xFF000000;
+        const x = tile.getPosition().x % MINIMAP_CONFIG.MINIMAP_CHUNK_SIZE;
+        const y = tile.getPosition().y % MINIMAP_CONFIG.MINIMAP_CHUNK_SIZE;
+        const pixelIndex = (y * MINIMAP_CONFIG.MINIMAP_CHUNK_SIZE + x) * 4; // 4 bytes per pixel (RGBA)
+        
         const idx = (color ?? -1) | 0;
-        const colorValue = MINIMAP_COLORS[idx] ?? DEFAULT_COLOR;
-        buffer.view[index] = colorValue;
+        let r = 0, g = 0, b = 0;
+        if (idx >= 0 && idx < MINIMAP_COLORS.length) {
+          // Get RGB tuple directly - no conversion needed!
+          [r, g, b] = MINIMAP_COLORS[idx];
+        }
+        
+        // Write RGB directly to ImageData buffer (A is always 255 for fully opaque)
+        const data = buffer.imageData.data;
+        data[pixelIndex] = r;     // R
+        data[pixelIndex + 1] = g; // G
+        data[pixelIndex + 2] = b; // B
+        data[pixelIndex + 3] = 255; // A (always fully opaque)
         modified.add(chunkId);
       });
     });

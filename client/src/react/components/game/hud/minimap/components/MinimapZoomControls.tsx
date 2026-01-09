@@ -8,6 +8,17 @@ interface MinimapZoomControlsProps {
   onZoomOut: () => void;
 }
 
+// Map actual zoom levels to display values
+// 5 → 3, 7 → 2, 9 → 1
+const getZoomDisplayValue = (zoomLevel: number): number => {
+  const zoomMap: { [key: number]: number } = {
+    5: 3,
+    7: 2,
+    9: 1
+  };
+  return zoomMap[zoomLevel] ?? zoomLevel;
+};
+
 export default function MinimapZoomControls({
   zoomLevel,
   minZoom,
@@ -25,7 +36,7 @@ export default function MinimapZoomControls({
       >
         +
       </button>
-      <span className="zoom-level-display">{zoomLevel.toFixed(1)}</span>
+      <span className="zoom-level-display">{getZoomDisplayValue(zoomLevel)}</span>
       <button 
         className="zoom-button zoom-out" 
         onClick={onZoomOut} 

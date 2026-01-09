@@ -313,8 +313,8 @@ export default class CreatureRenderer {
 
         if (!texture) continue;
 
-        const px = (posX - x) * size;
-        const py = (posY - y) * size;
+        const px = Math.round((posX - x) * size);
+        const py = Math.round((posY - y) * size);
 
         batcher.push(texture, px, py, Interface.TILE_SIZE, Interface.TILE_SIZE, false);
       }

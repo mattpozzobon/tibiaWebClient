@@ -135,7 +135,7 @@ export default class Renderer {
       antialias: false,
       resolution: 1,
       backgroundAlpha: 0,
-      roundPixels: false,
+      roundPixels: true,
       preference: 'webgl',
       useBackBuffer: true,
     });
@@ -346,8 +346,8 @@ export default class Renderer {
 
         const spr = this.spritePool[poolIndex++];
         spr.texture = spriteData.sprite.texture;
-        spr.x = spriteData.x;
-        spr.y = spriteData.y;
+        spr.x = Math.round(spriteData.x);
+        spr.y = Math.round(spriteData.y);
         spr.width = spriteData.width;
         spr.height = spriteData.height;
         spr.visible = true;

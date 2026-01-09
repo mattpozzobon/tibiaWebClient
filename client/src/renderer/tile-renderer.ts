@@ -69,8 +69,8 @@ export default class TileRenderer {
       const sid = fg.getSpriteIndex(f, p.x, p.y, p.z, 0, 0, 0);
       const tex = fg.getSprite(sid) as Texture | undefined;
       if (tex) {
-        const px = xCell * size;
-        const py = yCell * size;
+        const px = Math.round(xCell * size);
+        const py = Math.round(yCell * size);
         batcher.push(tex, px, py, size, size, false, style);
         this.light.addOccluderSprite(tileZ, tex, px, py, size, size);
       }
@@ -88,8 +88,8 @@ export default class TileRenderer {
           const yCellDraw = yCell - cy - tile.__renderElevation;
           if (xCellDraw < -1 || xCellDraw > Interface.TILE_WIDTH + 1 || yCellDraw < -1 || yCellDraw > Interface.TILE_HEIGHT + 1) continue;
 
-          const px = xCellDraw * size;
-          const py = yCellDraw * size;
+          const px = Math.round(xCellDraw * size);
+          const py = Math.round(yCellDraw * size);
 
           batcher.push(tex, px, py, size, size, false, style);
           this.light.addOccluderSprite(tileZ, tex, px, py, size, size);

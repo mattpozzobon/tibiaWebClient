@@ -34,8 +34,8 @@ export default class AnimationRenderer {
         const texture = frameGroup.getSprite(spriteIndex);
         if (!texture) continue;
 
-        const pixelX = (screenPos.x - x) * Interface.TILE_SIZE;
-        const pixelY = (screenPos.y - y) * Interface.TILE_SIZE;
+        const pixelX = Math.round((screenPos.x - x) * Interface.TILE_SIZE);
+        const pixelY = Math.round((screenPos.y - y) * Interface.TILE_SIZE);
 
         batcher.push(texture, pixelX, pixelY, Interface.TILE_SIZE, Interface.TILE_SIZE, false);
       }

@@ -53,6 +53,7 @@ export default function Minimap({ gc }: MinimapProps) {
   const [createMarkerModal, setCreateMarkerModal] = useState<{ visible: boolean; x: number; y: number; floor: number }>({ visible: false, x: 0, y: 0, floor: 0 });
   const [editMarkerModal, setEditMarkerModal] = useState<{ visible: boolean; marker: MapMarker | null }>({ visible: false, marker: null });
   const [hoveredMarker, setHoveredMarker] = useState<MapMarker | null>(null);
+  const [hoveredTile, setHoveredTile] = useState<{ x: number; y: number; z: number } | null>(null);
   
   const { magnifier, setMagnifier, magnifierCanvasRef } = useMinimapMagnifier(canvasRef, CANVAS_SIZE);
   
@@ -124,6 +125,7 @@ export default function Minimap({ gc }: MinimapProps) {
     setCreateMarkerModal,
     setEditMarkerModal,
     setHoveredMarker,
+    setHoveredTile,
     setMagnifier,
     render,
     chunksRef
@@ -402,6 +404,22 @@ export default function Minimap({ gc }: MinimapProps) {
             data-minimap-portal="tooltip"
           >
             {hoveredMarker.description}
+          </div>
+        ),
+        document.body
+      )}
+
+      {createPortal(
+        hoveredTile && magnifier.visible && (
+          <div 
+            className="position-tooltip position-tooltip-portal"
+            style={{ 
+              left: magnifier.mouseX + 15,
+              top: magnifier.mouseY + 15
+            }}
+            data-minimap-portal="position-tooltip"
+          >
+            {hoveredTile.x}, {hoveredTile.y}, {hoveredTile.z}
           </div>
         ),
         document.body

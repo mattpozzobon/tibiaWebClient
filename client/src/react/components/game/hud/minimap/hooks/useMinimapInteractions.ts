@@ -21,6 +21,7 @@ export function useMinimapInteractions(
   setCreateMarkerModal: (modal: { visible: boolean; x: number; y: number; floor: number }) => void,
   setEditMarkerModal: (modal: { visible: boolean; marker: MapMarker | null }) => void,
   setHoveredMarker: (marker: MapMarker | null) => void,
+  setHoveredTile: (tile: { x: number; y: number; z: number } | null) => void,
   setMagnifier: (magnifier: { visible: boolean; x: number; y: number; mouseX: number; mouseY: number; displayX: number; displayY: number }) => void,
   render: (chunks: any, force?: boolean) => void,
   chunksRef: React.MutableRefObject<any>
@@ -101,11 +102,18 @@ export function useMinimapInteractions(
     
     setMagnifier({ visible: true, x, y, mouseX: event.clientX, mouseY: event.clientY, displayX, displayY });
     
-    if (!player) { setHoveredMarker(null); return; }
+    if (!player) { 
+      setHoveredMarker(null);
+      setHoveredTile(null);
+      return; 
+    }
     
     const center = getQuantizedCenter();
     const zoomWindow = computeZoomWindow(zoomLevel, canvasSize);
     const { tileX, tileY } = finalCanvasToTile(x, y, center, zoomWindow, zoomLevel, canvasSize);
+    
+    // Update hovered tile position
+    setHoveredTile({ x: tileX, y: tileY, z: currentFloorRef.current });
     
     let over: MapMarker | null = null;
     const hoverByTile = markers.find(m =>
@@ -130,13 +138,14 @@ export function useMinimapInteractions(
       }
     }
     setHoveredMarker(over);
-  }, [player, markers, markerImages, getCanvasCoords, getQuantizedCenter, zoomLevel, canvasSize, currentFloorRef, setHoveredMarker, setMagnifier]);
+  }, [player, markers, markerImages, getCanvasCoords, getQuantizedCenter, zoomLevel, canvasSize, currentFloorRef, setHoveredMarker, setHoveredTile, setMagnifier]);
   
   const handleCanvasMouseLeave = useCallback(() => {
     setMagnifier({ visible: false, x: 0, y: 0, mouseX: 0, mouseY: 0, displayX: 0, displayY: 0 });
     setHoveredMarker(null);
+    setHoveredTile(null);
     isPanningRef.current = false;
-  }, [setMagnifier, setHoveredMarker]);
+  }, [setMagnifier, setHoveredMarker, setHoveredTile]);
   
   const handleMouseDown = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     if (event.button !== 0) return;

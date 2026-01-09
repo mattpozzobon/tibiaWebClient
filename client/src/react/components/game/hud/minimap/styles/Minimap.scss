@@ -221,6 +221,22 @@
   pointer-events: none !important;
 }
 
+/* Position tooltip styles */
+.position-tooltip {
+  position: fixed;
+  z-index: 99998 !important;
+  background: rgba(0, 0, 0, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+  font-family: monospace !important;
+  color: #fff !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+  border-radius: 3px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+}
+
 /* Tooltip positioning for left column (show above magnifier) */
 .window-column-left .minimap-window .minimap-canvas-container .marker-tooltip,
 .window-column-left .minimap-window-content .minimap-canvas-container .marker-tooltip {

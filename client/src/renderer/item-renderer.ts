@@ -24,20 +24,29 @@ export default class ItemRenderer {
     const items: Item[] = tile.items;
     const currentHoverTile = window.gameClient.mouse.getCurrentTileHover();
 
-    const tileHasOnTop = items.some(i => i.hasFlag(PropBitFlag.DatFlagOnTop));
+    // Optimize: check for on-top items during iteration instead of separate some() call
+    let tileHasOnTop = false;
+    let lastNonOnTopIndex = -1;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].hasFlag(PropBitFlag.DatFlagOnTop)) {
+        tileHasOnTop = true;
+      } else {
+        lastNonOnTopIndex = i;
+      }
+    }
     const shouldOutlineBase = currentHoverTile === tile && !tileHasOnTop;
 
     const tileZ = tile.getPosition().z;
     const size = Interface.TILE_SIZE;
+    
+    // Cache style calculation - same for all items on the tile
+    const style = this.lighting?.styleFor(tile) as TileLightStyle | undefined;
 
     for (let i = 0; i < items.length; ++i) {
       const item = items[i];
       if (item.hasFlag(PropBitFlag.DatFlagOnTop)) continue;
 
-      const outlineThis = shouldOutlineBase && i === items.length - 1 && item.isPickupable();
-
-      // Per-item style (deferred to lighting class)
-      const style = this.lighting?.styleFor(tile) as TileLightStyle | undefined;
+      const outlineThis = shouldOutlineBase && i === lastNonOnTopIndex && item.isPickupable();
 
       // --- bubble lighting for light-emitting items (collect by floor) ---
       if (item.isLight()) {

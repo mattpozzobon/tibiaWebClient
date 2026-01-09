@@ -38,8 +38,6 @@ export default class TileRenderer {
       }
       this.tileCache.push(floorTiles);
     }
-
-    this.tileCache.reduce((sum, floor) => sum + floor.length, 0);
   }
 
   public collectSprites(tile: Tile, screenPos: Position, batcher: SpriteBatcher): void {

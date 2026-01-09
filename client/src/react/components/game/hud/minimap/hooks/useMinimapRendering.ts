@@ -47,7 +47,9 @@ export function useMinimapRendering(
     isRenderingRef.current = true;
     
     // Check if chunks are being updated (count changed)
-    const currentChunksCount = Object.keys(chunks).length;
+    // Optimized: count keys without creating array
+    let currentChunksCount = 0;
+    for (const _ in chunks) currentChunksCount++;
     const chunksChanged = currentChunksCount !== prevChunksCountRef.current;
     prevChunksCountRef.current = currentChunksCount;
     
@@ -79,34 +81,41 @@ export function useMinimapRendering(
       prevCenterRef.current.z !== renderLayer
     );
 
-    // First, check if we have any chunks for the current render layer
-    const hasChunksForLayer = Object.keys(chunks).some((id: string) => {
-      const ch = chunks[id];
-      if (!ch || !ch.imageData) return false;
-      const [, , cz] = id.split('.').map(Number);
-      return cz === renderLayer;
-    });
-
     // Build snapshot of ALL chunks for the layer (not just visible ones)
     // This ensures the minimap canvas is always up to date
-    const allChunksForLayer = Object.keys(chunks).map((id: string) => {
+    // Optimized: single pass instead of map+filter, avoid Object.keys() overhead
+    const allChunksForLayer: Array<{ imageData: ImageData; x: number; y: number }> = [];
+    let hasChunksForLayer = false;
+    const size = MINIMAP_CONFIG.MINIMAP_CHUNK_SIZE;
+    
+    for (const id in chunks) {
       const ch = chunks[id];
-      if (!ch || !ch.imageData) return null;
-      const [cx, cy, cz] = id.split('.').map(Number);
-      if (cz !== renderLayer) return null;
+      if (!ch || !ch.imageData) continue;
       
-      const x = cx * MINIMAP_CONFIG.MINIMAP_CHUNK_SIZE - center.x + centerPoint;
-      const y = cy * MINIMAP_CONFIG.MINIMAP_CHUNK_SIZE - center.y + centerPoint;
+      // Parse chunk ID (format: "x.y.z")
+      let dot1 = id.indexOf('.');
+      if (dot1 === -1) continue;
+      let dot2 = id.indexOf('.', dot1 + 1);
+      if (dot2 === -1) continue;
+      
+      const cz = Number(id.substring(dot2 + 1));
+      if (cz !== renderLayer) continue;
+      
+      hasChunksForLayer = true;
+      const cx = Number(id.substring(0, dot1));
+      const cy = Number(id.substring(dot1 + 1, dot2));
+      
+      const x = cx * size - center.x + centerPoint;
+      const y = cy * size - center.y + centerPoint;
       
       // Create a copy of ImageData to prevent modification during rendering
-      const size = MINIMAP_CONFIG.MINIMAP_CHUNK_SIZE;
       const imageDataCopy = new ImageData(
         new Uint8ClampedArray(ch.imageData.data),
         size,
         size
       );
-      return { imageData: imageDataCopy, x: Math.round(x), y: Math.round(y) };
-    }).filter((item): item is { imageData: ImageData; x: number; y: number } => item !== null);
+      allChunksForLayer.push({ imageData: imageDataCopy, x: Math.round(x), y: Math.round(y) });
+    }
 
     // Filter to only visible chunks
     const visibleChunks = allChunksForLayer.filter(({ x, y }) => {
@@ -167,15 +176,23 @@ export function useMinimapRendering(
         const p = player.getPosition();
         drawPlayerIndicator(ctx, p, center, zoomWindow, zoomLevel, canvasSize);
       }
-    } else if (!hasChunksForLayer && Object.keys(chunks).length === 0) {
-      // Fill with black background if we truly have no chunks at all (initial load)
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvasSize, canvasSize);
-      // Still draw markers even if no map chunks
-      drawMarkers(ctx, markers, markerImages, center, zoomWindow, zoomLevel, canvasSize);
-      if (player) {
-        const p = player.getPosition();
-        drawPlayerIndicator(ctx, p, center, zoomWindow, zoomLevel, canvasSize);
+    } else if (!hasChunksForLayer) {
+      // Check if chunks object is empty without Object.keys()
+      let isEmpty = true;
+      for (const _ in chunks) {
+        isEmpty = false;
+        break;
+      }
+      if (isEmpty) {
+        // Fill with black background if we truly have no chunks at all (initial load)
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvasSize, canvasSize);
+        // Still draw markers even if no map chunks
+        drawMarkers(ctx, markers, markerImages, center, zoomWindow, zoomLevel, canvasSize);
+        if (player) {
+          const p = player.getPosition();
+          drawPlayerIndicator(ctx, p, center, zoomWindow, zoomLevel, canvasSize);
+        }
       }
     }
     // If we have chunks but none are visible (fast movement, new chunks loading),

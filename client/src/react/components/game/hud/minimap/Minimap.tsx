@@ -81,14 +81,20 @@ export default function Minimap({ gc }: MinimapProps) {
       cancelAnimationFrame(chunkUpdateRenderTimeoutRef.current);
     }
     
-    chunkUpdateRenderTimeoutRef.current = requestAnimationFrame(() => {
-      chunkUpdateRenderTimeoutRef.current = null;
-      // Use latest chunks from ref in case they've been updated
-      const latestChunks = chunksRef.current;
-      if (Object.keys(latestChunks).length > 0) {
-        render(latestChunks, true);
-      }
-    });
+      chunkUpdateRenderTimeoutRef.current = requestAnimationFrame(() => {
+        chunkUpdateRenderTimeoutRef.current = null;
+        // Use latest chunks from ref in case they've been updated
+        const latestChunks = chunksRef.current;
+        // Optimized: check if chunks object has keys without Object.keys()
+        let hasChunks = false;
+        for (const _ in latestChunks) {
+          hasChunks = true;
+          break;
+        }
+        if (hasChunks) {
+          render(latestChunks, true);
+        }
+      });
   }, [updateChunks, render, chunksRef]);
   
   const { cache, schedulePanCache, debouncedCache, cacheTimeoutRef } = useMinimapCache(

@@ -42,6 +42,7 @@ export default class Renderer {
   };
 
   public hoverOutline: Filter;
+  private hoverOutlineFilterArray: Filter[];
   public app: Application;
   public tileRenderer: TileRenderer;
   public itemRenderer: ItemRenderer;
@@ -55,12 +56,14 @@ export default class Renderer {
   public positionHelper: PositionHelper;
 
   public spritePool: Sprite[] = [];
-  public readonly poolSize = 28 * 14 * 50;
+  public readonly poolSize = (Interface.TILE_WIDTH + 2) * (Interface.TILE_HEIGHT + 2) * 50;
   public poolIndex: number = 0;
 
   private batcher = new SpriteBatcher();
   private scratchRemovals: any[] = [];
   private lastFramePoolUsed = 0;
+  private cachedGetStatic: ((p: Position) => Position) | null = null;
+  private cachedGetCreature: ((c: Creature) => Position) | null = null;
 
   constructor(app: Application) {
     this.app = app;
@@ -78,6 +81,7 @@ export default class Renderer {
       alpha: 1.0,
       knockout: false
     });
+    this.hoverOutlineFilterArray = [this.hoverOutline];
 
     this.app.stage.addChild(this.scalingContainer);
     this.app.stage.addChild(this.noScallingOverlayLayer);
@@ -107,6 +111,10 @@ export default class Renderer {
     this.creatureRenderer = new CreatureRenderer(this.animationRenderer, this.light);
     this.itemRenderer = new ItemRenderer(this.light);
     this.positionHelper = new PositionHelper(this.app, this.scalingContainer);
+    
+    // Pre-bind functions to avoid rebinding every frame
+    this.cachedGetStatic = this.getStaticScreenPosition.bind(this);
+    this.cachedGetCreature = this.getCreatureScreenPosition.bind(this);
   }
 
   static async create(): Promise<Renderer> {
@@ -240,7 +248,8 @@ export default class Renderer {
   private __renderWorld(): void {
     const tAssembleStart = performance.now();
 
-    const playerZ = window.gameClient.player!.getPosition().z;
+    const player = window.gameClient.player!;
+    const playerZ = player.getPosition().z;
     const lastVisibleZ = playerZ;
     this.light.beginFrame(playerZ, lastVisibleZ);
 
@@ -256,8 +265,9 @@ export default class Renderer {
 
     this.batcher.reset();
 
-    const getStatic = this.getStaticScreenPosition.bind(this);
-    const getCreature = this.getCreatureScreenPosition.bind(this);
+    // Use pre-bound functions to avoid rebinding every frame
+    const getStatic = this.cachedGetStatic!;
+    const getCreature = this.cachedGetCreature!;
     const floors = this.tileRenderer.tileCache;
 
     for (let f = 0; f < floors.length; f++) {
@@ -351,8 +361,9 @@ export default class Renderer {
         spr.width = spriteData.width;
         spr.height = spriteData.height;
         spr.visible = true;
-        spr.filters = spriteData.outline ? [this.hoverOutline] : null;
-        spr.tint = spriteData.tint ?? 0xFFFFFF;
+        spr.filters = spriteData.outline ? this.hoverOutlineFilterArray : null;
+        const tint = spriteData.tint ?? 0xFFFFFF;
+        if (spr.tint !== tint) spr.tint = tint;
         spr.blendMode = spriteData.blendMode ?? 'normal';
 
         this.drawCalls++;

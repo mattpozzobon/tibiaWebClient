@@ -7,6 +7,13 @@ import Interface from '../ui/interface';
 export class PositionHelper {
   private app: any;
   private scalingContainer: any;
+  // Use getters to avoid circular dependency - computed lazily on first access
+  private static get CENTER_X(): number {
+    return (Interface.TILE_WIDTH - 1) / 2;
+  }
+  private static get CENTER_Y(): number {
+    return (Interface.TILE_HEIGHT - 1) / 2;
+  }
 
   constructor(app: any, scalingContainer: any) {
     this.app = app;
@@ -14,10 +21,12 @@ export class PositionHelper {
   }
 
   public static getStaticScreenPosition(position: Position): Position {
-    const projectedPlayer = window.gameClient.player!.getPosition().projected();
+    const player = window.gameClient.player!;
+    const projectedPlayer = player.getPosition().projected();
     const projectedThing = position.projected();
-    const x = ((Interface.TILE_WIDTH-1)/2) + window.gameClient.player!.getMoveOffset().x + projectedThing.x - projectedPlayer.x;
-    const y = ((Interface.TILE_HEIGHT-1)/2) + window.gameClient.player!.getMoveOffset().y + projectedThing.y - projectedPlayer.y;
+    const moveOffset = player.getMoveOffset();
+    const x = PositionHelper.CENTER_X + moveOffset.x + projectedThing.x - projectedPlayer.x;
+    const y = PositionHelper.CENTER_Y + moveOffset.y + projectedThing.y - projectedPlayer.y;
     return new Position(x, y, 0);
   }
 
@@ -45,11 +54,8 @@ export class PositionHelper {
     const pos = player.getPosition();
     const move = player.getMoveOffset(); // in tile units
 
-    const centerX = (Interface.TILE_WIDTH  - 1) / 2;
-    const centerY = (Interface.TILE_HEIGHT - 1) / 2;
-
-    const worldX = Math.floor((sX - centerX - move.x) + 1e-7) + pos.x;
-    const worldY = Math.floor((sY - centerY - move.y) + 1e-7) + pos.y;
+    const worldX = Math.floor((sX - PositionHelper.CENTER_X - move.x) + 1e-7) + pos.x;
+    const worldY = Math.floor((sY - PositionHelper.CENTER_Y - move.y) + 1e-7) + pos.y;
 
     const p = new Position(worldX, worldY, pos.z);
     const chunk = window.gameClient.world.getChunkFromWorldPosition(p);

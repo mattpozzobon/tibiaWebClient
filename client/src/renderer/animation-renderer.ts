@@ -10,6 +10,7 @@ import SpriteBatcher from "./sprite-batcher";
 
 export default class AnimationRenderer {
   animationLayers = new Array();
+  private static readonly NULL_POSITION = new Position(0, 0, 0);
 
   constructor() {
     this.__createAnimationLayers();
@@ -128,15 +129,15 @@ export default class AnimationRenderer {
 
     let screenPos: Position;
     if (animation instanceof BoxAnimation) {
-      screenPos = getCreatureScreenPosition ? getCreatureScreenPosition(thing) : new Position(0, 0, 0);
+      screenPos = getCreatureScreenPosition ? getCreatureScreenPosition(thing) : AnimationRenderer.NULL_POSITION;
     } else if (thing instanceof Tile) {
-      screenPos = getStaticScreenPosition ? getStaticScreenPosition(thing.getPosition()) : new Position(0, 0, 0);
+      screenPos = getStaticScreenPosition ? getStaticScreenPosition(thing.getPosition()) : AnimationRenderer.NULL_POSITION;
       this.collectAnimationSprites(animation, screenPos, thing, batcher);
     } else if (thing instanceof Creature) {
-      screenPos = getCreatureScreenPosition ? getCreatureScreenPosition(thing) : new Position(0, 0, 0);
+      screenPos = getCreatureScreenPosition ? getCreatureScreenPosition(thing) : AnimationRenderer.NULL_POSITION;
       this.collectAnimationSprites(animation, screenPos, thing, batcher);
     } else if (thing instanceof DistanceAnimation) {
-      screenPos = getStaticScreenPosition ? getStaticScreenPosition(thing.getPosition()) : new Position(0, 0, 0);
+      screenPos = getStaticScreenPosition ? getStaticScreenPosition(thing.getPosition()) : AnimationRenderer.NULL_POSITION;
       this.collectAnimationSprites(animation, screenPos, thing, batcher);
     }
   }

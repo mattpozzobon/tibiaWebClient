@@ -470,7 +470,7 @@ class PacketHandler {
       message += ` (SID: ${packet.sid}, CID: ${packet.cid})`;
     }
 
-    if (packet.x && packet.y) {
+    if (packet.x !== null && packet.y !== null && packet.z !== null) {
       message += ` (X: ${packet.x}, Y: ${packet.y}, Z: ${packet.z})`;
     }
 

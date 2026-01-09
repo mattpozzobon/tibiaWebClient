@@ -663,13 +663,14 @@ export default class PacketReader extends Packet {
     name: string;
     description: string;
     count: number;
-    x: number;
-    y: number;
-    z: number;
+    x: number | null;
+    y: number | null;
+    z: number | null;
   } {
     /*
      * Function PacketReader.readItemInformation
      * Reads item information from a packet
+     * Server only includes position (x, y, z) if player is god mode
      */
     const itemInfo = {
       sid: this.readUInt16(),
@@ -682,10 +683,19 @@ export default class PacketReader extends Packet {
       name: this.readString(),
       description: this.readString(),
       count: this.readUInt8(),
-      x: this.readUInt16(),
-      y: this.readUInt16(),
-      z: this.readUInt16(),
+      x: null as number | null,
+      y: null as number | null,
+      z: null as number | null,
     };
+    
+    // Position is only included if player is god mode (6 bytes: x, y, z as UInt16 each)
+    // Check if there are 6 more bytes remaining in the packet
+    if (this.index + 6 <= this.buffer.length) {
+      itemInfo.x = this.readUInt16();
+      itemInfo.y = this.readUInt16();
+      itemInfo.z = this.readUInt16();
+    }
+    
     console.log("Item info:", itemInfo);
     return itemInfo;
   }

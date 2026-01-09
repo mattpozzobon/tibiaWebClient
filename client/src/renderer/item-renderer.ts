@@ -129,7 +129,7 @@ export default class ItemRenderer {
 
       const xCell = position.x - 0 - elevation;
       const yCell = position.y - 0 - elevation;
-      if (xCell < -1 || xCell > Interface.TILE_WIDTH || yCell < -1 || yCell > Interface.TILE_HEIGHT) return;
+      if (xCell < -1 || xCell > Interface.TILE_WIDTH + 1 || yCell < -1 || yCell > Interface.TILE_HEIGHT + 1) return;
 
       const px = size * xCell;
       const py = size * yCell;
@@ -151,7 +151,7 @@ export default class ItemRenderer {
 
           const xCell = position.x - x - elevation;
           const yCell = position.y - y - elevation;
-          if (xCell < -1 || xCell > Interface.TILE_WIDTH || yCell < -1 || yCell > Interface.TILE_HEIGHT) continue;
+          if (xCell < -1 || xCell > Interface.TILE_WIDTH + 1 || yCell < -1 || yCell > Interface.TILE_HEIGHT + 1) continue;
 
           const px = size * xCell;
           const py = size * yCell;

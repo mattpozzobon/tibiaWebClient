@@ -46,7 +46,7 @@ export default class TileRenderer {
     tile.setElevation(0);
     const xCell = screenPos.x;
     const yCell = screenPos.y;
-    if (xCell < -1 || xCell > Interface.TILE_WIDTH || yCell < -1 || yCell > Interface.TILE_HEIGHT) return;
+    if (xCell < -1 || xCell > Interface.TILE_WIDTH + 1 || yCell < -1 || yCell > Interface.TILE_HEIGHT + 1) return;
 
     const size = Interface.TILE_SIZE;
     const tileZ = tile.getPosition().z;
@@ -86,7 +86,7 @@ export default class TileRenderer {
 
           const xCellDraw = xCell - cx - tile.__renderElevation;
           const yCellDraw = yCell - cy - tile.__renderElevation;
-          if (xCellDraw < -1 || xCellDraw > Interface.TILE_WIDTH || yCellDraw < -1 || yCellDraw > Interface.TILE_HEIGHT) continue;
+          if (xCellDraw < -1 || xCellDraw > Interface.TILE_WIDTH + 1 || yCellDraw < -1 || yCellDraw > Interface.TILE_HEIGHT + 1) continue;
 
           const px = xCellDraw * size;
           const py = yCellDraw * size;

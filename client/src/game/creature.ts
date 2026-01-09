@@ -224,7 +224,7 @@ export default class Creature {
     const projectedThing = thing.getPosition().projected();
     const dx = Math.abs(projectedSelf.x - projectedThing.x);
     const dy = Math.abs(projectedSelf.y - projectedThing.y);
-    return (dx < (Interface.TILE_WIDTH+2)/2) && (dy < (Interface.TILE_HEIGHT+2)/2);
+    return (dx < (Interface.TILE_WIDTH+4)/2) && (dy < (Interface.TILE_HEIGHT+4)/2);
   }
   
   public canSeeSmall(thing: { getPosition(): Position }): boolean {

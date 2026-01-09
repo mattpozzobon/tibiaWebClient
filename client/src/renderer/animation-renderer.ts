@@ -22,7 +22,7 @@ export default class AnimationRenderer {
     batcher: SpriteBatcher
   ): void {
     const xCell = screenPos.x, yCell = screenPos.y;
-    if (xCell < -1 || xCell > Interface.TILE_WIDTH || yCell < -1 || yCell > Interface.TILE_HEIGHT) return;
+    if (xCell < -1 || xCell > Interface.TILE_WIDTH + 1 || yCell < -1 || yCell > Interface.TILE_HEIGHT + 1) return;
 
     const frameGroup = animation.getFrameGroup(FrameGroup.NONE);
     const frame = animation.getFrame();

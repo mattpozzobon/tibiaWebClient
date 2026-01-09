@@ -41,7 +41,7 @@ export default function ChatChannelTab({
         title={getTitle()}
       >
         {channel.name}
-        {isPrivate && channel.unreadCount && channel.unreadCount > 0 && (
+        {isPrivate && typeof channel.unreadCount === 'number' && channel.unreadCount > 0 && (
           <span className="unread-count">{channel.unreadCount}</span>
         )}
       </button>

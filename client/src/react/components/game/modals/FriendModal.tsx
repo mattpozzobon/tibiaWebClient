@@ -23,12 +23,18 @@ interface ContextMenu {
   friendOnline?: boolean;
 }
 
+const SHOW_OFFLINE_FRIENDS_KEY = 'showOfflineFriends';
+
 export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
   const [activeTab, setActiveTab] = useState<'friends' | 'requests'>('friends');
   const [friends, setFriends] = useState<Friend[]>([]);
   const [friendRequests, setFriendRequests] = useState<string[]>([]);
   const [newFriendName, setNewFriendName] = useState('');
-  const [showOffline, setShowOffline] = useState(true);
+  // Load showOffline preference from localStorage, default to true
+  const [showOffline, setShowOffline] = useState(() => {
+    const saved = localStorage.getItem(SHOW_OFFLINE_FRIENDS_KEY);
+    return saved !== null ? saved === 'true' : true;
+  });
   const [contextMenu, setContextMenu] = useState<ContextMenu>({ visible: false, x: 0, y: 0, friendName: '', friendOnline: false });
   const modalRef = useRef<HTMLDivElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
@@ -160,6 +166,8 @@ export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
         }
       }, 100);
     }
+    // Close the modal after opening the chat
+    onClose();
   };
 
   const handleContextMenuAction = (action: 'message' | 'remove', friendName: string) => {
@@ -171,7 +179,24 @@ export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
     setContextMenu({ visible: false, x: 0, y: 0, friendName: '', friendOnline: false });
   };
 
-  const filteredFriends = friends.filter(friend => showOffline || friend.online);
+  const handleShowOfflineChange = (checked: boolean) => {
+    setShowOffline(checked);
+    localStorage.setItem(SHOW_OFFLINE_FRIENDS_KEY, checked.toString());
+    // Dispatch custom event to notify other components (like FriendsPanel)
+    window.dispatchEvent(new CustomEvent('showOfflineFriendsChanged', { detail: { showOffline: checked } }));
+  };
+
+  // Filter and sort friends: online first, then offline (if shown), alphabetically within each group
+  const filteredFriends = friends
+    .filter(friend => showOffline || friend.online)
+    .sort((a, b) => {
+      // Online friends first
+      if (a.online !== b.online) {
+        return a.online ? -1 : 1;
+      }
+      // Then sort alphabetically within each group
+      return a.name.localeCompare(b.name);
+    });
 
   if (!isOpen || !gc.player) return null;
 
@@ -254,7 +279,7 @@ export default function FriendModal({ isOpen, onClose, gc }: FriendModalProps) {
                   <input
                     type="checkbox"
                     checked={showOffline}
-                    onChange={(e) => setShowOffline(e.target.checked)}
+                    onChange={(e) => handleShowOfflineChange(e.target.checked)}
                   />
                   Show Offline Friends
                 </label>

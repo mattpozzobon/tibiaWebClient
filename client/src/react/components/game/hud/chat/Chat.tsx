@@ -132,7 +132,7 @@ export default function Chat({ gc }: ChatProps) {
             text: message,
             sender: gc.player?.vitals.name || 'You',
             timestamp: new Date(),
-            color: '#ffffff',
+            color: '#ffffff', // White for messages sent by the player
             type: 1,
             channelName: activeChannel.name
           };

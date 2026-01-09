@@ -114,7 +114,7 @@ class ChatEventManager {
       text: data.message,
       sender: data.name,
       timestamp: new Date(),
-      color: '#ffffff',
+      color: '#87ceeb', // Light blue for private messages
       type: 1,
       channelName: channelName
     };

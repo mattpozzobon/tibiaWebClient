@@ -42,7 +42,12 @@ export default function ChatMessageComponent({ message, onSenderRightClick }: Ch
           {message.sender === 'You' ? '👤' : ''} {message.sender}:
         </span>
       )}
-      <span className="message-text">{message.text}</span>
+      <span 
+        className="message-text" 
+        style={{ color: message.type === 1 && message.color ? message.color : undefined }}
+      >
+        {message.text}
+      </span>
     </div>
   );
 }

@@ -1,21 +1,21 @@
-/* Chat Window Styles */
+/* Chat Window Styles - Sleek Black & Grey Theme */
 
 .chat-window {
   position: absolute;
   min-width: 300px;
   min-height: 200px;
-  background: rgba(0, 0, 0, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  border-radius: 0;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(10px);
-  z-index: 10000; /* High z-index to display over everything */
+  z-index: 10000;
   overflow: hidden;
-  opacity: 1; /* Always keep chat window visible and opaque */
-  resize: none; /* Prevent browser default resize */
-  pointer-events: auto; /* Ensure chat window captures mouse events and blocks game canvas */
+  opacity: 1;
+  resize: none;
+  pointer-events: auto;
 }
 
 /* Resize handles */
@@ -25,7 +25,6 @@
   z-index: 1001;
 }
 
-/* Edge handles */
 .resize-handle-top {
   top: 0;
   left: 10px;
@@ -58,7 +57,6 @@
   cursor: ew-resize;
 }
 
-/* Corner handles */
 .resize-handle-top-left {
   top: 0;
   left: 0;
@@ -95,9 +93,9 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  padding: 2px 8px 0 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 8px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+  background: rgba(0, 0, 0, 0.4);
   min-height: 26px;
   cursor: grab;
   user-select: none;
@@ -109,7 +107,6 @@
     cursor: grabbing;
   }
   
-  // Allow clicking on interactive elements
   button, input, .channel-tab {
     cursor: pointer;
     user-select: auto;
@@ -126,7 +123,7 @@
   margin-bottom: 0;
   padding-bottom: 0;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  scrollbar-color: rgba(128, 128, 128, 0.3) transparent;
   
   &::-webkit-scrollbar {
     height: 4px;
@@ -137,12 +134,12 @@
   }
   
   &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(128, 128, 128, 0.3);
     border-radius: 2px;
   }
   
   &::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(128, 128, 128, 0.5);
   }
 }
 
@@ -153,14 +150,14 @@
 }
 
 .channel-tab {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 3px 3px 0 0;
-  color: rgba(255, 255, 255, 0.7);
-  padding: 2px 8px 0 8px;
+  background: rgba(64, 64, 64, 0.4);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 0;
+  color: rgba(200, 200, 200, 0.8);
+  padding: 3px 8px;
   margin-bottom: 0;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1.4;
   transition: all 0.2s ease;
   border-bottom: none;
@@ -172,36 +169,36 @@
   text-overflow: ellipsis;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
+    background: rgba(96, 96, 96, 0.5);
+    color: rgba(255, 255, 255, 0.9);
   }
 
   &.active {
-    background: rgba(0, 150, 255, 0.3);
-    border-color: rgba(0, 150, 255, 0.5);
+    background: rgba(128, 128, 128, 0.3);
+    border-color: rgba(160, 160, 160, 0.4);
     border-bottom: none;
-    color: #0096ff;
-    font-weight: bold;
+    color: rgba(255, 255, 255, 1);
+    font-weight: 600;
   }
 
   &.joined {
     .joined-indicator {
-      color: #00ff00;
+      color: rgba(180, 180, 180, 0.8);
       font-size: 8px;
       margin-left: 4px;
     }
   }
 
   &.not-joined {
-    opacity: 0.6;
-    border-color: rgba(255, 255, 255, 0.1);
+    opacity: 0.5;
+    border-color: rgba(128, 128, 128, 0.15);
   }
 
   &.private {
-    border-color: rgba(255, 0, 255, 0.3);
+    border-color: rgba(160, 160, 160, 0.3);
     
     .private-indicator {
-      color: #ff00ff;
+      color: rgba(200, 200, 200, 0.8);
       font-size: 8px;
       margin-left: 4px;
     }
@@ -209,12 +206,12 @@
 }
 
 .unread-count {
-  background: #ff4444;
-  color: white;
-  border-radius: 10px;
+  background: rgba(255, 68, 68, 0.9);
+  color: rgba(255, 255, 255, 0.95);
+  border-radius: 0;
   padding: 2px 6px;
-  font-size: 10px;
-  font-weight: bold;
+  font-size: 9px;
+  font-weight: 600;
   margin-left: 4px;
   min-width: 16px;
   text-align: center;
@@ -227,10 +224,10 @@
   right: 0;
   width: 16px;
   height: 16px;
-  border-radius: 50%;
-  background: rgba(255, 0, 0, 0.8);
-  border: none;
-  color: white;
+  border-radius: 0;
+  background: rgba(64, 64, 64, 0.6);
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  color: rgba(200, 200, 200, 0.9);
   font-size: 10px;
   font-weight: bold;
   cursor: pointer;
@@ -241,7 +238,8 @@
   transition: opacity 0.2s ease;
 
   &:hover {
-    background: rgba(255, 0, 0, 1);
+    background: rgba(96, 96, 96, 0.8);
+    border-color: rgba(160, 160, 160, 0.5);
   }
 }
 
@@ -250,47 +248,47 @@
 }
 
 .current-channel {
-  color: #0096ff;
-  font-weight: bold;
-  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  font-size: 12px;
   min-width: 80px;
   text-align: center;
 }
 
 .chat-controls {
   display: flex;
-  gap: 5px;
+  gap: 4px;
 }
 
 .chat-control-btn {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 3px;
-  color: white;
-  padding: 2px 6px;
+  background: rgba(64, 64, 64, 0.4);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 0;
+  color: rgba(200, 200, 200, 0.9);
+  padding: 3px 6px;
   margin: 2px 0;
   cursor: pointer;
   font-size: 10px;
   transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(0, 150, 255, 0.5);
+    background: rgba(96, 96, 96, 0.5);
+    border-color: rgba(160, 160, 160, 0.4);
   }
 }
 
 .chat-close {
-  background: rgba(255, 107, 107, 0.2);
-  border: 1px solid rgba(255, 107, 107, 0.4);
-  border-radius: 4px;
-  color: #ff6b6b;
+  background: rgba(64, 64, 64, 0.4);
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  border-radius: 0;
+  color: rgba(200, 200, 200, 0.9);
   padding: 4px 8px;
   cursor: pointer;
-  font-size: 14px;
-  transition: all 0.3s ease;
+  font-size: 12px;
+  transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(255, 107, 107, 0.3);
+    background: rgba(96, 96, 96, 0.6);
   }
 }
 
@@ -298,9 +296,8 @@
   flex: 1;
   display: flex;
   gap: 1px;
-  background: rgba(255, 255, 255, 0.1);
-  min-height: 0; /* Allow container to shrink */
-  // Enable text selection for copying messages - use !important to override global #root * rule
+  background: rgba(32, 32, 32, 0.3);
+  min-height: 0;
   user-select: text !important;
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
@@ -311,9 +308,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* Allow section to shrink */
-  overflow: hidden; /* Prevent overflow from affecting other sections */
-  // Enable text selection for copying messages - use !important to override global #root * rule
+  min-height: 0;
+  overflow: hidden;
   user-select: text !important;
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
@@ -321,13 +317,13 @@
 }
 
 .chat-section-header {
-  background: rgba(0, 0, 0, 0.25);
-  color: #0096ff;
+  background: rgba(0, 0, 0, 0.4);
+  color: rgba(200, 200, 200, 0.9);
   font-weight: 600;
-  font-size: 10px;
+  font-size: 9px;
   padding: 3px 6px;
   text-align: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(128, 128, 128, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -342,46 +338,45 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
-  min-height: 0; /* Important for flex child scrolling */
-  max-height: 100%; /* Ensure it doesn't exceed container height */
-  // Enable text selection for copying messages - use !important to override global #root * rule
+  min-height: 0;
+  max-height: 100%;
   user-select: text !important;
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
   -ms-user-select: text !important;
-  cursor: default; /* Default cursor, text cursor only on message elements */
+  cursor: default;
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .message {
   display: flex;
-  align-items: baseline; /* Align items to baseline for better text alignment */
-  gap: 2px; /* Reduced gap between timestamp and sender */
+  align-items: baseline;
+  gap: 2px;
   font-size: 11px;
   line-height: 1.2;
   word-wrap: break-word;
   word-break: break-word;
   overflow-wrap: break-word;
   padding: 1px 0;
-  min-width: 0; /* Allow flex items to shrink */
-  // Enable text selection for copying - use !important to override global #root * rule
+  min-width: 0;
   user-select: text !important;
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
   -ms-user-select: text !important;
-  cursor: text; /* Show text cursor when hovering over messages */
+  cursor: text;
 }
 
 .message-time {
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(150, 150, 150, 0.6);
   font-size: 9px;
   white-space: nowrap;
-  margin-top: 0; /* Remove top margin for better alignment */
+  margin-top: 0;
   min-width: 35px;
   user-select: text !important;
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
   -ms-user-select: text !important;
-  cursor: text; /* Show text cursor when hovering over timestamps */
+  cursor: text;
 }
 
 .message-sender {
@@ -389,65 +384,67 @@
   white-space: nowrap;
   font-size: 10px;
   min-width: 50px;
-  margin-left: 0; /* Remove any left margin */
+  margin-left: 0;
+  color: rgba(220, 220, 220, 0.95);
   user-select: text !important;
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
   -ms-user-select: text !important;
-  cursor: pointer; /* Show pointer cursor when hovering over sender names to indicate interactivity */
+  cursor: pointer;
   
   &:hover {
-    text-decoration: underline; /* Visual feedback on hover */
+    text-decoration: underline;
+    color: rgba(255, 255, 255, 1);
   }
 }
 
 .message-text {
-  color: white;
+  color: rgba(240, 240, 240, 0.9);
   flex: 1;
   font-size: 11px;
   word-wrap: break-word;
   word-break: break-word;
   overflow-wrap: break-word;
-  min-width: 0; /* Allow flex items to shrink */
+  min-width: 0;
   user-select: text !important;
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
   -ms-user-select: text !important;
-  cursor: text; /* Show text cursor when hovering over message text */
+  cursor: text;
 }
 
 .chat-input-form {
   display: flex;
   align-items: center;
   padding: 4px 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(128, 128, 128, 0.2);
+  background: rgba(0, 0, 0, 0.4);
   gap: 6px;
 }
 
 .loudness-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  color: white;
+  background: rgba(64, 64, 64, 0.4);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 0;
+  color: rgba(200, 200, 200, 0.9);
   padding: 6px 10px;
   cursor: pointer;
-  font-size: 11px;
-  transition: all 0.3s ease;
+  font-size: 10px;
+  transition: all 0.2s ease;
   white-space: nowrap;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(0, 150, 255, 0.5);
+    background: rgba(96, 96, 96, 0.5);
+    border-color: rgba(160, 160, 160, 0.4);
   }
 }
 
 .chat-input {
   flex: 1;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
-  color: white;
+  background: rgba(32, 32, 32, 0.5);
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  border-radius: 0;
+  color: rgba(240, 240, 240, 0.95);
   padding: 4px 8px;
   font-size: 11px;
   transition: all 0.2s ease;
@@ -455,59 +452,41 @@
   
   &:focus {
     outline: none;
-    border-color: #0096ff;
-    background: rgba(255, 255, 255, 0.15);
-    caret-color: #0096ff; // Ensure caret is visible when focused
+    border-color: rgba(160, 160, 160, 0.5);
+    background: rgba(48, 48, 48, 0.6);
+    caret-color: rgba(200, 200, 200, 0.9);
   }
 
   &.active {
-    border-color: #0096ff;
-    background: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 0 10px rgba(0, 150, 255, 0.3);
-    caret-color: #0096ff; // Ensure caret is visible when active
+    border-color: rgba(160, 160, 160, 0.5);
+    background: rgba(48, 48, 48, 0.6);
+    box-shadow: none;
+    caret-color: rgba(200, 200, 200, 0.9);
   }
   
-  // Ensure caret is visible when active and focused
   &.active:focus {
-    caret-color: #0096ff !important; // Force caret visibility
+    caret-color: rgba(200, 200, 200, 0.9) !important;
   }
 
   &.inactive {
-    opacity: 0.7;
+    opacity: 0.6;
     cursor: pointer;
     
     &:hover {
-      opacity: 0.9;
-      background: rgba(255, 255, 255, 0.12);
+      opacity: 0.8;
+      background: rgba(40, 40, 40, 0.5);
     }
   }
 
   &:disabled {
     opacity: 0.5;
-    cursor: pointer; // Allow clicking even when disabled for activation
+    cursor: pointer;
   }
 
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(150, 150, 150, 0.6);
   }
 
-
-  &.inactive {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
-    cursor: pointer;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.08);
-    }
-  }
-
-  &:disabled {
-    cursor: pointer;
-    opacity: 0.8;
-  }
-  
-  // Ensure text selection works when active
   &.active {
     user-select: text;
     -webkit-user-select: text;
@@ -515,7 +494,6 @@
     -ms-user-select: text;
   }
   
-  // Hide caret when readonly (inactive state)
   &[readonly] {
     caret-color: transparent !important;
     user-select: none;
@@ -524,17 +502,16 @@
     -ms-user-select: none;
   }
   
-  // Ensure caret is visible when not readonly (active state)
   &:not([readonly]) {
-    caret-color: #0096ff;
+    caret-color: rgba(200, 200, 200, 0.9);
   }
 }
 
 .chat-send-btn {
-  background: linear-gradient(135deg, #0096ff 0%, #007acc 100%);
-  border: none;
-  border-radius: 4px;
-  color: white;
+  background: rgba(96, 96, 96, 0.6);
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  border-radius: 0;
+  color: rgba(240, 240, 240, 0.95);
   padding: 4px 10px;
   cursor: pointer;
   font-size: 11px;
@@ -542,13 +519,13 @@
   transition: all 0.2s ease;
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #00aaff 0%, #0088dd 100%);
+    background: rgba(128, 128, 128, 0.7);
+    border-color: rgba(160, 160, 160, 0.5);
   }
 
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.4;
     cursor: not-allowed;
-    transform: none;
   }
 }
 
@@ -558,23 +535,40 @@
 }
 
 .chat-messages::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0;
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-  background: rgba(0, 150, 255, 0.6);
-  border-radius: 3px;
+  background: rgba(128, 128, 128, 0.4);
+  border-radius: 0;
 }
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 150, 255, 0.8);
+  background: rgba(160, 160, 160, 0.5);
+}
+
+.chat-channel-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.chat-channel-tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-channel-tabs::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.3);
+  border-radius: 0;
+}
+
+.chat-channel-tabs::-webkit-scrollbar-thumb:hover {
+  background: rgba(160, 160, 160, 0.5);
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
   .chat-window {
-    width: 500px; /* Wider on tablets */
+    width: 500px;
     height: 300px;
     left: 5px;
     bottom: 70px;
@@ -599,7 +593,7 @@
 
 @media (max-width: 480px) {
   .chat-window {
-    width: 400px; /* Still wider on mobile for merged view */
+    width: 400px;
     height: 250px;
   }
 
@@ -631,34 +625,33 @@
   left: 10px;
   width: 50px;
   height: 50px;
-  background: rgba(0, 0, 0, 0.95);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(128, 128, 128, 0.3);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
-  z-index: 10001; /* Higher than window manager (100) and windows (10000) */
+  transition: all 0.2s ease;
+  z-index: 10001;
   backdrop-filter: blur(10px);
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
-  pointer-events: auto; /* Ensure it's clickable */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  pointer-events: auto;
 
   &:hover {
-    background: rgba(0, 0, 0, 1);
-    border-color: rgba(255, 255, 255, 0.4);
-    transform: scale(1.1);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+    background: rgba(32, 32, 32, 0.9);
+    border-color: rgba(160, 160, 160, 0.5);
+    transform: scale(1.05);
   }
 
   .chat-icon {
     font-size: 20px;
-    color: rgba(255, 255, 255, 0.8);
-    transition: color 0.3s ease;
+    color: rgba(200, 200, 200, 0.9);
+    transition: color 0.2s ease;
   }
 
   &:hover .chat-icon {
-    color: white;
+    color: rgba(255, 255, 255, 1);
   }
 
   .chat-notification-dot {
@@ -667,8 +660,8 @@
     right: -2px;
     width: 12px;
     height: 12px;
-    background: #ff4444;
-    border: 2px solid rgba(0, 0, 0, 0.95);
+    background: rgba(255, 68, 68, 0.9);
+    border: 2px solid rgba(0, 0, 0, 0.85);
     border-radius: 50%;
     animation: pulse 2s infinite;
   }

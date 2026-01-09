@@ -86,6 +86,8 @@ export default class LightRenderer {
 
   // Ambient (day/night/cave)
   private ambient = 1.0;
+  private lastAmbientTime = -1;
+  private cachedAmbient = 1.0;
 
   // Per-floor collections
   private glowByZ = new Map<number, FloorGlow>();
@@ -95,6 +97,13 @@ export default class LightRenderer {
   private eraseInflatePx = 0;
   private eraseBlurStrength = 0;
   private snapPixelPositions = false;
+
+  // Reusable arrays for occluder carving to avoid allocations
+  private occluderOriginals: (string | number)[] = [];
+  private occluderOrigX: number[] = [];
+  private occluderOrigY: number[] = [];
+  private occluderOrigW: number[] = [];
+  private occluderOrigH: number[] = [];
 
   constructor(private renderer: Renderer) {
     this.layer = new Container();
@@ -135,32 +144,47 @@ export default class LightRenderer {
     const height = Interface.TILE_HEIGHT * Interface.TILE_SIZE;
     this.ensureRTs(width, height);
 
-    // update ambient and set darkness alpha
-    this.ambient = this.computeAmbient();
+    // update ambient and set darkness alpha - cache if time unchanged
+    const currentTime = window.gameClient.world.clock.getUnix();
+    if (currentTime !== this.lastAmbientTime) {
+      this.cachedAmbient = this.computeAmbient();
+      this.lastAmbientTime = currentTime;
+    }
+    this.ambient = this.cachedAmbient;
     this.darkness.alpha = Math.min(1, this.ambient * 1.15);
 
-    // reset darkness holes
-    for (let i = 0; i < this.pool.length; i++) this.pool[i].visible = false;
+    // reset darkness holes - only reset used sprites
+    if (this.used > 0) {
+      const pool = this.pool;
+      for (let i = 0; i < this.used; i++) pool[i].visible = false;
+    }
     this.used = 0;
 
-    // current-floor glow reuse
-    for (let i = 0; i < this.glowPool.length; i++) this.glowPool[i].visible = false;
+    // current-floor glow reuse - only reset used sprites
+    if (this.glowUsed > 0) {
+      const glowPool = this.glowPool;
+      for (let i = 0; i < this.glowUsed; i++) glowPool[i].visible = false;
+    }
     this.glowUsed = 0;
 
-    // clear drawn layers
+    // clear drawn layers - removeChildren() is actually optimized in PIXI
     this.lowerGlowLayer.removeChildren();
 
-    // reset per-floor pools
+    // reset per-floor pools - only reset used sprites
     for (const fg of this.glowByZ.values()) {
       fg.used = 0;
-      for (const s of fg.pool) s.visible = false;
+      // Only reset sprites that were actually used
+      const pool = fg.pool;
+      for (let i = 0; i < pool.length; i++) pool[i].visible = false;
       fg.spr.visible = false;
       fg.holeSpr.visible = false;
       this.ensureGlowRT(fg, width, height);
     }
     for (const oc of this.occByZ.values()) {
       oc.used = 0;
-      for (const s of oc.pool) s.visible = false;
+      // Only reset sprites that were actually used
+      const pool = oc.pool;
+      for (let i = 0; i < pool.length; i++) pool[i].visible = false;
     }
 
     // overlap grid (current floor)
@@ -204,27 +228,36 @@ export default class LightRenderer {
           const oc = this.occByZ.get(z);
           if (!oc || oc.used === 0) continue;
 
-          const originals: (string | number)[] = new Array(oc.stage.children.length);
-          const origX: number[] = new Array(oc.stage.children.length);
-          const origY: number[] = new Array(oc.stage.children.length);
-          const origW: number[] = new Array(oc.stage.children.length);
-          const origH: number[] = new Array(oc.stage.children.length);
+          const children = oc.stage.children;
+          const len = children.length;
+          
+          // Reuse arrays - resize if needed, but avoid reallocation
+          if (this.occluderOriginals.length < len) {
+            this.occluderOriginals.length = len;
+            this.occluderOrigX.length = len;
+            this.occluderOrigY.length = len;
+            this.occluderOrigW.length = len;
+            this.occluderOrigH.length = len;
+          }
 
           if (blur) oc.stage.filters = [blur];
 
-          for (let i = 0; i < oc.stage.children.length; i++) {
-            const s = oc.stage.children[i] as Sprite;
-            originals[i] = s.blendMode;
-            origX[i] = s.x; origY[i] = s.y; origW[i] = s.width; origH[i] = s.height;
+          for (let i = 0; i < len; i++) {
+            const s = children[i] as Sprite;
+            this.occluderOriginals[i] = s.blendMode;
+            this.occluderOrigX[i] = s.x;
+            this.occluderOrigY[i] = s.y;
+            this.occluderOrigW[i] = s.width;
+            this.occluderOrigH[i] = s.height;
 
             s.blendMode = 'erase';
 
             // optional inflate to avoid leaks — OFF by default
             if (this.eraseInflatePx > 0) {
-              s.x = origX[i] - this.eraseInflatePx;
-              s.y = origY[i] - this.eraseInflatePx;
-              s.width  = origW[i] + this.eraseInflatePx * 2;
-              s.height = origH[i] + this.eraseInflatePx * 2;
+              s.x = this.occluderOrigX[i] - this.eraseInflatePx;
+              s.y = this.occluderOrigY[i] - this.eraseInflatePx;
+              s.width  = this.occluderOrigW[i] + this.eraseInflatePx * 2;
+              s.height = this.occluderOrigH[i] + this.eraseInflatePx * 2;
             }
 
             if (this.snapPixelPositions) {
@@ -240,10 +273,13 @@ export default class LightRenderer {
           });
 
           // restore
-          for (let i = 0; i < oc.stage.children.length; i++) {
-            const s = oc.stage.children[i] as Sprite;
-            s.blendMode = originals[i] as any;
-            s.x = origX[i]; s.y = origY[i]; s.width = origW[i]; s.height = origH[i];
+          for (let i = 0; i < len; i++) {
+            const s = children[i] as Sprite;
+            s.blendMode = this.occluderOriginals[i] as any;
+            s.x = this.occluderOrigX[i];
+            s.y = this.occluderOrigY[i];
+            s.width = this.occluderOrigW[i];
+            s.height = this.occluderOrigH[i];
           }
           if (blur) oc.stage.filters = null;
         }

@@ -112,11 +112,12 @@ export default function Window({
     
     const startY = e.clientY;
     const startHeight = windowRef.current?.offsetHeight || 0;
-    const maxHeight = naturalHeight || startHeight; // Use natural height as max
+    const maxHeight = naturalHeight || startHeight; // Use natural height as max - don't expand beyond content
+    const minHeight = 36 + 25; // 1 slot (36px) + header (12px) = minimum size
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaY = moveEvent.clientY - startY;
-      const newHeight = Math.max(100, Math.min(maxHeight, startHeight + deltaY)); // Clamp between min and max
+      const newHeight = Math.max(minHeight, Math.min(maxHeight, startHeight + deltaY)); // Clamp between min and max
       
       // Update both window and content heights simultaneously for smooth resizing
       if (windowRef.current) {

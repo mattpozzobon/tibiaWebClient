@@ -42,7 +42,7 @@
   background: rgba(30, 30, 30, 0.9);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0;
-  cursor: grab;
+  cursor: move !important;
   user-select: none !important;
   -webkit-user-select: none !important;
   -moz-user-select: none !important;
@@ -66,7 +66,7 @@
   transition: transform 0.2s ease, opacity 0.2s ease;
   
   &:active {
-    cursor: grabbing;
+    cursor: move !important;
   }
   
   &[draggable="true"] {

@@ -121,7 +121,7 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
       if (savedState) {
         const parsedWindows: SerializableWindowData[] = JSON.parse(savedState);
         if (Array.isArray(parsedWindows)) {
-          // Recreate windows with components (only equipment and minimap)
+          // Recreate windows with components (all windows except containers)
           const restoredWindows: WindowData[] = parsedWindows
             .filter(windowConfig => !windowConfig.id.startsWith(WINDOW_TYPES.CONTAINER + '-')) // Explicitly exclude containers
             .map(windowConfig => {
@@ -131,7 +131,11 @@ export default function WindowManager({ children, gc }: WindowManagerProps) {
                 component = <EquipmentWindow gc={gc} containerIndex={0} />;
               } else if (windowConfig.id === WINDOW_TYPES.MINIMAP) {
                 component = <MinimapWindow gc={gc} />;
-              } 
+              } else if (windowConfig.id === WINDOW_TYPES.STATUS) {
+                component = <StatusWindow gc={gc} />;
+              } else if (windowConfig.id === WINDOW_TYPES.FRIENDS) {
+                component = <FriendsWindow gc={gc} />;
+              }
               
               return {
                 ...windowConfig,

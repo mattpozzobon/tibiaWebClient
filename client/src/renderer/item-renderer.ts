@@ -24,29 +24,59 @@ export default class ItemRenderer {
     const items: Item[] = tile.items;
     const currentHoverTile = window.gameClient.mouse.getCurrentTileHover();
 
-    // Optimize: check for on-top items during iteration instead of separate some() call
-    let tileHasOnTop = false;
-    let lastNonOnTopIndex = -1;
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].hasFlag(PropBitFlag.DatFlagOnTop)) {
-        tileHasOnTop = true;
-      } else {
-        lastNonOnTopIndex = i;
-      }
-    }
-    const shouldOutlineBase = currentHoverTile === tile && !tileHasOnTop;
+    // Check if this tile is being hovered
+    const isHovered = currentHoverTile === tile;
 
     const tileZ = tile.getPosition().z;
     const size = Interface.TILE_SIZE;
     
-    // Cache style calculation - same for all items on the tile
-    const style = this.lighting?.styleFor(tile) as TileLightStyle | undefined;
+    // Cache base style calculation - same for all items on the tile
+    const baseStyle = this.lighting?.styleFor(tile) as TileLightStyle | undefined;
 
     for (let i = 0; i < items.length; ++i) {
       const item = items[i];
       if (item.hasFlag(PropBitFlag.DatFlagOnTop)) continue;
 
-      const outlineThis = shouldOutlineBase && i === lastNonOnTopIndex && item.isPickupable();
+      const isHoveredItem = isHovered;
+      const isPickupable = item.isPickupable();
+
+      // For pickupable items: use outline effect
+      // For non-pickupable items (walls, doors, stairs): use orange pulsating effect
+      let shouldOutline = false;
+      let style = baseStyle;
+      
+      if (isHoveredItem) {
+        if (isPickupable) {
+          // Pickupable items get outline
+          shouldOutline = true;
+        } else {
+          // Non-pickupable items get orange pulsating effect
+          const time = performance.now();
+          const pulseSpeed = 0.005; // Faster pulsation speed
+          const pulseIntensity = (Math.sin(time * pulseSpeed) + 1) / 2; // 0 to 1
+          
+          // Vary tint intensity from 0.3 to 1.0 for more visible pulsation
+          const minTintIntensity = 0.3;
+          const maxTintIntensity = 1.0;
+          const tintIntensity = minTintIntensity + (maxTintIntensity - minTintIntensity) * pulseIntensity;
+          
+          // Base orange color
+          const baseOrange = 0xFFA500; // Orange
+          
+          // Calculate pulsating tint by interpolating between white (no tint) and orange
+          const r = Math.floor(255 + (0xFF - 255) * tintIntensity);
+          const g = Math.floor(255 + (0xA5 - 255) * tintIntensity);
+          const b = Math.floor(255 + (0x00 - 255) * tintIntensity);
+          const pulsatingTint = (r << 16) | (g << 8) | b;
+          
+          // Use normal blend mode to avoid transparency issues
+          style = {
+            ...baseStyle,
+            tint: pulsatingTint
+            // Don't set alpha - let it use the base style's alpha or default to full opacity
+          };
+        }
+      }
 
       // --- bubble lighting for light-emitting items (collect by floor) ---
       if (item.isLight()) {
@@ -64,7 +94,7 @@ export default class ItemRenderer {
         tile.__renderElevation,
         size,
         batcher,
-        outlineThis,
+        shouldOutline, // Outline for pickupable items
         style,
         tileZ // occluder floor
       );
@@ -82,17 +112,54 @@ export default class ItemRenderer {
     const tileZ = tile.getPosition().z;
     const size = Interface.TILE_SIZE;
 
-    let lastOnTop = -1;
-    for (let i = 0; i < items.length; ++i) if (items[i].hasFlag(PropBitFlag.DatFlagOnTop)) lastOnTop = i;
+    // Check if this tile is being hovered
+    const isHovered = currentHoverTile === tile;
 
     for (let i = 0; i < items.length; ++i) {
       const item = items[i];
       if (!item.hasFlag(PropBitFlag.DatFlagOnTop)) continue;
 
-      const outlineThis = currentHoverTile === tile && i === lastOnTop && item.isPickupable();
+      const isHoveredItem = isHovered;
+      const isPickupable = item.isPickupable();
 
-      // Per-item style (deferred to lighting class)
-      const style = this.lighting?.styleFor(tile) as TileLightStyle | undefined;
+      // For pickupable items: use outline effect
+      // For non-pickupable items (walls, doors, stairs): use orange pulsating effect
+      let shouldOutline = false;
+      const baseStyle = this.lighting?.styleFor(tile) as TileLightStyle | undefined;
+      let style = baseStyle;
+      
+      if (isHoveredItem) {
+        if (isPickupable) {
+          // Pickupable items get outline
+          shouldOutline = true;
+        } else {
+          // Non-pickupable items get orange pulsating effect
+          const time = performance.now();
+          const pulseSpeed = 0.005; // Faster pulsation speed
+          const pulseIntensity = (Math.sin(time * pulseSpeed) + 1) / 2; // 0 to 1
+          
+          // Vary tint intensity from 0.3 to 1.0 for more visible pulsation
+          const minTintIntensity = 0.3;
+          const maxTintIntensity = 1.0;
+          const tintIntensity = minTintIntensity + (maxTintIntensity - minTintIntensity) * pulseIntensity;
+          
+          // Base orange color
+          const baseOrange = 0xFFA500; // Orange
+          
+          // Calculate pulsating tint by interpolating between white (no tint) and orange
+          const r = Math.floor(255 + (0xFF - 255) * tintIntensity);
+          const g = Math.floor(255 + (0xA5 - 255) * tintIntensity);
+          const b = Math.floor(255 + (0x00 - 255) * tintIntensity);
+          const pulsatingTint = (r << 16) | (g << 8) | b;
+          
+          // Use normal blend mode to avoid transparency issues
+          style = {
+            ...baseStyle,
+            tint: pulsatingTint
+            // Don't set alpha - let it use the base style's alpha or default to full opacity
+          };
+        }
+      }
 
       // Bubble lighting for on-top items too (collect by floor)
       if (item.isLight()) {
@@ -109,7 +176,7 @@ export default class ItemRenderer {
         tile.__renderElevation,
         size,
         batcher,
-        outlineThis,
+        shouldOutline, // Outline for pickupable items
         style,
         tileZ // occluder floor
       );

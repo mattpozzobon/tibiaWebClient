@@ -26,82 +26,9 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
     }
   }, [hasEquipment, gc]);
 
-  useEffect(() => {
-    // Wait a bit to ensure WindowManager has loaded saved state first
-    const timer = setTimeout(() => {
-      // Clean up existing windows to avoid duplicates
-      removeWindow('equipment');
-      removeWindow('minimap');
-      removeWindow('status');
-      removeWindow('friends');
-
-      // Helper function to get saved window state
-      const getSavedWindowState = (windowId: string) => {
-        try {
-          const savedState = localStorage.getItem('tibia-window-state');
-          if (savedState) {
-            const parsed = JSON.parse(savedState);
-            if (Array.isArray(parsed)) {
-              return parsed.find((w: any) => w?.id === windowId);
-            }
-          }
-        } catch (_) {}
-        return null;
-      };
-
-      // Get saved state for equipment, minimap, status, and friends windows
-      const savedEquipment = getSavedWindowState('equipment');
-      const savedMinimap = getSavedWindowState('minimap');
-      const savedStatus = getSavedWindowState('status');
-      const savedFriends = getSavedWindowState('friends');
-
-      // Add the equipment window with saved state or defaults
-      addWindow({
-        id: 'equipment',
-        title: 'Equipment',
-        component: <EquipmentWindow gc={gc} containerIndex={0} />,
-        column: savedEquipment?.column || 'left',
-        order: savedEquipment?.order || 0,
-        className: savedEquipment?.className || 'equipment-window',
-        pinned: savedEquipment?.pinned || false
-      });
-
-      // Add the minimap window with saved state or defaults
-      addWindow({
-        id: 'minimap',
-        title: 'Minimap',
-        component: <MinimapWindow gc={gc} />,
-        column: savedMinimap?.column || 'right',
-        order: savedMinimap?.order || 0,
-        className: savedMinimap?.className || 'minimap-window',
-        pinned: savedMinimap?.pinned || false
-      });
-
-      // Add the status window with saved state or defaults
-      addWindow({
-        id: 'status',
-        title: 'Status',
-        component: <StatusWindow gc={gc} />,
-        column: savedStatus?.column || 'left',
-        order: savedStatus?.order || 0,
-        className: savedStatus?.className || 'status-window',
-        pinned: savedStatus?.pinned || false
-      });
-
-      // Add the friends window with saved state or defaults
-      addWindow({
-        id: 'friends',
-        title: 'Friends',
-        component: <FriendsWindow gc={gc} />,
-        column: savedFriends?.column || 'right',
-        order: savedFriends?.order || 0,
-        className: savedFriends?.className || 'friends-window',
-        pinned: savedFriends?.pinned || false
-      });
-    }, 100); // Small delay to let WindowManager load first
-
-    return () => clearTimeout(timer);
-  }, [gc, addWindow, removeWindow]);
+  // Note: WindowManager already handles restoring windows from localStorage
+  // We don't need to auto-open windows here - they will be restored by WindowManager
+  // if they were saved as open. If they were closed, they won't be in saved state.
 
   // Set up container event listeners
   useEffect(() => {
@@ -143,51 +70,13 @@ export default function WindowInitializer({ gc }: WindowInitializerProps) {
         // Use default 'right' if localStorage fails
       }
       
-      // Calculate available space in the column
-      const calculateAvailableSpace = (targetColumn: ColumnType): number => {
-        const viewportHeight = window.innerHeight;
-        const columnPadding = 3 + 12; // top padding + bottom padding
-        const headerHeight = 12; // window header height
-        
-        // Get all windows in the target column
-        const columnWindows = windows.filter(w => w.column === targetColumn);
-        
-        // Calculate total height of existing windows
-        let totalWindowHeight = 0;
-        columnWindows.forEach(w => {
-          if (w.height) {
-            totalWindowHeight += w.height;
-          } else {
-            // Default heights for different window types
-            if (w.className === 'container-window') {
-              totalWindowHeight += 200; // Default container height
-            } else if (w.className === 'minimap-window') {
-              totalWindowHeight += 225;
-            } else if (w.className === 'equipment-window') {
-              totalWindowHeight += 150;
-            } else {
-              totalWindowHeight += 200; // Default
-            }
-          }
-        });
-        
-        // Available space = viewport height - column padding - existing windows
-        const availableSpace = viewportHeight - columnPadding - totalWindowHeight;
-        return Math.max(100, availableSpace); // Minimum 100px
-      };
-      
-      const availableSpace = calculateAvailableSpace(column);
-      const defaultContainerHeight = 300; // Default container window height
-      const containerHeight = availableSpace < defaultContainerHeight ? availableSpace : undefined;
-      
       addWindow({
         id: windowId,
         title: title,
         component: <ContainerWindow gc={gc} containerId={containerId} />,
         column: column,
         order: 0,
-        className: 'container-window',
-        height: containerHeight
+        className: 'container-window'
       });
     };
 

@@ -29,12 +29,46 @@ export default class TileRenderer {
     const size = Interface.TILE_SIZE;
     const tileZ = tile.getPosition().z;
 
+    // Check if this tile is being hovered (applies to all tile types: floors, walls, stairs, etc.)
+    const currentHoverTile = window.gameClient.mouse.getCurrentTileHover();
+    const isHovered = currentHoverTile === tile;
+    // Don't color the tile if it has items (items will be highlighted instead)
+    const hasItems = tile.items.length > 0;
+
     let fg: FrameGroup;
     try { fg = tile.getFrameGroup(FrameGroup.NONE); } catch { return; }
 
     const f = tile.getFrame();
     const p = tile.getPattern();
-    const style = this.lighting?.styleFor(tile);
+    const baseStyle = this.lighting?.styleFor(tile);
+    
+    // Apply orange pulsating hover effect (only if tile has no items)
+    let style = baseStyle;
+    if (isHovered && !hasItems) {
+      // Pulsating effect using sine wave - more visible by varying tint intensity
+      const time = performance.now();
+      const pulseSpeed = 0.005; // Faster pulsation speed
+      const pulseIntensity = (Math.sin(time * pulseSpeed) + 1) / 2; // 0 to 1
+      
+      // Vary tint intensity from 0.5 to 1.0 for more visible pulsation
+      const minTintIntensity = 0.5;
+      const maxTintIntensity = 1.0;
+      const tintIntensity = minTintIntensity + (maxTintIntensity - minTintIntensity) * pulseIntensity;
+      
+      // Calculate pulsating tint by interpolating between white (no tint) and orange
+      // This creates a smooth transition from subtle orange to full orange
+      const r = Math.floor(255 + (0xFF - 255) * tintIntensity);
+      const g = Math.floor(255 + (0xA5 - 255) * tintIntensity);
+      const b = Math.floor(255 + (0x00 - 255) * tintIntensity);
+      const pulsatingTint = (r << 16) | (g << 8) | b;
+      
+      // Use normal blend mode to avoid transparency issues
+      style = {
+        ...baseStyle,
+        tint: pulsatingTint
+        // Don't set alpha - let it use the base style's alpha or default to full opacity
+      };
+    }
 
     if (tile.isLight()) {
       const info = tile.getDataObject().properties.light;
@@ -69,6 +103,7 @@ export default class TileRenderer {
           const px = Math.round(xCellDraw * size);
           const py = Math.round(yCellDraw * size);
 
+          // Apply hover tint to all layers when hovered
           batcher.push(tex, px, py, size, size, false, style);
           this.light.addOccluderSprite(tileZ, tex, px, py, size, size);
         }

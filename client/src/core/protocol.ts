@@ -164,10 +164,20 @@ class UseBeltPotionPacket extends PacketWriter {
 }
 
 class ItemTextWritePacket extends PacketWriter {
-  constructor(content: string) {
-    const { stringEncoded, stringLength } = new PacketWriter(0, 0).encodeString(content);
-    super(CONST.PROTOCOL.CLIENT.ITEM_TEXT_WRITE, stringLength);
-    this.writeBuffer(stringEncoded);
+  constructor(thing: any, string: string) {
+    // Encode string as UTF-8 bytes (static method, returns Uint8Array without length prefix)
+    const { stringEncoded, stringLength } = new PacketWriter(0, 0).encodeString(string);
+    
+    // Packet structure: position/index (8 bytes via __writeGenericMove) + UInt16(length) + text bytes
+    // __writeGenericMove writes: 1 byte (eventType) + 6 or 7 bytes (location data) + 1 byte (index) = 8 bytes
+    const totalLength = 8 + 2 + stringLength; // 8 (position/index) + 2 (string length) + string bytes
+    
+    super(CONST.PROTOCOL.CLIENT.ITEM_TEXT_WRITE, totalLength);
+    this.__writeGenericMove(thing);
+    
+    // Write string length (UInt16) followed by string bytes
+    this.writeUInt16(stringLength);
+    this.set(stringEncoded);
   }
 }
 

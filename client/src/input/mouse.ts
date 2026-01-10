@@ -190,6 +190,12 @@ class Mouse {
       }
     }
     if (item !== null && item.isMultiUse()) return this.__setMultiUseItem(object);
+    
+    // Track the item being used so we can send it back when writing text
+    if (window.gameClient.networkManager.packetHandler) {
+      window.gameClient.networkManager.packetHandler.setLastUsedItem(object);
+    }
+    
     window.gameClient.send(new ItemUsePacket(object));
   }
 

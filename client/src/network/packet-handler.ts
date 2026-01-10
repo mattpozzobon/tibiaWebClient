@@ -15,6 +15,8 @@ import { reactNotificationManager } from "../react/services/ReactNotificationMan
 
 
 class PacketHandler {
+  private __lastUsedItem: any = null; // Track the last item used to open readable modal
+
   constructor() {
     /*
      * Class PacketHandler
@@ -22,6 +24,14 @@ class PacketHandler {
      * This usually delegates to the gameClient but is a central place for collections
      */
     
+  }
+  
+  setLastUsedItem(item: any): void {
+    this.__lastUsedItem = item;
+  }
+  
+  getLastUsedItem(): any {
+    return this.__lastUsedItem;
   }
 
   handlePropertyChange(packet: { guid: number; property: number; value: number }): void {
@@ -582,8 +592,15 @@ class PacketHandler {
     console.log('handleReadText: ', packet);
     // Only open the modal if the item is readable
     if (packet.readable && (window as any).reactUIManager) {
-      (window as any).reactUIManager.openModal('readable', packet);
+      // Include the last used item in the packet data so we can send it back when writing
+      const modalData = {
+        ...packet,
+        item: this.__lastUsedItem
+      };
+      (window as any).reactUIManager.openModal('readable', modalData);
     }
+    // Clear the last used item after opening modal
+    this.__lastUsedItem = null;
   }
 
   handleChannelMessage(packet: { id: number; message: string; name: string; color: number }): void {

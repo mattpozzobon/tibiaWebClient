@@ -9,15 +9,130 @@ class Mouse {
   public __multiUseObject: any = null;
   private __leftButtonPressed = false;
   private __rightButtonPressed = false;
+  private __pendingRightClick: { object: any; timeout: ReturnType<typeof setTimeout> } | null = null;
   public x = 0;
   public y = 0;
+  
+  // Store bound handlers so we can remove them in destroy()
+  private __boundHandlers: {
+    mousedown?: (e: MouseEvent) => void;
+    mouseup?: (e: MouseEvent) => void;
+    mousemove?: (e: MouseEvent) => void;
+    dblclick?: (e: MouseEvent) => void;
+    contextmenu?: (e: MouseEvent) => void;
+    blur?: () => void;
+    focus?: () => void;
+    visibilitychange?: () => void;
+    mouseleave?: () => void;
+  } = {};
 
   constructor() {
-    document.body.addEventListener("mousedown", this.__handleMouseDown.bind(this));
-    document.body.addEventListener("mouseup", this.__handleMouseUp.bind(this));
-    document.body.addEventListener("mousemove", this.__handleMouseMove.bind(this));
-    document.body.addEventListener("dblclick", this.__handleMouseDoubleClick.bind(this));
-    document.body.addEventListener("contextmenu", this.__handleContextMenu.bind(this));
+    // Bind handlers and store references for cleanup
+    this.__boundHandlers.mousedown = this.__handleMouseDown.bind(this);
+    this.__boundHandlers.mouseup = this.__handleMouseUp.bind(this);
+    this.__boundHandlers.mousemove = this.__handleMouseMove.bind(this);
+    this.__boundHandlers.dblclick = this.__handleMouseDoubleClick.bind(this);
+    this.__boundHandlers.contextmenu = this.__handleContextMenu.bind(this);
+    this.__boundHandlers.blur = this.setInactive.bind(this);
+    this.__boundHandlers.focus = this.__handleWindowFocus.bind(this);
+    this.__boundHandlers.visibilitychange = this.__handleVisibilityChange.bind(this);
+    this.__boundHandlers.mouseleave = this.__handleMouseLeave.bind(this);
+    
+    // Add event listeners
+    document.body.addEventListener("mousedown", this.__boundHandlers.mousedown);
+    document.body.addEventListener("mouseup", this.__boundHandlers.mouseup);
+    document.body.addEventListener("mousemove", this.__boundHandlers.mousemove);
+    document.body.addEventListener("dblclick", this.__boundHandlers.dblclick);
+    document.body.addEventListener("contextmenu", this.__boundHandlers.contextmenu);
+    
+    // Reset mouse state when window loses focus or becomes hidden
+    window.addEventListener("blur", this.__boundHandlers.blur);
+    window.addEventListener("focus", this.__boundHandlers.focus);
+    document.addEventListener("visibilitychange", this.__boundHandlers.visibilitychange);
+    document.body.addEventListener("mouseleave", this.__boundHandlers.mouseleave);
+  }
+  
+  destroy(): void {
+    // Remove all event listeners
+    if (this.__boundHandlers.mousedown) {
+      document.body.removeEventListener("mousedown", this.__boundHandlers.mousedown);
+    }
+    if (this.__boundHandlers.mouseup) {
+      document.body.removeEventListener("mouseup", this.__boundHandlers.mouseup);
+    }
+    if (this.__boundHandlers.mousemove) {
+      document.body.removeEventListener("mousemove", this.__boundHandlers.mousemove);
+    }
+    if (this.__boundHandlers.dblclick) {
+      document.body.removeEventListener("dblclick", this.__boundHandlers.dblclick);
+    }
+    if (this.__boundHandlers.contextmenu) {
+      document.body.removeEventListener("contextmenu", this.__boundHandlers.contextmenu);
+    }
+    if (this.__boundHandlers.blur) {
+      window.removeEventListener("blur", this.__boundHandlers.blur);
+    }
+    if (this.__boundHandlers.focus) {
+      window.removeEventListener("focus", this.__boundHandlers.focus);
+    }
+    if (this.__boundHandlers.visibilitychange) {
+      document.removeEventListener("visibilitychange", this.__boundHandlers.visibilitychange);
+    }
+    if (this.__boundHandlers.mouseleave) {
+      document.body.removeEventListener("mouseleave", this.__boundHandlers.mouseleave);
+    }
+    
+    // Clear pending right-click timeout
+    if (this.__pendingRightClick) {
+      clearTimeout(this.__pendingRightClick.timeout);
+      this.__pendingRightClick = null;
+    }
+    
+    // Reset all state
+    this.setInactive();
+    this.__boundHandlers = {};
+  }
+  
+  setInactive(): void {
+    // Reset all mouse state when window loses focus
+    this.__leftButtonPressed = false;
+    this.__rightButtonPressed = false;
+    this.__mouseDownObject = null;
+    this.__currentMouseTile = null;
+    
+    // Clear pending right-click timeout
+    if (this.__pendingRightClick) {
+      clearTimeout(this.__pendingRightClick.timeout);
+      this.__pendingRightClick = null;
+    }
+    
+    // Reset cursor
+    this.setCursor("auto");
+  }
+  
+  private __handleWindowFocus(): void {
+    // Reset state when window regains focus to ensure clean state
+    this.setInactive();
+  }
+  
+  private __handleVisibilityChange(): void {
+    if (document.hidden) {
+      // Reset state when tab becomes hidden
+      this.setInactive();
+    }
+  }
+  
+  private __handleMouseLeave(): void {
+    // Reset button states when mouse leaves the document
+    // This helps when switching windows while holding buttons
+    this.__leftButtonPressed = false;
+    this.__rightButtonPressed = false;
+    
+    // Clear pending right-click
+    if (this.__pendingRightClick) {
+      clearTimeout(this.__pendingRightClick.timeout);
+      this.__pendingRightClick = null;
+    }
   }
 
   getCurrentTileHover(): any {
@@ -30,7 +145,7 @@ class Mouse {
   }
 
   private isConnected(): boolean {
-    return !!window.gameClient.networkManager.isConnected();
+    return !!window.gameClient?.networkManager?.isConnected();
   }
 
   private parseIndex(val: string | null | undefined): number | null {
@@ -88,18 +203,75 @@ class Mouse {
   }
 
   private __handleContextMenu(event: MouseEvent): void {
-    event.preventDefault();
-    // window.gameClient.interface.menuManager.close();
-    // if (t.className === "hotbar-item") return window.gameClient.interface.menuManager.open("hotbar-menu", event);
-    // if (t.id === "chat-text-area" || t.className === "channel-empty") return window.gameClient.interface.menuManager.open("chat-body-menu", event);
-    // if (t.parentElement?.id === "chat-text-area" && t.getAttribute("name") !== null) return window.gameClient.interface.menuManager.open("chat-entry-menu", event);
-    // if (t.parentElement?.className === "window" && t.parentElement.id === "friend-window") return window.gameClient.interface.menuManager.open("friend-window-menu", event);
-    // if (t.className === "friend-entry") return window.gameClient.interface.menuManager.open("friend-list-menu", event);
-    // if (t.className.includes("chat-title")) return window.gameClient.interface.menuManager.open("chat-header-menu", event);
+    const target = event.target as HTMLElement;
+    
+    // Clear any pending right-click timeout since contextmenu fired
+    if (this.__pendingRightClick) {
+      clearTimeout(this.__pendingRightClick.timeout);
+    }
+    
+    // Don't prevent default for React components that handle their own context menus
+    // (minimap, chat, friends panel, etc.)
+    if (target.closest('.minimap-canvas-container') ||
+        target.closest('.chat-message') ||
+        target.closest('.friends-panel') ||
+        target.closest('.context-menu')) {
+      // Reset state even if we're not handling it
+      this.__mouseDownObject = null;
+      this.__rightButtonPressed = false;
+      this.__pendingRightClick = null;
+      return; // Let React handle it
+    }
+    
+    // For slots (equipment, containers), prevent default to block browser context menu
+    // The actual action is already handled in mouseup, so we just need to prevent the menu
+    if (target.className.includes("slot") || target.className === "body" || target.closest(".slot")) {
+      event.preventDefault();
+      // Reset state
+      this.__mouseDownObject = null;
+      this.__rightButtonPressed = false;
+      this.__pendingRightClick = null;
+      return;
+    }
+    
+    // For game canvas right-clicks, prevent default and handle it
+    if (target === window.gameClient?.renderer?.app?.canvas || target.closest('#game-container')) {
+      event.preventDefault();
+      
+      // Only process if game client exists, is connected and running
+      if (!window.gameClient || !this.isConnected() || !window.gameClient.isRunning()) {
+        // Reset state even if game isn't ready
+        this.__mouseDownObject = null;
+        this.__rightButtonPressed = false;
+        this.__pendingRightClick = null;
+        return;
+      }
+      
+      // Handle right-click action (use item/look at tile)
+      if (!window.gameClient.keyboard.isControlDown()) {
+        // Use the stored mouse down object from mousedown, or get current position
+        const obj = (this.__pendingRightClick?.object || this.__mouseDownObject || this.getWorldObject(event));
+        if (obj?.which) {
+          this.use(obj);
+        }
+      }
+      
+      // Reset state after handling
+      this.__mouseDownObject = null;
+      this.__rightButtonPressed = false;
+      this.__pendingRightClick = null;
+    } else {
+      // For other elements (like window headers, etc.), prevent default to block browser context menu
+      event.preventDefault();
+      // Reset state
+      this.__mouseDownObject = null;
+      this.__rightButtonPressed = false;
+      this.__pendingRightClick = null;
+    }
   }
 
   private __handleMouseMove(event: MouseEvent): void {
-    if (!window.gameClient.isRunning()) return;
+    if (!window.gameClient?.isRunning()) return;
     this.x = event.clientX;
     this.y = event.clientY;
     this.__currentMouseTile = window.gameClient.renderer.getWorldCoordinates(event);
@@ -109,6 +281,11 @@ class Mouse {
   private __handleMouseDown(event: MouseEvent): void {
     if (event.button === 0) this.__leftButtonPressed = true;
     if (event.button === 2) this.__rightButtonPressed = true;
+    
+    // Always set the selected object, even if not connected yet
+    // This ensures right-click works when the game is ready
+    this.__setSelectedObject(event);
+    
     if (!this.isConnected()) return;
 
     if (this.__leftButtonPressed && this.__rightButtonPressed && this.__mouseDownObject) {
@@ -119,8 +296,6 @@ class Mouse {
     //   window.gameClient.interface.menuManager.close();
     // }
 
-    this.__setSelectedObject(event);
-
     if (!window.gameClient.keyboard.isShiftDown() && !window.gameClient.keyboard.isControlDown() && event.buttons === 1) {
       this.setCursor("grabbing");
     }
@@ -128,16 +303,59 @@ class Mouse {
 
   private __handleMouseUp(event: MouseEvent): void {
     if (event.button === 0) this.__leftButtonPressed = false;
-    if (event.button === 2) this.__rightButtonPressed = false;
-    if (!this.isConnected()) return;
-
-    if (event.button === 2 && !window.gameClient.keyboard.isControlDown()) {
-      const obj = this.__mouseDownObject;
-      if (obj?.which) this.use(obj);
+    
+    const t = event.target as HTMLElement;
+    
+    // For right-click on game canvas, don't process here - let contextmenu event handle it
+    // This prevents double-firing. But for slots (equipment, containers in windows), 
+    // we still need to handle right-click here because they're not in the game canvas
+    if (event.button === 2) {
+      // If it's a slot (container/equipment window), handle it immediately
+      if (t.className.includes("slot") || t.className === "body" || t.closest(".slot")) {
+        if (!this.isConnected()) {
+          this.__mouseDownObject = null;
+          this.__rightButtonPressed = false;
+          return;
+        }
+        
+        // Handle right-click on slot (use item)
+        if (!window.gameClient.keyboard.isControlDown()) {
+          const obj = this.__mouseDownObject;
+          if (obj?.which) {
+            this.use(obj);
+          }
+        }
+        
+        this.__mouseDownObject = null;
+        this.__rightButtonPressed = false;
+        return;
+      }
+      
+      // For game canvas right-clicks, let contextmenu event handle it
+      // Clear any existing pending right-click timeout
+      if (this.__pendingRightClick) {
+        clearTimeout(this.__pendingRightClick.timeout);
+      }
+      
+      // Set up a fallback: if contextmenu doesn't fire within 200ms, clean up
+      const timeoutId = setTimeout(() => {
+        if (this.__pendingRightClick) {
+          this.__mouseDownObject = null;
+          this.__rightButtonPressed = false;
+          this.__pendingRightClick = null;
+        }
+      }, 200);
+      
+      this.__pendingRightClick = { object: this.__mouseDownObject, timeout: timeoutId };
+      this.__rightButtonPressed = false;
+      return;
+    }
+    
+    if (!this.isConnected()) {
+      this.__mouseDownObject = null;
       return;
     }
 
-    const t = event.target as HTMLElement;
     if (t === window.gameClient.renderer.app.canvas) {
       this.__handleCanvasMouseUp(event);
     } else if (t.className.includes("slot") || t.className === "body" || t.closest(".slot")) {
@@ -220,6 +438,8 @@ class Mouse {
   }
 
   private __setSelectedObject(event: MouseEvent): void {
+    if (!window.gameClient) return;
+    
     const t = event.target as HTMLElement;
     
     if (t === window.gameClient.renderer.app.canvas) {

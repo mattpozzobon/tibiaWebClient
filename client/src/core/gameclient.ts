@@ -119,6 +119,11 @@ export default class GameClient {
     // Reset interface
     this.interface.reset();
     
+    // Destroy mouse (removes event listeners)
+    if (this.mouse && typeof this.mouse.destroy === 'function') {
+      this.mouse.destroy();
+    }
+    
     // Destroy renderer and PIXI app
     if (this.renderer && this.renderer.app) {
       // Remove all children from stage

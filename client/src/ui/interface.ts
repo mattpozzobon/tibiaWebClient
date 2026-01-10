@@ -329,8 +329,9 @@ export default class Interface {
     if (!window.gameClient.networkManager.isConnected()) {
       return;
     }
-    // Disable the keyboard when tabbing out to prevent stuck keys.
+    // Disable the keyboard and mouse when tabbing out to prevent stuck keys/buttons.
     window.gameClient.keyboard.setInactive();
+    window.gameClient.mouse.setInactive();
     window.gameClient.renderer.__handleVisibiliyChange(event);
   }
 

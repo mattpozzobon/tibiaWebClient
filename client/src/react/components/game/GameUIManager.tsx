@@ -12,7 +12,7 @@ import ChangelogModal from '../ChangelogModal';
 import MoveItemModal from './modals/MoveItemModal';
 // import ConfirmModal from './modals/ConfirmModal';
 // import EnterNameModal from './modals/EnterNameModal';
-// import ReadableModal from './modals/ReadableModal';
+import ReadableModal from './modals/ReadableModal';
 // import OfferModal from './modals/OfferModal';
 // import SpellbookModal from './modals/SpellbookModal';
 
@@ -41,12 +41,12 @@ export default function GameUIManager() {
     changelog: { isOpen: false },
     // map: { isOpen: false },
     chat: { isOpen: false },
-    moveItem: { isOpen: false },
-    confirm: { isOpen: false },
-    // enterName: { isOpen: false },
-    // readable: { isOpen: false },
-    // offer: { isOpen: false },
-    // spellbook: { isOpen: false },
+      moveItem: { isOpen: false },
+      confirm: { isOpen: false },
+      readable: { isOpen: false },
+      // enterName: { isOpen: false },
+      // offer: { isOpen: false },
+      // spellbook: { isOpen: false },
   });
 
   // UI element states
@@ -202,13 +202,14 @@ export default function GameUIManager() {
         data={modals.confirm.data}
       />
       
-      {/*
+      {/* 
       <EnterNameModal 
         isOpen={modals.enterName.isOpen}
         onClose={() => closeModal('enterName')}
         gc={gc}
         data={modals.enterName.data}
       />
+      */}
       
       <ReadableModal 
         isOpen={modals.readable.isOpen}
@@ -217,7 +218,8 @@ export default function GameUIManager() {
         data={modals.readable.data}
       />
       
-      <OfferModal 
+      {/*
+      <OfferModal
         isOpen={modals.offer.isOpen}
         onClose={() => closeModal('offer')}
         gc={gc}

@@ -578,9 +578,12 @@ class PacketHandler {
     }
   }
 
-  handleReadText(packet: any): void {
+  handleReadText(packet: { readable: boolean; writeable: boolean; content: string; name: string }): void {
     console.log('handleReadText: ', packet);
-    //window.gameClient.interface.modalManager.open("readable-modal", packet);
+    // Only open the modal if the item is readable
+    if (packet.readable && (window as any).reactUIManager) {
+      (window as any).reactUIManager.openModal('readable', packet);
+    }
   }
 
   handleChannelMessage(packet: { id: number; message: string; name: string; color: number }): void {

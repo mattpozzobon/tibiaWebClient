@@ -163,4 +163,12 @@ class UseBeltPotionPacket extends PacketWriter {
   }
 }
 
-export { OutfitChangePacket, ContainerClosePacket, ChannelMessagePacket, ChannelJoinPacket, ChannelLeavePacket, ChannelPrivatePacket, MovementPacket, PlayerTurnPacket, ItemMovePacket, ItemLookPacket, ItemUsePacket, ItemUseWithPacket, TargetPacket, LogoutPacket, KeyringOpenPacket, FriendRemovePacket, FriendAddPacket, OfferBuyPacket, SpellCastPacket, LatencyPacket, UseBeltPotionPacket };
+class ItemTextWritePacket extends PacketWriter {
+  constructor(content: string) {
+    const { stringEncoded, stringLength } = new PacketWriter(0, 0).encodeString(content);
+    super(CONST.PROTOCOL.CLIENT.ITEM_TEXT_WRITE, stringLength);
+    this.writeBuffer(stringEncoded);
+  }
+}
+
+export { OutfitChangePacket, ContainerClosePacket, ChannelMessagePacket, ChannelJoinPacket, ChannelLeavePacket, ChannelPrivatePacket, MovementPacket, PlayerTurnPacket, ItemMovePacket, ItemLookPacket, ItemUsePacket, ItemUseWithPacket, TargetPacket, LogoutPacket, KeyringOpenPacket, FriendRemovePacket, FriendAddPacket, OfferBuyPacket, SpellCastPacket, LatencyPacket, UseBeltPotionPacket, ItemTextWritePacket };

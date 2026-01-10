@@ -168,8 +168,9 @@ export default class PacketReader extends Packet {
     return { id, offers };
   }
 
-  public readReadable(): { writeable: boolean; content: string; name: string } {
+  public readReadable(): { readable: boolean; writeable: boolean; content: string; name: string } {
     return {
+      readable: this.readBoolean(),
       writeable: this.readBoolean(),
       content: this.readString(),
       name: this.readString(),

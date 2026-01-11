@@ -216,21 +216,9 @@ class Mouse {
       clearTimeout(this.__pendingRightClick.timeout);
     }
     
-    // Don't prevent default for React components that handle their own context menus
-    // (minimap, chat, friends panel, etc.)
-    if (target.closest('.minimap-canvas-container') ||
-        target.closest('.chat-message') ||
-        target.closest('.friends-panel') ||
-        target.closest('.context-menu')) {
-      // Reset state even if we're not handling it
-      this.__mouseDownObject = null;
-      this.__rightButtonPressed = false;
-      this.__pendingRightClick = null;
-      return; // Let React handle it
-    }
-    
     // For slots (equipment, containers), prevent default to block browser context menu
     // The actual action is already handled in mouseup, so we just need to prevent the menu
+    // Check this BEFORE window panel check, since slots can be inside windows
     if (target.className.includes("slot") || target.className === "body" || target.closest(".slot")) {
       event.preventDefault();
       // Reset state
@@ -238,6 +226,23 @@ class Mouse {
       this.__rightButtonPressed = false;
       this.__pendingRightClick = null;
       return;
+    }
+    
+    // Don't prevent default for React components that handle their own context menus
+    // (minimap, chat, friends panel, window panels, etc.)
+    if (target.closest('.minimap-canvas-container') ||
+        target.closest('.chat-message') ||
+        target.closest('.friends-panel') ||
+        target.closest('.context-menu') ||
+        target.closest('.window-manager') ||
+        target.closest('.window-column') ||
+        target.closest('.window') ||
+        target.closest('.window-panel-group')) {
+      // Reset state even if we're not handling it
+      this.__mouseDownObject = null;
+      this.__rightButtonPressed = false;
+      this.__pendingRightClick = null;
+      return; // Let React handle it
     }
     
     // For game canvas right-clicks, prevent default and handle it

@@ -13,6 +13,9 @@ import MoveItemModal from './modals/MoveItemModal';
 // import ConfirmModal from './modals/ConfirmModal';
 // import EnterNameModal from './modals/EnterNameModal';
 import ReadableModal from './modals/ReadableModal';
+import LetterModal from './modals/LetterModal';
+import StampedLetterModal from './modals/StampedLetterModal';
+import LabelModal from './modals/LabelModal';
 // import OfferModal from './modals/OfferModal';
 // import SpellbookModal from './modals/SpellbookModal';
 
@@ -44,6 +47,9 @@ export default function GameUIManager() {
       moveItem: { isOpen: false },
       confirm: { isOpen: false },
       readable: { isOpen: false },
+      letter: { isOpen: false },
+      stampedLetter: { isOpen: false },
+      label: { isOpen: false },
       // enterName: { isOpen: false },
       // offer: { isOpen: false },
       // spellbook: { isOpen: false },
@@ -63,6 +69,37 @@ export default function GameUIManager() {
 
   // Modal management functions
   const openModal = useCallback((modalName: string, data?: any) => {
+    // Route letters, stamped letters, and labels to their respective modals instead of ReadableModal
+    if (modalName === 'readable' && data?.name) {
+      const normalizedName = data.name.toLowerCase();
+      if (normalizedName === 'letter') {
+        setModals(prev => ({
+          ...prev,
+          letter: { isOpen: true, data },
+          readable: { isOpen: false, data: undefined } // Ensure readable is closed
+        }));
+        return;
+      }
+      // Check for stamped letter variations
+      if (normalizedName === 'stamped letter' || normalizedName === 'stampedletter') {
+        setModals(prev => ({
+          ...prev,
+          stampedLetter: { isOpen: true, data },
+          readable: { isOpen: false, data: undefined } // Ensure readable is closed
+        }));
+        return;
+      }
+      // Check for label
+      if (normalizedName === 'label') {
+        setModals(prev => ({
+          ...prev,
+          label: { isOpen: true, data },
+          readable: { isOpen: false, data: undefined } // Ensure readable is closed
+        }));
+        return;
+      }
+    }
+    
     setModals(prev => ({
       ...prev,
       [modalName]: { isOpen: true, data }
@@ -216,6 +253,27 @@ export default function GameUIManager() {
         onClose={() => closeModal('readable')}
         gc={gc}
         data={modals.readable.data}
+      />
+      
+      <LetterModal 
+        isOpen={modals.letter.isOpen}
+        onClose={() => closeModal('letter')}
+        gc={gc}
+        data={modals.letter.data}
+      />
+      
+      <StampedLetterModal 
+        isOpen={modals.stampedLetter.isOpen}
+        onClose={() => closeModal('stampedLetter')}
+        gc={gc}
+        data={modals.stampedLetter.data}
+      />
+      
+      <LabelModal 
+        isOpen={modals.label.isOpen}
+        onClose={() => closeModal('label')}
+        gc={gc}
+        data={modals.label.data}
       />
       
       {/*

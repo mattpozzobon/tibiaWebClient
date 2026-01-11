@@ -1,0 +1,536 @@
+/* Letter Modal Styles - Separate from base modal to avoid conflicts */
+@import url('https://fonts.googleapis.com/css2?family=Satisfy&display=swap');
+
+.letter-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.letter-modal {
+  background-size: 100% 100%; // Fill container exactly - since dimensions match image
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  outline: none;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  animation: letterModalFadeIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  // Container dimensions are set inline based on image size - don't override with CSS
+  flex-shrink: 0;
+  overflow: hidden; // Hidden to prevent buttons from breaking out
+  box-sizing: border-box;
+  
+  // Remove any base modal pseudo-elements
+  &::before,
+  &::after {
+    display: none !important;
+    content: none !important;
+  }
+}
+
+@keyframes letterModalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.letter-modal-close {
+  position: absolute;
+  top: 5.5%; // Moved down - increased top to move button down
+  right: 6%; // Moved more to the left - increased right to move button left
+  padding: clamp(3px, 0.5%, 6px) clamp(5px, 1%, 10px);
+  font-size: clamp(9px, 1.8vw, 15px);
+  font-weight: 600;
+  font-family: "Satisfy", cursive;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: auto;
+  height: auto;
+  min-width: clamp(28px, 5%, 42px);
+  max-width: 11%; // Smaller max-width to ensure it stays well within bounds
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  z-index: 10;
+  box-sizing: border-box;
+  white-space: nowrap;
+  margin: 0; // Ensure no margin
+  
+  // Label-specific: position close button beside the input
+  &.label-close-btn {
+    position: relative; // Relative to parent container
+    top: auto;
+    right: auto;
+    flex-shrink: 0;
+    padding: clamp(2px, 0.4%, 4px) clamp(4px, 0.8%, 8px);
+    min-width: clamp(24px, 4%, 36px);
+    height: auto;
+    align-self: center; // Align with input height
+  }
+  
+  // Old-style button design (same as save button)
+  background: linear-gradient(145deg, #8b6f47 0%, #6b5338 100%);
+  border: 1.5px solid rgba(0, 0, 0, 0.4);
+  border-top-color: rgba(139, 111, 71, 0.8);
+  border-left-color: rgba(139, 111, 71, 0.8);
+  border-bottom-color: rgba(0, 0, 0, 0.5);
+  border-right-color: rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow: 
+    inset 0 1px 2px rgba(255, 255, 255, 0.2),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.3); // Reduced external shadow to prevent overflow
+
+  &:hover {
+    background: linear-gradient(145deg, #9b7f57 0%, #7b6348 100%);
+    border-color: rgba(0, 0, 0, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 
+      inset 0 1px 2px rgba(255, 255, 255, 0.25),
+      inset 0 -1px 2px rgba(0, 0, 0, 0.4),
+      0 2px 4px rgba(0, 0, 0, 0.4); // Reduced external shadow to prevent overflow
+    color: #fff;
+  }
+
+  &:active {
+    transform: translateY(0);
+    background: linear-gradient(145deg, #7b5f37 0%, #5b4328 100%);
+    box-shadow: 
+      inset 0 2px 4px rgba(0, 0, 0, 0.4),
+      inset 0 -1px 2px rgba(255, 255, 255, 0.1),
+      0 1px 2px rgba(0, 0, 0, 0.3);
+    border-top-color: rgba(0, 0, 0, 0.5);
+    border-left-color: rgba(0, 0, 0, 0.5);
+    border-bottom-color: rgba(139, 111, 71, 0.6);
+    border-right-color: rgba(139, 111, 71, 0.6);
+  }
+}
+
+.letter-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 12% 9% 18% 9%; // Increased padding slightly - symmetric left/right (9%), top (12%), bottom (18%)
+  position: relative;
+  min-height: 0;
+  gap: 2%;
+  overflow: hidden; // Prevent content overflow
+  border: none;
+  background: transparent;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  
+  // Label-specific content positioning
+  &.label-content {
+    padding: 18% 15% 18% 15%; // More padding on top and right to push content down and right
+  }
+}
+
+.letter-label {
+  font-family: "Satisfy", cursive;
+  font-weight: 400;
+  font-style: normal;
+  font-size: clamp(12px, 2.5vw, 20px); // Responsive font size
+  color: rgba(0, 0, 0, 0.9);
+  margin-right: 1.5%; // Percentage-based margin
+  flex-shrink: 0;
+  white-space: nowrap;
+  
+  // Label-specific label positioning
+  .label-recipient-container & {
+    margin-right: 0.3%; // Even smaller gap - make input very close to label
+    margin-left: 2%; // Move "To:" slightly to the right (less than before)
+  }
+}
+
+.letter-recipient-container {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-bottom: 0;
+  width: 100%;
+  max-width: 100%; // Ensure it doesn't exceed container
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-sizing: border-box;
+  
+  // Label-specific recipient container positioning
+  &.label-recipient-container {
+    position: absolute;
+    top: 36%; // Move down slightly more
+    left: 38%; // Move more to the right
+    width: auto;
+    max-width: none; // Allow wider container
+    display: flex;
+    align-items: center;
+    gap: clamp(8px, 1.5vw, 15px); // Space between input and close button
+    flex-wrap: nowrap; // Keep items on one line
+    
+    // Reduce gap between label and input (no gap, use margin on label instead)
+    gap: clamp(6px, 1.2vw, 12px); // Reduced gap - space between input and close button
+  }
+}
+
+.letter-recipient-input {
+  flex: 1;
+  padding: 1% 1.5%; // Percentage-based padding
+  background: rgba(0, 0, 0, 0.08); // Same background as writable textarea
+  border: none;
+  border-radius: 2px; // Same border radius as textarea
+  color: rgba(0, 0, 0, 0.9);
+  font-size: clamp(14px, 2.5vw, 20px); // Responsive font size
+  font-family: "Satisfy", cursive;
+  font-weight: 400;
+  font-style: normal;
+  text-align: left; // Left align with label
+  outline: none;
+  transition: none;
+  backdrop-filter: none;
+  // Override base modal input styles
+  box-shadow: none !important;
+  box-sizing: border-box; // Include padding in width calculation
+  max-width: 100%; // Ensure it doesn't overflow
+
+  &:focus {
+    background: rgba(0, 0, 0, 0.12); // Same focus background as textarea
+    border: none;
+    box-shadow: none;
+    // Override base modal focus styles
+    outline: none;
+  }
+
+  &::placeholder {
+    color: rgba(0, 0, 0, 0.5);
+  }
+}
+
+// Label-specific input styling
+.label-recipient-container .letter-recipient-input {
+  padding: 0.5% 1%; // Reduced vertical and horizontal padding
+  height: auto;
+  min-height: clamp(18px, 2.2vh, 28px); // Slightly smaller height
+  width: clamp(120px, 15vw, 220px); // Further reduced width - smaller input
+  max-width: none; // Allow wider width
+  flex: none; // Don't flex, use fixed width
+  font-size: clamp(12px, 2.2vw, 18px); // Slightly smaller font
+}
+
+.letter-recipient-display {
+  flex: 1;
+  padding: 1% 1.5%; // Percentage-based padding
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: clamp(14px, 2.5vw, 20px); // Responsive font size
+  font-family: "Satisfy", cursive;
+  font-weight: 400;
+  font-style: normal;
+  text-align: left; // Left align with label
+  box-sizing: border-box;
+  max-width: 100%;
+
+  .no-recipient {
+    color: rgba(0, 0, 0, 0.5);
+    font-style: italic;
+  }
+}
+
+.letter-message-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 1.5%; // Percentage-based gap
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 0; // Allow flex shrinking
+}
+
+.letter-textarea {
+  width: 100%;
+  flex: 1;
+  min-height: 0; // Remove fixed min-height, let flex handle it
+  padding: 1.5%; // Percentage-based padding
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  color: rgba(0, 0, 0, 0.9);
+  font-size: clamp(14px, 2.5vw, 20px); // Responsive font size
+  line-height: 1.6;
+  font-family: "Satisfy", cursive;
+  font-weight: 400;
+  font-style: normal;
+  resize: none;
+  overflow-y: auto;
+  outline: none;
+  transition: none;
+  backdrop-filter: none;
+  // Override base modal textarea styles
+  box-shadow: none !important;
+  box-sizing: border-box; // Include padding in width/height calculation
+
+  &.writable {
+    cursor: text;
+    background: rgba(0, 0, 0, 0.08); // Slightly darker for writable area
+    border-radius: 2px;
+
+    &:focus {
+      background: rgba(0, 0, 0, 0.12); // Slightly darker when focused
+      border: none;
+      box-shadow: none;
+      // Override base modal focus styles
+      outline: none;
+    }
+  }
+
+  &.read-only {
+    cursor: default;
+    background: transparent;
+  }
+
+  &::placeholder {
+    color: rgba(0, 0, 0, 0.5);
+  }
+
+  // Custom scrollbar styling for letter
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  // Stamped letter specific styles - no background, no scrollbar
+  &.stamped-letter-textarea {
+    background: transparent !important;
+    overflow: hidden !important; // Remove scrollbar
+    overflow-y: hidden !important;
+    overflow-x: hidden !important;
+    
+    &.writable {
+      background: transparent !important;
+      
+      &:focus {
+        background: transparent !important;
+      }
+    }
+    
+    // Hide scrollbar for stamped letters
+    &::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+    
+    &::-webkit-scrollbar-track {
+      display: none !important;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      display: none !important;
+    }
+    
+    // For Firefox
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+}
+
+.letter-footer {
+  display: none; // Hidden since button is absolutely positioned
+  flex-shrink: 0;
+}
+
+.letter-char-counter {
+  position: absolute;
+  bottom: 2%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: "Satisfy", cursive;
+  font-size: clamp(10px, 1.5vw, 14px);
+  color: rgba(0, 0, 0, 0.7);
+  background: transparent;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  pointer-events: none;
+  z-index: 5;
+  white-space: nowrap;
+  text-shadow: none;
+  box-shadow: none;
+  transition: color 0.2s ease;
+  
+  &.over-limit {
+    color: rgba(200, 0, 0, 0.9);
+    background: transparent;
+    font-weight: 600;
+  }
+  
+  // Position beside the Write button (to the left of it)
+  &.letter-char-counter-beside-button {
+    bottom: 7%; // Same as button
+    left: auto;
+    right: 20%; // Position to the left of button (button is at right: 6%, max-width 11%, so ~17% from right + gap)
+    transform: none;
+    display: flex;
+    align-items: center;
+  }
+}
+
+.letter-save-btn {
+  position: absolute;
+  bottom: 7%; // Moved further up - increased bottom value to move button up
+  right: 6%; // Moved more to the left - increased right to move button left
+  padding: clamp(3px, 0.5%, 6px) clamp(6px, 1.2%, 14px);
+  font-size: clamp(9px, 1.8vw, 15px);
+  font-weight: 600;
+  font-family: "Satisfy", cursive;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: auto;
+  height: auto;
+  min-width: clamp(45px, 7%, 65px);
+  max-width: 11%; // Smaller max-width to ensure it stays well within bounds
+  z-index: 10;
+  box-sizing: border-box;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0; // Ensure no margin
+  
+  // Old-style button design
+  background: linear-gradient(145deg, #8b6f47 0%, #6b5338 100%);
+  border: 1.5px solid rgba(0, 0, 0, 0.4);
+  border-top-color: rgba(139, 111, 71, 0.8);
+  border-left-color: rgba(139, 111, 71, 0.8);
+  border-bottom-color: rgba(0, 0, 0, 0.5);
+  border-right-color: rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow: 
+    inset 0 1px 2px rgba(255, 255, 255, 0.2),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.3); // Reduced external shadow to prevent overflow
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(145deg, #9b7f57 0%, #7b6348 100%);
+    border-color: rgba(0, 0, 0, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 
+      inset 0 1px 2px rgba(255, 255, 255, 0.25),
+      inset 0 -1px 2px rgba(0, 0, 0, 0.4),
+      0 2px 4px rgba(0, 0, 0, 0.4); // Reduced external shadow to prevent overflow
+    color: #fff;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    background: linear-gradient(145deg, #7b5f37 0%, #5b4328 100%);
+    box-shadow: 
+      inset 0 2px 4px rgba(0, 0, 0, 0.4),
+      inset 0 -1px 2px rgba(255, 255, 255, 0.1),
+      0 1px 2px rgba(0, 0, 0, 0.3);
+    border-top-color: rgba(0, 0, 0, 0.5);
+    border-left-color: rgba(0, 0, 0, 0.5);
+    border-bottom-color: rgba(139, 111, 71, 0.6);
+    border-right-color: rgba(139, 111, 71, 0.6);
+  }
+
+  &:disabled {
+    background: rgba(139, 111, 71, 0.3);
+    border-color: rgba(0, 0, 0, 0.2);
+    color: rgba(255, 255, 255, 0.3);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    text-shadow: none;
+  }
+}
+
+/* Responsive design for letter modal */
+/* Note: Dimensions are handled inline in the component to match image exactly */
+/* On mobile, component will scale down proportionally if needed */
+
+@media (max-width: 768px) {
+  .letter-content {
+    padding: 8% 6% 12% 6%; // Symmetric padding on mobile, slightly reduced
+    gap: 1.5%;
+  }
+  
+  .letter-label {
+    font-size: clamp(10px, 2.5vw, 16px);
+  }
+
+  .letter-footer {
+    display: none;
+  }
+  
+  .letter-recipient-input,
+  .letter-recipient-display {
+    font-size: clamp(12px, 2.5vw, 18px);
+    padding: 0.8% 1.2%;
+  }
+  
+  .letter-textarea {
+    font-size: clamp(12px, 2.5vw, 18px);
+    padding: 1.2%;
+  }
+  
+  .letter-modal-close {
+    top: 4%;
+    right: 4.5%;
+    padding: clamp(2px, 0.4%, 5px) clamp(4px, 0.8%, 8px);
+    font-size: clamp(8px, 1.8vw, 13px);
+    min-width: clamp(24px, 5%, 38px);
+    max-width: 10%;
+  }
+  
+  .letter-save-btn {
+    bottom: 5.5%;
+    right: 4.5%;
+    padding: clamp(2px, 0.4%, 5px) clamp(5px, 1%, 10px);
+    font-size: clamp(8px, 1.8vw, 13px);
+    min-width: clamp(38px, 7%, 65px);
+    max-width: 10%;
+  }
+}
